@@ -1,0 +1,117 @@
+{
+    "name": "sleep-mode-firmware-auto-update",
+    "instructions": [
+        {
+            "name": "wifi-ap-wait-device-connect"
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "firmware_auto_update": true,
+                    "sleep_mode": "30:10"
+                },
+                "expected_status": 204
+            }
+        },
+
+        {
+            "name": "wifi-ap-wait-device-disconnect",
+            "params": {
+                "timeout": 15
+            }
+        },
+        
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+
+        {
+            "name": "reset-serial-log"
+        },
+        {
+            "name": "device-reset"
+        },
+
+        {
+            "name": "wifi-ap-wait-device-connect"
+        },
+        {
+            "name": "check-serial",
+            "params": {
+                "wait_duration": 1000,
+                "expected_content_regex": ".*checking for a new version.*"
+            }
+        },
+
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "firmware_auto_update": false,
+                    "sleep_mode": ""
+                },
+                "expected_status": 204
+            }
+        }
+    ]
+}
+

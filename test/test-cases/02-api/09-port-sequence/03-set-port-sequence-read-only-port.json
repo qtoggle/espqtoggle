@@ -1,0 +1,39 @@
+{
+    "name": "set-port-sequence-read-only-port",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports/adc0/sequence",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "values": [10, 20],
+                    "delays": [100, 100],
+                    "repeat": 1
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "read-only port"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/adc0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "enabled": false
+                },
+                "expected_status": 204
+            }
+        }
+    ]
+}
+

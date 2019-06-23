@@ -1,0 +1,28 @@
+{
+    "name": "add-virtual-port-duplicate-port",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "id": "gpio0",
+                    "type": "number",
+                    "min": 0,
+                    "max": 100,
+                    "integer": true,
+                    "step": 5
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "duplicate port"
+                }
+            }
+        }
+    ]
+}
+

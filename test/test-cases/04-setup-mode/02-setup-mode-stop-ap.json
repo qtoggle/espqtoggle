@@ -1,0 +1,32 @@
+{
+    "name": "setup-mode-stop-ap",
+    "instructions": [
+        {
+            "name": "wifi-station-disconnect"
+        },
+		{
+		    "name": "device-write-gpio",
+		    "params": {
+		        "gpio": 12,
+		        "value": 0
+		    }
+		},
+		{
+			"name": "wifi-ap-start",
+			"params": {
+				"ssid": "${TEST_SSID}",
+				"psk": "${TEST_PSK}",
+				"wait_device_connect": true,
+				"timeout": 30
+			}
+		},
+		{
+		    "name": "device-write-gpio",
+		    "params": {
+		        "gpio": 12,
+		        "value": 1
+		    }
+		}
+	]
+}
+

@@ -1,0 +1,86 @@
+{
+    "name": "sleep-mode",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/webhooks",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "enabled": true,
+                    "scheme": "http",
+                    "host": "{{HOST_IP_ADDRESS}}",
+                    "port": 8080,
+                    "path": "/webhooks",
+                    "password": "${TEST_PASSWORD}_webhooks",
+                    "events": ["value-change", "port-update", "port-add", "port-remove", "device-update"],
+                    "timeout": 2,
+                    "retries": 0
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "sleep_mode": "1:10"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "reset-serial-log"
+        },
+        {
+            "name": "wifi-ap-wait-device-disconnect",
+            "params": {
+                "timeout": 15
+            }
+        },
+        {
+            "name": "sleep",
+            "params": {
+                "duration": 1000
+            }
+        },
+        {
+            "name": "check-serial",
+            "params": {
+                "expected_content_regex": ".*sleeping for \\d+ seconds.*"
+            }
+        },
+        {
+            "name": "device-reset",
+            "fire_and_forget": true,
+            "fire_delay": 1000
+        },
+        {
+            "name": "json-http-server",
+            "params": {
+                "port": 8080,
+                "timeout": 10,
+                "expected_method": "POST",
+                "expected_path": "/webhooks",
+                "expected_headers": {
+                    "Authorization": "Bearer ${TEST_JWT_WEBHOOKS}"
+                }
+            }
+        },
+        {
+            "name": "check-serial",
+            "params": {
+                "expected_content_regex": ".*light boot.*"
+            }
+        }
+    ]
+}
+

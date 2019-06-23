@@ -1,0 +1,25 @@
+{
+    "name": "set-port-sequence-port-disabled",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports/gpio2/sequence",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "values": [false, true],
+                    "delays": [100, 100],
+                    "repeat": 1
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "port disabled"
+                }
+            }
+        }
+    ]
+}
+

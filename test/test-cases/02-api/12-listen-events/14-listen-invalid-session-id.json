@@ -1,0 +1,34 @@
+{
+    "name": "listen-invalid-session-id",
+    "instructions": [
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/listen?session_id=inv@lid&timeout=1",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+				"expected_status": 400,
+				"expected_body": {
+				    "error": "invalid field: session_id"
+				}
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/listen?session_id=averyveryveryverylongsessionidtext&timeout=1",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+				"expected_status": 400,
+				"expected_body": {
+				    "error": "invalid field: session_id"
+				}
+			}
+		}
+	]
+}
+

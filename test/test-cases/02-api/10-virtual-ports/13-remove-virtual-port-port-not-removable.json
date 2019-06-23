@@ -1,0 +1,20 @@
+{
+    "name": "remove-virtual-port-port-not-removable",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "DELETE",
+                "path": "/ports/gpio0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "port not removable"
+                }
+            }
+        }
+    ]
+}
+

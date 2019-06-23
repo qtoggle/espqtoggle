@@ -1,0 +1,157 @@
+{
+    "name": "listen-device-update",
+    "instructions": [
+		{
+			"name": "json-http-client",
+			"fire_and_forget": true,
+			"fire_delay": 1000,
+			"params": {
+				"method": "PATCH",
+				"path": "/device",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+				    "description": "test description {{TEST_CASE_NAME}}"
+				},
+				"expected_status": 204
+			}
+		},
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/listen?session_id=test-{{TEST_CASE_NAME}}&timeout=3",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "array",
+                    "items": [
+                        {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["type", "params"],
+                            "properties": {
+                                "type": {"enum": ["device-update"]},
+                                "params": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "name",
+                                        "description",
+                                        "version",
+                                        "api_version",
+                                        "admin_password",
+                                        "normal_password",
+                                        "viewonly_password",
+                                        "flags",
+                                        "uptime",
+                                        "virtual_ports",
+                                        "network_ip",
+                                        "network_wifi",
+                                        "frequency",
+                                        "network_rssi",
+                                        "network_bssid",
+                                        "free_mem",
+                                        "flash_size",
+                                        "network_scan",
+                                        "firmware_auto_update",
+                                        "ping_watchdog_interval",
+                                        "flash_id",
+                                        "chip_id",
+                                        "config_name",
+                                        "config_id",
+                                        "definitions"
+                                    ],
+                                    "properties": {
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "enum": ["test description {{TEST_CASE_NAME}}"]
+                                        },
+                                        "version": {
+                                            "type": "string"
+                                        },
+                                        "api_version": {
+                                            "type": "string"
+                                        },
+                                        "admin_password": {
+                                            "type": "string"
+                                        },
+                                        "normal_password": {
+                                            "type": "string"
+                                        },
+                                        "viewonly_password": {
+                                            "type": "string"
+                                        },
+                                        "flags": {
+                                            "type": "array"
+                                        },
+                                        "uptime": {
+                                            "type": "integer"
+                                        },
+                                        "virtual_ports": {
+                                            "type": "integer"
+                                        },
+                                        "network_ip": {
+                                            "type": "string"
+                                        },
+                                        "network_wifi": {
+                                            "type": "string"
+                                        },
+                                        "frequency": {
+                                            "type": "integer"
+                                        },
+                                        "network_rssi": {
+                                            "type": "integer"
+                                        },
+                                        "network_bssid": {
+                                            "type": "string"
+                                        },
+                                        "free_mem": {
+                                            "type": "integer"
+                                        },
+                                        "flash_size": {
+                                            "type": "integer"
+                                        },
+                                        "network_scan": {
+                                            "type": "string"
+                                        },
+                                        "firmware_auto_update": {
+                                            "type": "boolean"
+                                        },
+                                        "ping_watchdog_interval": {
+                                            "type": "integer"
+                                        },
+                                        "flash_id": {
+                                            "type": "string"
+                                        },
+                                        "chip_id": {
+                                            "type": "string"
+                                        },
+                                        "config_name": {
+                                            "type": "string"
+                                        },
+                                        "config_id": {
+                                            "type": "string"
+                                        },
+                                        "debug": {
+                                            "type": "boolean"
+                                        },
+                                        "definitions": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
+

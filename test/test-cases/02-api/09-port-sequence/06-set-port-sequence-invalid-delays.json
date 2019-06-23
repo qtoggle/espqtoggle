@@ -1,0 +1,82 @@
+{
+    "name": "set-port-sequence-invalid-delays",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports/gpio0/sequence",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "values": [false, true],
+                    "delays": [100, 100, 100],
+                    "repeat": 1
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: delays"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports/gpio0/sequence",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "values": [false, true],
+                    "delays": [false, true],
+                    "repeat": 1
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: delays"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports/gpio0/sequence",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "values": [false, true],
+                    "delays": {"invalid": true},
+                    "repeat": 1
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: delays"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports/gpio0/sequence",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "values": [false, true],
+                    "delays": ["false", "true"],
+                    "repeat": 1
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: delays"
+                }
+            }
+        }
+    ]
+}
+

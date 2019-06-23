@@ -1,0 +1,110 @@
+{
+    "name": "expressions-logic",
+    "instructions": [
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/ports/bool_port",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+				    "expression": "AND(true, false)"
+				},
+				"expected_status": 204
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/ports/bool_port/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"expected_status": 200,
+				"expected_body": false
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/ports/bool_port",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+				    "expression": "OR(true, false)"
+				},
+				"expected_status": 204
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/ports/bool_port/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"expected_status": 200,
+				"expected_body": true
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/ports/bool_port",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+				    "expression": "NOT(false)"
+				},
+				"expected_status": 204
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/ports/bool_port/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"expected_status": 200,
+				"expected_body": true
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/ports/bool_port",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+				    "expression": "XOR(true, true)"
+				},
+				"expected_status": 204
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/ports/bool_port/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"expected_status": 200,
+				"expected_body": false
+			}
+		}
+    ]
+}
+

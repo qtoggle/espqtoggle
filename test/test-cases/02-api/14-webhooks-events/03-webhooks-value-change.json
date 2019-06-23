@@ -1,0 +1,56 @@
+{
+    "name": "webhooks-value-change",
+    "instructions": [
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "POST",
+				"path": "/ports/gpio0/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": false,
+				"expected_status": 204
+			}
+		},
+		{
+		    "name": "sleep",
+		    "params": {
+		        "duration": 500
+		    }
+		},
+		{
+			"name": "json-http-client",
+			"fire_and_forget": true,
+			"fire_delay": 1000,
+			"params": {
+				"method": "POST",
+				"path": "/ports/gpio0/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": true,
+				"expected_status": 204
+			}
+		},
+        {
+            "name": "json-http-server",
+            "params": {
+                "port": 8080,
+                "expected_method": "POST",
+                "expected_path": "/webhooks",
+                "expected_headers": {
+                    "Authorization": "Bearer ${TEST_JWT_WEBHOOKS}"
+                },
+                "expected_body": {
+                    "type": "value-change",
+                    "params": {
+                        "id": "gpio0",
+                        "value": true
+                    }
+                }
+            }
+        }
+    ]
+}
+

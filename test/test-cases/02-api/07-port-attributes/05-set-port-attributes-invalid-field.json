@@ -1,0 +1,23 @@
+{
+	"name": "set-port-attributes-invalid-field",
+	"instructions": [
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/ports/gpio0",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+				    "description": 0
+				},
+				"expected_status": 400,
+				"expected_body": {
+				    "error": "invalid field: description"
+				}
+			}
+		}
+	]
+}
+

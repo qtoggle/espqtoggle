@@ -1,0 +1,50 @@
+{
+	"name": "get-device-attributes-security",
+	"instructions": [
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/device",
+				"headers": {
+					"Authorization": "Bearer inexistent"
+				},
+				"expected_status": 401,
+				"expected_body": {
+				    "error": "authentication required" 
+				}
+			}
+		},
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_VIEWONLY}"
+                },
+                "expected_status": 403,
+                "expected_body": {
+                    "error": "forbidden",
+                    "required_level": "admin"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_NORMAL}"
+                },
+                "expected_status": 403,
+                "expected_body": {
+                    "error": "forbidden",
+                    "required_level": "admin"
+                }
+            }
+        }
+	]
+}
+

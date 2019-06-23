@@ -1,0 +1,36 @@
+{
+    "name": "setup-mode-start-ap",
+    "instructions": [
+		{
+		    "name": "device-write-gpio",
+		    "params": {
+		        "gpio": 12,
+		        "value": 0
+		    }
+		},
+        {
+            "name": "wifi-ap-wait-device-disconnect"
+        },
+		{
+		    "name": "device-write-gpio",
+		    "params": {
+		        "gpio": 12,
+		        "value": 1
+		    }
+		},
+		{
+			"name": "wifi-ap-stop"
+		},
+		{
+			"name": "wifi-station-connect",
+			"params": {
+				"ssid": "esp{{DEVICE_SERIAL_NUMBER}}",
+				"psk": "espqtoggle"
+			}
+		},
+		{
+		    "name": "wifi-station-disconnect"
+		}
+	]
+}
+

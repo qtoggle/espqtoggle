@@ -1,0 +1,54 @@
+{
+    "name": "set-webhooks-missing-fields",
+    "instructions": [
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/webhooks",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+                    "enabled": true
+                },
+                "expected_status": 400,
+				"expected_body": {
+				    "error": "missing field: host"
+				}
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/webhooks",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+                    "host": "{{HOST_IP_ADDRESS}}"
+                },
+				"expected_status": 204
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/webhooks",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+                    "enabled": true
+                },
+				"expected_status": 400,
+				"expected_body": {
+				    "error": "missing field: path"
+				}
+			}
+		}
+    ]
+}
+

@@ -1,0 +1,28 @@
+{
+	"name": "default-ap-mode",
+	"instructions": [
+		{
+			"name": "wifi-station-connect",
+			"params": {
+				"ssid": "esp{{DEVICE_SERIAL_NUMBER}}",
+				"psk": "espqtoggle"
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/device",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+				},
+				"body": {
+				    "network_wifi": "${TEST_SSID}:${TEST_PSK}"
+				},
+				"expected_status": 204,
+				"expected_body": null
+			}
+		}
+	]
+}
+

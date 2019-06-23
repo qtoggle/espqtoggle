@@ -1,0 +1,11 @@
+*.pyc
+.pydevproject
+.cproject
+.project
+.settings
+.idea
+build
+deploy*.sh
+build*.sh
+run-tests.sh
+flash.sh

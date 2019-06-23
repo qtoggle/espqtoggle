@@ -1,0 +1,480 @@
+{
+	"name": "get-device-attributes",
+	"instructions": [
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/device",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"expected_status": 200,
+				"expected_body_schema": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                        "name",
+                        "description",
+                        "version",
+                        "api_version",
+                        "admin_password",
+                        "normal_password",
+                        "viewonly_password",
+                        "flags",
+                        "uptime",
+                        "virtual_ports",
+                        "network_ip",
+                        "network_wifi",
+                        "frequency",
+                        "network_rssi",
+                        "network_bssid",
+                        "free_mem",
+                        "flash_size",
+                        "network_scan",
+                        "firmware_auto_update",
+                        "ping_watchdog_interval",
+                        "flash_id",
+                        "chip_id",
+                        "config_name",
+                        "config_id",
+                        "definitions"
+                    ],
+                    "properties": {
+                        "name": {
+                            "enum": ["testdevice"]
+                        },
+                        "description": {
+                            "enum": ["Test Description"]
+                        },
+                        "version": {
+                            "enum": ["${VERSION}"]
+                        },
+                        "api_version": {
+                            "enum": ["1.0"]
+                        },
+                        "admin_password": {
+                            "enum": [""]
+                        },
+                        "normal_password": {
+                            "enum": [""]
+                        },
+                        "viewonly_password": {
+                            "enum": [""]
+                        },
+                        "flags": {
+                            "type": "array",
+                            "items": {
+                                "enum": [
+                                    "firmware",
+                                    "listen",
+                                    "webhooks",
+                                    "ssl",
+                                    "reverse"
+                                ]
+                            }
+                        },
+                        "uptime": {
+                            "type": "integer"
+                        },
+                        "virtual_ports": {
+                            "enum": [8]
+                        },
+                        "network_ip": {
+                            "enum": ["${TEST_NETWORK_DEVICE_IP}/${TEST_NETWORK_MASK}:${TEST_NETWORK_HOST_IP}:${TEST_NETWORK_HOST_IP}"]
+                        },
+                        "network_wifi": {
+                            "enum": ["${TEST_SSID}:${TEST_PSK}"]
+                        },
+                        "frequency": {
+                            "enum": [80]
+                        },
+                        "network_rssi": {
+                            "type": "integer"
+                        },
+                        "network_bssid": {
+                            "enum": ["{{HOST_MAC_ADDRESS_UPPER}}"]
+                        },
+                        "free_mem": {
+                            "type": "integer"
+                        },
+                        "flash_size": {
+                            "enum": [1024, 2048, 4096]
+                        },
+                        "network_scan": {
+                            "enum": [""]
+                        },
+                        "firmware_auto_update": {
+                            "enum": [false]
+                        },
+                        "ping_watchdog_interval": {
+                            "enum": [0]
+                        },
+                        "flash_id": {
+                            "type": "string",
+                            "pattern": "^[a-f0-9]{8}$"
+                        },
+                        "chip_id": {
+                            "type": "string",
+                            "pattern": "^[a-f0-9]{8}$"
+                        },
+                        "config_name": {
+                            "enum": ["${FW_CONFIG_NAME}"]
+                        },
+                        "config_id": {
+                            "enum": ["${FW_CONFIG_ID}"]
+                        },
+                        "debug": {
+                            "enum": [true]
+                        },
+                        "definitions": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                                "frequency",
+                                "network_rssi",
+                                "network_bssid",
+                                "network_scan",
+                                "ping_watchdog_interval",
+                                "firmware_auto_update",
+                                "free_mem",
+                                "flash_size",
+                                "flash_id",
+                                "chip_id",
+                                "config_id",
+                                "config_name"
+                            ],
+                            "properties": {
+                                "frequency": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "description",
+                                        "unit",
+                                        "modifiable",
+                                        "type",
+                                        "integer",
+                                        "choices"
+                                    ],
+                                    "properties": {
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "unit": {
+                                            "enum": ["MHz"]
+                                        },
+                                        "modifiable": {
+                                            "enum": [true]
+                                        },  
+                                        "type": {
+                                            "enum": ["number"]
+                                        },
+                                        "integer": {
+                                            "enum": [true]
+                                        },
+                                        "choices": {
+                                            "type": "array",
+                                            "items": {
+                                                "enum": [80, 160]
+                                            }
+                                        }
+                                    }
+                                },
+                                "network_rssi": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "description",
+                                        "unit",
+                                        "modifiable",
+                                        "type",
+                                        "min",
+                                        "max",
+                                        "integer"
+                                    ],
+                                    "properties": {
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "unit": {
+                                            "enum": ["dBm"]
+                                        },
+                                        "modifiable": {
+                                            "enum": [false]
+                                        },
+                                        "type": {
+                                            "enum": ["number"]
+                                        },
+                                        "min": {
+                                            "enum": [-100]
+                                        },
+                                        "max": {
+                                            "enum": [-30]
+                                        },
+                                        "integer": {
+                                            "enum": [true]
+                                        }
+                                    }
+                                },
+                                "network_bssid": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "description",
+                                        "modifiable",
+                                        "type"
+                                    ],
+                                    "properties": {
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "modifiable": {
+                                            "enum": [false]
+                                        },
+                                        "type": {
+                                            "enum": [
+                                                "string"
+                                            ]
+                                        }
+                                    }
+                                },
+                                "network_scan": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "description",
+                                        "modifiable",
+                                        "type"
+                                    ],
+                                    "properties": {
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "modifiable": {
+                                            "enum": [true]
+                                        },
+                                        "type": {
+                                            "enum": ["string"]
+                                        }
+                                    }
+                                },
+                                "ping_watchdog_interval": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "description",
+                                        "unit",
+                                        "modifiable",
+                                        "type",
+                                        "integer",
+                                        "choices"
+                                    ],
+                                    "properties": {
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "unit": {
+                                            "enum": ["seconds"]
+                                        },
+                                        "modifiable": {
+                                            "enum": [true]
+                                        },
+                                        "type": {
+                                            "enum": ["number"]
+                                        },
+                                        "integer": {
+                                            "enum": [true]
+                                        },
+                                        "choices": {
+                                            "type": "array",
+                                            "items": {
+                                                "enum": [0, 1, 5, 10, 30, 60, 120]
+                                            }
+                                        }
+                                    }
+                                },
+                                "firmware_auto_update": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "description",
+                                        "modifiable",
+                                        "type"
+                                    ],
+                                    "properties": {
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "modifiable": {
+                                            "enum": [true]
+                                        },
+                                        "type": {
+                                            "enum": ["boolean"]
+                                        }
+                                    }
+                                },
+                                "free_mem": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "description",
+                                        "unit",
+                                        "modifiable",
+                                        "type",
+                                        "integer"
+                                    ],
+                                    "properties": {
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "unit": {
+                                            "enum": ["kB"]
+                                        },
+                                        "modifiable": {
+                                            "enum": [false]
+                                        },
+                                        "type": {
+                                            "enum": ["number"]
+                                        },
+                                        "integer": {
+                                            "enum": [true]
+                                        }
+                                    }
+                                },
+                                "flash_size": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "description",
+                                        "unit",
+                                        "modifiable",
+                                        "type",
+                                        "integer"
+                                    ],
+                                    "properties": {
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "unit": {
+                                            "enum": ["kB"]
+                                        },
+                                        "modifiable": {
+                                            "enum": [false]
+                                        },
+                                        "type": {
+                                            "enum": ["number"]
+                                        },
+                                        "integer": {
+                                            "enum": [true]
+                                        }
+                                    }
+                                },
+                                "flash_id": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "description",
+                                        "modifiable",
+                                        "type"
+                                    ],
+                                    "properties": {
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "modifiable": {
+                                            "enum": [false]
+                                        },
+                                        "type": {
+                                            "enum": ["string"]
+                                        }
+                                    }
+                                },
+                                "chip_id": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "description",
+                                        "modifiable",
+                                        "type"
+                                    ],
+                                    "properties": {
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "modifiable": {
+                                            "enum": [false]
+                                        },
+                                        "type": {
+                                            "enum": ["string"]
+                                        }
+                                    }
+                                },
+                                "config_id": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "description",
+                                        "modifiable",
+                                        "type"
+                                    ],
+                                    "properties": {
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "modifiable": {
+                                            "enum": [false]
+                                        },
+                                        "type": {
+                                            "enum": ["string"]
+                                        }
+                                    }
+                                },
+                                "config_name": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "description",
+                                        "modifiable",
+                                        "type"
+                                    ],
+                                    "properties": {
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "modifiable": {
+                                            "enum": [false]
+                                        },
+                                        "type": {
+                                            "enum": ["string"]
+                                        }
+                                    }
+                                },
+                                "debug": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "description",
+                                        "modifiable",
+                                        "type"
+                                    ],
+                                    "properties": {
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "modifiable": {
+                                            "enum": [false]
+                                        },
+                                        "type": {
+                                            "enum": ["boolean"]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+			}
+		}
+	]
+}
+

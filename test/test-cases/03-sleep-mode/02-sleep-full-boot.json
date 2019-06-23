@@ -1,0 +1,76 @@
+{
+    "name": "sleep-full-boot",
+    "instructions": [
+        {
+            "name": "wifi-ap-wait-device-connect"
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/webhooks",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "enabled": false
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "sleep_mode": ""
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "sleep_mode": "1:10"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "wifi-ap-wait-device-disconnect",
+            "params": {
+                "timeout": 15
+            }
+        },
+        {
+            "name": "device-power-off"
+        },
+        {
+            "name": "device-reset"
+        },
+        {
+            "name": "reset-serial-log"
+        },
+        {
+            "name": "device-power-on"
+        },
+        {
+            "name": "check-serial",
+            "params": {
+                "wait_duration": 1000,
+                "expected_content_regex": ".*full boot.*"
+            }
+        }
+    ]
+}
+

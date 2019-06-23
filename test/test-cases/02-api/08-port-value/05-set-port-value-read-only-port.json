@@ -1,0 +1,35 @@
+{
+    "name": "set-port-value-read-only-port",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/adc0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "enabled": true
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/adc0/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": 10,
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "read-only port"
+                }
+            }
+        }
+    ]
+}
+

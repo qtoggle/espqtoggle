@@ -1,0 +1,100 @@
+{
+	"name": "reset-factory",
+	"instructions": [
+		{
+			"name": "json-http-client",
+			"params": {
+			    "ip_address": "${TEST_NETWORK_DEVICE_IP}",
+				"method": "POST",
+				"path": "/reset",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+				    "factory": true
+				},
+				"expected_status": 204,
+				"expected_body": null
+			}
+		},
+		{
+			"name": "wifi-ap-wait-device-disconnect"
+		},
+		{
+			"name": "wifi-station-connect",
+			"params": {
+				"ssid": "esp{{DEVICE_SERIAL_NUMBER}}",
+				"psk": "espqtoggle"
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/device",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+				},
+				"body": {
+				    "network_wifi": "${TEST_SSID}:${TEST_PSK}"
+				},
+				"expected_status": 204,
+				"expected_body": null
+			}
+		},
+		{
+			"name": "wifi-ap-wait-device-disconnect"
+		},
+		{
+			"name": "wifi-ap-start",
+			"params": {
+				"ssid": "${TEST_SSID}",
+				"psk": "${TEST_PSK}",
+				"wait_device_connect": true
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/device",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+				},
+				"expected_status": 200,
+				"expected_body_schema": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "required": [
+                        "name"
+                    ],
+                    "properties": {
+                        "name": {
+                            "enum": ["esp{{DEVICE_SERIAL_NUMBER}}"]
+                        }
+                    }
+                }
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/device",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+				},
+				"body": {
+				    "name": "testdevice",
+				    "description": "Test Description",
+				    "admin_password": "${TEST_PASSWORD}",
+				    "normal_password": "${TEST_PASSWORD}",
+				    "viewonly_password": "${TEST_PASSWORD}"
+				},
+				"expected_status": 204,
+				"expected_body": null
+			}
+		}
+	]
+}
+

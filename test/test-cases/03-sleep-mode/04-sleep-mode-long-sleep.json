@@ -1,0 +1,132 @@
+{
+    "name": "sleep-mode-long-sleep",
+    "reset_before": true,
+    "instructions": [
+        {
+            "name": "wifi-ap-wait-device-connect",
+            "params": {
+                "timeout": 15
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "sleep_mode": "1510:10"
+                },
+                "expected_status": 204
+            }
+        },
+
+        {
+            "name": "wifi-ap-wait-device-disconnect",
+            "params": {
+                "timeout": 15
+            }
+        },
+        {
+            "name": "device-reset"
+        },
+        {
+            "name": "check-serial",
+            "params": {
+                "wait_duration": 500,
+                "expected_content_regex": ".*sleeping for another 1800 seconds.*"
+            }
+        },
+
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        {"name": "device-reset"},
+        
+        {
+            "name": "reset-serial-log"
+        },
+        {
+            "name": "device-reset"
+        },
+        {
+            "name": "check-serial",
+            "params": {
+                "wait_duration": 100,
+                "expected_content_regex": ".*sleeping for another 1800 seconds.*"
+            }
+        },
+        
+        {
+            "name": "device-reset"
+        },
+        {
+            "name": "check-serial",
+            "params": {
+                "wait_duration": 100,
+                "expected_content_regex": ".*sleeping for another 600 seconds.*"
+            }
+        },
+        
+        {
+            "name": "device-reset"
+        },
+        {
+            "name": "check-serial",
+            "params": {
+                "wait_duration": 500,
+                "expected_content_regex": ".*system initialization done.*"
+            }
+        }
+    ]
+}
+

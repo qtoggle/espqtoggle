@@ -1,0 +1,165 @@
+{
+    "name": "persistence",
+    "instructions": [
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/device",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+				    "name": "testdevice2",
+				    "description": "Test Description2"
+				},
+				"expected_status": 204,
+				"expected_body": null
+			}
+		},
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "description": "test description2",
+                    "unit": "test unit2",
+                    "enabled": true,
+                    "persisted": true,
+                    "sampling_interval": 150,
+                    "transform_read": "",
+                    "pull_up": true,
+                    "output": true
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports/gpio0/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": true,
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "sleep",
+            "params": {
+                "duration": 6000
+            }
+        },
+        {
+            "name": "device-reset"
+        },
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/device",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"expected_status": 200,
+				"expected_body_schema": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "required": [
+                        "name",
+                        "description"
+                    ],
+                    "properties": {
+                        "name": {
+                            "enum": ["testdevice2"]
+                        },
+                        "description": {
+                            "enum": ["Test Description2"]
+                        }
+                    }
+                }
+			}
+		},
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "array",
+                    "additionalItems": true,
+                    "items": [
+                        {
+                            "type": "object",
+                            "required": [
+                                "id",
+                                "description",
+                                "unit",
+                                "enabled",
+                                "persisted",
+                                "sampling_interval",
+                                "transform_read",
+                                "pull_up",
+                                "output"
+                            ],
+                            "properties": {
+                                "id": {
+                                    "enum": ["gpio0"]
+                                },
+                                "description": {
+                                    "enum": ["test description2"]
+                                },
+                                "unit": {
+                                    "enum": ["test unit2"]
+                                },
+                                "enabled": {
+                                    "enum": [true]
+                                },
+                                "persisted": {
+                                    "enum": [true]
+                                },
+                                "sampling_interval": {
+                                    "enum": [150]
+                                },
+                                "transform_read": {
+                                    "enum": [""]
+                                },
+                                "pull_up": {
+                                    "enum": [true]
+                                },
+                                "output": {
+                                    "enum": [true]
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/gpio0/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": true
+            }
+        }
+    ]
+}
+

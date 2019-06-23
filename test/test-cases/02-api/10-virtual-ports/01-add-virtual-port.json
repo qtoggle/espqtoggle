@@ -1,0 +1,55 @@
+{
+    "name": "add-virtual-port",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "id": "test_port",
+                    "type": "number",
+                    "min": 0,
+                    "max": 100,
+                    "integer": true,
+                    "step": 5
+                },
+                "expected_status": 201,
+                "expected_body": {
+                    "id": "test_port",
+                    "description": "",
+                    "unit": "",
+                    "writable": true,
+                    "enabled": true,
+                    "persisted": false,
+                    "virtual": true,
+                    "transform_read": "",
+                    "type": "number",
+                    "min": 0,
+                    "max": 100,
+                    "step": 5,
+                    "integer": true,
+                    "expression": "",
+                    "transform_write": "",
+                    "value": 0,
+                    "definitions": {}
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "method": "DELETE",
+                "path": "/ports/test_port",
+                "expected_status": 204
+            }
+        }
+    ]
+}
+

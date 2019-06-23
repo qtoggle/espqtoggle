@@ -1,0 +1,162 @@
+{
+    "name": "expressions-comparisons",
+    "instructions": [
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/ports/num_port",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+				    "expression": "IF(true, 12, 13)"
+				},
+				"expected_status": 204
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/ports/num_port/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"expected_status": 200,
+				"expected_body": 12
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/ports/bool_port",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+				    "expression": "EQ(12, 13)"
+				},
+				"expected_status": 204
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/ports/bool_port/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"expected_status": 200,
+				"expected_body": false
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/ports/bool_port",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+				    "expression": "GT(12, 13)"
+				},
+				"expected_status": 204
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/ports/bool_port/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"expected_status": 200,
+				"expected_body": false
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/ports/bool_port",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+				    "expression": "GTE(12, 12)"
+				},
+				"expected_status": 204
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/ports/bool_port/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"expected_status": 200,
+				"expected_body": true
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/ports/bool_port",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+				    "expression": "LT(12, 13)"
+				},
+				"expected_status": 204
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/ports/bool_port/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"expected_status": 200,
+				"expected_body": true
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/ports/bool_port",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+				    "expression": "LTE(12, 12)"
+				},
+				"expected_status": 204
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/ports/bool_port/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"expected_status": 200,
+				"expected_body": true
+			}
+		}
+    ]
+}
+

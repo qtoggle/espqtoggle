@@ -1,0 +1,50 @@
+{
+    "name": "add-virtual-port-invalid-max",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "id": "test_port",
+                    "type": "number",
+                    "min": 0,
+                    "max": "invalid",
+                    "integer": true,
+                    "step": 5
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: max"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "id": "test_port",
+                    "type": "number",
+                    "min": 100,
+                    "max": 0,
+                    "integer": true,
+                    "step": 5
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: max"
+                }
+            }
+        }
+    ]
+}
+

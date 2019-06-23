@@ -1,0 +1,118 @@
+{
+    "name": "listen-port-add-security",
+    "instructions": [
+        {
+            "name": "json-http-client",
+			"fire_and_forget": true,
+			"fire_delay": 1000,
+            "params": {
+                "method": "POST",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "id": "test_port",
+                    "type": "number",
+                    "min": 0,
+                    "max": 100,
+                    "integer": true,
+                    "step": 5
+                },
+                "expected_status": 201
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/listen?session_id=test-{{TEST_CASE_NAME}}&timeout=3",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_VIEWONLY}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "array",
+                    "items": [
+                        {
+                            "type": "object",
+                            "additionalProperties": true,
+                            "required": ["type", "params"],
+                            "properties": {
+                                "type": {"enum": ["port-add"]}
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "DELETE",
+                "path": "/ports/test_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+			"fire_and_forget": true,
+			"fire_delay": 1000,
+            "params": {
+                "method": "POST",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "id": "test_port",
+                    "type": "number",
+                    "min": 0,
+                    "max": 100,
+                    "integer": true,
+                    "step": 5
+                },
+                "expected_status": 201
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/listen?session_id=test-{{TEST_CASE_NAME}}2&timeout=3",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_VIEWONLY}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "array",
+                    "items": [
+                        {
+                            "type": "object",
+                            "additionalProperties": true,
+                            "required": ["type", "params"],
+                            "properties": {
+                                "type": {"enum": ["port-add"]}
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "DELETE",
+                "path": "/ports/test_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 204
+            }
+        }
+    ]
+}
+

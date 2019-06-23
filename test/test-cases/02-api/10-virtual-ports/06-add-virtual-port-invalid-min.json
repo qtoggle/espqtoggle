@@ -1,0 +1,28 @@
+{
+    "name": "add-virtual-port-invalid-min",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "id": "test_port",
+                    "type": "number",
+                    "min": "invalid",
+                    "max": 100,
+                    "integer": true,
+                    "step": 5
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: min"
+                }
+            }
+        }
+    ]
+}
+

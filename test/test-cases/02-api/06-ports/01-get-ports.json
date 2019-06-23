@@ -1,0 +1,179 @@
+{
+	"name": "get-ports",
+	"instructions": [
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/ports",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"expected_status": 200,
+				"expected_body_schema": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "id",
+                            "description",
+                            "unit",
+                            "writable",
+                            "enabled",
+                            "persisted",
+                            "sampling_interval",
+                            "transform_read",
+                            "type",
+                            "value",
+                            "definitions"
+                        ],
+                        "properties": {
+                            "id": {
+                                "enum": ["gpio0", "gpio2", "gpio4", "gpio5", "pwm12", "pwm13", "pwm14", "pwm15", "pwm_freq", "adc0"]
+                            },
+                            "description": {
+                                "enum": [""]
+                            },
+                            "unit": {
+                                "enum": [""]
+                            },
+                            "writable": {
+                                "type": "boolean"
+                            },
+                            "enabled": {
+                                "type": "boolean"
+                            },
+                            "persisted": {
+                                "type": "boolean"
+                            },
+                            "sampling_interval": {
+                                "type": "integer"
+                            },
+                            "transform_read": {
+                                "enum": [""]
+                            },
+                            "transform_write": {
+                                "enum": [""]
+                            },
+                            "type": {
+                                "enum": ["boolean", "number"]
+                            },
+                            "expression": {
+                                "enum": [""]
+                            },
+                            "pull_up": {
+                                "type": "boolean"
+                            },
+                            "output": {
+                                "type": "boolean"
+                            },
+                            "value": {
+                                "oneOf": [
+                                    {
+                                        "type": "boolean"
+                                    },
+                                    {
+                                        "type": "number"
+                                    },
+                                    {
+                                        "type": "null"
+                                    }
+                                ]
+                            },
+                            "definitions": {
+                                "type": "object",
+                                "required": [
+                                    "sampling_interval"
+                                ],
+                                "properties": {
+                                    "sampling_interval": {
+                                        "type": "object",
+                                        "required": [
+                                            "description",
+                                            "unit",
+                                            "modifiable",
+                                            "type",
+                                            "min",
+                                            "max",
+                                            "integer"
+                                        ],
+                                        "properties": {
+                                            "description": {
+                                                "type": "string"
+                                            },
+                                            "unit": {
+                                                "type": "string"
+                                            },
+                                            "modifiable": {
+                                                "type": "boolean"
+                                            },
+                                            "type": {
+                                                "enum": ["number"]
+                                            },
+                                            "min": {
+                                                "type": "number"
+                                            },
+                                            "max": {
+                                                "type": "number"
+                                            },
+                                            "integer": {
+                                                "enum": [true]
+                                            }
+                                        }
+                                    },
+                                    "pull_up": {
+                                        "type": "object",
+                                        "required": [
+                                            "description",
+                                            "unit",
+                                            "modifiable",
+                                            "type"
+                                        ],
+                                        "properties": {
+                                            "description": {
+                                                "type": "string"
+                                            },
+                                            "unit": {
+                                                "type": "string"
+                                            },
+                                            "modifiable": {
+                                                "enum": [true]
+                                            },
+                                            "type": {
+                                                "enum": ["boolean"]
+                                            }
+                                        }
+                                    },
+                                    "output": {
+                                        "type": "object",
+                                        "required": [
+                                            "description",
+                                            "unit",
+                                            "modifiable",
+                                            "type"
+                                        ],
+                                        "properties": {
+                                            "description": {
+                                                "type": "string"
+                                            },
+                                            "unit": {
+                                                "type": "string"
+                                            },
+                                            "modifiable": {
+                                                "enum": [true]
+                                            },
+                                            "type": {
+                                                "enum": ["boolean"]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+			}
+		}
+	]
+}
+

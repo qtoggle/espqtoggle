@@ -1,0 +1,121 @@
+{
+    "name": "expressions-delay",
+    "instructions": [
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "POST",
+				"path": "/ports",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+				    "id": "num_port2",
+				    "type": "number"
+				},
+				"expected_status": 201
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/ports/num_port",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+				    "expression": ""
+				},
+				"expected_status": 204
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/ports/num_port/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": 100,
+				"expected_status": 204
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/ports/num_port2",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": {
+				    "expression": "DELAY(${DOLLAR}num_port, 1000)"
+				},
+				"expected_status": 204
+			}
+		},
+		{
+		    "name": "sleep",
+		    "params": {
+		        "duration": 500
+		    }
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/ports/num_port2/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"expected_status": 200,
+				"expected_body": 100
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/ports/num_port/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": 101,
+				"expected_status": 204
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/ports/num_port2/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"expected_status": 200,
+				"expected_body": 100
+			}
+		},
+		{
+		    "name": "sleep",
+		    "params": {
+		        "duration": 1500
+		    }
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/ports/num_port2/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"expected_status": 200,
+				"expected_body": 101
+			}
+		}
+    ]
+}
+

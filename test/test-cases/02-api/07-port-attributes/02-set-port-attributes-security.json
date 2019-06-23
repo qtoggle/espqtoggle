@@ -1,0 +1,62 @@
+{
+    "name": "set-port-attributes-security",
+    "instructions": [
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "PATCH",
+				"path": "/ports/gpio0",
+				"headers": {
+					"Authorization": "Bearer inexistent"
+				},
+				"body": {
+				    "description": "test description"
+				},
+				"expected_status": 401
+			}
+		},
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_VIEWONLY}"
+                },
+				"body": {
+				    "description": "test description"
+				},
+                "expected_status": 403
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_NORMAL}"
+                },
+				"body": {
+				    "description": "test description"
+				},
+                "expected_status": 403
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+				"body": {
+				    "enabled": true
+				},
+                "expected_status": 204
+            }
+        }
+    ]
+}
+

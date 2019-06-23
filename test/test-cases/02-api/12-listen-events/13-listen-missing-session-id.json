@@ -1,0 +1,20 @@
+{
+    "name": "listen-missing-session-id",
+    "instructions": [
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/listen?timeout=1",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+				"expected_status": 400,
+				"expected_body": {
+				    "error": "missing field: session_id"
+				}
+			}
+		}
+	]
+}
+

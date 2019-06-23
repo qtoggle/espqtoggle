@@ -1,0 +1,149 @@
+{
+    "name": "listen-value-change-security",
+    "instructions": [
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "POST",
+				"path": "/ports/gpio0/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": false,
+				"expected_status": 204
+			}
+		},
+		{
+		    "name": "sleep",
+		    "params": {
+		        "duration": 1000
+		    }
+		},
+		{
+			"name": "json-http-client",
+			"fire_and_forget": true,
+			"fire_delay": 1000,
+			"params": {
+				"method": "POST",
+				"path": "/ports/gpio0/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": true,
+				"expected_status": 204
+			}
+		},
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/listen?session_id=test-listen-v-c-security&timeout=3",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_VIEWONLY}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "array",
+                    "items": [
+                        {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["type", "params"],
+                            "properties": {
+                                "type": {"enum": ["value-change"]},
+                                "params": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "id",
+                                        "value"
+                                    ],
+                                    "properties": {
+                                        "id": {
+                                            "enum": ["gpio0"]
+                                        },
+                                        "value": {
+                                            "enum": [true]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "POST",
+				"path": "/ports/gpio0/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": false,
+				"expected_status": 204
+			}
+		},
+		{
+		    "name": "sleep",
+		    "params": {
+		        "duration": 1000
+		    }
+		},
+		{
+			"name": "json-http-client",
+			"fire_and_forget": true,
+			"fire_delay": 1000,
+			"params": {
+				"method": "POST",
+				"path": "/ports/gpio0/value",
+				"headers": {
+					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
+				},
+				"body": true,
+				"expected_status": 204
+			}
+		},
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/listen?session_id=test-listen-p-u-security2&timeout=3",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_NORMAL}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "array",
+                    "items": [
+                        {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["type", "params"],
+                            "properties": {
+                                "type": {"enum": ["value-change"]},
+                                "params": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "value"
+                                    ],
+                                    "properties": {
+                                        "id": {
+                                            "enum": ["gpio0"]
+                                        },
+                                        "value": {
+                                            "enum": [true]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
+

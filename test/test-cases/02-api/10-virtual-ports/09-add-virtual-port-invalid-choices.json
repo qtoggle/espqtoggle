@@ -1,0 +1,46 @@
+{
+    "name": "add-virtual-port-invalid-choices",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "id": "test_port",
+                    "type": "number",
+                    "integer": true,
+                    "choices": "invalid"
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: choices"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "id": "test_port",
+                    "type": "number",
+                    "integer": true,
+                    "choices": ["invalid1", "invalid2"]
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: choices"
+                }
+            }
+        }
+    ]
+}
+

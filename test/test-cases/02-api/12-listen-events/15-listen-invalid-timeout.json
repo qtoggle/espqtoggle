@@ -1,0 +1,48 @@
+{
+    "name": "listen-invalid-timeout",
+    "instructions": [
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/listen?session_id=test&timeout=0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+				"expected_status": 400,
+				"expected_body": {
+				    "error": "invalid field: timeout"
+				}
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/listen?session_id=test&timeout=3601",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+				"expected_status": 400,
+				"expected_body": {
+				    "error": "invalid field: timeout"
+				}
+			}
+		},
+		{
+			"name": "json-http-client",
+			"params": {
+				"method": "GET",
+				"path": "/listen?session_id=test&timeout=invalid",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+				"expected_status": 400,
+				"expected_body": {
+				    "error": "invalid field: timeout"
+				}
+			}
+		}
+	]
+}
+
