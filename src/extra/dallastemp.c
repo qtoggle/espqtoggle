@@ -56,7 +56,6 @@
 #define HEART_BEAT_INTERVAL             2000    /* milliseconds */
 
 #define GPIO_CONFIG_OFFS                0x00    /* 1 byte */
-#define PARASITIC_CONFIG_OFFS           0x01    /* 1 byte */
 
 #define GPIO_CHOICES_LEN                17
 
@@ -65,7 +64,6 @@ typedef struct {
 
     double                              last_value;
     uint8                               gpio;
-    bool                                parasitic;
     one_wire_t                        * one_wire;
 
 } extra_info_t;
@@ -77,9 +75,6 @@ typedef struct {
 #define get_gpio(p)                     (((extra_info_t *) (p)->extra_info)->gpio)
 #define set_gpio(p, v)                  {((extra_info_t *) (p)->extra_info)->gpio = v;}
 
-#define get_parasitic(p)                (((extra_info_t *) (p)->extra_info)->parasitic)
-#define set_parasitic(p, v)             {((extra_info_t *) (p)->extra_info)->parasitic = v;}
-
 #define get_one_wire(p)                 (((extra_info_t *) (p)->extra_info)->one_wire)
 #define set_one_wire(p, v)              {((extra_info_t *) (p)->extra_info)->one_wire = v;}
 
@@ -90,9 +85,6 @@ ICACHE_FLASH_ATTR static void           heart_beat(port_t *port);
 
 ICACHE_FLASH_ATTR static int            attr_get_gpio(port_t *port);
 ICACHE_FLASH_ATTR static void           attr_set_gpio(port_t *port, int index);
-
-ICACHE_FLASH_ATTR static bool           attr_get_parasitic(port_t *port);
-ICACHE_FLASH_ATTR static void           attr_set_parasitic(port_t *port, bool parasitic);
 
 #if defined(_DEBUG) && defined(_DEBUG_DALLASTEMP)
 ICACHE_FLASH_ATTR static char *         get_model_str(uint8 *addr);
@@ -119,21 +111,9 @@ static attrdef_t gpio_attrdef = {
 
 };
 
-static attrdef_t parasitic_attrdef = {
-
-    .name = "parasitic",
-    .description = "Indicates whether the parasitic power mode is used for this one-wire sensor.",
-    .type = ATTR_TYPE_BOOLEAN,
-    .modifiable = TRUE,
-    .set = attr_set_parasitic,
-    .get = attr_get_parasitic
-
-};
-
 static attrdef_t *attrdefs[] = {
 
     &gpio_attrdef,
-    &parasitic_attrdef,
     NULL
 
 };
@@ -188,7 +168,6 @@ void configure(port_t *port) {
     set_last_value(port, UNDEFINED);
 
     DEBUG_DT(port, "using gpio = %d", get_gpio(port));
-    DEBUG_DT(port, "using parasitic = %d", get_parasitic(port));
 
     DEBUG_DT(port, "searching for sensor");
     one_wire_search_reset(one_wire);
@@ -218,8 +197,8 @@ void heart_beat(port_t *port) {
     }
 
     one_wire_reset(one_wire);
-    one_wire_write(one_wire, ONE_WIRE_CMD_SKIP_ROM, /* parasitic = */ FALSE); // TODO  parasitic stuff
-    one_wire_write(one_wire, ONE_WIRE_CMD_CONVERT_T, /* parasitic = */ FALSE); // TODO  parasitic stuff
+    one_wire_write(one_wire, ONE_WIRE_CMD_SKIP_ROM, /* parasitic = */ FALSE);
+    one_wire_write(one_wire, ONE_WIRE_CMD_CONVERT_T, /* parasitic = */ FALSE);
 
     os_delay_us(750);
     one_wire_reset(one_wire);
@@ -279,26 +258,6 @@ void attr_set_gpio(port_t *port, int index) {
 
     /* write to persisted data */
     memcpy(port->extra_data + GPIO_CONFIG_OFFS, &value, 1);
-}
-
-bool attr_get_parasitic(port_t *port) {
-    bool value;
-
-    /* read from persisted data */
-    memcpy(&value, port->extra_data + PARASITIC_CONFIG_OFFS, 1);
-
-    /* update cached value */
-    set_parasitic(port, value);
-
-    return value;
-}
-
-void attr_set_parasitic(port_t *port, bool value) {
-    /* update cached value */
-    set_parasitic(port, value);
-
-    /* write to persisted data */
-    memcpy(port->extra_data + PARASITIC_CONFIG_OFFS, &value, 1);
 }
 
 #if defined(_DEBUG) && defined(_DEBUG_DALLASTEMP)

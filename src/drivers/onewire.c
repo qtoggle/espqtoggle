@@ -197,11 +197,8 @@ void one_wire_write(one_wire_t *one_wire, uint8 value, bool parasitic) {
         write_bit(one_wire, !!(mask & value));
     }
 
-    if (parasitic) {
+    if (!parasitic) {
         GPIO_DIS_OUTPUT(one_wire->gpio_no);
-    }
-    else {
-        GPIO_OUTPUT_SET(one_wire->gpio_no, 1);
     }
 }
 
@@ -211,11 +208,8 @@ void one_wire_write_bytes(one_wire_t *one_wire, uint8 *buf, uint16 len, bool par
         one_wire_write(one_wire, buf[i], /* parasitic = */ FALSE);
     }
 
-    if (parasitic) {
+    if (!parasitic) {
         GPIO_DIS_OUTPUT(one_wire->gpio_no);
-    }
-    else {
-        GPIO_OUTPUT_SET(one_wire->gpio_no, 1);
     }
 }
 
