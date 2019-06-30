@@ -38,7 +38,6 @@ jobs:
       - run: |
           cd ${CIRCLE_WORKING_DIRECTORY}
           export SRC_DIR="$(pwd)"
-          export EB_CONF_FILES=${SRC_DIR}/test/configurations/*.conf
           test -z "${VERSION}" && export VERSION=$(cat ${SRC_DIR}/src/ver.h | grep '#define FW_VERSION' | tr -s ' ' | cut -d ' ' -f 3 | sed -e 's/^"//' -e 's/"$//')
           export EB_VERSION=${VERSION}
 
@@ -117,6 +116,20 @@ jobs:
             --test-case ${SRC_DIR}/test/test-cases/01-wifi/02-connect-wifi.json \
             --test-cases ${SRC_DIR}/test/test-cases/05-gpio/*.json
 
+  release:
+    docker:
+      - image: qtoggle/espqtoggle-builder
+    working_directory: /opt/espqtoggle
+    steps:
+      - checkout
+      - run: |
+          cd ${CIRCLE_WORKING_DIRECTORY}
+          export DO_RELEASE=true
+          export SRC_DIR="$(pwd)"
+          export EB_VERSION=${CIRCLE_TAG:8}
+          export EB_CONF_FILES=${SRC_DIR}/release/configurations/*.conf
+          /opt/builder.sh
+
 workflows:
   version: 2
   test:
@@ -133,3 +146,13 @@ workflows:
           filters:
             branches:
               only: circle-ci
+
+workflows:
+  version: 2
+  release:
+    jobs:
+      - release:
+          context: qtoggle-global
+          filters:
+            branches:
+              only: /^version-[0-9.]+(b[0-9.]+)?$/

@@ -70,7 +70,8 @@
                                     "listen",
                                     "webhooks",
                                     "ssl",
-                                    "reverse"
+                                    "reverse",
+                                    "sequence"
                                 ]
                             }
                         },
