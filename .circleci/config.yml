@@ -154,8 +154,18 @@ workflows:
               ignore: /.*/
       - release-approval:
           type: approval
+          filters:
+            tags:
+              only: /^version-[0-9.]+(b[0-9.]+)?$/
+            branches:
+              ignore: /.*/
       - release:
           context: qtoggle-global
           requires:
             - run-automated-tests
             - release-approval
+          filters:
+            tags:
+              only: /^version-[0-9.]+(b[0-9.]+)?$/
+            branches:
+              ignore: /.*/
