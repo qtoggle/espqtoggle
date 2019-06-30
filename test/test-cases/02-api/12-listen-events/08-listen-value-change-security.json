@@ -4,7 +4,7 @@
 		{
 			"name": "json-http-client",
 			"params": {
-				"method": "POST",
+				"method": "PATCH",
 				"path": "/ports/gpio0/value",
 				"headers": {
 					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
@@ -24,7 +24,7 @@
 			"fire_and_forget": true,
 			"fire_delay": 1000,
 			"params": {
-				"method": "POST",
+				"method": "PATCH",
 				"path": "/ports/gpio0/value",
 				"headers": {
 					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
@@ -76,7 +76,7 @@
 		{
 			"name": "json-http-client",
 			"params": {
-				"method": "POST",
+				"method": "PATCH",
 				"path": "/ports/gpio0/value",
 				"headers": {
 					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
@@ -96,7 +96,7 @@
 			"fire_and_forget": true,
 			"fire_delay": 1000,
 			"params": {
-				"method": "POST",
+				"method": "PATCH",
 				"path": "/ports/gpio0/value",
 				"headers": {
 					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
