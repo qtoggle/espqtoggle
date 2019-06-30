@@ -16,12 +16,6 @@ jobs:
       - image: qtoggle/espqtoggle-builder
     steps:
       - checkout
-      - run: |
-          virtualenv project
-          source project/bin/activate
-          pip install -U twine virtualenv
-          python setup.py sdist
-          twine upload dist/*
 
 workflows:
   version: 2
