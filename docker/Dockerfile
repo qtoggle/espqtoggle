@@ -1,4 +1,7 @@
-FROM ubuntu:17.10
+# Build with:
+#     docker build -t qtoggle/espqtoggle-builder .
+
+FROM ubuntu:19.04
 
 MAINTAINER Calin Crisan ccrisan@gmail.com
 
@@ -28,7 +31,7 @@ RUN git clone https://github.com/espressif/ESP8266_NONOS_SDK.git /opt/esp-nonos-
     git checkout v2.2.1 && \
     rm -rf .git
 
-RUN wget https://raw.githubusercontent.com/espressif/esptool/v2.5.1/esptool.py -O /usr/bin/esptool && chmod +x /usr/bin/esptool
+RUN wget https://raw.githubusercontent.com/espressif/esptool/v2.6/esptool.py -O /usr/bin/esptool && chmod +x /usr/bin/esptool
 
 ENV PATH="/opt/xtensa-lx106-elf/bin:${PATH}"
 ENV SDK_BASE="/opt/esp-nonos-sdk"
