@@ -3,7 +3,7 @@ jobs:
   test-compile:
     docker:
       - image: qtoggle/espqtoggle-builder
-    working-directory: /opt/espqtoggle
+    working_directory: /opt/espqtoggle
     steps:
       - checkout
       - run: |
