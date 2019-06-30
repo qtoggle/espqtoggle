@@ -9,7 +9,7 @@ jobs:
       - run: |
           cd ${CIRCLE_WORKING_DIRECTORY}
           export SRC_DIR="$(pwd)"
-          export EB_CONF_FILES=${CI_PROJECT_DIR}/test/configurations/*.conf
+          export EB_CONF_FILES=${SRC_DIR}/test/configurations/*.conf
           /opt/builder.sh
 
   run-automated-tests:
