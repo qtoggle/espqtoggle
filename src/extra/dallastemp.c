@@ -163,6 +163,7 @@ void configure(port_t *port) {
 
     one_wire = zalloc(sizeof(one_wire_t));
     one_wire->gpio_no = get_gpio(port);
+    one_wire_setup(one_wire);
     set_one_wire(port, one_wire);
 
     set_last_value(port, UNDEFINED);

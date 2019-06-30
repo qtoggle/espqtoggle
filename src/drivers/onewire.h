@@ -45,6 +45,7 @@ typedef struct {
 } one_wire_t;
 
 
+ICACHE_FLASH_ATTR void                  one_wire_setup(one_wire_t *one_wire);
 ICACHE_FLASH_ATTR bool                  one_wire_reset(one_wire_t *one_wire);
 
 ICACHE_FLASH_ATTR void                  one_wire_search_reset(one_wire_t *one_wire);

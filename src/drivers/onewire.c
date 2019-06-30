@@ -21,6 +21,7 @@
  * Inspired from https://github.com/PaulStoffregen/OneWire/
  */
 
+#include <c_types.h>
 #include <gpio.h>
 #include <user_interface.h>
 
@@ -33,6 +34,12 @@
 ICACHE_FLASH_ATTR static void       write_bit(one_wire_t *one_wire, bool value);
 ICACHE_FLASH_ATTR static bool       read_bit(one_wire_t *one_wire);
 
+
+void one_wire_setup(one_wire_t *one_wire) {
+    gpio_select_func(one_wire->gpio_no);
+    gpio_set_pullup(one_wire->gpio_no, FALSE);
+    GPIO_DIS_OUTPUT(one_wire->gpio_no);
+}
 
 bool one_wire_reset(one_wire_t *one_wire) {
     ETS_INTR_LOCK();
