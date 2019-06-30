@@ -136,7 +136,6 @@ workflows:
     jobs:
       - test-compile
       - run-automated-tests-approval:
-          context: qtoggle-global
           type: approval
       - run-automated-tests:
           context: qtoggle-global
@@ -148,8 +147,15 @@ workflows:
     jobs:
       - run-automated-tests:
           context: qtoggle-global
+          filters:
+            tags:
+              only: /^version-[0-9.]+(b[0-9.]+)?$/
+            branches:
+              ignore: /.*/
+      - release-approval:
+          type: approval
       - release:
           context: qtoggle-global
-          filters:
-            branches:
-              only: /^version-[0-9.]+(b[0-9.]+)?$/
+          requires:
+            - run-automated-tests
+            - release-approval
