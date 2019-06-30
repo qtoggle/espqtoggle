@@ -121,7 +121,8 @@ workflows:
   version: 2
   test:
     jobs:
-      - test-compile
+      - test-compile:
+          type: approval
       - run-automated-tests:
           context: qtoggle-global
           type: approval
