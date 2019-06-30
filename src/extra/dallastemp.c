@@ -149,6 +149,156 @@ port_t *temperature0 = &_temperature0;
 #endif
 
 
+#ifdef HAS_DT1
+static extra_info_t dt1_extra_info;
+
+static port_t _temperature1 = {
+
+    .slot = PORT_SLOT_EXTRA1,
+
+    .id = "temperature1",
+    .type = PORT_TYPE_NUMBER,
+    .step = UNDEFINED,
+
+    .heart_beat_interval = HEART_BEAT_INTERVAL,
+    .extra_info = &dt1_extra_info,
+
+    .min_sampling_interval = MIN_SAMP_INT,
+    .def_sampling_interval = DEF_SAMP_INT,
+    .max_sampling_interval = MAX_SAMP_INT,
+
+    .read_value = read_value,
+    .configure = configure,
+    .heart_beat = heart_beat,
+
+    .attrdefs = attrdefs
+
+};
+
+port_t *temperature1 = &_temperature1;
+#endif
+
+
+#ifdef HAS_DT2
+static extra_info_t dt2_extra_info;
+
+static port_t _temperature2 = {
+
+    .slot = PORT_SLOT_EXTRA2,
+
+    .id = "temperature2",
+    .type = PORT_TYPE_NUMBER,
+    .step = UNDEFINED,
+
+    .heart_beat_interval = HEART_BEAT_INTERVAL,
+    .extra_info = &dt2_extra_info,
+
+    .min_sampling_interval = MIN_SAMP_INT,
+    .def_sampling_interval = DEF_SAMP_INT,
+    .max_sampling_interval = MAX_SAMP_INT,
+
+    .read_value = read_value,
+    .configure = configure,
+    .heart_beat = heart_beat,
+
+    .attrdefs = attrdefs
+
+};
+
+port_t *temperature2 = &_temperature2;
+#endif
+
+
+#ifdef HAS_DT3
+static extra_info_t dt3_extra_info;
+
+static port_t _temperature3 = {
+
+    .slot = PORT_SLOT_EXTRA3,
+
+    .id = "temperature3",
+    .type = PORT_TYPE_NUMBER,
+    .step = UNDEFINED,
+
+    .heart_beat_interval = HEART_BEAT_INTERVAL,
+    .extra_info = &dt3_extra_info,
+
+    .min_sampling_interval = MIN_SAMP_INT,
+    .def_sampling_interval = DEF_SAMP_INT,
+    .max_sampling_interval = MAX_SAMP_INT,
+
+    .read_value = read_value,
+    .configure = configure,
+    .heart_beat = heart_beat,
+
+    .attrdefs = attrdefs
+
+};
+
+port_t *temperature3 = &_temperature3;
+#endif
+
+
+#ifdef HAS_DT4
+static extra_info_t dt4_extra_info;
+
+static port_t _temperature4 = {
+
+    .slot = PORT_SLOT_EXTRA4,
+
+    .id = "temperature4",
+    .type = PORT_TYPE_NUMBER,
+    .step = UNDEFINED,
+
+    .heart_beat_interval = HEART_BEAT_INTERVAL,
+    .extra_info = &dt4_extra_info,
+
+    .min_sampling_interval = MIN_SAMP_INT,
+    .def_sampling_interval = DEF_SAMP_INT,
+    .max_sampling_interval = MAX_SAMP_INT,
+
+    .read_value = read_value,
+    .configure = configure,
+    .heart_beat = heart_beat,
+
+    .attrdefs = attrdefs
+
+};
+
+port_t *temperature4 = &_temperature4;
+#endif
+
+
+#ifdef HAS_DT5
+static extra_info_t dt5_extra_info;
+
+static port_t _temperature5 = {
+
+    .slot = PORT_SLOT_EXTRA5,
+
+    .id = "temperature5",
+    .type = PORT_TYPE_NUMBER,
+    .step = UNDEFINED,
+
+    .heart_beat_interval = HEART_BEAT_INTERVAL,
+    .extra_info = &dt5_extra_info,
+
+    .min_sampling_interval = MIN_SAMP_INT,
+    .def_sampling_interval = DEF_SAMP_INT,
+    .max_sampling_interval = MAX_SAMP_INT,
+
+    .read_value = read_value,
+    .configure = configure,
+    .heart_beat = heart_beat,
+
+    .attrdefs = attrdefs
+
+};
+
+port_t *temperature5 = &_temperature5;
+#endif
+
+
 double read_value(port_t *port) {
     return get_last_value(port);
 }
@@ -308,6 +458,21 @@ bool valid_family(uint8 *addr) {
 void dallastemp_init_ports() {
 #ifdef HAS_DT0
     port_register(temperature0);
+#endif
+#ifdef HAS_DT1
+    port_register(temperature1);
+#endif
+#ifdef HAS_DT2
+    port_register(temperature2);
+#endif
+#ifdef HAS_DT3
+    port_register(temperature3);
+#endif
+#ifdef HAS_DT4
+    port_register(temperature4);
+#endif
+#ifdef HAS_DT5
+    port_register(temperature5);
 #endif
 }
 
