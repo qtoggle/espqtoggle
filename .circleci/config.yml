@@ -134,23 +134,20 @@ workflows:
   version: 2
   test:
     jobs:
-#      - test-compile
+      - test-compile
       - run-automated-tests-approval:
           context: qtoggle-global
           type: approval
       - run-automated-tests:
           context: qtoggle-global
-#          requires:
-#            - test-compile
-#            - run-automated-tests-approval
-          filters:
-            branches:
-              only: circle-ci
+          requires:
+            - test-compile
+            - run-automated-tests-approval
 
-workflows:
-  version: 2
   release:
     jobs:
+      - run-automated-tests:
+          context: qtoggle-global
       - release:
           context: qtoggle-global
           filters:
