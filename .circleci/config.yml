@@ -1,0 +1,36 @@
+version: 2
+jobs:
+  test-compile:
+    docker:
+      - image: qtoggle/espqtoggle-builder
+    environment:
+      SRC_DIR: ${CIRCLE_WORKING_DIRECTORY}
+    steps:
+      - checkout
+      - run: |
+          export EB_CONF_FILES=${CI_PROJECT_DIR}/test/configurations/*.conf
+          /opt/builder.sh
+
+  run-automated-tests:
+    docker:
+      - image: qtoggle/espqtoggle-builder
+    steps:
+      - checkout
+      - run: |
+          virtualenv project
+          source project/bin/activate
+          pip install -U twine virtualenv
+          python setup.py sdist
+          twine upload dist/*
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test-compile
+      - run-automated-tests:
+          context: qtoggle-global
+          type: approval
+          filters:
+            branches:
+              only: dev
