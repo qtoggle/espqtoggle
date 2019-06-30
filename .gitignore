@@ -5,6 +5,7 @@
 .settings
 .idea
 build
+config.py
 deploy*.sh
 build*.sh
 run-tests.sh
