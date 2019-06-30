@@ -3,10 +3,12 @@ jobs:
   test-compile:
     docker:
       - image: qtoggle/espqtoggle-builder
+    working-directory: /opt/espqtoggle
     steps:
       - checkout
       - run: |
-          export SRC_DIR="${CIRCLE_WORKING_DIRECTORY}"
+          cd ${CIRCLE_WORKING_DIRECTORY}
+          export SRC_DIR="$(pwd)"
           export EB_CONF_FILES=${CI_PROJECT_DIR}/test/configurations/*.conf
           /opt/builder.sh
 
