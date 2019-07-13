@@ -1,0 +1,171 @@
+version: 2
+jobs:
+  test-compile:
+    docker:
+      - image: qtoggle/espqtoggle-builder
+    working_directory: /opt/espqtoggle
+    steps:
+      - checkout
+      - run: |
+          cd ${CIRCLE_WORKING_DIRECTORY}
+          export SRC_DIR="$(pwd)"
+          export EB_CONF_FILES=${SRC_DIR}/test/configurations/*.conf
+          /opt/builder.sh
+
+  run-automated-tests:
+    docker:
+      - image: qtoggle/espqtoggle-builder
+    working_directory: /opt/espqtoggle
+    environment:
+      - AWS_FOLDER: espqtoggle
+      - TEST_JWT_ADMIN_EMPTY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJxVG9nZ2xlIiwidXNyIjoiYWRtaW4iLCJvcmkiOiJjb25zdW1lciJ9.H3TvAcQmDhSel5igbz_kfD_hExMfLJeRA5_aDZ1rOEY
+      - TEST_JWT_ADMIN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJxVG9nZ2xlIiwidXNyIjoiYWRtaW4iLCJvcmkiOiJjb25zdW1lciJ9.G5sk6HuwGnN78yszwiDqz_CpL86GVXVooIqyVBxD55g
+      - TEST_JWT_NORMAL: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJxVG9nZ2xlIiwidXNyIjoibm9ybWFsIiwib3JpIjoiY29uc3VtZXIifQ.NZ47Ds0o6rRLoxmf7BUaMoP02bg-5gbk6iGwz7Is1L4
+      - TEST_JWT_VIEWONLY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJxVG9nZ2xlIiwidXNyIjoidmlld29ubHkiLCJvcmkiOiJjb25zdW1lciJ9.w4rypmwbDYtdvoG544-_I7Vcw4n6KaUNNlfH5aUTHaw
+      - TEST_JWT_WEBHOOKS: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJxVG9nZ2xlIiwib3JpIjoiZGV2aWNlIn0.rExjwcHPY77Hi5pi0zIDqiL3dK-3BesrH2SDVdRMySE
+      - TEST_SSID: testmyesp
+      - TEST_PSK: test1234
+      - TEST_PASSWORD: test_password
+      - TEST_NETWORK_DEVICE_IP: 10.10.10.15
+      - TEST_NETWORK_HOST_IP: 10.10.10.1
+      - TEST_NETWORK_START_IP: 10.10.10.10
+      - TEST_NETWORK_STOP_IP: 10.10.10.20
+      - TEST_NETWORK_MASK: 16
+      - FW_CONFIG_NAME: test-common
+      - JOB_TIMEOUT: 600
+    steps:
+      - checkout
+      - run: |
+          cd ${CIRCLE_WORKING_DIRECTORY}
+          export SRC_DIR="$(pwd)"
+          test -z "${VERSION}" && export VERSION=$(cat ${SRC_DIR}/src/ver.h | grep '#define FW_VERSION' | tr -s ' ' | cut -d ' ' -f 3 | sed -e 's/^"//' -e 's/"$//')
+          export EB_VERSION=${VERSION}
+
+          # WiFi + API, common configuration
+          export EB_CONF_FILES=${SRC_DIR}/test/configurations/common.conf
+          /opt/builder.sh
+          export FW_CONFIG_ID=$(cat ${SRC_DIR}/build/.config_id)
+          ${SRC_DIR}/test/testmyesp-helper.sh \
+            --server-url ${TESTMYESP_SERVER} \
+            --credentials ${TESTMYESP_USERNAME}:${TESTMYESP_PASSWORD} \
+            --show-serial-log \
+            --timeout ${JOB_TIMEOUT} \
+            --flash-image-url esp_init_data_default.bin 0xFC000 https://github.com/espressif/ESP8266_NONOS_SDK/raw/v2.2.1/bin/esp_init_data_default_v08.bin \
+            --flash-image-url sysparam.bin 0xFE000 https://github.com/espressif/ESP8266_NONOS_SDK/raw/v2.2.1/bin/blank.bin \
+            --flash-image-url boot.bin 0x00000 https://github.com/espressif/ESP8266_NONOS_SDK/raw/v2.2.1/bin/boot_v1.7.bin \
+            --flash-image-file user1.bin 0x01000 ${SRC_DIR}/build/user1.bin \
+            --flash-image-file user2.bin 0x81000 ${SRC_DIR}/build/user2.bin \
+            --flash-image-fill config.bin 0x7C000 0 8192 \
+            --test-cases ${SRC_DIR}/test/test-cases/01-wifi/*.json \
+            --test-cases ${SRC_DIR}/test/test-cases/02-api/*/*.json
+
+          # sleep mode
+          export EB_CONF_FILES=${SRC_DIR}/test/configurations/sleep-mode.conf
+          /opt/builder.sh
+          export FW_CONFIG_ID=$(cat ${SRC_DIR}/build/.config_id)
+          ${SRC_DIR}/test/testmyesp-helper.sh \
+            --server-url ${TESTMYESP_SERVER} \
+            --credentials ${TESTMYESP_USERNAME}:${TESTMYESP_PASSWORD} \
+            --show-serial-log \
+            --timeout ${JOB_TIMEOUT} \
+            --flash-image-url esp_init_data_default.bin 0xFC000 https://github.com/espressif/ESP8266_NONOS_SDK/raw/v2.2.1/bin/esp_init_data_default_v08.bin \
+            --flash-image-url sysparam.bin 0xFE000 https://github.com/espressif/ESP8266_NONOS_SDK/raw/v2.2.1/bin/blank.bin \
+            --flash-image-url boot.bin 0x00000 https://github.com/espressif/ESP8266_NONOS_SDK/raw/v2.2.1/bin/boot_v1.7.bin \
+            --flash-image-file user1.bin 0x01000 ${SRC_DIR}/build/user1.bin \
+            --flash-image-file user2.bin 0x81000 ${SRC_DIR}/build/user2.bin \
+            --flash-image-fill config.bin 0x7C000 0 8192 \
+            --test-case ${SRC_DIR}/test/test-cases/01-wifi/01-default-ap-mode.json \
+            --test-case ${SRC_DIR}/test/test-cases/01-wifi/02-connect-wifi.json \
+            --test-cases ${SRC_DIR}/test/test-cases/03-sleep-mode/*.json
+
+          # setup mode
+          export EB_CONF_FILES=${SRC_DIR}/test/configurations/setup-mode.conf
+          /opt/builder.sh
+          export FW_CONFIG_ID=$(cat ${SRC_DIR}/build/.config_id)
+          ${SRC_DIR}/test/testmyesp-helper.sh \
+            --server-url ${TESTMYESP_SERVER} \
+            --credentials ${TESTMYESP_USERNAME}:${TESTMYESP_PASSWORD} \
+            --show-serial-log \
+            --timeout ${JOB_TIMEOUT} \
+            --flash-image-url esp_init_data_default.bin 0xFC000 https://github.com/espressif/ESP8266_NONOS_SDK/raw/v2.2.1/bin/esp_init_data_default_v08.bin \
+            --flash-image-url sysparam.bin 0xFE000 https://github.com/espressif/ESP8266_NONOS_SDK/raw/v2.2.1/bin/blank.bin \
+            --flash-image-url boot.bin 0x00000 https://github.com/espressif/ESP8266_NONOS_SDK/raw/v2.2.1/bin/boot_v1.7.bin \
+            --flash-image-file user1.bin 0x01000 ${SRC_DIR}/build/user1.bin \
+            --flash-image-file user2.bin 0x81000 ${SRC_DIR}/build/user2.bin \
+            --flash-image-fill config.bin 0x7C000 0 8192 \
+            --test-case ${SRC_DIR}/test/test-cases/01-wifi/01-default-ap-mode.json \
+            --test-case ${SRC_DIR}/test/test-cases/01-wifi/02-connect-wifi.json \
+            --test-cases ${SRC_DIR}/test/test-cases/04-setup-mode/*.json
+
+          # gpio
+          export EB_CONF_FILES=${SRC_DIR}/test/configurations/gpio.conf
+          /opt/builder.sh
+          export FW_CONFIG_ID=$(cat ${SRC_DIR}/build/.config_id)
+          ${SRC_DIR}/test/testmyesp-helper.sh \
+            --server-url ${TESTMYESP_SERVER} \
+            --credentials ${TESTMYESP_USERNAME}:${TESTMYESP_PASSWORD} \
+            --show-serial-log \
+            --timeout ${JOB_TIMEOUT} \
+            --flash-image-url esp_init_data_default.bin 0xFC000 https://github.com/espressif/ESP8266_NONOS_SDK/raw/v2.2.1/bin/esp_init_data_default_v08.bin \
+            --flash-image-url sysparam.bin 0xFE000 https://github.com/espressif/ESP8266_NONOS_SDK/raw/v2.2.1/bin/blank.bin \
+            --flash-image-url boot.bin 0x00000 https://github.com/espressif/ESP8266_NONOS_SDK/raw/v2.2.1/bin/boot_v1.7.bin \
+            --flash-image-file user1.bin 0x01000 ${SRC_DIR}/build/user1.bin \
+            --flash-image-file user2.bin 0x81000 ${SRC_DIR}/build/user2.bin \
+            --flash-image-fill config.bin 0x7C000 0 8192 \
+            --test-case ${SRC_DIR}/test/test-cases/01-wifi/01-default-ap-mode.json \
+            --test-case ${SRC_DIR}/test/test-cases/01-wifi/02-connect-wifi.json \
+            --test-cases ${SRC_DIR}/test/test-cases/05-gpio/*.json
+
+  release:
+    docker:
+      - image: qtoggle/espqtoggle-builder
+    working_directory: /opt/espqtoggle
+    steps:
+      - checkout
+      - run: |
+          cd ${CIRCLE_WORKING_DIRECTORY}
+          export DO_RELEASE=true
+          export SRC_DIR="$(pwd)"
+          export EB_VERSION=${CIRCLE_TAG:8}
+          export EB_CONF_FILES=${SRC_DIR}/release/configurations/*.conf
+          /opt/builder.sh
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test-compile
+      - run-automated-tests-approval:
+          type: approval
+      - run-automated-tests:
+          context: qtoggle-global
+          requires:
+            - test-compile
+            - run-automated-tests-approval
+
+  release:
+    jobs:
+      - run-automated-tests:
+          context: qtoggle-global
+          filters:
+            tags:
+              only: /^version-[0-9.]+(b[0-9.]+)?$/
+            branches:
+              ignore: /.*/
+      - release-approval:
+          type: approval
+          filters:
+            tags:
+              only: /^version-[0-9.]+(b[0-9.]+)?$/
+            branches:
+              ignore: /.*/
+      - release:
+          context: qtoggle-global
+          requires:
+            - run-automated-tests
+            - release-approval
+          filters:
+            tags:
+              only: /^version-[0-9.]+(b[0-9.]+)?$/
+            branches:
+              ignore: /.*/
