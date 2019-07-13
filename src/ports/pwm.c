@@ -42,7 +42,7 @@
 }
 
 #define PWM_SET_INFO(info, func, pin) {     \
-    (info)[0] = gpio_get_mux(pin);    \
+    (info)[0] = gpio_get_mux(pin);          \
     (info)[1] = (func);                     \
     (info)[2] = (pin);                      \
 }
