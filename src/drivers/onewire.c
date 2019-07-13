@@ -272,14 +272,14 @@ bool read_bit(one_wire_t *one_wire) {
     os_delay_us(1);
 
     GPIO_OUTPUT_SET(one_wire->gpio_no, 0);
-    os_delay_us(15);
+    os_delay_us(3);
 
     GPIO_DIS_OUTPUT(one_wire->gpio_no);
-    os_delay_us(5);
+    os_delay_us(10);
 
     result = GPIO_INPUT_GET(one_wire->gpio_no);
 
-    os_delay_us(40);
+    os_delay_us(47);
     ETS_INTR_UNLOCK();
 
     return result;
