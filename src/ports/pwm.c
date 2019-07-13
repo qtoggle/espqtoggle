@@ -96,7 +96,7 @@ static port_t _pwm0 = {
 
     .slot = 0,
 
-    .id = "pwm0",
+    .id = PWM0_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
 
@@ -119,7 +119,7 @@ static port_t _pwm1 = {
 
     .slot = 1,
 
-    .id = "pwm1",
+    .id = PWM1_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
 
@@ -142,7 +142,7 @@ static port_t _pwm2 = {
 
     .slot = 2,
 
-    .id = "pwm2",
+    .id = PWM2_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
 
@@ -165,7 +165,7 @@ static port_t _pwm3 = {
 
     .slot = 3,
 
-    .id = "pwm3",
+    .id = PWM3_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
 
@@ -188,7 +188,7 @@ static port_t _pwm4 = {
 
     .slot = 4,
 
-    .id = "pwm4",
+    .id = PWM4_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
 
@@ -211,7 +211,7 @@ static port_t _pwm5 = {
 
     .slot = 5,
 
-    .id = "pwm5",
+    .id = PWM5_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
 
@@ -234,7 +234,7 @@ static port_t _pwm12 = {
 
     .slot = 12,
 
-    .id = "pwm12",
+    .id = PWM12_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
 
@@ -257,7 +257,7 @@ static port_t _pwm13 = {
 
     .slot = 13,
 
-    .id = "pwm13",
+    .id = PWM13_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
 
@@ -280,7 +280,7 @@ static port_t _pwm14 = {
 
     .slot = 14,
 
-    .id = "pwm14",
+    .id = PWM14_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
 
@@ -303,7 +303,7 @@ static port_t _pwm15 = {
 
     .slot = 15,
 
-    .id = "pwm15",
+    .id = PWM15_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
 
