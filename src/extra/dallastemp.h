@@ -37,10 +37,6 @@
 #define DEBUG_DT(...)                       {}
 #endif
 
-#ifdef HAS_DALLASTEMP
-extern port_t                             * dt0;
-#endif
-
 ICACHE_FLASH_ATTR void                      dallastemp_init_ports();
 
 

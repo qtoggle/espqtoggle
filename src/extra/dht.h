@@ -35,11 +35,6 @@
 #define DEBUG_DHT(...)              {}
 #endif
 
-#ifdef HAS_DHT
-extern port_t                     * temperature0;
-extern port_t                     * humidity0;
-#endif
-
 ICACHE_FLASH_ATTR void              dht_init_ports();
 
 
