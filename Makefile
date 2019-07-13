@@ -15,6 +15,7 @@ VIRTUAL ?= true
 
 PORTS ?= # gpio0 gpio2 gpio4 gpio5 gpio12 gpio13 gpio14 gpio15 adc0 pwm0
 EXTRA_DRIVERS ?=
+PORT_ID_MAPPINGS ?= # gpio0:mygpio adc0:myadc
 
 BATTERY ?= false
 BATTERY_DIV_FACTOR ?= 0.166 # 200k / (1000k + 200k)
@@ -38,6 +39,7 @@ FW_CONFIG_NAME ?= # configuration-name
 
 # ---- configurable stuff ends here ---- #
 
+SHELL = /bin/bash  # other shells will probably fail
 VERSION = $(shell cat src/ver.h | grep FW_VERSION | head -n 1 | tr -s ' ' | cut -d ' ' -f 3 | tr -d '"')
 
 FLASH_MODE = 0     	# QIO
@@ -185,6 +187,20 @@ CFLAGS += $(addprefix -DHAS_,$(shell echo $(PORTS) | tr a-z A-Z))
 # define _DEBUG_<FLAG>
 CFLAGS += $(addprefix -D_DEBUG_,$(shell echo $(DEBUG_FLAGS) | tr a-z A-Z))
 
+# define <PORT>_ID="<id>" from mappings
+CFLAGS += $(foreach m,$(PORT_ID_MAPPINGS),-D$(shell \
+    m=$$(echo $(m) | tr ':' ' '); parts=($${m}); \
+    name=$$(echo $${parts[0]} | tr a-z A-Z); id=$${parts[1]}; \
+    echo $${name}_ID=\\\"$${id}\\\"; \
+))
+
+# define <PORT>_ID="<id>" defaults
+CFLAGS += $(foreach p,$(PORTS),$(shell \
+	if ! [[ "$(PORT_ID_MAPPINGS)" =~ $(p): ]]; then \
+		echo -D$$(echo $(p) | tr a-z A-Z)_ID=\\\"$(p)\\\"; \
+	fi \
+))
+
 LDSCRIPT = eagle.app.v6.new.$(FLASH_SIZE).app$(USR).ld
 LDSCRIPT := $(SDK_BASE)/ld/$(LDSCRIPT)
 
@@ -240,6 +256,7 @@ buildinfo:
 								 $(BATTERY_VOLT_60) $(BATTERY_VOLT_80) $(BATTERY_VOLT_100)
 	$(vecho) " *" PORTS = $(PORTS)
 	$(vecho) " *" EXTRA_DRIVERS = $(EXTRA_DRIVERS)
+	$(vecho) " *" PORT_ID_MAPPINGS = $(PORT_ID_MAPPINGS)
 	$(vecho) " *" SETUP_MODE_PORT = $(SETUP_MODE_PORT)
 	$(vecho) " *" SETUP_MODE_LEVEL = $(SETUP_MODE_LEVEL)
 	$(vecho) " *" SETUP_MODE_LED_PORT = $(SETUP_MODE_LED_PORT)

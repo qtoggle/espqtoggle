@@ -167,7 +167,7 @@ static port_t _rgb0 = {
 
     .slot = PORT_SLOT_EXTRA0,
 
-    .id = "rgb0",
+    .id = RGB0_ID,
     .type = PORT_TYPE_NUMBER,
     .min = RGB_MIN,
     .max = RGB_MAX,
@@ -196,7 +196,7 @@ static port_t _rgb1 = {
 
     .slot = PORT_SLOT_EXTRA2,
 
-    .id = "rgb1",
+    .id = RGB1_ID,
     .type = PORT_TYPE_NUMBER,
     .min = RGB_MIN,
     .max = RGB_MAX,
@@ -224,7 +224,7 @@ static port_t _rgb2 = {
 
     .slot = PORT_SLOT_EXTRA2,
 
-    .id = "rgb2",
+    .id = RGB2_ID,
     .type = PORT_TYPE_NUMBER,
     .min = RGB_MIN,
     .max = RGB_MAX,
@@ -252,7 +252,7 @@ static port_t _rgb3 = {
 
     .slot = PORT_SLOT_EXTRA3,
 
-    .id = "rgb3",
+    .id = RGB3_ID,
     .type = PORT_TYPE_NUMBER,
     .min = RGB_MIN,
     .max = RGB_MAX,
@@ -280,7 +280,7 @@ static port_t _rgb4 = {
 
     .slot = PORT_SLOT_EXTRA4,
 
-    .id = "rgb4",
+    .id = RGB4_ID,
     .type = PORT_TYPE_NUMBER,
     .min = RGB_MIN,
     .max = RGB_MAX,
@@ -308,7 +308,7 @@ static port_t _rgb5 = {
 
     .slot = PORT_SLOT_EXTRA5,
 
-    .id = "rgb5",
+    .id = RGB5_ID,
     .type = PORT_TYPE_NUMBER,
     .min = RGB_MIN,
     .max = RGB_MAX,

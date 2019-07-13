@@ -51,7 +51,7 @@ ICACHE_FLASH_ATTR static double     read_value(port_t *port);
 static port_t _adc0 = {
     .slot = ADC0_SLOT,
 
-    .id = "adc0",
+    .id = ADC0_ID,
     .type = PORT_TYPE_NUMBER,
     .unit = "millivolts",
 

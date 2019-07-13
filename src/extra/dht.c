@@ -181,11 +181,11 @@ static extra_info_t dht0_extra_info = {
 
 };
 
-static port_t _temperature0 = {
+static port_t _dht0 = {
 
     .slot = PORT_SLOT_EXTRA0,
 
-    .id = "temperature0",
+    .id = DHT0_ID,
     .type = PORT_TYPE_NUMBER,
     .min = TEMP_MIN,
     .max = TEMP_MAX,
@@ -206,11 +206,11 @@ static port_t _temperature0 = {
 
 };
 
-static port_t _humidity0 = {
+static port_t _dht0_h = {
 
     .slot = PORT_SLOT_EXTRA1,
 
-    .id = "humidity0",
+    .id = DHT0_ID "h",
     .type = PORT_TYPE_NUMBER,
     .min = RH_MIN,
     .max = RH_MAX,
@@ -228,8 +228,8 @@ static port_t _humidity0 = {
 
 };
 
-port_t *temperature0 = &_temperature0;
-port_t *humidity0 = &_humidity0;
+port_t *dt0 = &_dht0;
+port_t *dht0_h = &_dht0_h;
 #endif
 
 #ifdef HAS_DHT1
@@ -239,11 +239,11 @@ static extra_info_t dht1_extra_info = {
 
 };
 
-static port_t _temperature1 = {
+static port_t _dht1 = {
 
     .slot = PORT_SLOT_EXTRA2,
 
-    .id = "temperature1",
+    .id = DHT1_ID,
     .type = PORT_TYPE_NUMBER,
     .min = TEMP_MIN,
     .max = TEMP_MAX,
@@ -264,11 +264,11 @@ static port_t _temperature1 = {
 
 };
 
-static port_t _humidity1 = {
+static port_t _dht1_h = {
 
     .slot = PORT_SLOT_EXTRA3,
 
-    .id = "humidity1",
+    .id = DHT1_ID "h",
     .type = PORT_TYPE_NUMBER,
     .min = RH_MIN,
     .max = RH_MAX,
@@ -286,8 +286,8 @@ static port_t _humidity1 = {
 
 };
 
-port_t *temperature1 = &_temperature1;
-port_t *humidity1 = &_humidity1;
+port_t *dht1 = &_dht1;
+port_t *dht1_h = &_dht1_h;
 #endif
 
 #ifdef HAS_DHT2
@@ -297,11 +297,11 @@ static extra_info_t dht2_extra_info = {
 
 };
 
-static port_t _temperature2 = {
+static port_t _dht2 = {
 
     .slot = PORT_SLOT_EXTRA4,
 
-    .id = "temperature2",
+    .id = DHT2_ID,
     .type = PORT_TYPE_NUMBER,
     .min = TEMP_MIN,
     .max = TEMP_MAX,
@@ -322,11 +322,11 @@ static port_t _temperature2 = {
 
 };
 
-static port_t _humidity2 = {
+static port_t _dht2_h = {
 
     .slot = PORT_SLOT_EXTRA5,
 
-    .id = "humidity2",
+    .id = DHT2_ID "h",
     .type = PORT_TYPE_NUMBER,
     .min = RH_MIN,
     .max = RH_MAX,
@@ -344,8 +344,8 @@ static port_t _humidity2 = {
 
 };
 
-port_t *temperature2 = &_temperature2;
-port_t *humidity2 = &_humidity2;
+port_t *dht2 = &_dht2;
+port_t *dht2_h = &_dht2_h;
 #endif
 
 
@@ -646,27 +646,27 @@ void write_wire(port_t *port, bool value) {
 
 void dht_init_ports() {
 #ifdef HAS_DHT0
-    port_register(temperature0);
-    port_register(humidity0);
+    port_register(dt0);
+    port_register(dht0_h);
 
-    dht0_extra_info.temperature_port = temperature0;
-    dht0_extra_info.humidity_port = humidity0;
+    dht0_extra_info.temperature_port = dt0;
+    dht0_extra_info.humidity_port = dht0_h;
 #endif
 
 #ifdef HAS_DHT1
-    port_register(temperature1);
-    port_register(humidity1);
+    port_register(dht1);
+    port_register(dht1_h);
 
-    dht1_extra_info.temperature_port = temperature1;
-    dht1_extra_info.humidity_port = humidity1;
+    dht1_extra_info.temperature_port = dht1;
+    dht1_extra_info.humidity_port = dht1_h;
 #endif
 
 #ifdef HAS_DHT2
-    port_register(temperature2);
-    port_register(humidity2);
+    port_register(dht2);
+    port_register(dht2_h);
 
-    dht2_extra_info.temperature_port = temperature2;
-    dht2_extra_info.humidity_port = humidity2;
+    dht2_extra_info.temperature_port = dht2;
+    dht2_extra_info.humidity_port = dht2_h;
 #endif
 }
 

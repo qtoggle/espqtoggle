@@ -298,7 +298,7 @@ static port_t _pwdetect0 = {
 
     .slot = PORT_SLOT_EXTRA0,
 
-    .id = "pwdetect0",
+    .id = PWDETECT0_ID,
     .type = PORT_TYPE_NUMBER,
     .min = UNDEFINED,
     .max = UNDEFINED,
@@ -331,7 +331,7 @@ static port_t _pwdetect1 = {
 
     .slot = PORT_SLOT_EXTRA1,
 
-    .id = "pwdetect1",
+    .id = PWDETECT1_ID,
     .type = PORT_TYPE_NUMBER,
     .min = UNDEFINED,
     .max = UNDEFINED,
@@ -364,7 +364,7 @@ static port_t _pwdetect2 = {
 
     .slot = PORT_SLOT_EXTRA2,
 
-    .id = "pwdetect2",
+    .id = PWDETECT2_ID,
     .type = PORT_TYPE_NUMBER,
     .min = UNDEFINED,
     .max = UNDEFINED,
@@ -397,7 +397,7 @@ static port_t _pwdetect3 = {
 
     .slot = PORT_SLOT_EXTRA3,
 
-    .id = "pwdetect3",
+    .id = PWDETECT3_ID,
     .type = PORT_TYPE_NUMBER,
     .min = UNDEFINED,
     .max = UNDEFINED,
@@ -430,7 +430,7 @@ static port_t _pwdetect4 = {
 
     .slot = PORT_SLOT_EXTRA4,
 
-    .id = "pwdetect4",
+    .id = PWDETECT4_ID,
     .type = PORT_TYPE_NUMBER,
     .min = UNDEFINED,
     .max = UNDEFINED,
@@ -463,7 +463,7 @@ static port_t _pwdetect5 = {
 
     .slot = PORT_SLOT_EXTRA5,
 
-    .id = "pwdetect5",
+    .id = PWDETECT5_ID,
     .type = PORT_TYPE_NUMBER,
     .min = UNDEFINED,
     .max = UNDEFINED,

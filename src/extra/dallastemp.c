@@ -122,11 +122,11 @@ static attrdef_t *attrdefs[] = {
 #ifdef HAS_DT0
 static extra_info_t dt0_extra_info;
 
-static port_t _temperature0 = {
+static port_t _dt0 = {
 
     .slot = PORT_SLOT_EXTRA0,
 
-    .id = "temperature0",
+    .id = DT0_ID,
     .type = PORT_TYPE_NUMBER,
     .step = UNDEFINED,
 
@@ -145,18 +145,18 @@ static port_t _temperature0 = {
 
 };
 
-port_t *temperature0 = &_temperature0;
+port_t *dt0 = &_dt0;
 #endif
 
 
 #ifdef HAS_DT1
 static extra_info_t dt1_extra_info;
 
-static port_t _temperature1 = {
+static port_t _dt1 = {
 
     .slot = PORT_SLOT_EXTRA1,
 
-    .id = "temperature1",
+    .id = DT1_ID,
     .type = PORT_TYPE_NUMBER,
     .step = UNDEFINED,
 
@@ -175,18 +175,18 @@ static port_t _temperature1 = {
 
 };
 
-port_t *temperature1 = &_temperature1;
+port_t *dt1 = &_dt1;
 #endif
 
 
 #ifdef HAS_DT2
 static extra_info_t dt2_extra_info;
 
-static port_t _temperature2 = {
+static port_t _dt2 = {
 
     .slot = PORT_SLOT_EXTRA2,
 
-    .id = "temperature2",
+    .id = DT2_ID,
     .type = PORT_TYPE_NUMBER,
     .step = UNDEFINED,
 
@@ -205,18 +205,18 @@ static port_t _temperature2 = {
 
 };
 
-port_t *temperature2 = &_temperature2;
+port_t *dt2 = &_dt2;
 #endif
 
 
 #ifdef HAS_DT3
 static extra_info_t dt3_extra_info;
 
-static port_t _temperature3 = {
+static port_t _dt3 = {
 
     .slot = PORT_SLOT_EXTRA3,
 
-    .id = "temperature3",
+    .id = DT3_ID,
     .type = PORT_TYPE_NUMBER,
     .step = UNDEFINED,
 
@@ -235,18 +235,18 @@ static port_t _temperature3 = {
 
 };
 
-port_t *temperature3 = &_temperature3;
+port_t *dt3 = &_dt3;
 #endif
 
 
 #ifdef HAS_DT4
 static extra_info_t dt4_extra_info;
 
-static port_t _temperature4 = {
+static port_t _dt4 = {
 
     .slot = PORT_SLOT_EXTRA4,
 
-    .id = "temperature4",
+    .id = DT4_ID,
     .type = PORT_TYPE_NUMBER,
     .step = UNDEFINED,
 
@@ -265,18 +265,18 @@ static port_t _temperature4 = {
 
 };
 
-port_t *temperature4 = &_temperature4;
+port_t *dt4 = &_dt4;
 #endif
 
 
 #ifdef HAS_DT5
 static extra_info_t dt5_extra_info;
 
-static port_t _temperature5 = {
+static port_t _dt5 = {
 
     .slot = PORT_SLOT_EXTRA5,
 
-    .id = "temperature5",
+    .id = DT5_ID,
     .type = PORT_TYPE_NUMBER,
     .step = UNDEFINED,
 
@@ -295,7 +295,7 @@ static port_t _temperature5 = {
 
 };
 
-port_t *temperature5 = &_temperature5;
+port_t *dt5 = &_dt5;
 #endif
 
 
@@ -457,22 +457,22 @@ bool valid_family(uint8 *addr) {
 
 void dallastemp_init_ports() {
 #ifdef HAS_DT0
-    port_register(temperature0);
+    port_register(dt0);
 #endif
 #ifdef HAS_DT1
-    port_register(temperature1);
+    port_register(dt1);
 #endif
 #ifdef HAS_DT2
-    port_register(temperature2);
+    port_register(dt2);
 #endif
 #ifdef HAS_DT3
-    port_register(temperature3);
+    port_register(dt3);
 #endif
 #ifdef HAS_DT4
-    port_register(temperature4);
+    port_register(dt4);
 #endif
 #ifdef HAS_DT5
-    port_register(temperature5);
+    port_register(dt5);
 #endif
 }
 

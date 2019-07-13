@@ -91,7 +91,7 @@ static port_t _gpio0 = {
 
     .slot = 0,
 
-    .id = "gpio0",
+    .id = GPIO0_ID,
     .type = PORT_TYPE_BOOLEAN,
     
     .read_value = read_value,
@@ -113,7 +113,7 @@ static port_t _gpio1 = {
 
     .slot = 1,
 
-    .id = "gpio1",
+    .id = GPIO1_ID,
     .type = PORT_TYPE_BOOLEAN,
 
     .read_value = read_value,
@@ -135,7 +135,7 @@ static port_t _gpio2 = {
 
     .slot = 2,
 
-    .id = "gpio2",
+    .id = GPIO2_ID,
     .type = PORT_TYPE_BOOLEAN,
 
     .read_value = read_value,
@@ -157,7 +157,7 @@ static port_t _gpio3 = {
 
     .slot = 3,
 
-    .id = "gpio3",
+    .id = GPIO3_ID,
     .type = PORT_TYPE_BOOLEAN,
 
     .read_value = read_value,
@@ -179,7 +179,7 @@ static port_t _gpio4 = {
 
     .slot = 4,
 
-    .id = "gpio4",
+    .id = GPIO4_ID,
     .type = PORT_TYPE_BOOLEAN,
 
     .read_value = read_value,
@@ -201,7 +201,7 @@ static port_t _gpio5 = {
 
     .slot = 5,
 
-    .id = "gpio5",
+    .id = GPIO5_ID,
     .type = PORT_TYPE_BOOLEAN,
 
     .read_value = read_value,
@@ -223,7 +223,7 @@ static port_t _gpio6 = {
 
     .slot = 6,
 
-    .id = "gpio6",
+    .id = GPIO6_ID,
     .type = PORT_TYPE_BOOLEAN,
 
     .read_value = read_value,
@@ -245,7 +245,7 @@ static port_t _gpio7 = {
 
     .slot = 7,
 
-    .id = "gpio7",
+    .id = GPIO7_ID,
     .type = PORT_TYPE_BOOLEAN,
 
     .read_value = read_value,
@@ -267,7 +267,7 @@ static port_t _gpio8 = {
 
     .slot = 8,
 
-    .id = "gpio8",
+    .id = GPIO8_ID,
     .type = PORT_TYPE_BOOLEAN,
 
     .read_value = read_value,
@@ -289,7 +289,7 @@ static port_t _gpio9 = {
 
     .slot = 9,
 
-    .id = "gpio9",
+    .id = GPIO9_ID,
     .type = PORT_TYPE_BOOLEAN,
 
     .read_value = read_value,
@@ -311,7 +311,7 @@ static port_t _gpio10 = {
 
     .slot = 10,
 
-    .id = "gpio10",
+    .id = GPIO10_ID,
     .type = PORT_TYPE_BOOLEAN,
 
     .read_value = read_value,
@@ -333,7 +333,7 @@ static port_t _gpio11 = {
 
     .slot = 11,
 
-    .id = "gpio11",
+    .id = GPIO11_ID,
     .type = PORT_TYPE_BOOLEAN,
 
     .read_value = read_value,
@@ -355,7 +355,7 @@ static port_t _gpio12 = {
 
     .slot = 12,
 
-    .id = "gpio12",
+    .id = GPIO12_ID,
     .type = PORT_TYPE_BOOLEAN,
 
     .read_value = read_value,
@@ -377,7 +377,7 @@ static port_t _gpio13 = {
 
     .slot = 13,
 
-    .id = "gpio13",
+    .id = GPIO13_ID,
     .type = PORT_TYPE_BOOLEAN,
 
     .read_value = read_value,
@@ -399,7 +399,7 @@ static port_t _gpio14 = {
 
     .slot = 14,
 
-    .id = "gpio14",
+    .id = GPIO14_ID,
     .type = PORT_TYPE_BOOLEAN,
 
     .read_value = read_value,
@@ -421,7 +421,7 @@ static port_t _gpio15 = {
 
     .slot = 15,
 
-    .id = "gpio15",
+    .id = GPIO15_ID,
     .type = PORT_TYPE_BOOLEAN,
 
     .read_value = read_value,
