@@ -482,7 +482,7 @@ static port_t _fsg0 = {
 
     .slot = PORT_SLOT_EXTRA0,
 
-    .id = "fsg0",
+    .id = FSG0_ID,
     .type = PORT_TYPE_NUMBER,
     .min = STATE_CLOSING,
     .max = STATE_OPENING,
@@ -527,7 +527,7 @@ static port_t _fsg1 = {
 
     .slot = PORT_SLOT_EXTRA1,
 
-    .id = "fsg1",
+    .id = FSG1_ID,
     .type = PORT_TYPE_NUMBER,
     .min = STATE_CLOSING,
     .max = STATE_OPENING,
@@ -572,7 +572,7 @@ static port_t _fsg2 = {
 
     .slot = PORT_SLOT_EXTRA2,
 
-    .id = "fsg2",
+    .id = FSG2_ID,
     .type = PORT_TYPE_NUMBER,
     .min = STATE_CLOSING,
     .max = STATE_OPENING,
@@ -617,7 +617,7 @@ static port_t _fsg3 = {
 
     .slot = PORT_SLOT_EXTRA3,
 
-    .id = "fsg3",
+    .id = FSG3_ID,
     .type = PORT_TYPE_NUMBER,
     .min = STATE_CLOSING,
     .max = STATE_OPENING,
@@ -662,7 +662,7 @@ static port_t _fsg4 = {
 
     .slot = PORT_SLOT_EXTRA4,
 
-    .id = "fsg4",
+    .id = FSG4_ID,
     .type = PORT_TYPE_NUMBER,
     .min = STATE_CLOSING,
     .max = STATE_OPENING,
@@ -707,7 +707,7 @@ static port_t _fsg5 = {
 
     .slot = PORT_SLOT_EXTRA5,
 
-    .id = "fsg5",
+    .id = FSG5_ID,
     .type = PORT_TYPE_NUMBER,
     .min = STATE_CLOSING,
     .max = STATE_OPENING,
