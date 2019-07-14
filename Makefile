@@ -48,7 +48,7 @@ FLASH_SIZE_MAP = 2  # 1024 (512 + 512)
 FLASH_SIZE = 1024
 FLASH_CONFIG_FACTORY_ADDR_BASE = 0x78000
 FLASH_CONFIG_ADDR_BASE = 0x7C000
-FLASH_EXTRA_ADDR_BASE = 0x100000
+FLASH_HTML_ADDR_BASE = 0xF8000
 
 CC = xtensa-lx106-elf-gcc
 AR = xtensa-lx106-elf-ar
@@ -76,7 +76,7 @@ CFLAGS = -Wpointer-arith -Wall -Wl,-EL -fno-inline-functions -nostdlib -mlongcal
          -D__ets__ -DICACHE_FLASH -DUSE_OPTIMIZE_PRINTF \
          -DFLASH_CONFIG_ADDR_BASE=$(FLASH_CONFIG_ADDR_BASE) \
          -DFLASH_CONFIG_FACTORY_ADDR_BASE=$(FLASH_CONFIG_FACTORY_ADDR_BASE) \
-         -DFLASH_EXTRA_ADDR_BASE=$(FLASH_EXTRA_ADDR_BASE)
+         -DFLASH_HTML_ADDR_BASE=$(FLASH_HTML_ADDR_BASE)
 LDFLAGS	= -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static -L$(SDK_BASE)/lib -Wl,--gc-sections
 
 ifeq ($(GDB),true)
