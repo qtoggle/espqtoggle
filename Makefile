@@ -208,11 +208,11 @@ LDSCRIPT := $(SDK_BASE)/ld/$(LDSCRIPT)
 ifeq ($(FW_CONFIG_ID),)
 	FW_CONFIG_TEXT = $(SETUP_MODE_PORT) $(SETUP_MODE_LED_PORT) $(CONNECTED_LED_PORT) \
                      null null null null null null null null null null null null null
-	FW_CONFIG_NUMB = $(FLASH_MODE) $(FLASH_CLK_DIV) $(FLASH_SIZE_MAP) $(FLASH_SIZE) \
+	FW_CONFIG_NUMB = $(FLASH_SIZE) \
 					 $(SETUP_MODE_LEVEL) $(BATTERY_DIV_FACTOR) \
 					 $(BATTERY_VOLT_0) $(BATTERY_VOLT_20) $(BATTERY_VOLT_40) \
 					 $(BATTERY_VOLT_60) $(BATTERY_VOLT_80) $(BATTERY_VOLT_100) \
-                     $(CONNECTED_LED_LEVEL) 0 0
+                     $(CONNECTED_LED_LEVEL) 0 0 0 0 0 0
     FW_CONFIG_FLAG = $(OTA) $(SSL) $(SLEEP) $(BATTERY) $(VIRTUAL) $(DEBUG) \
                      false false false false false false false false false false
     FW_CONFIG_PORT = $(sort $(PORTS)) $(sort $(EXTRA_DRIVERS))
