@@ -135,13 +135,6 @@ workflows:
   test:
     jobs:
       - test-compile
-      - run-automated-tests-approval:
-          type: approval
-      - run-automated-tests:
-          context: qtoggle-global
-          requires:
-            - test-compile
-            - run-automated-tests-approval
 
   release:
     jobs:
