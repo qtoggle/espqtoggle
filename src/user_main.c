@@ -93,13 +93,13 @@ void main_init() {
 void on_system_ready() {
     DEBUG_SYSTEM("system initialization done");
 
-    if (wifi_get_bssid()[0]) {
+    if (wifi_get_bssid()[0]) {  /* specific BSSID set */
         wifi_connect(wifi_get_bssid());
     }
-    else if (wifi_get_ssid()[0]) {
+    else if (wifi_get_ssid()[0]) {  /* specific SSID set */
         wifi_auto_scan();
     }
-    else {
+    else {  /* no (B)SSID set */
         DEBUG_SYSTEM("no SSID configured, switching to setup mode");
         if (!system_setup_mode_active()) {
             system_setup_mode_toggle();
