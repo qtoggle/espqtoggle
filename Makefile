@@ -72,15 +72,15 @@ BUILD_DIR = build
 INC = $(SRC_MAIN_DIR) $(SDK_BASE)/include $(GDB_DIR)
 LIB = c gcc hal pp phy net80211 lwip wpa crypto upgrade m main
 CFLAGS = -Wpointer-arith -Wall -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals \
-		 -ffunction-sections -fdata-sections -mforce-l32 \
-		 -D__ets__ -DICACHE_FLASH -DUSE_OPTIMIZE_PRINTF \
-		 -DFLASH_CONFIG_ADDR_BASE=$(FLASH_CONFIG_ADDR_BASE) \
-		 -DFLASH_CONFIG_FACTORY_ADDR_BASE=$(FLASH_CONFIG_FACTORY_ADDR_BASE) \
-		 -DFLASH_EXTRA_ADDR_BASE=$(FLASH_EXTRA_ADDR_BASE)
+         -ffunction-sections -fdata-sections -mforce-l32 \
+         -D__ets__ -DICACHE_FLASH -DUSE_OPTIMIZE_PRINTF \
+         -DFLASH_CONFIG_ADDR_BASE=$(FLASH_CONFIG_ADDR_BASE) \
+         -DFLASH_CONFIG_FACTORY_ADDR_BASE=$(FLASH_CONFIG_FACTORY_ADDR_BASE) \
+         -DFLASH_EXTRA_ADDR_BASE=$(FLASH_EXTRA_ADDR_BASE)
 LDFLAGS	= -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static -L$(SDK_BASE)/lib -Wl,--gc-sections
 
 ifeq ($(GDB),true)
-	DEBUG = true
+    DEBUG = true
 endif
 
 ifeq ($(OTA), true)
@@ -146,27 +146,27 @@ SRC_DRIVERS_FILES =       $(wildcard $(SRC_DRIVERS_DIR)/*.c)
 SRC_EXTRA_DRIVERS_FILES = $(foreach p,$(EXTRA_DRIVERS),$(SRC_EXTRA_DRIVERS_DIR)/$(p).c)
 SRC_GDB_FILES =           $(wildcard $(GDB_DIR)/*.c)
 OBJ_FILES = $(SRC_MAIN_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
-			$(SRC_ESPGOODIES_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
-			$(SRC_PORT_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
-			$(SRC_DRIVERS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
-			$(SRC_EXTRA_DRIVERS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o)	
+            $(SRC_ESPGOODIES_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
+            $(SRC_PORT_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
+            $(SRC_DRIVERS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
+            $(SRC_EXTRA_DRIVERS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o)	
 VPATH = $(SRC_MAIN_DIR) $(GDB_DIR)
 
 ifeq ($(GDB),true)
-	CFLAGS  += -g -ggdb -Og -D_GDB -fPIE -fPIC
-	LDFLAGS += -g -ggdb -Og -fPIE -fPIC
-	ASFLAGS += -g -ggdb -Og -fPIE -fPIC -mlongcalls
-	OBJ_FILES += $(BUILD_DIR)/gdbstub.o $(BUILD_DIR)/gdbstub-entry.o
+    CFLAGS  += -g -ggdb -Og -D_GDB -fPIE -fPIC
+    LDFLAGS += -g -ggdb -Og -fPIE -fPIC
+    ASFLAGS += -g -ggdb -Og -fPIE -fPIC -mlongcalls
+    OBJ_FILES += $(BUILD_DIR)/gdbstub.o $(BUILD_DIR)/gdbstub-entry.o
 else
-	CFLAGS  += -Os -O2
-	LDLAGS  += -Os -O2
+    CFLAGS  += -Os -O2
+    LDLAGS  += -Os -O2
 endif
 
 ifneq ($(EXTRA_DRIVERS),)
-	INCLUDE_EXTRA_DRIVERS = $(foreach p,$(EXTRA_DRIVERS),-include $(SRC_EXTRA_DRIVERS_DIR)/$(p).h)
-	INIT_EXTRA_DRIVERS = $(foreach p,$(EXTRA_DRIVERS),$(p)_init_ports();)
-	CFLAGS += -D_INIT_EXTRA_DRIVERS="$(INIT_EXTRA_DRIVERS)" $(INCLUDE_EXTRA_DRIVERS)
-	CFLAGS += $(addprefix -DHAS_,$(shell echo $(EXTRA_DRIVERS) | tr a-z A-Z))
+    INCLUDE_EXTRA_DRIVERS = $(foreach p,$(EXTRA_DRIVERS),-include $(SRC_EXTRA_DRIVERS_DIR)/$(p).h)
+    INIT_EXTRA_DRIVERS = $(foreach p,$(EXTRA_DRIVERS),$(p)_init_ports();)
+    CFLAGS += -D_INIT_EXTRA_DRIVERS="$(INIT_EXTRA_DRIVERS)" $(INCLUDE_EXTRA_DRIVERS)
+    CFLAGS += $(addprefix -DHAS_,$(shell echo $(EXTRA_DRIVERS) | tr a-z A-Z))
 endif
 
 APP_AR  = $(BUILD_DIR)/$(APP).a
@@ -196,9 +196,9 @@ CFLAGS += $(foreach m,$(PORT_ID_MAPPINGS),-D$(shell \
 
 # define <PORT>_ID="<id>" defaults
 CFLAGS += $(foreach p,$(PORTS),$(shell \
-	if ! [[ "$(PORT_ID_MAPPINGS)" =~ $(p): ]]; then \
-		echo -D$$(echo $(p) | tr a-z A-Z)_ID=\\\"$(p)\\\"; \
-	fi \
+    if ! [[ "$(PORT_ID_MAPPINGS)" =~ $(p): ]]; then \
+        echo -D$$(echo $(p) | tr a-z A-Z)_ID=\\\"$(p)\\\"; \
+    fi \
 ))
 
 LDSCRIPT = eagle.app.v6.new.$(FLASH_SIZE).app$(USR).ld
@@ -206,12 +206,12 @@ LDSCRIPT := $(SDK_BASE)/ld/$(LDSCRIPT)
 
 # compute the firmware config identifier (nulls and 0s are reserved)
 ifeq ($(FW_CONFIG_ID),)
-	FW_CONFIG_TEXT = $(SETUP_MODE_PORT) $(SETUP_MODE_LED_PORT) $(CONNECTED_LED_PORT) \
+    FW_CONFIG_TEXT = $(SETUP_MODE_PORT) $(SETUP_MODE_LED_PORT) $(CONNECTED_LED_PORT) \
                      null null null null null null null null null null null null null
-	FW_CONFIG_NUMB = $(FLASH_SIZE) \
-					 $(SETUP_MODE_LEVEL) $(BATTERY_DIV_FACTOR) \
-					 $(BATTERY_VOLT_0) $(BATTERY_VOLT_20) $(BATTERY_VOLT_40) \
-					 $(BATTERY_VOLT_60) $(BATTERY_VOLT_80) $(BATTERY_VOLT_100) \
+    FW_CONFIG_NUMB = $(FLASH_SIZE) \
+                     $(SETUP_MODE_LEVEL) $(BATTERY_DIV_FACTOR) \
+                     $(BATTERY_VOLT_0) $(BATTERY_VOLT_20) $(BATTERY_VOLT_40) \
+                     $(BATTERY_VOLT_60) $(BATTERY_VOLT_80) $(BATTERY_VOLT_100) \
                      $(CONNECTED_LED_LEVEL) 0 0 0 0 0 0
     FW_CONFIG_FLAG = $(OTA) $(SSL) $(SLEEP) $(BATTERY) $(VIRTUAL) $(DEBUG) \
                      false false false false false false false false false false
