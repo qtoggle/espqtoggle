@@ -109,7 +109,7 @@ void tcp_server_init(int tcp_port,
     DEBUG_TCPSERVER("server listening on port %d", tcp_server_conn->proto.tcp->local_port);
 }
 
-void tcp_server_stop() {
+void tcp_server_stop(void) {
     espconn_tcp_set_max_con_allow(tcp_server_conn, 0);
 }
 

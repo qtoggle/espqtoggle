@@ -67,8 +67,8 @@
 #define CONFIG_SIZE_STR                 0x0E00 /* 3584 bytes */
 
 
-ICACHE_FLASH_ATTR void                  config_init();
-ICACHE_FLASH_ATTR void                  config_save();
+ICACHE_FLASH_ATTR void                  config_init(void);
+ICACHE_FLASH_ATTR void                  config_save(void);
 
 
 #endif /* _CONFIG_H */

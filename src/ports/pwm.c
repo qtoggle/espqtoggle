@@ -365,7 +365,7 @@ void configure(port_t *port) {
     pwm_start();
 }
 
-void pwm_init_ports() {
+void pwm_init_ports(void) {
     uint32 *pwm_duty_list = NULL;
     uint32 (*pwm_info)[3] = NULL;
 

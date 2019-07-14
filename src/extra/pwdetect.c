@@ -804,7 +804,7 @@ bool level_read(port_t *port) {
 }
 
 
-void pwdetect_init_ports() {
+void pwdetect_init_ports(void) {
 #ifdef HAS_PWDETECT0
     port_register(pwdetect0);
 #endif

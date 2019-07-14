@@ -32,7 +32,7 @@ static bool                     full_boot = TRUE;
 static int                      boot_count = 0;
 
 
-void rtc_init() {
+void rtc_init(void) {
     uint32 test_value;
     system_rtc_mem_read(FULL_BOOT_TEST_ADDR, &test_value, 4);
 
@@ -52,7 +52,7 @@ void rtc_init() {
     system_rtc_mem_write(BOOT_COUNT_ADDR, &boot_count, 4);
 }
 
-void rtc_reset() {
+void rtc_reset(void) {
     uint32 value = 0;
 
     DEBUG_RTC("resetting");
@@ -60,11 +60,11 @@ void rtc_reset() {
     system_rtc_mem_write(BOOT_COUNT_ADDR, &value, 4);
 }
 
-bool rtc_is_full_boot() {
+bool rtc_is_full_boot(void) {
     return full_boot;
 }
 
-int rtc_get_boot_count() {
+int rtc_get_boot_count(void) {
     return boot_count;
 }
 

@@ -30,11 +30,11 @@
 #endif
 
 
-ICACHE_FLASH_ATTR void                  rtc_init();
-ICACHE_FLASH_ATTR void                  rtc_reset();
+ICACHE_FLASH_ATTR void                  rtc_init(void);
+ICACHE_FLASH_ATTR void                  rtc_reset(void);
 
-ICACHE_FLASH_ATTR bool                  rtc_is_full_boot();
-ICACHE_FLASH_ATTR int                   rtc_get_boot_count();
+ICACHE_FLASH_ATTR bool                  rtc_is_full_boot(void);
+ICACHE_FLASH_ATTR int                   rtc_get_boot_count(void);
 
 ICACHE_FLASH_ATTR int                   rtc_get_value(uint8 addr);
 ICACHE_FLASH_ATTR void                  rtc_set_value(uint8 addr, int value);

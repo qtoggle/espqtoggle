@@ -74,7 +74,7 @@ double read_value(port_t *port) {
     return system_adc_read() * 1000 / 1024;
 }
 
-void adc_init_ports() {
+void adc_init_ports(void) {
 #ifdef HAS_ADC0
     port_register(adc0);
 #endif

@@ -72,7 +72,7 @@ BUILD_DIR = build
 INC = $(SRC_MAIN_DIR) $(SDK_BASE)/include $(GDB_DIR)
 LIB = c gcc hal pp phy net80211 lwip wpa crypto upgrade m main
 CFLAGS = -Wpointer-arith -Wall -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals \
-         -ffunction-sections -fdata-sections -mforce-l32 \
+         -ffunction-sections -fdata-sections -mforce-l32 -Wmissing-prototypes \
          -D__ets__ -DICACHE_FLASH -DUSE_OPTIMIZE_PRINTF \
          -DFLASH_CONFIG_ADDR_BASE=$(FLASH_CONFIG_ADDR_BASE) \
          -DFLASH_CONFIG_FACTORY_ADDR_BASE=$(FLASH_CONFIG_FACTORY_ADDR_BASE) \

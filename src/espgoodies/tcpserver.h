@@ -51,7 +51,7 @@ ICACHE_FLASH_ATTR void          tcp_server_init(int tcp_port,
                                                 tcp_sent_cb_t sent_cb,
                                                 tcp_disc_cb_t disc_cb);
 
-ICACHE_FLASH_ATTR void          tcp_server_stop();
+ICACHE_FLASH_ATTR void          tcp_server_stop(void);
 ICACHE_FLASH_ATTR void          tcp_send(struct espconn *conn, uint8 *data, int len, bool free_on_sent);
 ICACHE_FLASH_ATTR void          tcp_disconnect(struct espconn *conn);
 

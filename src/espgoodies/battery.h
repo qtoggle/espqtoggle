@@ -32,8 +32,8 @@
 #endif
 
 
-ICACHE_FLASH_ATTR int               battery_get_voltage();  /* millivolts */
-ICACHE_FLASH_ATTR int               battery_get_level();    /* percent, 0 - 100 */
+ICACHE_FLASH_ATTR int               battery_get_voltage(void);  /* millivolts */
+ICACHE_FLASH_ATTR int               battery_get_level(void);    /* percent, 0 - 100 */
 
 
 #endif  /* _ESPGOODIES_BATTERY_H */

@@ -35,7 +35,7 @@
 #endif
 
 
-ICACHE_FLASH_ATTR void              fsg_init_ports();
+ICACHE_FLASH_ATTR void              fsg_init_ports(void);
 
 
 #endif /* _EXTRA_FSG_H */

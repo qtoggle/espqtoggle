@@ -63,7 +63,7 @@ static int                          setup_mode_state = SETUP_MODE_IDLE;
 ICACHE_FLASH_ATTR static void       on_system_reset(void *arg);
 
 
-void system_init() {
+void system_init(void) {
 #ifdef SETUP_MODE_PORT
     /* skip "gpio" and convert the rest to number */
     system_setup_mode_gpio_no = strtol(_STRING(SETUP_MODE_PORT) + 4, NULL, 10);
@@ -111,7 +111,7 @@ void system_init() {
 #endif
 }
 
-uint32 system_uptime() {
+uint32 system_uptime(void) {
     uint32 time = system_get_time();
     if (time < last_time) { /* time overflow */
         uptime += time + UINT_MAX - last_time;
@@ -125,11 +125,11 @@ uint32 system_uptime() {
     return uptime / 1000000;
 }
 
-uint64 system_uptime_us() {
+uint64 system_uptime_us(void) {
     return uptime;
 }
 
-int system_get_flash_size() {
+int system_get_flash_size(void) {
     return (1 << ((spi_flash_get_id() >> 16) & 0xff));
 }
 
@@ -154,11 +154,11 @@ void system_set_reset_callback(system_reset_callback_t callback) {
     reset_callback = callback;
 }
 
-bool system_setup_mode_active() {
+bool system_setup_mode_active(void) {
     return setup_mode;
 }
 
-void system_setup_mode_toggle() {
+void system_setup_mode_toggle(void) {
     if (setup_mode) {
         system_reset(/* delayed = */ FALSE);
     }
@@ -170,7 +170,7 @@ void system_setup_mode_toggle() {
     }
 }
 
-void system_setup_mode_update() {
+void system_setup_mode_update(void) {
     uint32 now = system_uptime();
 
     if (system_setup_mode_gpio_no != -1) {
@@ -215,7 +215,7 @@ void system_setup_mode_update() {
     }
 }
 
-void system_connected_led_update() {
+void system_connected_led_update(void) {
     static bool old_led_level = FALSE;
 
     if ((system_connected_led_gpio_no == system_setup_mode_led_gpio_no) && setup_mode) {

@@ -42,7 +42,7 @@ extern port_t *                 adc0;
 #endif
 
 
-ICACHE_FLASH_ATTR void          adc_init_ports();
+ICACHE_FLASH_ATTR void          adc_init_ports(void);
 
 
 #endif  /* _PORTS_ADC_H */

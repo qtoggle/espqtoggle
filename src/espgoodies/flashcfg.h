@@ -33,7 +33,7 @@
 
 ICACHE_FLASH_ATTR bool                  flashcfg_load(uint8 *data);
 ICACHE_FLASH_ATTR bool                  flashcfg_save(uint8 *data);
-ICACHE_FLASH_ATTR bool                  flashcfg_reset();
+ICACHE_FLASH_ATTR bool                  flashcfg_reset(void);
 
 
 #endif /* _ESPGOODIES_FLASHCFG_H */

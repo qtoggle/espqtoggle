@@ -34,7 +34,7 @@
 
 
 
-ICACHE_FLASH_ATTR void                          client_init();
+ICACHE_FLASH_ATTR void                          client_init(void);
 
     /* respond_json() will free the json structure by itself, using json_free() ! */
 ICACHE_FLASH_ATTR void                          respond_json(struct espconn *conn, int status, json_t *json);

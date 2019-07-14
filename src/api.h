@@ -72,13 +72,13 @@ ICACHE_FLASH_ATTR json_t          * api_call_handle(int method, char* path, json
                                                     int *code);
 
 ICACHE_FLASH_ATTR json_t          * port_to_json(port_t *port);
-ICACHE_FLASH_ATTR json_t          * device_to_json();
+ICACHE_FLASH_ATTR json_t          * device_to_json(void);
 
 ICACHE_FLASH_ATTR void              api_conn_set(struct espconn *conn, int access_level);
-ICACHE_FLASH_ATTR bool              api_conn_busy();
+ICACHE_FLASH_ATTR bool              api_conn_busy(void);
 ICACHE_FLASH_ATTR bool              api_conn_equal(struct espconn *conn);
-ICACHE_FLASH_ATTR uint8             api_conn_access_level_get();
-ICACHE_FLASH_ATTR void              api_conn_reset();
+ICACHE_FLASH_ATTR uint8             api_conn_access_level_get(void);
+ICACHE_FLASH_ATTR void              api_conn_reset(void);
 
 
 #endif /* _API_H */

@@ -31,10 +31,10 @@
 #define PING_WDT_ERR_COUNT          10  /* number of successive ping timeouts that trigger a reset */
 
 
-ICACHE_FLASH_ATTR void              ping_wdt_init();
+ICACHE_FLASH_ATTR void              ping_wdt_init(void);
 ICACHE_FLASH_ATTR void              ping_wdt_start(int interval);
-ICACHE_FLASH_ATTR void              ping_wdt_stop();
-ICACHE_FLASH_ATTR int               ping_wdt_get_interval();
+ICACHE_FLASH_ATTR void              ping_wdt_stop(void);
+ICACHE_FLASH_ATTR int               ping_wdt_get_interval(void);
 
 
 #endif /* _ESPGOODIES_PINGWDT_H */

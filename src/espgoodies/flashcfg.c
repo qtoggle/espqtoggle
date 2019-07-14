@@ -67,7 +67,7 @@ bool flashcfg_save(uint8 *data) {
     return TRUE;
 }
 
-bool flashcfg_reset() {
+bool flashcfg_reset(void) {
     DEBUG_FLASHCFG("resetting to factory defaults");
 
     uint8 *config_data = zalloc(FLASH_CONFIG_SIZE);

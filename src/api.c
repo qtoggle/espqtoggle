@@ -164,7 +164,7 @@ ICACHE_FLASH_ATTR static json_t       * patch_webhooks(json_t *query_json, json_
 ICACHE_FLASH_ATTR static json_t       * get_wifi(json_t *query_json, int *code);
 
 ICACHE_FLASH_ATTR static json_t       * port_attrdefs_to_json(port_t *port);
-ICACHE_FLASH_ATTR static json_t       * device_attrdefs_to_json();
+ICACHE_FLASH_ATTR static json_t       * device_attrdefs_to_json(void);
 
 ICACHE_FLASH_ATTR static json_t       * attrdef_to_json(char *description, char *unit, char type, bool modifiable,
                                                         double min, double max, bool integer, double step, char **choices,
@@ -526,7 +526,7 @@ json_t *port_to_json(port_t *port) {
     return json;
 }
 
-json_t *device_to_json() {
+json_t *device_to_json(void) {
     char value[256];
     json_t *json = json_obj_new();
 
@@ -686,7 +686,7 @@ void api_conn_set(struct espconn *conn, int access_level) {
     api_access_level = access_level;
 }
 
-bool api_conn_busy() {
+bool api_conn_busy(void) {
     return !!api_conn;
 }
 
@@ -698,11 +698,11 @@ bool api_conn_equal(struct espconn *conn) {
     return CONN_EQUAL(conn, api_conn);
 }
 
-uint8 api_conn_access_level_get() {
+uint8 api_conn_access_level_get(void) {
     return api_access_level;
 }
 
-void api_conn_reset() {
+void api_conn_reset(void) {
     api_conn = NULL;
     api_access_level = API_ACCESS_LEVEL_NONE;
 }
@@ -2292,7 +2292,7 @@ json_t *port_attrdefs_to_json(port_t *port) {
     return json;
 }
 
-json_t *device_attrdefs_to_json() {
+json_t *device_attrdefs_to_json(void) {
     json_t *json = json_obj_new();
 
     json_obj_append(json, "frequency", attrdef_to_json(

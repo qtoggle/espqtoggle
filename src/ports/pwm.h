@@ -69,7 +69,7 @@ extern port_t *                 pwm15;
 #endif
 
 
-ICACHE_FLASH_ATTR void          pwm_init_ports();
+ICACHE_FLASH_ATTR void          pwm_init_ports(void);
 
 
 #endif  /* _PORTS_PWM_H */

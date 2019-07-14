@@ -644,7 +644,7 @@ void write_wire(port_t *port, bool value) {
 }
 
 
-void dht_init_ports() {
+void dht_init_ports(void) {
 #ifdef HAS_DHT0
     port_register(dt0);
     port_register(dht0_h);

@@ -90,7 +90,7 @@ extern port_t *                     gpio15;
 #endif
 
 
-ICACHE_FLASH_ATTR void              gpio_init_ports();
+ICACHE_FLASH_ATTR void              gpio_init_ports(void);
 
 
 #endif /* _PORTS_GPIO_H */

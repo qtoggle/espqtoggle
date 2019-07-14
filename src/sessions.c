@@ -142,7 +142,7 @@ void sessions_push_event(int type, json_t *params, port_t *port) {
     }
 }
 
-void sessions_respond_all() {
+void sessions_respond_all(void) {
     /* respond with "busy" to all active sessions */
     int i;
     session_t *session;

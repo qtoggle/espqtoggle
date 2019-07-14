@@ -34,7 +34,7 @@
 #endif
 
 
-ICACHE_FLASH_ATTR void          pwdetect_init_ports();
+ICACHE_FLASH_ATTR void          pwdetect_init_ports(void);
 
 
 #endif /* _EXTRA_PWDETECT_H */

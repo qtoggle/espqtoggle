@@ -453,7 +453,7 @@ void attr_set_gpio_b(port_t *port, int index) {
 }
 
 
-void rgb_init_ports() {
+void rgb_init_ports(void) {
 #ifdef HAS_RGB0
     port_register(rgb0);
 #endif

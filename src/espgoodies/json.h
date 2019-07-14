@@ -82,14 +82,14 @@ ICACHE_FLASH_ATTR void          json_free(json_t *json);
 #define                         json_obj_get_len(json) (json->obj_data.len)
 ICACHE_FLASH_ATTR json_t *      json_obj_lookup_key(json_t *json, char *key);
 
-ICACHE_FLASH_ATTR json_t *      json_null_new();
+ICACHE_FLASH_ATTR json_t *      json_null_new(void);
 ICACHE_FLASH_ATTR json_t *      json_bool_new(bool value);
 ICACHE_FLASH_ATTR json_t *      json_int_new(int value);
 ICACHE_FLASH_ATTR json_t *      json_double_new(double value);
 ICACHE_FLASH_ATTR json_t *      json_str_new(char *value);
-ICACHE_FLASH_ATTR json_t *      json_list_new();
+ICACHE_FLASH_ATTR json_t *      json_list_new(void);
 ICACHE_FLASH_ATTR void          json_list_append(json_t *json, json_t *child);
-ICACHE_FLASH_ATTR json_t *      json_obj_new();
+ICACHE_FLASH_ATTR json_t *      json_obj_new(void);
 ICACHE_FLASH_ATTR void          json_obj_append(json_t *json, char *key, json_t *child);
 ICACHE_FLASH_ATTR json_t *      json_dup(json_t *json);
 
