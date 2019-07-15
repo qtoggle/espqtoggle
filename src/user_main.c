@@ -65,10 +65,13 @@ static bool                         wifi_first_time_connected = FALSE;
 static os_timer_t                   connect_timeout_timer;
 
 
-ICACHE_FLASH_ATTR static void       main_init();
+ICACHE_FLASH_ATTR static void       main_init(void);
+ICACHE_FLASH_ATTR void              user_init(void);
+ICACHE_FLASH_ATTR void              user_rf_pre_init(void);
+ICACHE_FLASH_ATTR int               user_rf_cal_sector_set(void);
 
-ICACHE_FLASH_ATTR static void       on_system_ready();
-ICACHE_FLASH_ATTR static void       on_system_reset();
+ICACHE_FLASH_ATTR static void       on_system_ready(void);
+ICACHE_FLASH_ATTR static void       on_system_reset(void);
 
 #ifdef _OTA
 ICACHE_FLASH_ATTR static void       on_ota_auto_perform(int code);
@@ -80,7 +83,7 @@ ICACHE_FLASH_ATTR static void       on_connect_timeout(void *arg);
 
 /* main/system */
 
-void main_init() {
+void main_init(void) {
     system_init_done_cb(on_system_ready);
 
     os_timer_disarm(&connect_timeout_timer);
@@ -90,7 +93,7 @@ void main_init() {
     system_set_reset_callback(on_system_reset);
 }
 
-void on_system_ready() {
+void on_system_ready(void) {
     DEBUG_SYSTEM("system initialization done");
 
     if (wifi_get_bssid()[0]) {  /* specific BSSID set */
@@ -110,7 +113,7 @@ void on_system_ready() {
     event_push_device_update();
 }
 
-void on_system_reset() {
+void on_system_reset(void) {
     DEBUG_SYSTEM("cleaning up before reset");
 
     ensure_ports_saved();
@@ -188,7 +191,7 @@ void on_connect_timeout(void *arg) {
 
     /* main functions */
 
-void user_rf_pre_init() {
+void user_rf_pre_init(void) {
     system_deep_sleep_set_option(2);    /* no RF calibration after waking from deep sleep */
     system_phy_set_rfoption(2);         /* no RF calibration after waking from deep sleep */
     system_phy_set_powerup_option(2);   /* calibration only for VDD33 and Tx power */
@@ -207,7 +210,7 @@ int user_rf_cal_sector_set(void) {
     }
 }
 
-void user_init() {
+void user_init(void) {
 #ifdef _DEBUG
     uart_div_modify(0, UART_CLK_FREQ / 115200);
     os_delay_us(10000);

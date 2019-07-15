@@ -92,29 +92,29 @@ typedef void (* wifi_scan_callback_t)(wifi_scan_result_t *results, int len);
 typedef void (* wifi_connect_callback_t)(bool connected);
 
 
-ICACHE_FLASH_ATTR int                   wifi_get_scan_interval();
+ICACHE_FLASH_ATTR int                   wifi_get_scan_interval(void);
 ICACHE_FLASH_ATTR void                  wifi_set_scan_interval(int interval);
-ICACHE_FLASH_ATTR char                  wifi_get_scan_threshold();
+ICACHE_FLASH_ATTR char                  wifi_get_scan_threshold(void);
 ICACHE_FLASH_ATTR void                  wifi_set_scan_threshold(char threshold);
 
-ICACHE_FLASH_ATTR char                * wifi_get_ssid();
-ICACHE_FLASH_ATTR uint8               * wifi_get_bssid();
-ICACHE_FLASH_ATTR char                * wifi_get_psk();
+ICACHE_FLASH_ATTR char                * wifi_get_ssid(void);
+ICACHE_FLASH_ATTR uint8               * wifi_get_bssid(void);
+ICACHE_FLASH_ATTR char                * wifi_get_psk(void);
 ICACHE_FLASH_ATTR void                  wifi_set_ssid_psk(char *ssid, uint8 *bssid, char *psk);
 
-ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_static_ip();
-ICACHE_FLASH_ATTR char                  wifi_get_static_netmask();
-ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_static_gw();
-ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_static_dns();
+ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_static_ip(void);
+ICACHE_FLASH_ATTR char                  wifi_get_static_netmask(void);
+ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_static_gw(void);
+ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_static_dns(void);
 ICACHE_FLASH_ATTR void                  wifi_set_ip(ip_addr_t *ip, char netmask, ip_addr_t *gw, ip_addr_t *dns);
 
 ICACHE_FLASH_ATTR void                  wifi_set_station_mode(wifi_connect_callback_t callback, char *hostname);
 ICACHE_FLASH_ATTR void                  wifi_connect(uint8 *bssid);
 ICACHE_FLASH_ATTR void                  wifi_set_ap_mode(char *hostname);
-ICACHE_FLASH_ATTR bool                  wifi_is_connected();
+ICACHE_FLASH_ATTR bool                  wifi_is_connected(void);
 
 ICACHE_FLASH_ATTR bool                  wifi_scan(wifi_scan_callback_t callback);
-ICACHE_FLASH_ATTR void                  wifi_auto_scan();
+ICACHE_FLASH_ATTR void                  wifi_auto_scan(void);
 
 
 #endif /* _ESPGOODIES_WIFI_H */

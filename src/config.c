@@ -265,7 +265,7 @@ void device_save(uint8 *data, uint32 *strings_offs) {
 }
 
 
-void config_init() {
+void config_init(void) {
     uint8 *config_data = zalloc(FLASH_CONFIG_SIZE);
     flashcfg_load(config_data);
 
@@ -331,7 +331,7 @@ void config_init() {
     }
 }
 
-void config_save() {
+void config_save(void) {
     uint8 *config_data = zalloc(FLASH_CONFIG_SIZE);
     uint32 strings_offs = 1; /* address 0 in strings pool represents an unset string, so it's left out */
 

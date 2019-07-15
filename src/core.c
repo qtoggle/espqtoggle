@@ -62,11 +62,11 @@ static int                          value_change_trigger_mask = 0;
 static os_event_t                   task_queue[TASK_QUEUE_SIZE];
 
 
-ICACHE_FLASH_ATTR static void       system_task();
-ICACHE_FLASH_ATTR static void       on_value_change();
+ICACHE_FLASH_ATTR static void       system_task(os_event_t *e);
+ICACHE_FLASH_ATTR static void       on_value_change(void);
 
 
-void core_init() {
+void core_init(void) {
     system_os_task(system_task, USER_TASK_PRIO_0, task_queue, TASK_QUEUE_SIZE);
     system_os_post(USER_TASK_PRIO_0, TASK_POLL_PORTS, (os_param_t) NULL);
     system_os_post(USER_TASK_PRIO_0, TASK_UPDATE_SYSTEM, (os_param_t) NULL);
@@ -76,7 +76,7 @@ void core_listen_respond(session_t *session) {
     system_os_post(USER_TASK_PRIO_0, TASK_LISTEN_RESPOND, (os_param_t) session);
 }
 
-void force_expr_eval() {
+void force_expr_eval(void) {
     system_os_post(USER_TASK_PRIO_0, TASK_FORCE_EVAL_EXPR, (os_param_t) NULL);
 }
 
@@ -85,7 +85,7 @@ void port_mark_for_saving(port_t *port) {
     port_save_mask |= 1 << port->slot;
 }
 
-void ensure_ports_saved() {
+void ensure_ports_saved(void) {
     if (port_save_mask) {
         DEBUG("ports need saving");
         last_port_save_time = system_uptime();

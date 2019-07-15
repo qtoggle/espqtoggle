@@ -62,8 +62,8 @@ static int                      queue_len = 0;
 os_timer_t                      later_timer;
 
 
-ICACHE_FLASH_ATTR static void   process_queue();
-ICACHE_FLASH_ATTR static void   process_queue_later();
+ICACHE_FLASH_ATTR static void   process_queue(void);
+ICACHE_FLASH_ATTR static void   process_queue_later(void);
 ICACHE_FLASH_ATTR static void   on_process_queue_later(void *arg);
 ICACHE_FLASH_ATTR static void   do_webhook_request(event_t *event);
 ICACHE_FLASH_ATTR static void   on_webhook_response(char *body, int body_len, int status, char *header_names[],

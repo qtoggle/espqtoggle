@@ -1510,7 +1510,7 @@ void attr_set_output_pulse_off_len(port_t *port, int value) {
 }
 
 
-void fsg_init_ports() {
+void fsg_init_ports(void) {
 #ifdef HAS_FSG0
     port_register(fsg0);
 #endif

@@ -445,7 +445,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
 }
 
 
-void client_init() {
+void client_init(void) {
     int i;
     for (i = 0; i < MAX_PARALLEL_HTTP_REQ; i++) {
         http_state_array[i].slot_index = i;

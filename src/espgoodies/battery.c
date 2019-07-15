@@ -78,7 +78,7 @@ static struct {  /* voltage vs. battery charge level lookup table */
 static double adc_factor = 1 / BATTERY_DIV_FACTOR / 1.024;
 
 
-int battery_get_voltage() {
+int battery_get_voltage(void) {
     int v = system_adc_read();
 
     DEBUG_BATTERY("raw ADC value: %d", v);
@@ -90,7 +90,7 @@ int battery_get_voltage() {
     return v;
 }
 
-int battery_get_level() {
+int battery_get_level(void) {
     int i = 0;
     int v1, v2, v = battery_get_voltage();
     int l1, l2;

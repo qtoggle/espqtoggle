@@ -89,7 +89,7 @@ void event_push_port_remove(char *port_id) {
     json_free(params);
 }
 
-void event_push_device_update() {
+void event_push_device_update(void) {
     json_t *params = device_to_json();
     event_push(EVENT_TYPE_DEVICE_UPDATE, params, NULL);
     json_free(params);

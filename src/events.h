@@ -53,7 +53,7 @@ ICACHE_FLASH_ATTR void              event_push_value_change(port_t *port);
 ICACHE_FLASH_ATTR void              event_push_port_update(port_t *port);
 ICACHE_FLASH_ATTR void              event_push_port_add(port_t *port);
 ICACHE_FLASH_ATTR void              event_push_port_remove(char *port_id);
-ICACHE_FLASH_ATTR void              event_push_device_update();
+ICACHE_FLASH_ATTR void              event_push_device_update(void);
 ICACHE_FLASH_ATTR json_t *          event_to_json(event_t *event);
 ICACHE_FLASH_ATTR void              event_free(event_t *event);
 

@@ -503,7 +503,7 @@ void attr_set_output(port_t *port, bool value) {
 }
 
 
-void gpio_init_ports() {
+void gpio_init_ports(void) {
 
 #ifdef HAS_GPIO0
     port_register(gpio0);

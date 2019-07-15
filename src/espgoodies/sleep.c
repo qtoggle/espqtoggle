@@ -43,7 +43,7 @@ static bool                     about_to_sleep = FALSE;
 ICACHE_FLASH_ATTR static void   on_sleep(void *arg);
 
 
-void sleep_init() {
+void sleep_init(void) {
     /* we might still have a few rounds to sleep,
      * as part of the long sleep mechanism */
 
@@ -67,7 +67,7 @@ void sleep_init() {
     }
 }
 
-void sleep_reset() {
+void sleep_reset(void) {
     os_timer_disarm(&sleep_timer);
 
     if (!wake_interval) {
@@ -81,15 +81,15 @@ void sleep_reset() {
     DEBUG_SLEEP("will go to sleep in %d seconds", wake_duration);
 }
 
-bool sleep_pending() {
+bool sleep_pending(void) {
     return about_to_sleep;
 }
 
-bool sleep_is_short_wake() {
+bool sleep_is_short_wake(void) {
     return (wake_interval > 0) && (wake_duration <= WAKE_SHORT_DURATION);
 }
 
-int sleep_get_wake_interval() {
+int sleep_get_wake_interval(void) {
     return wake_interval;
 }
 
@@ -98,7 +98,7 @@ void sleep_set_wake_interval(int interval) {
     DEBUG_SLEEP("wake interval set to %d minutes", interval);
 }
 
-int sleep_get_wake_duration() {
+int sleep_get_wake_duration(void) {
     return wake_duration;
 }
 

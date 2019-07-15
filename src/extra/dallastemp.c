@@ -455,7 +455,7 @@ bool valid_family(uint8 *addr) {
 }
 
 
-void dallastemp_init_ports() {
+void dallastemp_init_ports(void) {
 #ifdef HAS_DT0
     port_register(dt0);
 #endif

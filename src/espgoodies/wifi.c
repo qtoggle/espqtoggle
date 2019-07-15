@@ -74,7 +74,7 @@ ICACHE_FLASH_ATTR static void       on_wifi_watchdog(void *arg);
 ICACHE_FLASH_ATTR static int        compare_wifi_rssi(const void *a, const void *b);
 
 
-int wifi_get_scan_interval() {
+int wifi_get_scan_interval(void) {
     return wifi_scan_interval;
 }
 
@@ -96,7 +96,7 @@ void wifi_set_scan_interval(int interval) {
     }
 }
 
-char wifi_get_scan_threshold() {
+char wifi_get_scan_threshold(void) {
     return wifi_scan_threshold;
 }
 
@@ -106,15 +106,15 @@ void wifi_set_scan_threshold(char threshold) {
     DEBUG_WIFI("scan threshold set to %d dBm", threshold);
 }
 
-char *wifi_get_ssid() {
+char *wifi_get_ssid(void) {
     return wifi_ssid;
 }
 
-uint8 *wifi_get_bssid() {
+uint8 *wifi_get_bssid(void) {
     return wifi_bssid;
 }
 
-char *wifi_get_psk() {
+char *wifi_get_psk(void) {
     return wifi_psk;
 }
 
@@ -146,7 +146,7 @@ void wifi_set_ssid_psk(char *ssid, uint8 *bssid, char *psk) {
     }
 }
 
-ip_addr_t *wifi_get_static_ip() {
+ip_addr_t *wifi_get_static_ip(void) {
     if (wifi_static_ip.addr) {
         return &wifi_static_ip;
     }
@@ -155,11 +155,11 @@ ip_addr_t *wifi_get_static_ip() {
     }
 }
 
-char wifi_get_static_netmask() {
+char wifi_get_static_netmask(void) {
     return wifi_static_netmask;
 }
 
-ip_addr_t *wifi_get_static_gw() {
+ip_addr_t *wifi_get_static_gw(void) {
     if (wifi_static_gw.addr) {
         return &wifi_static_gw;
     }
@@ -168,7 +168,7 @@ ip_addr_t *wifi_get_static_gw() {
     }
 }
 
-ip_addr_t *wifi_get_static_dns() {
+ip_addr_t *wifi_get_static_dns(void) {
     if (wifi_static_dns.addr) {
         return &wifi_static_dns;
     }
@@ -355,7 +355,7 @@ void wifi_set_ap_mode(char *hostname) {
     system_phy_set_max_tpw(82 /* 20.5 dBm * 4 */);
 }
 
-bool wifi_is_connected() {
+bool wifi_is_connected(void) {
     return wifi_connected;
 }
 

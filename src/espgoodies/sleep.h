@@ -37,15 +37,15 @@
 #define SLEEP_WAKE_CONNECT_TIMEOUT      20          /* seconds */
 
 
-ICACHE_FLASH_ATTR void                  sleep_init();
-ICACHE_FLASH_ATTR void                  sleep_reset();
-ICACHE_FLASH_ATTR bool                  sleep_pending();
-ICACHE_FLASH_ATTR bool                  sleep_is_short_wake();
+ICACHE_FLASH_ATTR void                  sleep_init(void);
+ICACHE_FLASH_ATTR void                  sleep_reset(void);
+ICACHE_FLASH_ATTR bool                  sleep_pending(void);
+ICACHE_FLASH_ATTR bool                  sleep_is_short_wake(void);
 
-ICACHE_FLASH_ATTR int                   sleep_get_wake_interval();
+ICACHE_FLASH_ATTR int                   sleep_get_wake_interval(void);
 ICACHE_FLASH_ATTR void                  sleep_set_wake_interval(int interval);
 
-ICACHE_FLASH_ATTR int                   sleep_get_wake_duration();
+ICACHE_FLASH_ATTR int                   sleep_get_wake_duration(void);
 ICACHE_FLASH_ATTR void                  sleep_set_wake_duration(int duration);
 
 

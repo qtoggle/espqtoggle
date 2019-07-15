@@ -37,7 +37,7 @@
 #define DEBUG_DT(...)                       {}
 #endif
 
-ICACHE_FLASH_ATTR void                      dallastemp_init_ports();
+ICACHE_FLASH_ATTR void                      dallastemp_init_ports(void);
 
 
 #endif /* _EXTRA_DALLASTEMP_H */

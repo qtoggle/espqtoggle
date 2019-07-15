@@ -75,7 +75,7 @@ ICACHE_FLASH_ATTR void              session_respond(session_t *session);
 ICACHE_FLASH_ATTR void              session_reset(session_t *session);
 
 ICACHE_FLASH_ATTR void              sessions_push_event(int type, json_t *params, port_t *port);
-ICACHE_FLASH_ATTR void              sessions_respond_all();
+ICACHE_FLASH_ATTR void              sessions_respond_all(void);
 
 
 #endif /* _SESSION_H */

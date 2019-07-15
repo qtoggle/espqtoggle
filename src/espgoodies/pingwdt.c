@@ -49,7 +49,7 @@ ICACHE_FLASH_ATTR void      on_ping_recv(void *arg, void *pdata);
 ICACHE_FLASH_ATTR void      on_ping_sent(void *arg, void *pdata);
 
 
-void ping_wdt_init() {
+void ping_wdt_init(void) {
     ping_regist_recv(&ping_opt, on_ping_recv);
     ping_regist_sent(&ping_opt, on_ping_sent);
 }
@@ -78,7 +78,7 @@ void ping_wdt_start(int interval) {
     os_timer_arm(&ping_timer, ping_interval * 1000, /* repeat = */ TRUE);
 }
 
-void ping_wdt_stop() {
+void ping_wdt_stop(void) {
     if (!ping_interval) {
         return;
     }
@@ -89,7 +89,7 @@ void ping_wdt_stop() {
     os_timer_disarm(&ping_timer);
 }
 
-int ping_wdt_get_interval() {
+int ping_wdt_get_interval(void) {
     return ping_interval;
 }
 

@@ -35,7 +35,7 @@
 #define DEBUG_DHT(...)              {}
 #endif
 
-ICACHE_FLASH_ATTR void              dht_init_ports();
+ICACHE_FLASH_ATTR void              dht_init_ports(void);
 
 
 #endif /* _EXTRA_DHT_H */

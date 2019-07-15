@@ -47,7 +47,7 @@ static char                   * url_template = NULL;
 static char                   * current_version = NULL;
 
 
-ICACHE_FLASH_ATTR int           ota_next_slot();
+ICACHE_FLASH_ATTR int           ota_next_slot(void);
 
 ICACHE_FLASH_ATTR static void   on_ota_start(void *arg);
 ICACHE_FLASH_ATTR static void   on_ota_finish_check(void *arg);
@@ -156,12 +156,12 @@ bool ota_auto_update_check(bool beta, ota_perform_callback_t callback) {
     return TRUE;
 }
 
-bool ota_busy() {
+bool ota_busy(void) {
     return (system_upgrade_flag_check() == UPGRADE_FLAG_START) || ota_url ||
             ota_latest_callback || ota_auto_update_checking || ota_perform_callback;
 }
 
-int ota_current_state() {
+int ota_current_state(void) {
     if (system_upgrade_flag_check() == UPGRADE_FLAG_IDLE) {
         if (ota_url || ota_latest_callback || ota_auto_update_checking || ota_perform_callback) {
             return OTA_STATE_CHECKING;
@@ -179,7 +179,7 @@ int ota_current_state() {
 }
 
 
-int ota_next_slot() {
+int ota_next_slot(void) {
     return !system_upgrade_userbin_check() + 1;
 }
 

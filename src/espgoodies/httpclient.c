@@ -46,6 +46,11 @@ typedef struct {
 static char *user_agent = NULL;
 
 
+void ICACHE_FLASH_ATTR http_raw_request(char *hostname, uint16 port, bool secure, char *path, char *method,
+                                        uint8 *body, int body_len, char *headers, http_callback_t callback,
+                                        int timeout);
+
+
 static int ICACHE_FLASH_ATTR chunked_decode(char *chunked, int size) {
     char *src = chunked;
     char *end = chunked + size;
@@ -357,9 +362,8 @@ static void ICACHE_FLASH_ATTR timeout_callback(void *arg) {
         espconn_disconnect(req->connection);
 }
 
-void ICACHE_FLASH_ATTR http_raw_request(char *hostname, uint16 port, bool secure, char *path, char *method,
-                                        uint8 *body, int body_len, char *headers, http_callback_t callback,
-                                        int timeout) {
+void http_raw_request(char *hostname, uint16 port, bool secure, char *path, char *method, uint8 *body, int body_len,
+                      char *headers, http_callback_t callback, int timeout) {
 
     DEBUG_HTTPCLIENT("DNS request");
 

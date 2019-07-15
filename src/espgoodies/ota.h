@@ -45,8 +45,8 @@ ICACHE_FLASH_ATTR bool          ota_get_latest(bool beta, ota_latest_callback_t 
 ICACHE_FLASH_ATTR bool          ota_perform_url(char *url, ota_perform_callback_t callback);
 ICACHE_FLASH_ATTR bool          ota_perform_version(char *url, ota_perform_callback_t callback);
 ICACHE_FLASH_ATTR bool          ota_auto_update_check(bool beta, ota_perform_callback_t callback);
-ICACHE_FLASH_ATTR bool          ota_busy();
-ICACHE_FLASH_ATTR int           ota_current_state();
+ICACHE_FLASH_ATTR bool          ota_busy(void);
+ICACHE_FLASH_ATTR int           ota_current_state(void);
 
 
 #endif /* _ESPGOODIES_OTA_H */

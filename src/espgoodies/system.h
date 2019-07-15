@@ -31,7 +31,7 @@
 #endif
 
 
-typedef void (*system_reset_callback_t)();
+typedef void (*system_reset_callback_t)(void);
 
 
 extern int8                     system_setup_mode_gpio_no;
@@ -43,21 +43,21 @@ extern int8                     system_connected_led_gpio_no;
 extern bool                     system_connected_led_level;
 
 
-ICACHE_FLASH_ATTR void          system_init();
+ICACHE_FLASH_ATTR void          system_init(void);
 
-ICACHE_FLASH_ATTR uint32        system_uptime(); /* needs to be called at least once every half an hour */
-ICACHE_FLASH_ATTR uint64        system_uptime_us();
+ICACHE_FLASH_ATTR uint32        system_uptime(void); /* needs to be called at least once every half an hour */
+ICACHE_FLASH_ATTR uint64        system_uptime_us(void);
 
-ICACHE_FLASH_ATTR int           system_get_flash_size();
+ICACHE_FLASH_ATTR int           system_get_flash_size(void);
 
 ICACHE_FLASH_ATTR void          system_reset(bool delayed);
 ICACHE_FLASH_ATTR void          system_set_reset_callback(system_reset_callback_t callback);
 
-ICACHE_FLASH_ATTR bool          system_setup_mode_active();
-ICACHE_FLASH_ATTR void          system_setup_mode_toggle();
-ICACHE_FLASH_ATTR void          system_setup_mode_update();
+ICACHE_FLASH_ATTR bool          system_setup_mode_active(void);
+ICACHE_FLASH_ATTR void          system_setup_mode_toggle(void);
+ICACHE_FLASH_ATTR void          system_setup_mode_update(void);
 
-ICACHE_FLASH_ATTR void          system_connected_led_update();
+ICACHE_FLASH_ATTR void          system_connected_led_update(void);
 
 
 #endif /* _ESPGOODIES_SYSTEM_H */
