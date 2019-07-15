@@ -44,13 +44,14 @@
 
 #define MAX_PARALLEL_HTTP_REQ       4
 #define JSON_CONTENT_TYPE           "application/json; charset=utf-8"
+#define HTML_CONTENT_TYPE           "text/html; charset=utf-8"
 
 #define RESPOND_UNAUTHENTICATED()   respond_error(conn, 401, "authentication required");
 
 
 static httpserver_context_t         http_state_array[MAX_PARALLEL_HTTP_REQ];
 
-static char                       * unprotected_paths[] = {"/access", NULL};
+static char                       * unprotected_paths[] = {"/access", "/", NULL};
 
 
 ICACHE_FLASH_ATTR static void     * on_tcp_conn(struct espconn *conn);
@@ -328,6 +329,11 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
 
     skip_auth:
 
+    if (!strncmp(path, "/", 1)) {  /* index */
+        respond_html(conn, 200, (uint8*) "<html>Test</html>", 17);
+        goto done;
+    }
+
     /* treat the listen API call separately */
     if (!strncmp(path, "/listen", 7) && method == HTTP_METHOD_GET) {
         DEBUG_ESPQTCLIENT_CONN(conn, "received listen request");
@@ -499,11 +505,11 @@ void respond_json(struct espconn *conn, int status, json_t *json) {
 
 #if defined(_DEBUG) && defined(_DEBUG_ESPQTCLIENT)
     int free_mem_after_send = system_get_free_heap_size();
-#endif
 
     /* show free memory after sending the response */
     DEBUG_ESPQTCLIENT("free memory: before dump=%d, after dump=%d, after send=%d",
                       free_mem_before_dump, free_mem_after_dump, free_mem_after_send);
+#endif
 }
 
 void respond_error(struct espconn *conn, int status, char *error) {
@@ -511,4 +517,33 @@ void respond_error(struct espconn *conn, int status, char *error) {
     json_obj_append(json, "error", json_str_new(error));
 
     respond_json(conn, status, json);
+}
+
+void respond_html(struct espconn *conn, int status, uint8 *html, int len) {
+    uint8 *response;
+
+#if defined(_DEBUG) && defined(_DEBUG_ESPQTCLIENT)
+    int free_mem_before_dump = system_get_free_heap_size();
+#endif
+
+#if defined(_DEBUG) && defined(_DEBUG_ESPQTCLIENT)
+    int free_mem_after_dump = system_get_free_heap_size();
+#endif
+
+    response = httpserver_build_response(status, HTML_CONTENT_TYPE,
+                                         /* header_names = */ NULL,
+                                         /* header_values = */ NULL,
+                                         /* header_count = */ 0, html, &len);
+
+    DEBUG_ESPQTCLIENT_CONN(conn, "responding with status %d", status);
+
+    tcp_send(conn, response, len, /* free on sent = */ TRUE);
+
+#if defined(_DEBUG) && defined(_DEBUG_ESPQTCLIENT)
+    int free_mem_after_send = system_get_free_heap_size();
+
+    /* show free memory after sending the response */
+    DEBUG_ESPQTCLIENT("free memory: before dump=%d, after dump=%d, after send=%d",
+                      free_mem_before_dump, free_mem_after_dump, free_mem_after_send);
+#endif
 }
