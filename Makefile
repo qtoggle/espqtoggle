@@ -56,6 +56,7 @@ LD = xtensa-lx106-elf-gcc
 OC = xtensa-lx106-elf-objcopy
 MD = mkdir -p
 RM = rm -rf
+GZ = gzip -c
 
 ESPTOOL ?= esptool
 APPGEN = $(SDK_BASE)/tools/gen_appbin.py
@@ -235,6 +236,7 @@ endif
 
 .PHONY: dirs
 .NOTPARALLEL: buildinfo
+.PRECIOUS: $(BUILD_DIR)/%.html.gz
 
 all: buildinfo dirs $(FW) 
 
@@ -243,6 +245,7 @@ dirs:
 
 buildinfo:
 	$(vecho) "---- configuration summary ----"
+	$(vecho) " *" SDK_BASE = $(SDK_BASE)
 	$(vecho) " *" VERSION = $(VERSION)
 	$(vecho) " *" DEBUG = $(DEBUG)
 	$(vecho) " *" DEBUG_FLAGS = $(DEBUG_FLAGS)
@@ -285,18 +288,27 @@ $(APP_OUT): $(APP_AR)
 	$(vecho) "LD $@"
 	$(Q) $(LD) $(LDFLAGS) -T$(LDSCRIPT) -Wl,--start-group $(LIB) $^ -Wl,--end-group -o $@
 
-$(BUILD_DIR)/user%.bin: $(APP_OUT)
+$(BUILD_DIR)/%.html.gz: html/%.html
+	$(vecho) "GZ $@"
+	$(Q) $(GZ) $^ > $@
+
+$(BUILD_DIR)/user%.bin: $(APP_OUT) $(BUILD_DIR)/index.html.gz
 	@echo $(FW_CONFIG_ID) > $(BUILD_DIR)/.config_id
 	$(vecho) "FW $@"
 	$(Q) $(OC) --only-section .text -O binary $< $(BUILD_DIR)/eagle.app.v6.text.bin
 	$(Q) $(OC) --only-section .data -O binary $< $(BUILD_DIR)/eagle.app.v6.data.bin
 	$(Q) $(OC) --only-section .rodata -O binary $< $(BUILD_DIR)/eagle.app.v6.rodata.bin
 	$(Q) $(OC) --only-section .irom0.text -O binary $< $(BUILD_DIR)/eagle.app.v6.irom0text.bin
-	$(Q) cd $(BUILD_DIR); \
+	$(Q) cd $(BUILD_DIR) && \
 	     COMPILE=gcc python2 $(APPGEN) *.out 2 $(FLASH_MODE) $(FLASH_CLK_DIV) $(FLASH_SIZE_MAP) $(USR) > /dev/null
 	$(Q) mv $(BUILD_DIR)/eagle.app.flash.bin $@
-	$(vecho) "-------------------------------"
-	$(vecho) " *" $(notdir $@): $$(stat -L -c %s $@) bytes
+
+	$(Q) size=$$(stat -L -c %s $@) && \
+	     offs=$$((476 * 1024 - $${size})) && \
+	     dd if=/dev/zero of=$@ oflag=append conv=notrunc bs=$${offs} count=1 status=none
+	$(Q) size=$$(stat -L -c %s $(BUILD_DIR)/index.html.gz) && \
+	     python2 -c "import sys, struct; sys.stdout.write(struct.pack('<i', $${size}))" >> $@
+	$(Q) cat $(BUILD_DIR)/index.html.gz >> $@
 	$(vecho)
 
 clean:
