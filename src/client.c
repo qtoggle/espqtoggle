@@ -27,6 +27,7 @@
 #include "espgoodies/httpserver.h"
 #include "espgoodies/httpclient.h"
 #include "espgoodies/httputils.h"
+#include "espgoodies/html.h"
 #include "espgoodies/crypto.h"
 #include "espgoodies/jwt.h"
 #include "espgoodies/utils.h"
@@ -330,7 +331,16 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
     skip_auth:
 
     if (!strncmp(path, "/", 1)) {  /* index */
-        respond_html(conn, 200, (uint8*) "<html>Test</html>", 17);
+        uint32 html_len;
+        uint8 *html = html_load(&html_len);
+        if (!html) {
+            respond_html(conn, 500, (uint8 *) "Error", 5);
+            goto done;
+        }
+
+        respond_html(conn, 200, html, html_len);
+        free(html);
+
         goto done;
     }
 
@@ -530,10 +540,11 @@ void respond_html(struct espconn *conn, int status, uint8 *html, int len) {
     int free_mem_after_dump = system_get_free_heap_size();
 #endif
 
+    static char *header_names[] = {"Content-Encoding"};
+    static char *header_values[] = {"gzip"};
+
     response = httpserver_build_response(status, HTML_CONTENT_TYPE,
-                                         /* header_names = */ NULL,
-                                         /* header_values = */ NULL,
-                                         /* header_count = */ 0, html, &len);
+                                         header_names, header_values, 1, html, &len);
 
     DEBUG_ESPQTCLIENT_CONN(conn, "responding with status %d", status);
 
