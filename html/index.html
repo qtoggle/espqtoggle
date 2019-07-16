@@ -1,3 +1,106 @@
+<!DOCTYPE HTML>
+
 <html>
-    Test
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="theme-color" content="#62abea">
+        <meta name="apple-mobile-web-app-status-bar-style" content="#62abea">
+        <title>espQToggle Setup</title>
+        <style>
+        
+            * {
+                user-select: none;
+            }
+            
+            .all-transition {
+                transition: all .3s ease;
+            }
+            
+            html {
+                color: #fff;
+                background: #444444;
+                font-family: sans-serif;
+                text-align: center;
+            }
+            
+            div.main-form {
+                margin: 2em;
+            }
+            
+            div.button {
+                line-height: 2.5em;
+                padding: 0 0.5em;
+                border-radius: .2em;
+                min-width: 6em;
+                text-align: center;
+                background: #62abea;
+                cursor: pointer;
+                box-sizing: border-box;
+                opacity: 1;
+            }
+            
+            div.button:ACTIVE {
+                background: #4e89bb;
+            }
+            
+            #wifiScanImg {
+                display: none;
+                opacity: 0;
+                max-width: 32em;
+            }
+            
+            body.progress #wifiScanImg {
+                display: inline;
+                opacity: 1;
+            }
+
+            body.progress #scanButton {
+                visibility: hidden;
+                opacity: 0;
+                cursor: normal;
+            }
+            
+        </style>
+        <script type="text/javascript">
+        
+            document.addEventListener('DOMContentLoaded', function () {
+                var scanButton = document.getElementById('scanButton');
+                var wifiScanImg = document.getElementById('wifiScanImg');
+                var body = document.getElementsByTagName('body')[0];
+                var progress = false;
+                
+                function setProgress() {
+                    if (progress) {
+                        return;
+                    }
+                    progress = true;
+                    body.className = 'progress';
+                }
+                
+                function clearProgress() {
+                    if (!progress) {
+                        return;
+                    }
+                    progress = false;
+                    body.className = '';
+                }
+                
+                scanButton.onclick = function () {
+                    setProgress();
+                    setTimeout(clearProgress, 2000);
+                }
+            })
+        
+        </script>
+    </head>
+    
+    <body>
+        <div class="main-form">
+            <div class="button all-transition" id="scanButton">WiFi Scan</div>
+        </div>
+        <img class="all-transition" id="wifiScanImg" src="data:image/svg+xml,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 100 100' preserveAspectRatio='xMidYMid'%3E%3Csvg version='1.1' id='d1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 100 100' style='transform-origin: 50px 50px 0px;' xml:space='preserve'%3E%3Cg style='transform-origin: 50px 50px 0px;'%3E%3Cg style='transform-origin: 50px 50px 0px; transform: scale(0.6);'%3E%3Cg style='transform-origin: 50px 50px 0px;'%3E%3Cg%3E%3Cstyle type='text/css' class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -1s; animation-direction: normal;'%3E.st0%7Bfill:%23C7B299;stroke:%23333333;stroke-width:6;stroke-miterlimit:10;%7D .st1%7Bfill:%23F5E169;%7D .st2%7Bfill:%23666666;%7D .st3%7Bfill:%23F5E6C8;%7D .st4%7Bfill:%23333333;%7D .st5%7Bfill:%23E0E0E0;%7D .st6%7Bfill:%23F8B26A;%7D .st7%7Bfill:%23FFFFFF;stroke:%23000000;stroke-width:4;stroke-miterlimit:10;%7D .st8%7Bfill:%23F47E60;%7D .st9%7Bfill:%23ABBD81;%7D .st10%7Bfill:%23E15B64;%7D .st11%7Bfill:%23666666;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st12%7Bfill:%23FFFFFF;stroke:%23221E1F;stroke-width:6;stroke-linejoin:round;stroke-miterlimit:10;%7D .st13%7Bfill:%2377A4BD;%7D .st14%7Bfill:%23FFDC6C;%7D .st15%7Bfill:%23FFFFFF;%7D .st16%7Bfill:%23353035;%7D .st17%7Bfill:%23E0E0E0;stroke:%23000000;stroke-width:6;stroke-miterlimit:10;%7D .st18%7Bfill:none;stroke:%23000000;stroke-width:5;stroke-linecap:round;stroke-miterlimit:10;%7D .st19%7Bfill:none;stroke:%23000000;stroke-width:5;stroke-miterlimit:10;%7D .st20%7Bfill:none;%7D .st21%7Bfill:%23666666;stroke:%23221E1F;stroke-width:6;stroke-linejoin:round;stroke-miterlimit:10;%7D .st22%7Bfill:%23FFFFFF;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st23%7Bfill:%23333333;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st24%7Bfill:%231BD112;%7D .st25%7Bfill:%23FFFFFF;stroke:%23333333;stroke-width:8;stroke-miterlimit:10;%7D .st26%7Bfill:none;stroke:%23666666;stroke-width:8;stroke-miterlimit:10;%7D .st27%7Bfill:%23FFFFFF;stroke:%23333333;stroke-miterlimit:10;%7D .st28%7Bfill:none;stroke:%23333333;stroke-miterlimit:10;%7D .st29%7Bstroke:%23333333;stroke-miterlimit:10;%7D .st30%7Bfill:none;stroke:%23000000;stroke-width:4;stroke-linecap:round;stroke-miterlimit:10;%7D .st31%7Bfill:none;stroke:%23000000;stroke-width:6;stroke-miterlimit:10;%7D .st32%7Bfill:%23C33737;%7D .st33%7Bfill:%23849B87;%7D .st34%7Bfill:%2366503A;%7D .st35%7Bfill:none;stroke:%23333333;stroke-width:6;stroke-miterlimit:10;%7D .st36%7Bfill:none;stroke:%23333333;stroke-width:4;stroke-miterlimit:10;%7D .st37%7Bfill:%23C59B6D;%7D .st38%7Bfill:%23E0E0E0;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st39%7Bfill:%23666666;stroke:%23000000;stroke-width:3;stroke-miterlimit:10;%7D .st40%7Bfill:%23F5E6C8;stroke:%23000000;stroke-width:3;stroke-miterlimit:10;%7D .st41%7Bfill:%23FFFFFF;stroke:%23808080;stroke-width:4;stroke-miterlimit:10;%7D .st42%7Bfill:%23808080;stroke:%23808080;stroke-width:4;stroke-miterlimit:10;%7D .st43%7Bfill:%23666666;stroke:%23B3B3B3;stroke-width:12;stroke-linecap:round;stroke-miterlimit:10;%7D .st44%7Bfill:%23808080;%7D .st45%7Bfill:%23B3B3B3;%7D .st46%7Bfill:%23FFFF00;stroke:%23E15B64;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;%7D .st47%7Bfill:none;stroke:%23E15B64;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;%7D .st48%7Bfill:%23F5E6C8;stroke:%23333333;stroke-width:4;stroke-miterlimit:10;%7D%3C/style%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.928571s; animation-direction: normal;'%3E%3Cpath class='st10' d='M56.4,75.4c-3.6-3.6-9.3-3.6-12.9,0l6.4,6.4L56.4,75.4z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.857143s; animation-direction: normal;'%3E%3Cpath class='st10' d='M62.9,69l6.4-6.4c-10.7-10.7-27.9-10.7-38.6,0l6.4,6.4C44.2,61.9,55.8,61.9,62.9,69z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.785714s; animation-direction: normal;'%3E%3Cpath class='st10' d='M75.7,56.1l6.4-6.4c-17.8-17.8-46.5-17.8-64.3,0l6.4,6.4C38.5,41.9,61.5,41.9,75.7,56.1z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.714286s; animation-direction: normal;'%3E%3Cpath class='st10' d='M88.6,43.2l6.4-6.4C70.1,12,29.9,12,5,36.8l6.4,6.4C32.7,22,67.3,22,88.6,43.2z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cmetadata xmlns:d='https://loading.io/stock/' class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.642857s; animation-direction: normal;'%3E%3C/metadata%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/g%3E%3Cstyle type='text/css' class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.285714s; animation-direction: normal;'%3E@keyframes ld-fade %7B0%25 %7Bopacity: 1;%7D100%25 %7Bopacity: 0;%7D%7D@keyframes ld-fade %7B0%25 %7Bopacity: 1;%7D100%25 %7Bopacity: 0;%7D%7D.ld.ld-fade %7Banimation: ld-fade 1s infinite linear;animation: ld-fade 1s infinite linear;%7D%3C/style%3E%3C/svg%3E%3C/svg%3E">
+    </body>
 </html>
