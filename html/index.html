@@ -13,17 +13,25 @@
         
             * {
                 user-select: none;
+                -webkit-tap-highlight-color: rgba(255,255,255,0);
             }
             
-            .all-transition {
-                transition: all .3s ease;
+            .limit-width {
+                max-width: 30em;
+                margin: auto;
             }
             
             html {
-                color: #fff;
-                background: #444444;
+                color: #eee;
+                background: #444;
                 font-family: sans-serif;
                 text-align: center;
+                height: 100%;
+            }
+            
+            body {
+                margin: 0;
+                height: 100%;
             }
             
             div.main-form {
@@ -46,30 +54,133 @@
                 background: #4e89bb;
             }
             
-            #wifiScanImg {
+            div.progress-overlay {
+                transition: all .3s ease;
                 display: none;
+                position: absolute;
+                background: #444;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
                 opacity: 0;
-                max-width: 32em;
             }
             
-            body.progress #wifiScanImg {
-                display: inline;
+            body.progress div.progress-overlay {
                 opacity: 1;
             }
-
-            body.progress #scanButton {
-                visibility: hidden;
-                opacity: 0;
-                cursor: normal;
+            
+            div.wifi-list {
+                overflow: auto;
+                background: #393939;
+                height: calc(100% - 6.1em);
             }
             
+            @media (min-width: 32em) {
+                div.wifi-list {
+                    border: .0625em  solid #555;
+                }
+            }
+
+            div.wifi-list-header {
+                font-weight: bold;
+                height: 3em;
+                line-height: 3em;
+            }
+            
+            div.wifi-list-footer {
+                position: absolute;
+                width: 100%;
+                bottom: 0;
+                height: 3em;
+                line-height: 3em;
+                background: #444;
+            }
+            
+            div.wifi-item {
+                cursor: pointer;
+                overflow: hidden;
+                color: #62abea;
+                transition: all .3s ease;
+                text-align: left;
+                margin: auto;
+                height: 3em;
+                line-height: 3em;
+                border-width: .0625em 0 0 0;
+                border-style: solid;
+                border-color: #555;
+            }
+            
+            div.wifi-item:FIRST-CHILD {
+                border-top-width: 0;
+            }
+
+            div.wifi-item:LAST-CHILD {
+                border-bottom-width: .0625em;
+            }
+            
+            div.wifi-item:ACTIVE {
+                background: #303030;
+            }
+            
+            div.wifi-item::BEFORE {
+                content: '';
+                margin: 0.5em;
+                display: inline-block;
+                width: 2em;
+                height: 2em;
+                vertical-align: middle;
+            }
+            
+            div.wifi-item.full::BEFORE {
+                background: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg version='1.1' viewBox='0 0 1200 1200' xmlns='http://www.w3.org/2000/svg' xmlns:cc='http://creativecommons.org/ns%23' xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns%23'%3E%3Cmetadata%3E%3Crdf:RDF%3E%3Ccc:Work rdf:about=''%3E%3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E%3Cdc:type rdf:resource='http://purl.org/dc/dcmitype/StillImage'/%3E%3Cdc:title/%3E%3C/cc:Work%3E%3C/rdf:RDF%3E%3C/metadata%3E%3Ccircle cx='601.71' cy='868.42' r='73.252' fill='%23eee'/%3E%3Cpath d='m118.1 425.29 91.443 91.443c216.23-216.24 568.09-216.25 784.33 0l91.454-91.443c-266.67-266.67-700.57-266.65-967.23 0z' fill='%23eee'/%3E%3Cpath d='m951.7 558.94c-192.98-192.97-506.98-192.97-699.96 0l91.454 91.454c142.55-142.56 374.5-142.56 517.06 0z' fill='%23eee'/%3E%3Cpath d='m816.62 694.02c-57.403-57.415-133.73-89.021-214.91-89.021-81.177 0-157.5 31.607-214.9 89.021l91.443 91.432c32.971-32.971 76.822-51.128 123.45-51.128 46.648 0 90.488 18.157 123.46 51.128z' fill='%23eee'/%3E%3C/svg%3E");
+            }
+
+            div.wifi-item.medium::BEFORE {
+                background: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg version='1.1' viewBox='0 0 1200 1200' xmlns='http://www.w3.org/2000/svg' xmlns:cc='http://creativecommons.org/ns%23' xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns%23'%3E%3Cmetadata%3E%3Crdf:RDF%3E%3Ccc:Work rdf:about=''%3E%3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E%3Cdc:type rdf:resource='http://purl.org/dc/dcmitype/StillImage'/%3E%3Cdc:title/%3E%3C/cc:Work%3E%3C/rdf:RDF%3E%3C/metadata%3E%3Ccircle cx='601.71' cy='868.42' r='73.252' fill='%23eee'/%3E%3Cpath d='m118.1 425.29 91.443 91.443c216.23-216.24 568.09-216.25 784.33 0l91.454-91.443c-266.67-266.67-700.57-266.65-967.23 0z' fill='%23696969'/%3E%3Cpath d='m951.7 558.94c-192.98-192.97-506.98-192.97-699.96 0l91.454 91.454c142.55-142.56 374.5-142.56 517.06 0z' fill='%23eee'/%3E%3Cpath d='m816.62 694.02c-57.403-57.415-133.73-89.021-214.91-89.021-81.177 0-157.5 31.607-214.9 89.021l91.443 91.432c32.971-32.971 76.822-51.128 123.45-51.128 46.648 0 90.488 18.157 123.46 51.128z' fill='%23eee'/%3E%3C/svg%3E");
+            }
+
+            div.wifi-item.low::BEFORE {
+                background: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg version='1.1' viewBox='0 0 1200 1200' xmlns='http://www.w3.org/2000/svg' xmlns:cc='http://creativecommons.org/ns%23' xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns%23'%3E%3Cmetadata%3E%3Crdf:RDF%3E%3Ccc:Work rdf:about=''%3E%3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E%3Cdc:type rdf:resource='http://purl.org/dc/dcmitype/StillImage'/%3E%3Cdc:title/%3E%3C/cc:Work%3E%3C/rdf:RDF%3E%3C/metadata%3E%3Ccircle cx='601.71' cy='868.42' r='73.252' fill='%23eee'/%3E%3Cpath d='m118.1 425.29 91.443 91.443c216.23-216.24 568.09-216.25 784.33 0l91.454-91.443c-266.67-266.67-700.57-266.65-967.23 0z' fill='%23696969'/%3E%3Cpath d='m951.7 558.94c-192.98-192.97-506.98-192.97-699.96 0l91.454 91.454c142.55-142.56 374.5-142.56 517.06 0z' fill='%23696969'/%3E%3Cpath d='m816.62 694.02c-57.403-57.415-133.73-89.021-214.91-89.021-81.177 0-157.5 31.607-214.9 89.021l91.443 91.432c32.971-32.971 76.822-51.128 123.45-51.128 46.648 0 90.488 18.157 123.46 51.128z' fill='%23eee'/%3E%3C/svg%3E");
+            }
+            
+            div.wifi-item.hidden {
+                height: 0;
+                border-width: 0;
+            }
+
+            div.wifi-item.selected {
+                border-top-width: 0;
+                height: 6em;
+                color: #eee;
+            }
+            
+            div.wifi-item.selected:ACTIVE {
+                background: inherit;
+            }
+            
+            input[type=password] {
+                color: #eee;
+                border: .0625em solid #62abea;
+                border-radius: .2em;
+                padding: .25em;
+                line-height: 1.15em;
+                font-size: 1.2em;
+                box-sizing: border-box;
+                background: #444;
+                display: block;
+                width: 90%;
+                margin-left: 5%;
+                outline: 0;
+            }
+
+
         </style>
         <script type="text/javascript">
         
             document.addEventListener('DOMContentLoaded', function () {
-                var scanButton = document.getElementById('scanButton');
-                var wifiScanImg = document.getElementById('wifiScanImg');
                 var body = document.getElementsByTagName('body')[0];
+                var progressOverlay = document.getElementsByClassName('progress-overlay')[0];
                 var progress = false;
                 
                 function setProgress() {
@@ -77,7 +188,10 @@
                         return;
                     }
                     progress = true;
-                    body.className = 'progress';
+                    progressOverlay.style.display = 'block';
+                    setTimeout(function () {
+                        body.classList.add('progress');
+                    }, 10);
                 }
                 
                 function clearProgress() {
@@ -85,22 +199,80 @@
                         return;
                     }
                     progress = false;
-                    body.className = '';
+                    body.classList.remove('progress');
+                    setTimeout(function () {
+                        progressOverlay.style.display = '';
+                    }, 1000);
                 }
                 
-                scanButton.onclick = function () {
-                    setProgress();
-                    setTimeout(clearProgress, 2000);
+                function selectItem() {
+                    var els = document.getElementsByClassName('wifi-item');
+                    Array.prototype.forEach.call(els, function (div) {
+                        if (div === this) {
+                            return;
+                        }
+                        div.classList.add('hidden');
+                    }.bind(this));
+
+                    this.classList.add('selected');
+                    this.onclick = null;
+                    
+                    var pskInput = document.createElement('input');
+                    pskInput.setAttribute('type', 'password');
+                    pskInput.setAttribute('placeholder', 'network key');
+                    this.append(pskInput);
                 }
+                
+                function initItems() {
+                    var els = document.getElementsByClassName('wifi-item');
+                    Array.prototype.forEach.call(els, function (div) {
+                        div.onclick = selectItem;
+                    });
+                }
+                
+                initItems();
+                
+                setProgress();
+                setTimeout(clearProgress, 2000);
             })
         
         </script>
     </head>
     
     <body>
-        <div class="main-form">
-            <div class="button all-transition" id="scanButton">WiFi Scan</div>
+        <div class="wifi-list-header">Choose WiFi Network</div>
+        <div class="wifi-list limit-width">
+            <div class="wifi-item full">Full WiFi</div>
+            <div class="wifi-item medium">Medium WiFi</div>
+            <div class="wifi-item low">Low WiFi</div>
+            <div class="wifi-item full">Full WiFi</div>
+            <div class="wifi-item medium">Medium WiFi</div>
+            <div class="wifi-item low">Low WiFi</div>
+            <div class="wifi-item full">Full WiFi</div>
+            <div class="wifi-item medium">Medium WiFi</div>
+            <div class="wifi-item low">Low WiFi</div>
+            <div class="wifi-item full">Full WiFi</div>
+            <div class="wifi-item medium">Medium WiFi</div>
+            <div class="wifi-item low">Low WiFi</div>
+            <div class="wifi-item medium">Medium WiFi</div>
+            <div class="wifi-item low">Low WiFi</div>
+            <div class="wifi-item full">Full WiFi</div>
+            <div class="wifi-item medium">Medium WiFi</div>
+            <div class="wifi-item low">Low WiFi</div>
+            <div class="wifi-item full">Full WiFi</div>
+            <div class="wifi-item medium">Medium WiFi</div>
+            <div class="wifi-item low">Low WiFi</div>
+            <div class="wifi-item medium">Medium WiFi</div>
+            <div class="wifi-item low">Low WiFi</div>
+            <div class="wifi-item full">Full WiFi</div>
+            <div class="wifi-item medium">Medium WiFi</div>
+            <div class="wifi-item low">Low WiFi</div>
+            <div class="wifi-item full">Full WiFi</div>
         </div>
-        <img class="all-transition" id="wifiScanImg" src="data:image/svg+xml,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 100 100' preserveAspectRatio='xMidYMid'%3E%3Csvg version='1.1' id='d1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 100 100' style='transform-origin: 50px 50px 0px;' xml:space='preserve'%3E%3Cg style='transform-origin: 50px 50px 0px;'%3E%3Cg style='transform-origin: 50px 50px 0px; transform: scale(0.6);'%3E%3Cg style='transform-origin: 50px 50px 0px;'%3E%3Cg%3E%3Cstyle type='text/css' class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -1s; animation-direction: normal;'%3E.st0%7Bfill:%23C7B299;stroke:%23333333;stroke-width:6;stroke-miterlimit:10;%7D .st1%7Bfill:%23F5E169;%7D .st2%7Bfill:%23666666;%7D .st3%7Bfill:%23F5E6C8;%7D .st4%7Bfill:%23333333;%7D .st5%7Bfill:%23E0E0E0;%7D .st6%7Bfill:%23F8B26A;%7D .st7%7Bfill:%23FFFFFF;stroke:%23000000;stroke-width:4;stroke-miterlimit:10;%7D .st8%7Bfill:%23F47E60;%7D .st9%7Bfill:%23ABBD81;%7D .st10%7Bfill:%23E15B64;%7D .st11%7Bfill:%23666666;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st12%7Bfill:%23FFFFFF;stroke:%23221E1F;stroke-width:6;stroke-linejoin:round;stroke-miterlimit:10;%7D .st13%7Bfill:%2377A4BD;%7D .st14%7Bfill:%23FFDC6C;%7D .st15%7Bfill:%23FFFFFF;%7D .st16%7Bfill:%23353035;%7D .st17%7Bfill:%23E0E0E0;stroke:%23000000;stroke-width:6;stroke-miterlimit:10;%7D .st18%7Bfill:none;stroke:%23000000;stroke-width:5;stroke-linecap:round;stroke-miterlimit:10;%7D .st19%7Bfill:none;stroke:%23000000;stroke-width:5;stroke-miterlimit:10;%7D .st20%7Bfill:none;%7D .st21%7Bfill:%23666666;stroke:%23221E1F;stroke-width:6;stroke-linejoin:round;stroke-miterlimit:10;%7D .st22%7Bfill:%23FFFFFF;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st23%7Bfill:%23333333;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st24%7Bfill:%231BD112;%7D .st25%7Bfill:%23FFFFFF;stroke:%23333333;stroke-width:8;stroke-miterlimit:10;%7D .st26%7Bfill:none;stroke:%23666666;stroke-width:8;stroke-miterlimit:10;%7D .st27%7Bfill:%23FFFFFF;stroke:%23333333;stroke-miterlimit:10;%7D .st28%7Bfill:none;stroke:%23333333;stroke-miterlimit:10;%7D .st29%7Bstroke:%23333333;stroke-miterlimit:10;%7D .st30%7Bfill:none;stroke:%23000000;stroke-width:4;stroke-linecap:round;stroke-miterlimit:10;%7D .st31%7Bfill:none;stroke:%23000000;stroke-width:6;stroke-miterlimit:10;%7D .st32%7Bfill:%23C33737;%7D .st33%7Bfill:%23849B87;%7D .st34%7Bfill:%2366503A;%7D .st35%7Bfill:none;stroke:%23333333;stroke-width:6;stroke-miterlimit:10;%7D .st36%7Bfill:none;stroke:%23333333;stroke-width:4;stroke-miterlimit:10;%7D .st37%7Bfill:%23C59B6D;%7D .st38%7Bfill:%23E0E0E0;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st39%7Bfill:%23666666;stroke:%23000000;stroke-width:3;stroke-miterlimit:10;%7D .st40%7Bfill:%23F5E6C8;stroke:%23000000;stroke-width:3;stroke-miterlimit:10;%7D .st41%7Bfill:%23FFFFFF;stroke:%23808080;stroke-width:4;stroke-miterlimit:10;%7D .st42%7Bfill:%23808080;stroke:%23808080;stroke-width:4;stroke-miterlimit:10;%7D .st43%7Bfill:%23666666;stroke:%23B3B3B3;stroke-width:12;stroke-linecap:round;stroke-miterlimit:10;%7D .st44%7Bfill:%23808080;%7D .st45%7Bfill:%23B3B3B3;%7D .st46%7Bfill:%23FFFF00;stroke:%23E15B64;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;%7D .st47%7Bfill:none;stroke:%23E15B64;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;%7D .st48%7Bfill:%23F5E6C8;stroke:%23333333;stroke-width:4;stroke-miterlimit:10;%7D%3C/style%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.928571s; animation-direction: normal;'%3E%3Cpath class='st10' d='M56.4,75.4c-3.6-3.6-9.3-3.6-12.9,0l6.4,6.4L56.4,75.4z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.857143s; animation-direction: normal;'%3E%3Cpath class='st10' d='M62.9,69l6.4-6.4c-10.7-10.7-27.9-10.7-38.6,0l6.4,6.4C44.2,61.9,55.8,61.9,62.9,69z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.785714s; animation-direction: normal;'%3E%3Cpath class='st10' d='M75.7,56.1l6.4-6.4c-17.8-17.8-46.5-17.8-64.3,0l6.4,6.4C38.5,41.9,61.5,41.9,75.7,56.1z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.714286s; animation-direction: normal;'%3E%3Cpath class='st10' d='M88.6,43.2l6.4-6.4C70.1,12,29.9,12,5,36.8l6.4,6.4C32.7,22,67.3,22,88.6,43.2z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cmetadata xmlns:d='https://loading.io/stock/' class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.642857s; animation-direction: normal;'%3E%3C/metadata%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/g%3E%3Cstyle type='text/css' class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.285714s; animation-direction: normal;'%3E@keyframes ld-fade %7B0%25 %7Bopacity: 1;%7D100%25 %7Bopacity: 0;%7D%7D@keyframes ld-fade %7B0%25 %7Bopacity: 1;%7D100%25 %7Bopacity: 0;%7D%7D.ld.ld-fade %7Banimation: ld-fade 1s infinite linear;animation: ld-fade 1s infinite linear;%7D%3C/style%3E%3C/svg%3E%3C/svg%3E">
+        <div class="wifi-list-footer">espQToggle 0.8b2</div>
+        <div class="progress-overlay">
+            <img class="limit-width" src="data:image/svg+xml,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 100 100' preserveAspectRatio='xMidYMid'%3E%3Csvg version='1.1' id='d1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 100 100' style='transform-origin: 50px 50px 0px;' xml:space='preserve'%3E%3Cg style='transform-origin: 50px 50px 0px;'%3E%3Cg style='transform-origin: 50px 50px 0px; transform: scale(0.6);'%3E%3Cg style='transform-origin: 50px 50px 0px;'%3E%3Cg%3E%3Cstyle type='text/css' class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -1s; animation-direction: normal;'%3E.st0%7Bfill:%23C7B299;stroke:%23333333;stroke-width:6;stroke-miterlimit:10;%7D .st1%7Bfill:%23F5E169;%7D .st2%7Bfill:%23666666;%7D .st3%7Bfill:%23F5E6C8;%7D .st4%7Bfill:%23333333;%7D .st5%7Bfill:%23E0E0E0;%7D .st6%7Bfill:%23F8B26A;%7D .st7%7Bfill:%23FFFFFF;stroke:%23000000;stroke-width:4;stroke-miterlimit:10;%7D .st8%7Bfill:%23F47E60;%7D .st9%7Bfill:%23ABBD81;%7D .st10%7Bfill:%23E15B64;%7D .st11%7Bfill:%23666666;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st12%7Bfill:%23FFFFFF;stroke:%23221E1F;stroke-width:6;stroke-linejoin:round;stroke-miterlimit:10;%7D .st13%7Bfill:%2377A4BD;%7D .st14%7Bfill:%23FFDC6C;%7D .st15%7Bfill:%23FFFFFF;%7D .st16%7Bfill:%23353035;%7D .st17%7Bfill:%23E0E0E0;stroke:%23000000;stroke-width:6;stroke-miterlimit:10;%7D .st18%7Bfill:none;stroke:%23000000;stroke-width:5;stroke-linecap:round;stroke-miterlimit:10;%7D .st19%7Bfill:none;stroke:%23000000;stroke-width:5;stroke-miterlimit:10;%7D .st20%7Bfill:none;%7D .st21%7Bfill:%23666666;stroke:%23221E1F;stroke-width:6;stroke-linejoin:round;stroke-miterlimit:10;%7D .st22%7Bfill:%23FFFFFF;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st23%7Bfill:%23333333;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st24%7Bfill:%231BD112;%7D .st25%7Bfill:%23FFFFFF;stroke:%23333333;stroke-width:8;stroke-miterlimit:10;%7D .st26%7Bfill:none;stroke:%23666666;stroke-width:8;stroke-miterlimit:10;%7D .st27%7Bfill:%23FFFFFF;stroke:%23333333;stroke-miterlimit:10;%7D .st28%7Bfill:none;stroke:%23333333;stroke-miterlimit:10;%7D .st29%7Bstroke:%23333333;stroke-miterlimit:10;%7D .st30%7Bfill:none;stroke:%23000000;stroke-width:4;stroke-linecap:round;stroke-miterlimit:10;%7D .st31%7Bfill:none;stroke:%23000000;stroke-width:6;stroke-miterlimit:10;%7D .st32%7Bfill:%23C33737;%7D .st33%7Bfill:%23849B87;%7D .st34%7Bfill:%2366503A;%7D .st35%7Bfill:none;stroke:%23333333;stroke-width:6;stroke-miterlimit:10;%7D .st36%7Bfill:none;stroke:%23333333;stroke-width:4;stroke-miterlimit:10;%7D .st37%7Bfill:%23C59B6D;%7D .st38%7Bfill:%23E0E0E0;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st39%7Bfill:%23666666;stroke:%23000000;stroke-width:3;stroke-miterlimit:10;%7D .st40%7Bfill:%23F5E6C8;stroke:%23000000;stroke-width:3;stroke-miterlimit:10;%7D .st41%7Bfill:%23FFFFFF;stroke:%23808080;stroke-width:4;stroke-miterlimit:10;%7D .st42%7Bfill:%23808080;stroke:%23808080;stroke-width:4;stroke-miterlimit:10;%7D .st43%7Bfill:%23666666;stroke:%23B3B3B3;stroke-width:12;stroke-linecap:round;stroke-miterlimit:10;%7D .st44%7Bfill:%23808080;%7D .st45%7Bfill:%23B3B3B3;%7D .st46%7Bfill:%23FFFF00;stroke:%23E15B64;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;%7D .st47%7Bfill:none;stroke:%23E15B64;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;%7D .st48%7Bfill:%23F5E6C8;stroke:%23333333;stroke-width:4;stroke-miterlimit:10;%7D%3C/style%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.928571s; animation-direction: normal;'%3E%3Cpath class='st10' d='M56.4,75.4c-3.6-3.6-9.3-3.6-12.9,0l6.4,6.4L56.4,75.4z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.857143s; animation-direction: normal;'%3E%3Cpath class='st10' d='M62.9,69l6.4-6.4c-10.7-10.7-27.9-10.7-38.6,0l6.4,6.4C44.2,61.9,55.8,61.9,62.9,69z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.785714s; animation-direction: normal;'%3E%3Cpath class='st10' d='M75.7,56.1l6.4-6.4c-17.8-17.8-46.5-17.8-64.3,0l6.4,6.4C38.5,41.9,61.5,41.9,75.7,56.1z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.714286s; animation-direction: normal;'%3E%3Cpath class='st10' d='M88.6,43.2l6.4-6.4C70.1,12,29.9,12,5,36.8l6.4,6.4C32.7,22,67.3,22,88.6,43.2z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cmetadata xmlns:d='https://loading.io/stock/' class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.642857s; animation-direction: normal;'%3E%3C/metadata%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/g%3E%3Cstyle type='text/css' class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.285714s; animation-direction: normal;'%3E@keyframes ld-fade %7B0%25 %7Bopacity: 1;%7D100%25 %7Bopacity: 0;%7D%7D@keyframes ld-fade %7B0%25 %7Bopacity: 1;%7D100%25 %7Bopacity: 0;%7D%7D.ld.ld-fade %7Banimation: ld-fade 1s infinite linear;animation: ld-fade 1s infinite linear;%7D%3C/style%3E%3C/svg%3E%3C/svg%3E">
+            <div>Scanning for WiFi networks...</div>
+        </div>
     </body>
 </html>
