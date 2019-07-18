@@ -2233,7 +2233,8 @@ json_t *patch_webhooks(json_t *query_json, json_t *request_json, int *code) {
 json_t *get_wifi(json_t *query_json, int *code) {
     json_t *response_json = NULL;
 
-    if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
+    /* allow non-authenticated WiFi scans only in AP mode */
+    if (!(wifi_get_opmode() | SOFTAP_MODE) && api_access_level < API_ACCESS_LEVEL_ADMIN) {
         return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
     }
 

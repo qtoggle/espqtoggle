@@ -52,7 +52,7 @@
 
 static httpserver_context_t         http_state_array[MAX_PARALLEL_HTTP_REQ];
 
-static char                       * unprotected_paths[] = {"/access", "/", NULL};
+static char                       * unprotected_paths[] = {"/", "/access", "/wifi", NULL};
 
 
 ICACHE_FLASH_ATTR static void     * on_tcp_conn(struct espconn *conn);
@@ -330,7 +330,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
 
     skip_auth:
 
-    if (!strncmp(path, "/", 1)) {  /* index */
+    if (!strcmp(path, "/")) {  /* index */
         uint32 html_len;
         uint8 *html = html_load(&html_len);
         if (!html) {
