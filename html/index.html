@@ -38,25 +38,8 @@
                 margin: 2em;
             }
             
-            div.button {
-                line-height: 2.5em;
-                padding: 0 0.5em;
-                border-radius: .2em;
-                min-width: 6em;
-                text-align: center;
-                background: #62abea;
-                cursor: pointer;
-                box-sizing: border-box;
-                opacity: 1;
-            }
-            
-            div.button:ACTIVE {
-                background: #4e89bb;
-            }
-            
             div.progress-overlay {
                 transition: all .3s ease;
-                display: none;
                 position: absolute;
                 background: #444;
                 top: 0;
@@ -106,17 +89,9 @@
                 margin: auto;
                 height: 3em;
                 line-height: 3em;
-                border-width: .0625em 0 0 0;
+                border-width: 0 0 .0625em 0;
                 border-style: solid;
                 border-color: #555;
-            }
-            
-            div.wifi-item:FIRST-CHILD {
-                border-top-width: 0;
-            }
-
-            div.wifi-item:LAST-CHILD {
-                border-bottom-width: .0625em;
             }
             
             div.wifi-item:ACTIVE {
@@ -151,7 +126,8 @@
 
             div.wifi-item.selected {
                 border-top-width: 0;
-                height: 6em;
+                border-bottom-width: 0;
+                height: 25em;
                 color: #eee;
             }
             
@@ -159,6 +135,7 @@
                 background: inherit;
             }
             
+            input[type=text],
             input[type=password] {
                 color: #eee;
                 border: .0625em solid #62abea;
@@ -171,9 +148,51 @@
                 display: block;
                 width: 90%;
                 margin-left: 5%;
+                margin-top: 1em;
                 outline: 0;
             }
-
+            
+            div.button {
+                transition: all .3s ease;
+                line-height: 2.5em;
+                padding: 0 0.5em;
+                border-radius: .2em;
+                min-width: 6em;
+                text-align: center;
+                background: #62abea;
+                cursor: pointer;
+                box-sizing: border-box;
+                opacity: 1;
+                margin: 5%;
+            }
+            
+            div.button:ACTIVE {
+                background: #4e89bb;
+            }
+            
+            div.info {
+                text-align: justify;
+                line-height: 1.2em;
+                transition: height .3s ease;
+                height: 0;
+                margin: 0;
+                overflow: hidden;
+            }
+            
+            div.info::BEFORE {
+                content: '';
+                display: block;
+                margin: auto;
+                width: 2em;
+                height: 2em;
+                margin-bottom: 1em;
+                background-image: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg version='1.1' viewBox='0 0 1200 1200' xmlns='http://www.w3.org/2000/svg' xmlns:cc='http://creativecommons.org/ns%23' xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns%23'%3E%3Cmetadata%3E%3Crdf:RDF%3E%3Ccc:Work rdf:about=''%3E%3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E%3Cdc:type rdf:resource='http://purl.org/dc/dcmitype/StillImage'/%3E%3Cdc:title/%3E%3C/cc:Work%3E%3C/rdf:RDF%3E%3C/metadata%3E%3Cpath d='m479.33 907.6v-102.33h67.824v-206.83h-67.824v-102.93h171.48v308.68h68.183v103.29h-239.66z' fill='%23eee'/%3E%3Cpath d='m582.86 290.71a68.902 68.902 0 0 1 68.423 68.782 70.58 70.58 0 0 1 -70.7 69.382 69.022 69.022 0 0 1 -67.105 -69.382 70.34 70.34 0 0 1 69.382 -68.782z' fill='%23eee'/%3E%3Cpath d='m601.07 0.00288c328.93 1.0785 599.15 271.54 597.23 598.19a600.83 600.83 0 0 1 -601.55 600.11c-329.17 0.5991-598.31-271.89-596.75-604.42a599.15 599.15 0 0 1 601.07 -593.88zm2.7561 113.36a484.35 484.35 0 0 0 -489.03 484.71c-2.9958 264.7 216.65 485.67 482.08 486.27a485.07 485.07 0 0 0 486.15 -487.71c-1.5578-265.42-217.25-482.92-479.2-483.27z' fill='%23eee'/%3E%3C/svg%3E");
+            }
+            
+            div.info.visible {
+                height: 20em;
+                margin: 1em;
+            }
 
         </style>
         <script type="text/javascript">
@@ -181,14 +200,35 @@
             document.addEventListener('DOMContentLoaded', function () {
                 var body = document.getElementsByTagName('body')[0];
                 var progressOverlay = document.getElementsByClassName('progress-overlay')[0];
-                var progress = false;
+                var wifiList = document.getElementsByClassName('wifi-list')[0];
+                var infoDiv = document.getElementsByClassName('info')[0];
+                var progress = true;
+                var okButton, selectedItem, pskInput, ipInput, gwInput, dnsInput;
+                
+                function fetchWiFiList(callback) {
+                    var request = new XMLHttpRequest();
+                    request.open('GET', '/wifi', true);
+                    request.onload = function() {
+                        if (request.status >= 200 && request.status < 400) {
+                            callback(JSON.parse(request.responseText));
+                        }
+                        else {
+                            callback([]);
+                        }
+                    };
+
+                    request.onerror = function() {
+                        callback([]);
+                    };
+
+                    request.send();
+                }
                 
                 function setProgress() {
                     if (progress) {
                         return;
                     }
-                    progress = true;
-                    progressOverlay.style.display = 'block';
+                    progressOverlay.style.display = '';
                     setTimeout(function () {
                         body.classList.add('progress');
                     }, 10);
@@ -201,11 +241,13 @@
                     progress = false;
                     body.classList.remove('progress');
                     setTimeout(function () {
-                        progressOverlay.style.display = '';
+                        progressOverlay.style.display = 'none';
                     }, 1000);
                 }
                 
                 function selectItem() {
+                    selectedItem = this;
+                    
                     var els = document.getElementsByClassName('wifi-item');
                     Array.prototype.forEach.call(els, function (div) {
                         if (div === this) {
@@ -217,10 +259,39 @@
                     this.classList.add('selected');
                     this.onclick = null;
                     
-                    var pskInput = document.createElement('input');
+                    pskInput = document.createElement('input');
                     pskInput.setAttribute('type', 'password');
                     pskInput.setAttribute('placeholder', 'network key');
                     this.append(pskInput);
+                    
+                    ipInput = document.createElement('input');
+                    ipInput.setAttribute('type', 'text');
+                    ipInput.setAttribute('placeholder', '(optional) IP (e.g. 192.168.1.10/24)');
+                    this.append(ipInput);
+                    
+                    gwInput = document.createElement('input');
+                    gwInput.setAttribute('type', 'text');
+                    gwInput.setAttribute('placeholder', '(optional) GW (e.g. 192.168.1.1)');
+                    this.append(gwInput);
+                    
+                    dnsInput = document.createElement('input');
+                    dnsInput.setAttribute('type', 'text');
+                    dnsInput.setAttribute('placeholder', '(optional) DNS (e.g. 8.8.8.8)');
+                    this.append(dnsInput);
+                    
+                    okButton = document.createElement('div');
+                    okButton.innerText = 'OK';
+                    okButton.classList.add('button');
+                    this.append(okButton);
+                    
+                    okButton.onclick = sendSettings;
+                }
+                
+                function sendSettings() {
+                    selectedItem.classList.add('hidden');
+                    selectedItem.classList.remove('selected');
+                    
+                    infoDiv.classList.add('visible');
                 }
                 
                 function initItems() {
@@ -230,44 +301,38 @@
                     });
                 }
                 
-                initItems();
-                
-                setProgress();
-                setTimeout(clearProgress, 2000);
+                fetchWiFiList(function (list) {
+                    list.forEach(function (network) {
+                        var div = document.createElement('div');
+                        var cls = 'low';
+                        div.innerText = network.ssid;
+                        if (network.rssi > -50) {
+                            cls = 'full';
+                        }
+                        else if (network.rssi > -70) {
+                            cls = 'medium';
+                        }
+                        div.classList.add('wifi-item');
+                        div.classList.add(cls);
+                        wifiList.insertBefore(div, infoDiv);
+                    });
+                    
+                    initItems();
+                    clearProgress();
+                });
             })
         
         </script>
     </head>
     
-    <body>
+    <body class="progress">
         <div class="wifi-list-header">Choose WiFi Network</div>
         <div class="wifi-list limit-width">
-            <div class="wifi-item full">Full WiFi</div>
-            <div class="wifi-item medium">Medium WiFi</div>
-            <div class="wifi-item low">Low WiFi</div>
-            <div class="wifi-item full">Full WiFi</div>
-            <div class="wifi-item medium">Medium WiFi</div>
-            <div class="wifi-item low">Low WiFi</div>
-            <div class="wifi-item full">Full WiFi</div>
-            <div class="wifi-item medium">Medium WiFi</div>
-            <div class="wifi-item low">Low WiFi</div>
-            <div class="wifi-item full">Full WiFi</div>
-            <div class="wifi-item medium">Medium WiFi</div>
-            <div class="wifi-item low">Low WiFi</div>
-            <div class="wifi-item medium">Medium WiFi</div>
-            <div class="wifi-item low">Low WiFi</div>
-            <div class="wifi-item full">Full WiFi</div>
-            <div class="wifi-item medium">Medium WiFi</div>
-            <div class="wifi-item low">Low WiFi</div>
-            <div class="wifi-item full">Full WiFi</div>
-            <div class="wifi-item medium">Medium WiFi</div>
-            <div class="wifi-item low">Low WiFi</div>
-            <div class="wifi-item medium">Medium WiFi</div>
-            <div class="wifi-item low">Low WiFi</div>
-            <div class="wifi-item full">Full WiFi</div>
-            <div class="wifi-item medium">Medium WiFi</div>
-            <div class="wifi-item low">Low WiFi</div>
-            <div class="wifi-item full">Full WiFi</div>
+            <div class="info">
+                The device should now connect to your WiFi network. <br> <br>
+                If you don't see it connected within 1 minute or if you need to change the WiFi settings, simply switch it to setup mode again and repeat this procedure. <br> <br>
+                You can now close me.
+            </div>
         </div>
         <div class="wifi-list-footer">espQToggle 0.8b2</div>
         <div class="progress-overlay">
