@@ -10,6 +10,7 @@
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  * 
@@ -31,6 +32,7 @@
 #include "espgoodies/crypto.h"
 #include "espgoodies/jwt.h"
 #include "espgoodies/utils.h"
+#include "espgoodies/system.h"
 
 #ifdef _OTA
 #include "espgoodies/ota.h"
@@ -52,7 +54,7 @@
 
 static httpserver_context_t         http_state_array[MAX_PARALLEL_HTTP_REQ];
 
-static char                       * unprotected_paths[] = {"/", "/access", "/wifi", NULL};
+static char                       * unprotected_paths[] = {"/access", NULL};
 
 
 ICACHE_FLASH_ATTR static void     * on_tcp_conn(struct espconn *conn);
@@ -181,6 +183,12 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         else {
             request_json = json_obj_new();
         }
+    }
+
+    /* automatically grant admin access level in setup mode */
+    if (system_setup_mode_active()) {
+        access_level = API_ACCESS_LEVEL_ADMIN;
+        goto skip_auth;
     }
 
     bool unprotected = FALSE;
