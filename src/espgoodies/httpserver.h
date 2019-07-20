@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef _ESPGOODIES_HTTPSERVER_H
@@ -87,7 +87,7 @@ typedef struct {
     http_invalid_callback_t invalid_callback;
     http_request_callback_t request_callback;
     void  * callback_arg;
-    
+
     /* for debugging purposes */
     uint8   slot_index;
     uint8   ip[4];

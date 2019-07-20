@@ -36,6 +36,7 @@
 #include "espgoodies/utils.h"
 #include "espgoodies/pingwdt.h"
 #include "espgoodies/rtc.h"
+#include "espgoodies/dnsserver.h"
 
 #ifdef _SLEEP
 #include "espgoodies/sleep.h"
@@ -245,4 +246,5 @@ void user_init(void) {
     core_init();
     system_init();
     main_init();
+    dnsserver_start_captive(); // TODO move this to AP mode
 }
