@@ -44,36 +44,46 @@
 #define WIFI_EVENT_DISCONNECTED         2
 #define WIFI_EVENT_CONNECT_TIMEOUT      3
 
+#define WIFI_SSID_MAX_LEN               32
+#define WIFI_BSSID_LEN                  6
+#define WIFI_PSK_MAX_LEN                64
+
 
     /* IP address */
+#ifndef WIFI_AP_IP1
 #define WIFI_AP_IP1                     192
 #define WIFI_AP_IP2                     168
 #define WIFI_AP_IP3                     5
 #define WIFI_AP_IP4                     1
+#endif
 
     /* netmask */
+#ifndef WIFI_AP_NM
 #define WIFI_AP_NM1                     255
 #define WIFI_AP_NM2                     255
 #define WIFI_AP_NM3                     255
 #define WIFI_AP_NM4                     0
+#endif
 
     /* start DHCP IP address */
+#ifndef WIFI_AP_SI1
 #define WIFI_AP_SI1                     192
 #define WIFI_AP_SI2                     168
 #define WIFI_AP_SI3                     5
 #define WIFI_AP_SI4                     100
+#endif
 
     /* end DHCP IP address */
+#ifndef WIFI_AP_EI1
 #define WIFI_AP_EI1                     192
 #define WIFI_AP_EI2                     168
 #define WIFI_AP_EI3                     5
 #define WIFI_AP_EI4                     150
+#endif
 
-#define WIFI_AP_PSK                     "espqtoggle"
-
-#define WIFI_SSID_MAX_LEN               32
-#define WIFI_BSSID_LEN                  6
-#define WIFI_PSK_MAX_LEN                64
+#ifndef WIFI_AP_PSK
+#define WIFI_AP_PSK                     NULL
+#endif
 
 
 typedef struct {
