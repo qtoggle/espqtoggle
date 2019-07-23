@@ -18,6 +18,7 @@
  */
 
 #include <mem.h>
+#include <c_types.h>
 #include <spi_flash.h>
 
 #include "espgoodies/common.h"
