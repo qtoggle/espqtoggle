@@ -8,6 +8,7 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="theme-color" content="#62abea">
         <meta name="apple-mobile-web-app-status-bar-style" content="#62abea">
+        <link rel="icon" href="data:,">
         <title>espQToggle Setup</title>
         <style>
         
@@ -301,25 +302,27 @@
                     });
                 }
                 
-                fetchWiFiList(function (list) {
-                    list.forEach(function (network) {
-                        var div = document.createElement('div');
-                        var cls = 'low';
-                        div.innerText = network.ssid;
-                        if (network.rssi > -50) {
-                            cls = 'full';
-                        }
-                        else if (network.rssi > -70) {
-                            cls = 'medium';
-                        }
-                        div.classList.add('wifi-item');
-                        div.classList.add(cls);
-                        wifiList.insertBefore(div, infoDiv);
+                setTimeout(function () {
+                    fetchWiFiList(function (list) {
+                        list.forEach(function (network) {
+                            var div = document.createElement('div');
+                            var cls = 'low';
+                            div.innerText = network.ssid;
+                            if (network.rssi > -50) {
+                                cls = 'full';
+                            }
+                            else if (network.rssi > -70) {
+                                cls = 'medium';
+                            }
+                            div.classList.add('wifi-item');
+                            div.classList.add(cls);
+                            wifiList.insertBefore(div, infoDiv);
+                        });
+                        
+                        initItems();
+                        clearProgress();
                     });
-                    
-                    initItems();
-                    clearProgress();
-                });
+                }, 1000);
             })
         
         </script>
