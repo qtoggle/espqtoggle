@@ -361,11 +361,13 @@ bool wifi_is_connected(void) {
 
 bool wifi_scan(wifi_scan_callback_t callback) {
     if (wifi_scanning) {
+        DEBUG_WIFI("attempt to scan while already scanning");
         return FALSE; /* already scanning */
     }
 
 #ifdef _OTA
     if (ota_busy()) {
+        DEBUG_WIFI("attempt to scan while OTA busy");
         return FALSE; /* ota started */
     }
 #endif

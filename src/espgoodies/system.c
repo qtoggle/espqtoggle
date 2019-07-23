@@ -29,6 +29,7 @@
 #include "wifi.h"
 #include "device.h"
 #include "flashcfg.h"
+#include "dnsserver.h"
 #include "system.h"
 
 
@@ -167,6 +168,7 @@ void system_setup_mode_toggle(void) {
 
         DEBUG_SYSTEM("entering setup mode");
         wifi_set_ap_mode(DEFAULT_HOSTNAME);
+        dnsserver_start_captive();
     }
 }
 
