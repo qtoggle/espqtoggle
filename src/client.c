@@ -338,20 +338,6 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
 
     skip_auth:
 
-    if (!strcmp(path, "/")) {  /* index */
-        uint32 html_len;
-        uint8 *html = html_load(&html_len);
-        if (!html) {
-            respond_html(conn, 500, (uint8 *) "Error", 5);
-            goto done;
-        }
-
-        respond_html(conn, 200, html, html_len);
-        free(html);
-
-        goto done;
-    }
-
     /* treat the listen API call separately */
     if (!strncmp(path, "/listen", 7) && method == HTTP_METHOD_GET) {
         DEBUG_ESPQTCLIENT_CONN(conn, "received listen request");
@@ -446,7 +432,22 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
 
         int code;
         response_json = api_call_handle(method, path, query_json, request_json, &code);
-        if (response_json) {
+
+        /* serve the HTML page only in setup mode and on any 404 */
+        if (code == 404 && system_setup_mode_active()) {
+            json_free(response_json);
+
+            uint32 html_len;
+            uint8 *html = html_load(&html_len);
+            if (html) {
+                respond_html(conn, 200, html, html_len);
+                free(html);
+            }
+            else {
+                respond_html(conn, 500, (uint8 *) "Error", 5);
+            }
+        }
+        else if (response_json) {
             respond_json(conn, code, response_json);
             api_conn_reset();
         }
