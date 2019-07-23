@@ -354,6 +354,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
 #ifdef _OTA
         /* no listening while OTA active */
         if (ota_busy()) {
+            DEBUG_ESPQTCLIENT_CONN(conn, "cannot accept listen requests while OTA active");
             respond_error(conn, 503, "busy");
             goto done;
         }
@@ -420,6 +421,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         else { /* new session */
             session = session_create(session_id, conn, timeout, access_level);
             if (!session) { /* too many sessions */
+                DEBUG_ESPQTCLIENT_CONN(conn, "too many sessions");
                 respond_error(conn, 503, "busy");
                 goto done;
             }
@@ -436,6 +438,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         /* serve the HTML page only in setup mode and on any 404 */
         if (code == 404 && system_setup_mode_active()) {
             json_free(response_json);
+            api_conn_reset();
 
             uint32 html_len;
             uint8 *html = html_load(&html_len);
