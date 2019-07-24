@@ -229,6 +229,7 @@
                     if (progress) {
                         return;
                     }
+                    progress = true;
                     progressOverlay.style.display = '';
                     setTimeout(function () {
                         body.classList.add('progress');
@@ -289,10 +290,53 @@
                 }
                 
                 function sendSettings() {
-                    selectedItem.classList.add('hidden');
-                    selectedItem.classList.remove('selected');
+                    var networkWifi = selectedItem.childNodes[0].data;
+                    if (pskInput.value) {
+                        networkWifi += ':' + pskInput.value;
+                    }
                     
-                    infoDiv.classList.add('visible');
+                    var networkIp = '';
+                    if (ipInput.value) {
+                        networkIp = ipInput.value;
+                    }
+                    if (gwInput.value) {
+                        networkIp += ':' + gwInput.value;
+                    }
+                    if (dnsInput.value) {
+                        networkIp += ':' + dnsInput.value;
+                    }
+
+                    var attrs = {
+                        'network_wifi': networkWifi,
+                        'network_ip': networkIp
+                    };
+
+                    var request = new XMLHttpRequest();
+
+                    request.onload = function() {
+                        if (request.status >= 200 && request.status < 400) {
+                            clearProgress();
+                            selectedItem.classList.add('hidden');
+                            selectedItem.classList.remove('selected');
+                            infoDiv.classList.add('visible');
+                        }
+                        else {
+                            request.onerror(request.responseText);
+                        }
+                    };
+
+                    request.onerror = function(error) {
+                        clearProgress();
+                        alert('Error: ' + error);
+                    };
+
+                    request.open('PATCH', '/device', true);
+                    request.setRequestHeader('Content-Type', 'application/json');
+
+                    var body = JSON.stringify(attrs);
+                    request.send(body);
+                    
+                    setProgress();
                 }
                 
                 function initItems() {
