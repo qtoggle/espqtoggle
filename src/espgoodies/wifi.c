@@ -298,7 +298,7 @@ void wifi_connect(uint8 *bssid) {
 }
 
 void wifi_set_ap_mode(char *hostname) {
-    if (!wifi_set_opmode_current(SOFTAP_MODE)) {
+    if (!wifi_set_opmode_current(STATIONAP_MODE)) {
         DEBUG_WIFI("wifi_set_opmode_current() failed");
     }
 
