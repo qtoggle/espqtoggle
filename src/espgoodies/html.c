@@ -20,14 +20,21 @@
 #include <mem.h>
 #include <c_types.h>
 #include <spi_flash.h>
+#include <user_interface.h>
 
 #include "espgoodies/common.h"
 #include "espgoodies/html.h"
 
 
+#define USER1_FLASH_HTML_ADDR       0x78000
+#define USER2_FLASH_HTML_ADDR       0xF8000
+
+
 uint8 *html_load(uint32 *len) {
-    if (spi_flash_read(FLASH_HTML_ADDR, len, 4) != SPI_FLASH_RESULT_OK) {
-        DEBUG_HTML("failed to read HTML length from flash at 0x%05X", FLASH_HTML_ADDR);
+    uint32 flash_html_addr = system_upgrade_userbin_check() ? USER2_FLASH_HTML_ADDR : USER1_FLASH_HTML_ADDR;
+
+    if (spi_flash_read(flash_html_addr, len, 4) != SPI_FLASH_RESULT_OK) {
+        DEBUG_HTML("failed to read HTML length from flash at 0x%05X", flash_html_addr);
         return NULL;
     }
 
@@ -38,14 +45,14 @@ uint8 *html_load(uint32 *len) {
     }
 
     uint8 *data = malloc(*len);
-    uint32 addr = FLASH_HTML_ADDR + 4;
+    uint32 addr = flash_html_addr + 4;
     if (spi_flash_read(addr, (uint32 *) data, *len) != SPI_FLASH_RESULT_OK) {
         DEBUG_HTML("failed to read %d bytes from flash at 0x%05X", *len, addr);
         free(data);
         return NULL;
     }
 
-    DEBUG_HTML("successfully read %d bytes from flash at 0x%05X", *len, FLASH_HTML_ADDR);
+    DEBUG_HTML("successfully read %d bytes from flash at 0x%05X", *len, flash_html_addr);
 
     return data;
 }
