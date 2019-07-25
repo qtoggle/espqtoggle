@@ -46,6 +46,30 @@
                 }
             }
         },
+        {
+            "name": "http-client",
+            "params": {
+                "method": "GET",
+                "path": "/",
+                "expected_status": 200,
+                "expected_headers": {
+                    "Content-Type": "text/html",
+                    "Content-Encoding": "gzip"
+                }
+            }
+        },
+        {
+            "name": "http-client",
+            "params": {
+                "method": "GET",
+                "path": "/nonexistent",
+                "expected_status": 200,
+                "expected_headers": {
+                    "Content-Type": "text/html",
+                    "Content-Encoding": "gzip"
+                }
+            }
+        },
 		{
 			"name": "json-http-client",
 			"params": {
