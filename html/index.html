@@ -40,6 +40,7 @@
             }
             
             div.progress-overlay {
+                display: none;
                 transition: all .3s ease;
                 position: absolute;
                 background: #444;
@@ -165,10 +166,16 @@
                 box-sizing: border-box;
                 opacity: 1;
                 margin: 5%;
+                font-weight: bold;
             }
             
             div.button:ACTIVE {
                 background: #4e89bb;
+            }
+            
+            div.scan-button {
+                height: 10em;
+                line-height: 10em;
             }
             
             div.info {
@@ -202,27 +209,83 @@
                 var body = document.getElementsByTagName('body')[0];
                 var progressOverlay = document.getElementsByClassName('progress-overlay')[0];
                 var wifiList = document.getElementsByClassName('wifi-list')[0];
+                var scanButton = document.getElementsByClassName('scan-button')[0];
                 var infoDiv = document.getElementsByClassName('info')[0];
-                var progress = true;
+                var progress = false;
                 var okButton, selectedItem, pskInput, ipInput, gwInput, dnsInput;
                 
                 function fetchWiFiList(callback) {
                     var request = new XMLHttpRequest();
+                    setProgress();
                     request.open('GET', '/wifi', true);
                     request.onload = function() {
+                        clearProgress();
+
                         if (request.status >= 200 && request.status < 400) {
                             callback(JSON.parse(request.responseText));
                         }
                         else {
+                            showError(request.responseText);
                             callback([]);
                         }
                     };
 
                     request.onerror = function() {
+                        clearProgress();
+                        showError('AJAX request failed');
                         callback([]);
                     };
 
                     request.send();
+                }
+                
+                function sendSettings() {
+                    var networkWifi = selectedItem.childNodes[0].data;
+                    if (pskInput.value) {
+                        networkWifi += ':' + pskInput.value;
+                    }
+                    
+                    var networkIp = '';
+                    if (ipInput.value) {
+                        networkIp = ipInput.value;
+                    }
+                    if (gwInput.value) {
+                        networkIp += ':' + gwInput.value;
+                    }
+                    if (dnsInput.value) {
+                        networkIp += ':' + dnsInput.value;
+                    }
+
+                    var attrs = {
+                        'network_wifi': networkWifi,
+                        'network_ip': networkIp
+                    };
+
+                    var request = new XMLHttpRequest();
+                    setProgress();
+
+                    request.onload = function() {
+                        clearProgress();
+                        if (request.status >= 200 && request.status < 400) {
+                            selectedItem.classList.add('hidden');
+                            selectedItem.classList.remove('selected');
+                            infoDiv.classList.add('visible');
+                        }
+                        else {
+                            showError(request.responseText);
+                        }
+                    };
+
+                    request.onerror = function() {
+                        clearProgress();
+                        showError('AJAX request failed');
+                    };
+                    
+                    request.open('PATCH', '/device', true);
+                    request.setRequestHeader('Content-Type', 'application/json');
+
+                    var body = JSON.stringify(attrs);
+                    request.send(body);
                 }
                 
                 function setProgress() {
@@ -230,7 +293,7 @@
                         return;
                     }
                     progress = true;
-                    progressOverlay.style.display = '';
+                    progressOverlay.style.display = 'block';
                     setTimeout(function () {
                         body.classList.add('progress');
                     }, 10);
@@ -243,10 +306,14 @@
                     progress = false;
                     body.classList.remove('progress');
                     setTimeout(function () {
-                        progressOverlay.style.display = 'none';
+                        progressOverlay.style.display = '';
                     }, 1000);
                 }
                 
+                function showError(msg) {
+                    alert('Error: ' + msg);
+                }
+
                 function selectItem() {
                     selectedItem = this;
                     
@@ -289,64 +356,15 @@
                     okButton.onclick = sendSettings;
                 }
                 
-                function sendSettings() {
-                    var networkWifi = selectedItem.childNodes[0].data;
-                    if (pskInput.value) {
-                        networkWifi += ':' + pskInput.value;
-                    }
-                    
-                    var networkIp = '';
-                    if (ipInput.value) {
-                        networkIp = ipInput.value;
-                    }
-                    if (gwInput.value) {
-                        networkIp += ':' + gwInput.value;
-                    }
-                    if (dnsInput.value) {
-                        networkIp += ':' + dnsInput.value;
-                    }
-
-                    var attrs = {
-                        'network_wifi': networkWifi,
-                        'network_ip': networkIp
-                    };
-
-                    var request = new XMLHttpRequest();
-
-                    request.onload = function() {
-                        if (request.status >= 200 && request.status < 400) {
-                            clearProgress();
-                            selectedItem.classList.add('hidden');
-                            selectedItem.classList.remove('selected');
-                            infoDiv.classList.add('visible');
-                        }
-                        else {
-                            request.onerror(request.responseText);
-                        }
-                    };
-
-                    request.onerror = function(error) {
-                        clearProgress();
-                        alert('Error: ' + error);
-                    };
-
-                    request.open('PATCH', '/device', true);
-                    request.setRequestHeader('Content-Type', 'application/json');
-
-                    var body = JSON.stringify(attrs);
-                    request.send(body);
-                    
-                    setProgress();
-                }
-                
                 function initItems() {
+                    scanButton.style.display = 'none';
                     var els = document.getElementsByClassName('wifi-item');
                     Array.prototype.forEach.call(els, function (div) {
                         div.onclick = selectItem;
                     });
                 }
                 
-                setTimeout(function () {
+                function startScan() {
                     fetchWiFiList(function (list) {
                         list.forEach(function (network) {
                             var div = document.createElement('div');
@@ -364,17 +382,19 @@
                         });
                         
                         initItems();
-                        clearProgress();
                     });
-                }, 1000);
+                }
+                
+                scanButton.onclick = startScan;
             })
         
         </script>
     </head>
     
-    <body class="progress">
+    <body>
         <div class="wifi-list-header">Choose WiFi Network</div>
         <div class="wifi-list limit-width">
+            <div class="button scan-button">Start Scanning</div>
             <div class="info">
                 The device should now connect to your WiFi network. <br> <br>
                 If you don't see it connected within 1 minute or if you need to change the WiFi settings, simply switch it to setup mode again and repeat this procedure. <br> <br>
