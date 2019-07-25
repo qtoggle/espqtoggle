@@ -26,14 +26,14 @@
 
 
 bool flashcfg_load(uint8 *data) {
-    if (spi_flash_read(FLASH_CONFIG_ADDR_BASE, (uint32 *) data, FLASH_CONFIG_SIZE) != SPI_FLASH_RESULT_OK) {
+    if (spi_flash_read(FLASH_CONFIG_ADDR, (uint32 *) data, FLASH_CONFIG_SIZE) != SPI_FLASH_RESULT_OK) {
         DEBUG_FLASHCFG("failed to read %d bytes from flash config at 0x%05X",
-                       FLASH_CONFIG_SIZE, FLASH_CONFIG_ADDR_BASE);
+                       FLASH_CONFIG_SIZE, FLASH_CONFIG_ADDR);
         return FALSE;
     }
     else {
         DEBUG_FLASHCFG("successfully read %d bytes from flash config at 0x%05X",
-                       FLASH_CONFIG_SIZE, FLASH_CONFIG_ADDR_BASE);
+                       FLASH_CONFIG_SIZE, FLASH_CONFIG_ADDR);
     }
 
     return TRUE;
@@ -42,26 +42,26 @@ bool flashcfg_load(uint8 *data) {
 bool flashcfg_save(uint8 *data) {
     int i, sector;
     for (i = 0; i < FLASH_CONFIG_SIZE / FLASH_CONFIG_SECTOR_SIZE; i++) {
-        sector = (FLASH_CONFIG_ADDR_BASE + FLASH_CONFIG_SECTOR_SIZE * i) / 0x1000;
+        sector = (FLASH_CONFIG_ADDR + FLASH_CONFIG_SECTOR_SIZE * i) / 0x1000;
         if (spi_flash_erase_sector(sector) != SPI_FLASH_RESULT_OK) {
             DEBUG_FLASHCFG("failed to erase flash sector at 0x%05X",
-                           FLASH_CONFIG_ADDR_BASE + FLASH_CONFIG_SECTOR_SIZE * i);
+                           FLASH_CONFIG_ADDR + FLASH_CONFIG_SECTOR_SIZE * i);
             return FALSE;
         }
         else {
             DEBUG_FLASHCFG("flash sector at 0x%05X erased",
-                           FLASH_CONFIG_ADDR_BASE + FLASH_CONFIG_SECTOR_SIZE * i);
+                           FLASH_CONFIG_ADDR + FLASH_CONFIG_SECTOR_SIZE * i);
         }
     }
 
-    if (spi_flash_write(FLASH_CONFIG_ADDR_BASE, (uint32 *) data, FLASH_CONFIG_SIZE) != SPI_FLASH_RESULT_OK) {
+    if (spi_flash_write(FLASH_CONFIG_ADDR, (uint32 *) data, FLASH_CONFIG_SIZE) != SPI_FLASH_RESULT_OK) {
         DEBUG_FLASHCFG("failed to write %d bytes of flash config at 0x%05X",
-                       FLASH_CONFIG_SIZE, FLASH_CONFIG_ADDR_BASE);
+                       FLASH_CONFIG_SIZE, FLASH_CONFIG_ADDR);
         return FALSE;
     }
     else {
         DEBUG_FLASHCFG("successfully written %d bytes of flash config at 0x%05X",
-                       FLASH_CONFIG_SIZE, FLASH_CONFIG_ADDR_BASE);
+                       FLASH_CONFIG_SIZE, FLASH_CONFIG_ADDR);
     }
 
     return TRUE;

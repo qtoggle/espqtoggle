@@ -40,5 +40,7 @@ ICACHE_FLASH_ATTR void                          client_init(void);
 ICACHE_FLASH_ATTR void                          respond_json(struct espconn *conn, int status, json_t *json);
 ICACHE_FLASH_ATTR void                          respond_error(struct espconn *conn, int status, char *error);
 
+ICACHE_FLASH_ATTR void                          respond_html(struct espconn *conn, int status, uint8 *html, int len);
+
 
 #endif /* _CLIENT_H */

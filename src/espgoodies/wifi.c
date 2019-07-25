@@ -298,7 +298,7 @@ void wifi_connect(uint8 *bssid) {
 }
 
 void wifi_set_ap_mode(char *hostname) {
-    if (!wifi_set_opmode_current(SOFTAP_MODE)) {
+    if (!wifi_set_opmode_current(STATIONAP_MODE)) {
         DEBUG_WIFI("wifi_set_opmode_current() failed");
     }
 
@@ -325,9 +325,9 @@ void wifi_set_ap_mode(char *hostname) {
 
     memset(&config, 0, sizeof(struct softap_config));
     strcpy((char *) config.ssid, ssid);
-    strcpy((char *) config.password, WIFI_AP_PSK);
+    strcpy((char *) config.password, WIFI_AP_PSK ? WIFI_AP_PSK : "");
     config.ssid_len = strlen(ssid);
-    config.authmode = AUTH_WPA2_PSK;
+    config.authmode = WIFI_AP_PSK ? AUTH_WPA2_PSK : AUTH_OPEN;
     config.channel = 0;
     config.ssid_hidden = FALSE;
     config.max_connection = 4;
@@ -361,11 +361,13 @@ bool wifi_is_connected(void) {
 
 bool wifi_scan(wifi_scan_callback_t callback) {
     if (wifi_scanning) {
+        DEBUG_WIFI("attempt to scan while already scanning");
         return FALSE; /* already scanning */
     }
 
 #ifdef _OTA
     if (ota_busy()) {
+        DEBUG_WIFI("attempt to scan while OTA busy");
         return FALSE; /* ota started */
     }
 #endif

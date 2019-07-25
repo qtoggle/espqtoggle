@@ -289,7 +289,7 @@ static void ICACHE_FLASH_ATTR error_callback(void *arg, int8 errType) {
     disconnect_callback(arg);
 }
 
-static void ICACHE_FLASH_ATTR dns_callback(const char * hostname, ip_addr_t * addr, void * arg) {
+static void ICACHE_FLASH_ATTR dns_callback(const char * hostname, ip_addr_t *addr, void * arg) {
     request_args_t * req = (request_args_t *)arg;
 
     if (addr == NULL) {

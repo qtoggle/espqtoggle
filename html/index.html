@@ -1,0 +1,410 @@
+<!DOCTYPE HTML>
+
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="theme-color" content="#62abea">
+        <meta name="apple-mobile-web-app-status-bar-style" content="#62abea">
+        <link rel="icon" href="data:,">
+        <title>espQToggle Setup</title>
+        <style>
+        
+            * {
+                user-select: none;
+                -webkit-tap-highlight-color: rgba(255,255,255,0);
+            }
+            
+            .limit-width {
+                max-width: 30em;
+                margin: auto;
+            }
+            
+            html {
+                color: #eee;
+                background: #444;
+                font-family: sans-serif;
+                text-align: center;
+                height: 100%;
+            }
+            
+            body {
+                margin: 0;
+                height: 100%;
+            }
+            
+            div.main-form {
+                margin: 2em;
+            }
+            
+            div.progress-overlay {
+                display: none;
+                transition: all .3s ease;
+                position: absolute;
+                background: #444;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                opacity: 0;
+            }
+            
+            body.progress div.progress-overlay {
+                opacity: 1;
+            }
+            
+            div.wifi-list {
+                overflow: auto;
+                background: #393939;
+                height: calc(100% - 6.1em);
+            }
+            
+            @media (min-width: 32em) {
+                div.wifi-list {
+                    border: .0625em  solid #555;
+                }
+            }
+
+            div.wifi-list-header {
+                font-weight: bold;
+                height: 3em;
+                line-height: 3em;
+            }
+            
+            div.wifi-list-footer {
+                position: absolute;
+                width: 100%;
+                bottom: 0;
+                height: 3em;
+                line-height: 3em;
+                background: #444;
+            }
+            
+            div.wifi-item {
+                cursor: pointer;
+                overflow: hidden;
+                color: #62abea;
+                transition: all .3s ease;
+                text-align: left;
+                margin: auto;
+                height: 3em;
+                line-height: 3em;
+                border-width: 0 0 .0625em 0;
+                border-style: solid;
+                border-color: #555;
+            }
+            
+            div.wifi-item:ACTIVE {
+                background: #303030;
+            }
+            
+            div.wifi-item::BEFORE {
+                content: '';
+                margin: 0.5em;
+                display: inline-block;
+                width: 2em;
+                height: 2em;
+                vertical-align: middle;
+            }
+            
+            div.wifi-item.full::BEFORE {
+                background: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg version='1.1' viewBox='0 0 1200 1200' xmlns='http://www.w3.org/2000/svg' xmlns:cc='http://creativecommons.org/ns%23' xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns%23'%3E%3Cmetadata%3E%3Crdf:RDF%3E%3Ccc:Work rdf:about=''%3E%3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E%3Cdc:type rdf:resource='http://purl.org/dc/dcmitype/StillImage'/%3E%3Cdc:title/%3E%3C/cc:Work%3E%3C/rdf:RDF%3E%3C/metadata%3E%3Ccircle cx='601.71' cy='868.42' r='73.252' fill='%23eee'/%3E%3Cpath d='m118.1 425.29 91.443 91.443c216.23-216.24 568.09-216.25 784.33 0l91.454-91.443c-266.67-266.67-700.57-266.65-967.23 0z' fill='%23eee'/%3E%3Cpath d='m951.7 558.94c-192.98-192.97-506.98-192.97-699.96 0l91.454 91.454c142.55-142.56 374.5-142.56 517.06 0z' fill='%23eee'/%3E%3Cpath d='m816.62 694.02c-57.403-57.415-133.73-89.021-214.91-89.021-81.177 0-157.5 31.607-214.9 89.021l91.443 91.432c32.971-32.971 76.822-51.128 123.45-51.128 46.648 0 90.488 18.157 123.46 51.128z' fill='%23eee'/%3E%3C/svg%3E");
+            }
+
+            div.wifi-item.medium::BEFORE {
+                background: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg version='1.1' viewBox='0 0 1200 1200' xmlns='http://www.w3.org/2000/svg' xmlns:cc='http://creativecommons.org/ns%23' xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns%23'%3E%3Cmetadata%3E%3Crdf:RDF%3E%3Ccc:Work rdf:about=''%3E%3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E%3Cdc:type rdf:resource='http://purl.org/dc/dcmitype/StillImage'/%3E%3Cdc:title/%3E%3C/cc:Work%3E%3C/rdf:RDF%3E%3C/metadata%3E%3Ccircle cx='601.71' cy='868.42' r='73.252' fill='%23eee'/%3E%3Cpath d='m118.1 425.29 91.443 91.443c216.23-216.24 568.09-216.25 784.33 0l91.454-91.443c-266.67-266.67-700.57-266.65-967.23 0z' fill='%23696969'/%3E%3Cpath d='m951.7 558.94c-192.98-192.97-506.98-192.97-699.96 0l91.454 91.454c142.55-142.56 374.5-142.56 517.06 0z' fill='%23eee'/%3E%3Cpath d='m816.62 694.02c-57.403-57.415-133.73-89.021-214.91-89.021-81.177 0-157.5 31.607-214.9 89.021l91.443 91.432c32.971-32.971 76.822-51.128 123.45-51.128 46.648 0 90.488 18.157 123.46 51.128z' fill='%23eee'/%3E%3C/svg%3E");
+            }
+
+            div.wifi-item.low::BEFORE {
+                background: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg version='1.1' viewBox='0 0 1200 1200' xmlns='http://www.w3.org/2000/svg' xmlns:cc='http://creativecommons.org/ns%23' xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns%23'%3E%3Cmetadata%3E%3Crdf:RDF%3E%3Ccc:Work rdf:about=''%3E%3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E%3Cdc:type rdf:resource='http://purl.org/dc/dcmitype/StillImage'/%3E%3Cdc:title/%3E%3C/cc:Work%3E%3C/rdf:RDF%3E%3C/metadata%3E%3Ccircle cx='601.71' cy='868.42' r='73.252' fill='%23eee'/%3E%3Cpath d='m118.1 425.29 91.443 91.443c216.23-216.24 568.09-216.25 784.33 0l91.454-91.443c-266.67-266.67-700.57-266.65-967.23 0z' fill='%23696969'/%3E%3Cpath d='m951.7 558.94c-192.98-192.97-506.98-192.97-699.96 0l91.454 91.454c142.55-142.56 374.5-142.56 517.06 0z' fill='%23696969'/%3E%3Cpath d='m816.62 694.02c-57.403-57.415-133.73-89.021-214.91-89.021-81.177 0-157.5 31.607-214.9 89.021l91.443 91.432c32.971-32.971 76.822-51.128 123.45-51.128 46.648 0 90.488 18.157 123.46 51.128z' fill='%23eee'/%3E%3C/svg%3E");
+            }
+            
+            div.wifi-item.hidden {
+                height: 0;
+                border-width: 0;
+            }
+
+            div.wifi-item.selected {
+                border-top-width: 0;
+                border-bottom-width: 0;
+                height: 25em;
+                color: #eee;
+            }
+            
+            div.wifi-item.selected:ACTIVE {
+                background: inherit;
+            }
+            
+            input[type=text],
+            input[type=password] {
+                color: #eee;
+                border: .0625em solid #62abea;
+                border-radius: .2em;
+                padding: .25em;
+                line-height: 1.15em;
+                font-size: 1.2em;
+                box-sizing: border-box;
+                background: #444;
+                display: block;
+                width: 90%;
+                margin-left: 5%;
+                margin-top: 1em;
+                outline: 0;
+            }
+            
+            div.button {
+                transition: all .3s ease;
+                line-height: 2.5em;
+                padding: 0 0.5em;
+                border-radius: .2em;
+                min-width: 6em;
+                text-align: center;
+                background: #62abea;
+                cursor: pointer;
+                box-sizing: border-box;
+                opacity: 1;
+                margin: 5%;
+                font-weight: bold;
+            }
+            
+            div.button:ACTIVE {
+                background: #4e89bb;
+            }
+            
+            div.scan-button {
+                height: 10em;
+                line-height: 10em;
+            }
+            
+            div.info {
+                text-align: justify;
+                line-height: 1.2em;
+                transition: height .3s ease;
+                height: 0;
+                margin: 0;
+                overflow: hidden;
+            }
+            
+            div.info::BEFORE {
+                content: '';
+                display: block;
+                margin: auto;
+                width: 2em;
+                height: 2em;
+                margin-bottom: 1em;
+                background-image: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg version='1.1' viewBox='0 0 1200 1200' xmlns='http://www.w3.org/2000/svg' xmlns:cc='http://creativecommons.org/ns%23' xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns%23'%3E%3Cmetadata%3E%3Crdf:RDF%3E%3Ccc:Work rdf:about=''%3E%3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E%3Cdc:type rdf:resource='http://purl.org/dc/dcmitype/StillImage'/%3E%3Cdc:title/%3E%3C/cc:Work%3E%3C/rdf:RDF%3E%3C/metadata%3E%3Cpath d='m479.33 907.6v-102.33h67.824v-206.83h-67.824v-102.93h171.48v308.68h68.183v103.29h-239.66z' fill='%23eee'/%3E%3Cpath d='m582.86 290.71a68.902 68.902 0 0 1 68.423 68.782 70.58 70.58 0 0 1 -70.7 69.382 69.022 69.022 0 0 1 -67.105 -69.382 70.34 70.34 0 0 1 69.382 -68.782z' fill='%23eee'/%3E%3Cpath d='m601.07 0.00288c328.93 1.0785 599.15 271.54 597.23 598.19a600.83 600.83 0 0 1 -601.55 600.11c-329.17 0.5991-598.31-271.89-596.75-604.42a599.15 599.15 0 0 1 601.07 -593.88zm2.7561 113.36a484.35 484.35 0 0 0 -489.03 484.71c-2.9958 264.7 216.65 485.67 482.08 486.27a485.07 485.07 0 0 0 486.15 -487.71c-1.5578-265.42-217.25-482.92-479.2-483.27z' fill='%23eee'/%3E%3C/svg%3E");
+            }
+            
+            div.info.visible {
+                height: 20em;
+                margin: 1em;
+            }
+
+        </style>
+        <script type="text/javascript">
+        
+            document.addEventListener('DOMContentLoaded', function () {
+                var body = document.getElementsByTagName('body')[0];
+                var progressOverlay = document.getElementsByClassName('progress-overlay')[0];
+                var wifiList = document.getElementsByClassName('wifi-list')[0];
+                var scanButton = document.getElementsByClassName('scan-button')[0];
+                var infoDiv = document.getElementsByClassName('info')[0];
+                var progress = false;
+                var okButton, selectedItem, pskInput, ipInput, gwInput, dnsInput;
+                
+                function fetchWiFiList(callback) {
+                    var request = new XMLHttpRequest();
+                    setProgress();
+                    request.open('GET', '/wifi', true);
+                    request.onload = function() {
+                        clearProgress();
+
+                        if (request.status >= 200 && request.status < 400) {
+                            callback(JSON.parse(request.responseText));
+                        }
+                        else {
+                            showError(request.responseText);
+                            callback([]);
+                        }
+                    };
+
+                    request.onerror = function() {
+                        clearProgress();
+                        showError('AJAX request failed');
+                        callback([]);
+                    };
+
+                    request.send();
+                }
+                
+                function sendSettings() {
+                    var networkWifi = selectedItem.childNodes[0].data;
+                    if (pskInput.value) {
+                        networkWifi += ':' + pskInput.value;
+                    }
+                    
+                    var networkIp = '';
+                    if (ipInput.value) {
+                        networkIp = ipInput.value;
+                    }
+                    if (gwInput.value) {
+                        networkIp += ':' + gwInput.value;
+                    }
+                    if (dnsInput.value) {
+                        networkIp += ':' + dnsInput.value;
+                    }
+
+                    var attrs = {
+                        'network_wifi': networkWifi,
+                        'network_ip': networkIp
+                    };
+
+                    var request = new XMLHttpRequest();
+                    setProgress();
+
+                    request.onload = function() {
+                        clearProgress();
+                        if (request.status >= 200 && request.status < 400) {
+                            selectedItem.classList.add('hidden');
+                            selectedItem.classList.remove('selected');
+                            infoDiv.classList.add('visible');
+                        }
+                        else {
+                            showError(request.responseText);
+                        }
+                    };
+
+                    request.onerror = function() {
+                        clearProgress();
+                        showError('AJAX request failed');
+                    };
+                    
+                    request.open('PATCH', '/device', true);
+                    request.setRequestHeader('Content-Type', 'application/json');
+
+                    var body = JSON.stringify(attrs);
+                    request.send(body);
+                }
+                
+                function setProgress() {
+                    if (progress) {
+                        return;
+                    }
+                    progress = true;
+                    progressOverlay.style.display = 'block';
+                    setTimeout(function () {
+                        body.classList.add('progress');
+                    }, 10);
+                }
+                
+                function clearProgress() {
+                    if (!progress) {
+                        return;
+                    }
+                    progress = false;
+                    body.classList.remove('progress');
+                    setTimeout(function () {
+                        progressOverlay.style.display = '';
+                    }, 1000);
+                }
+                
+                function showError(msg) {
+                    alert('Error: ' + msg);
+                }
+
+                function selectItem() {
+                    selectedItem = this;
+                    
+                    var els = document.getElementsByClassName('wifi-item');
+                    Array.prototype.forEach.call(els, function (div) {
+                        if (div === this) {
+                            return;
+                        }
+                        div.classList.add('hidden');
+                    }.bind(this));
+
+                    this.classList.add('selected');
+                    this.onclick = null;
+                    
+                    pskInput = document.createElement('input');
+                    pskInput.setAttribute('type', 'password');
+                    pskInput.setAttribute('placeholder', 'network key');
+                    this.append(pskInput);
+                    
+                    ipInput = document.createElement('input');
+                    ipInput.setAttribute('type', 'text');
+                    ipInput.setAttribute('placeholder', '(optional) IP (e.g. 192.168.1.10/24)');
+                    this.append(ipInput);
+                    
+                    gwInput = document.createElement('input');
+                    gwInput.setAttribute('type', 'text');
+                    gwInput.setAttribute('placeholder', '(optional) GW (e.g. 192.168.1.1)');
+                    this.append(gwInput);
+                    
+                    dnsInput = document.createElement('input');
+                    dnsInput.setAttribute('type', 'text');
+                    dnsInput.setAttribute('placeholder', '(optional) DNS (e.g. 8.8.8.8)');
+                    this.append(dnsInput);
+                    
+                    okButton = document.createElement('div');
+                    okButton.innerText = 'OK';
+                    okButton.classList.add('button');
+                    this.append(okButton);
+                    
+                    okButton.onclick = sendSettings;
+                }
+                
+                function initItems() {
+                    scanButton.style.display = 'none';
+                    var els = document.getElementsByClassName('wifi-item');
+                    Array.prototype.forEach.call(els, function (div) {
+                        div.onclick = selectItem;
+                    });
+                }
+                
+                function startScan() {
+                    fetchWiFiList(function (list) {
+                        list.forEach(function (network) {
+                            var div = document.createElement('div');
+                            var cls = 'low';
+                            div.innerText = network.ssid;
+                            if (network.rssi > -50) {
+                                cls = 'full';
+                            }
+                            else if (network.rssi > -70) {
+                                cls = 'medium';
+                            }
+                            div.classList.add('wifi-item');
+                            div.classList.add(cls);
+                            wifiList.insertBefore(div, infoDiv);
+                        });
+                        
+                        initItems();
+                    });
+                }
+                
+                scanButton.onclick = startScan;
+            })
+        
+        </script>
+    </head>
+    
+    <body>
+        <div class="wifi-list-header">Choose WiFi Network</div>
+        <div class="wifi-list limit-width">
+            <div class="button scan-button">Start Scanning</div>
+            <div class="info">
+                The device should now connect to your WiFi network. <br> <br>
+                If you don't see it connected within 1 minute or if you need to change the WiFi settings, simply switch it to setup mode again and repeat this procedure. <br> <br>
+                You can now close me.
+            </div>
+        </div>
+        <div class="wifi-list-footer">espQToggle 0.8b2</div>
+        <div class="progress-overlay">
+            <img class="limit-width" src="data:image/svg+xml,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 100 100' preserveAspectRatio='xMidYMid'%3E%3Csvg version='1.1' id='d1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 100 100' style='transform-origin: 50px 50px 0px;' xml:space='preserve'%3E%3Cg style='transform-origin: 50px 50px 0px;'%3E%3Cg style='transform-origin: 50px 50px 0px; transform: scale(0.6);'%3E%3Cg style='transform-origin: 50px 50px 0px;'%3E%3Cg%3E%3Cstyle type='text/css' class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -1s; animation-direction: normal;'%3E.st0%7Bfill:%23C7B299;stroke:%23333333;stroke-width:6;stroke-miterlimit:10;%7D .st1%7Bfill:%23F5E169;%7D .st2%7Bfill:%23666666;%7D .st3%7Bfill:%23F5E6C8;%7D .st4%7Bfill:%23333333;%7D .st5%7Bfill:%23E0E0E0;%7D .st6%7Bfill:%23F8B26A;%7D .st7%7Bfill:%23FFFFFF;stroke:%23000000;stroke-width:4;stroke-miterlimit:10;%7D .st8%7Bfill:%23F47E60;%7D .st9%7Bfill:%23ABBD81;%7D .st10%7Bfill:%23E15B64;%7D .st11%7Bfill:%23666666;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st12%7Bfill:%23FFFFFF;stroke:%23221E1F;stroke-width:6;stroke-linejoin:round;stroke-miterlimit:10;%7D .st13%7Bfill:%2377A4BD;%7D .st14%7Bfill:%23FFDC6C;%7D .st15%7Bfill:%23FFFFFF;%7D .st16%7Bfill:%23353035;%7D .st17%7Bfill:%23E0E0E0;stroke:%23000000;stroke-width:6;stroke-miterlimit:10;%7D .st18%7Bfill:none;stroke:%23000000;stroke-width:5;stroke-linecap:round;stroke-miterlimit:10;%7D .st19%7Bfill:none;stroke:%23000000;stroke-width:5;stroke-miterlimit:10;%7D .st20%7Bfill:none;%7D .st21%7Bfill:%23666666;stroke:%23221E1F;stroke-width:6;stroke-linejoin:round;stroke-miterlimit:10;%7D .st22%7Bfill:%23FFFFFF;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st23%7Bfill:%23333333;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st24%7Bfill:%231BD112;%7D .st25%7Bfill:%23FFFFFF;stroke:%23333333;stroke-width:8;stroke-miterlimit:10;%7D .st26%7Bfill:none;stroke:%23666666;stroke-width:8;stroke-miterlimit:10;%7D .st27%7Bfill:%23FFFFFF;stroke:%23333333;stroke-miterlimit:10;%7D .st28%7Bfill:none;stroke:%23333333;stroke-miterlimit:10;%7D .st29%7Bstroke:%23333333;stroke-miterlimit:10;%7D .st30%7Bfill:none;stroke:%23000000;stroke-width:4;stroke-linecap:round;stroke-miterlimit:10;%7D .st31%7Bfill:none;stroke:%23000000;stroke-width:6;stroke-miterlimit:10;%7D .st32%7Bfill:%23C33737;%7D .st33%7Bfill:%23849B87;%7D .st34%7Bfill:%2366503A;%7D .st35%7Bfill:none;stroke:%23333333;stroke-width:6;stroke-miterlimit:10;%7D .st36%7Bfill:none;stroke:%23333333;stroke-width:4;stroke-miterlimit:10;%7D .st37%7Bfill:%23C59B6D;%7D .st38%7Bfill:%23E0E0E0;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st39%7Bfill:%23666666;stroke:%23000000;stroke-width:3;stroke-miterlimit:10;%7D .st40%7Bfill:%23F5E6C8;stroke:%23000000;stroke-width:3;stroke-miterlimit:10;%7D .st41%7Bfill:%23FFFFFF;stroke:%23808080;stroke-width:4;stroke-miterlimit:10;%7D .st42%7Bfill:%23808080;stroke:%23808080;stroke-width:4;stroke-miterlimit:10;%7D .st43%7Bfill:%23666666;stroke:%23B3B3B3;stroke-width:12;stroke-linecap:round;stroke-miterlimit:10;%7D .st44%7Bfill:%23808080;%7D .st45%7Bfill:%23B3B3B3;%7D .st46%7Bfill:%23FFFF00;stroke:%23E15B64;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;%7D .st47%7Bfill:none;stroke:%23E15B64;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;%7D .st48%7Bfill:%23F5E6C8;stroke:%23333333;stroke-width:4;stroke-miterlimit:10;%7D%3C/style%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.928571s; animation-direction: normal;'%3E%3Cpath class='st10' d='M56.4,75.4c-3.6-3.6-9.3-3.6-12.9,0l6.4,6.4L56.4,75.4z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.857143s; animation-direction: normal;'%3E%3Cpath class='st10' d='M62.9,69l6.4-6.4c-10.7-10.7-27.9-10.7-38.6,0l6.4,6.4C44.2,61.9,55.8,61.9,62.9,69z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.785714s; animation-direction: normal;'%3E%3Cpath class='st10' d='M75.7,56.1l6.4-6.4c-17.8-17.8-46.5-17.8-64.3,0l6.4,6.4C38.5,41.9,61.5,41.9,75.7,56.1z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.714286s; animation-direction: normal;'%3E%3Cpath class='st10' d='M88.6,43.2l6.4-6.4C70.1,12,29.9,12,5,36.8l6.4,6.4C32.7,22,67.3,22,88.6,43.2z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cmetadata xmlns:d='https://loading.io/stock/' class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.642857s; animation-direction: normal;'%3E%3C/metadata%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/g%3E%3Cstyle type='text/css' class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.285714s; animation-direction: normal;'%3E@keyframes ld-fade %7B0%25 %7Bopacity: 1;%7D100%25 %7Bopacity: 0;%7D%7D@keyframes ld-fade %7B0%25 %7Bopacity: 1;%7D100%25 %7Bopacity: 0;%7D%7D.ld.ld-fade %7Banimation: ld-fade 1s infinite linear;animation: ld-fade 1s infinite linear;%7D%3C/style%3E%3C/svg%3E%3C/svg%3E">
+            <div>Scanning for WiFi networks...</div>
+        </div>
+    </body>
+</html>

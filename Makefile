@@ -1,7 +1,8 @@
 
 DEBUG ?= true
-DEBUG_FLAGS ?= flashcfg httpclient httpserver ota pingwdt sleep rtc tcpserver device wifi battery system \
-               api expr ports sessions webhooks espqtclient virtual adc gpio pwm dht pwdetect rgb fsg dallastemp
+DEBUG_FLAGS ?= flashcfg httpclient httpserver ota pingwdt sleep rtc tcpserver device wifi battery system html \
+               dnsserver api expr ports sessions webhooks espqtclient virtual \
+               adc gpio pwm dht pwdetect rgb fsg dallastemp
 DEBUG_IP ?= # 192.168.0.1
 DEBUG_PORT ?= 48879
 
@@ -46,9 +47,7 @@ FLASH_MODE = 0     	# QIO
 FLASH_CLK_DIV = 15 	# 80 MHz
 FLASH_SIZE_MAP = 2  # 1024 (512 + 512)
 FLASH_SIZE = 1024
-FLASH_CONFIG_FACTORY_ADDR_BASE = 0x78000
-FLASH_CONFIG_ADDR_BASE = 0x7C000
-FLASH_EXTRA_ADDR_BASE = 0x100000
+FLASH_CONFIG_ADDR = 0x7C000
 
 CC = xtensa-lx106-elf-gcc
 AR = xtensa-lx106-elf-ar
@@ -56,6 +55,7 @@ LD = xtensa-lx106-elf-gcc
 OC = xtensa-lx106-elf-objcopy
 MD = mkdir -p
 RM = rm -rf
+GZ = gzip -c
 
 ESPTOOL ?= esptool
 APPGEN = $(SDK_BASE)/tools/gen_appbin.py
@@ -74,9 +74,7 @@ LIB = c gcc hal pp phy net80211 lwip wpa crypto upgrade m main
 CFLAGS = -Wpointer-arith -Wall -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals \
          -ffunction-sections -fdata-sections -mforce-l32 -Wmissing-prototypes \
          -D__ets__ -DICACHE_FLASH -DUSE_OPTIMIZE_PRINTF \
-         -DFLASH_CONFIG_ADDR_BASE=$(FLASH_CONFIG_ADDR_BASE) \
-         -DFLASH_CONFIG_FACTORY_ADDR_BASE=$(FLASH_CONFIG_FACTORY_ADDR_BASE) \
-         -DFLASH_EXTRA_ADDR_BASE=$(FLASH_EXTRA_ADDR_BASE)
+         -DFLASH_CONFIG_ADDR=$(FLASH_CONFIG_ADDR)
 LDFLAGS	= -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static -L$(SDK_BASE)/lib -Wl,--gc-sections
 
 ifeq ($(GDB),true)
@@ -235,6 +233,7 @@ endif
 
 .PHONY: dirs
 .NOTPARALLEL: buildinfo
+.PRECIOUS: $(BUILD_DIR)/%.html.gz
 
 all: buildinfo dirs $(FW) 
 
@@ -243,6 +242,7 @@ dirs:
 
 buildinfo:
 	$(vecho) "---- configuration summary ----"
+	$(vecho) " *" SDK_BASE = $(SDK_BASE)
 	$(vecho) " *" VERSION = $(VERSION)
 	$(vecho) " *" DEBUG = $(DEBUG)
 	$(vecho) " *" DEBUG_FLAGS = $(DEBUG_FLAGS)
@@ -285,18 +285,27 @@ $(APP_OUT): $(APP_AR)
 	$(vecho) "LD $@"
 	$(Q) $(LD) $(LDFLAGS) -T$(LDSCRIPT) -Wl,--start-group $(LIB) $^ -Wl,--end-group -o $@
 
-$(BUILD_DIR)/user%.bin: $(APP_OUT)
+$(BUILD_DIR)/%.html.gz: html/%.html
+	$(vecho) "GZ $@"
+	$(Q) $(GZ) $^ > $@
+
+$(BUILD_DIR)/user%.bin: $(APP_OUT) $(BUILD_DIR)/index.html.gz
 	@echo $(FW_CONFIG_ID) > $(BUILD_DIR)/.config_id
 	$(vecho) "FW $@"
 	$(Q) $(OC) --only-section .text -O binary $< $(BUILD_DIR)/eagle.app.v6.text.bin
 	$(Q) $(OC) --only-section .data -O binary $< $(BUILD_DIR)/eagle.app.v6.data.bin
 	$(Q) $(OC) --only-section .rodata -O binary $< $(BUILD_DIR)/eagle.app.v6.rodata.bin
 	$(Q) $(OC) --only-section .irom0.text -O binary $< $(BUILD_DIR)/eagle.app.v6.irom0text.bin
-	$(Q) cd $(BUILD_DIR); \
+	$(Q) cd $(BUILD_DIR) && \
 	     COMPILE=gcc python2 $(APPGEN) *.out 2 $(FLASH_MODE) $(FLASH_CLK_DIV) $(FLASH_SIZE_MAP) $(USR) > /dev/null
 	$(Q) mv $(BUILD_DIR)/eagle.app.flash.bin $@
-	$(vecho) "-------------------------------"
-	$(vecho) " *" $(notdir $@): $$(stat -L -c %s $@) bytes
+
+	$(Q) size=$$(stat -L -c %s $@) && \
+	     offs=$$((476 * 1024 - $${size})) && \
+	     dd if=/dev/zero of=$@ oflag=append conv=notrunc bs=$${offs} count=1 status=none
+	$(Q) size=$$(stat -L -c %s $(BUILD_DIR)/index.html.gz) && \
+	     python2 -c "import sys, struct; sys.stdout.write(struct.pack('<i', $${size}))" >> $@
+	$(Q) cat $(BUILD_DIR)/index.html.gz >> $@
 	$(vecho)
 
 clean:

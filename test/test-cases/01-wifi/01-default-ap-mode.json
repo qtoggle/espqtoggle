@@ -8,14 +8,73 @@
 				"psk": "espqtoggle"
 			}
 		},
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/wifi",
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "ssid",
+                            "bssid",
+                            "channel",
+                            "rssi",
+                            "auth_mode"
+                        ],
+                        "properties": {
+                            "ssid": {
+                                "type": "string"
+                            },
+                            "bssid": {
+                                "type": "string"
+                            },
+                            "channel": {
+                                "type": "integer"
+                            },
+                            "rssi": {
+                                "type": "number"
+                            },
+                            "auth_mode": {
+                                "enum": ["OPEN", "WEP", "WPA_PSK", "WPA2_PSK", "WPA_WPA2_PSK", "unknown"]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "http-client",
+            "params": {
+                "method": "GET",
+                "path": "/",
+                "expected_status": 200,
+                "expected_headers": {
+                    "Content-Type": "text/html",
+                    "Content-Encoding": "gzip"
+                }
+            }
+        },
+        {
+            "name": "http-client",
+            "params": {
+                "method": "GET",
+                "path": "/nonexistent",
+                "expected_status": 200,
+                "expected_headers": {
+                    "Content-Type": "text/html",
+                    "Content-Encoding": "gzip"
+                }
+            }
+        },
 		{
 			"name": "json-http-client",
 			"params": {
 				"method": "PATCH",
 				"path": "/device",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
-				},
 				"body": {
 				    "network_wifi": "${TEST_SSID}:${TEST_PSK}"
 				},

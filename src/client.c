@@ -10,6 +10,7 @@
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  * 
@@ -27,9 +28,11 @@
 #include "espgoodies/httpserver.h"
 #include "espgoodies/httpclient.h"
 #include "espgoodies/httputils.h"
+#include "espgoodies/html.h"
 #include "espgoodies/crypto.h"
 #include "espgoodies/jwt.h"
 #include "espgoodies/utils.h"
+#include "espgoodies/system.h"
 
 #ifdef _OTA
 #include "espgoodies/ota.h"
@@ -44,6 +47,7 @@
 
 #define MAX_PARALLEL_HTTP_REQ       4
 #define JSON_CONTENT_TYPE           "application/json; charset=utf-8"
+#define HTML_CONTENT_TYPE           "text/html; charset=utf-8"
 
 #define RESPOND_UNAUTHENTICATED()   respond_error(conn, 401, "authentication required");
 
@@ -179,6 +183,12 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         else {
             request_json = json_obj_new();
         }
+    }
+
+    /* automatically grant admin access level in setup mode */
+    if (system_setup_mode_active()) {
+        access_level = API_ACCESS_LEVEL_ADMIN;
+        goto skip_auth;
     }
 
     bool unprotected = FALSE;
@@ -344,6 +354,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
 #ifdef _OTA
         /* no listening while OTA active */
         if (ota_busy()) {
+            DEBUG_ESPQTCLIENT_CONN(conn, "cannot accept listen requests while OTA active");
             respond_error(conn, 503, "busy");
             goto done;
         }
@@ -410,6 +421,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         else { /* new session */
             session = session_create(session_id, conn, timeout, access_level);
             if (!session) { /* too many sessions */
+                DEBUG_ESPQTCLIENT_CONN(conn, "too many sessions");
                 respond_error(conn, 503, "busy");
                 goto done;
             }
@@ -422,7 +434,23 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
 
         int code;
         response_json = api_call_handle(method, path, query_json, request_json, &code);
-        if (response_json) {
+
+        /* serve the HTML page only in setup mode and on any 404 */
+        if (code == 404 && system_setup_mode_active()) {
+            json_free(response_json);
+            api_conn_reset();
+
+            uint32 html_len;
+            uint8 *html = html_load(&html_len);
+            if (html) {
+                respond_html(conn, 200, html, html_len);
+                free(html);
+            }
+            else {
+                respond_html(conn, 500, (uint8 *) "Error", 5);
+            }
+        }
+        else if (response_json) {
             respond_json(conn, code, response_json);
             api_conn_reset();
         }
@@ -499,11 +527,11 @@ void respond_json(struct espconn *conn, int status, json_t *json) {
 
 #if defined(_DEBUG) && defined(_DEBUG_ESPQTCLIENT)
     int free_mem_after_send = system_get_free_heap_size();
-#endif
 
     /* show free memory after sending the response */
     DEBUG_ESPQTCLIENT("free memory: before dump=%d, after dump=%d, after send=%d",
                       free_mem_before_dump, free_mem_after_dump, free_mem_after_send);
+#endif
 }
 
 void respond_error(struct espconn *conn, int status, char *error) {
@@ -511,4 +539,34 @@ void respond_error(struct espconn *conn, int status, char *error) {
     json_obj_append(json, "error", json_str_new(error));
 
     respond_json(conn, status, json);
+}
+
+void respond_html(struct espconn *conn, int status, uint8 *html, int len) {
+    uint8 *response;
+
+#if defined(_DEBUG) && defined(_DEBUG_ESPQTCLIENT)
+    int free_mem_before_dump = system_get_free_heap_size();
+#endif
+
+#if defined(_DEBUG) && defined(_DEBUG_ESPQTCLIENT)
+    int free_mem_after_dump = system_get_free_heap_size();
+#endif
+
+    static char *header_names[] = {"Content-Encoding"};
+    static char *header_values[] = {"gzip"};
+
+    response = httpserver_build_response(status, HTML_CONTENT_TYPE,
+                                         header_names, header_values, 1, html, &len);
+
+    DEBUG_ESPQTCLIENT_CONN(conn, "responding with status %d", status);
+
+    tcp_send(conn, response, len, /* free on sent = */ TRUE);
+
+#if defined(_DEBUG) && defined(_DEBUG_ESPQTCLIENT)
+    int free_mem_after_send = system_get_free_heap_size();
+
+    /* show free memory after sending the response */
+    DEBUG_ESPQTCLIENT("free memory: before dump=%d, after dump=%d, after send=%d",
+                      free_mem_before_dump, free_mem_after_dump, free_mem_after_send);
+#endif
 }
