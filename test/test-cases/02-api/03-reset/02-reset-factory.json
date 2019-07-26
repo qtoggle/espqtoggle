@@ -23,8 +23,7 @@
 		{
 			"name": "wifi-station-connect",
 			"params": {
-				"ssid": "esp{{DEVICE_SERIAL_NUMBER}}",
-				"psk": "espqtoggle"
+				"ssid": "esp{{DEVICE_SERIAL_NUMBER}}"
 			}
 		},
 		{
