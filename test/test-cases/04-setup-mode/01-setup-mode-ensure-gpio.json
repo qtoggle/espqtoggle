@@ -1,0 +1,12 @@
+{
+    "name": "setup-mode-ensure-gpio",
+    "instructions": [
+		{
+		    "name": "device-write-gpio",
+		    "params": {
+		        "gpio": 12,
+		        "value": 1
+		    }
+		}
+	]
+}
