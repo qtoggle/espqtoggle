@@ -2737,30 +2737,25 @@ void on_sequence_timer(void *arg) {
 #ifdef _OTA
 
 void on_ota_latest(char *version, char *date, char *url) {
-    if (version) {
-        if (api_conn) {
-            json_t *response_json = json_obj_new();
-            json_obj_append(response_json, "version", json_str_new(FW_VERSION));
+    if (api_conn) {
+        json_t *response_json = json_obj_new();
+        json_obj_append(response_json, "version", json_str_new(FW_VERSION));
+        json_obj_append(response_json, "status", json_str_new(ota_states_str[OTA_STATE_IDLE]));
+
+        if (version) {
             json_obj_append(response_json, "latest_version", json_str_new(version));
             json_obj_append(response_json, "latest_date", json_str_new(date));
             json_obj_append(response_json, "latest_url", json_str_new(url));
-            json_obj_append(response_json, "status", json_str_new(ota_states_str[OTA_STATE_IDLE]));
-            respond_json(api_conn, 200, response_json);
-            api_conn_reset();
         }
 
+        respond_json(api_conn, 200, response_json);
+        api_conn_reset();
+    }
+
+    if (version) {
         free(version);
         free(date);
         free(url);
-    }
-    else {  /* error */
-        if (api_conn) {
-            json_t *response_json = json_obj_new();
-            char error[] = "error communicating with firmware server";
-            json_obj_append(response_json, "error", json_str_new(error));
-            respond_json(api_conn, 500, response_json);
-            api_conn_reset();
-        }
     }
 }
 

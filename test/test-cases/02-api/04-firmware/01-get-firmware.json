@@ -15,9 +15,6 @@
                     "additionalProperties": false,
                     "required": [
                         "version",
-                        "latest_version",
-                        "latest_date",
-                        "latest_url",
                         "status"
                     ],
                     "properties": {
