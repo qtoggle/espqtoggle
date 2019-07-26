@@ -4,7 +4,8 @@
 		{
 			"name": "wifi-station-connect",
 			"params": {
-				"ssid": "esp{{DEVICE_SERIAL_NUMBER}}"
+				"ssid": "esp{{DEVICE_SERIAL_NUMBER}}",
+				"psk": null
 			}
 		},
         {
@@ -52,7 +53,7 @@
                 "path": "/",
                 "expected_status": 200,
                 "expected_headers": {
-                    "Content-Type": "text/html",
+                    "Content-Type": "text/html; charset=utf-8",
                     "Content-Encoding": "gzip"
                 }
             }
@@ -64,7 +65,7 @@
                 "path": "/nonexistent",
                 "expected_status": 200,
                 "expected_headers": {
-                    "Content-Type": "text/html",
+                    "Content-Type": "text/html; charset=utf-8",
                     "Content-Encoding": "gzip"
                 }
             }
