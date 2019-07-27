@@ -58,7 +58,7 @@ RM = rm -rf
 GZ = gzip -c
 
 ESPTOOL ?= esptool
-APPGEN = $(SDK_BASE)/tools/gen_appbin.py
+APPGEN ?= $(PWD)/gen_appbin.py
 
 APP = espqtoggle
 SRC_MAIN_DIR = src
@@ -286,8 +286,9 @@ $(APP_OUT): $(APP_AR)
 	$(Q) $(LD) $(LDFLAGS) -T$(LDSCRIPT) -Wl,--start-group $(LIB) $^ -Wl,--end-group -o $@
 
 $(BUILD_DIR)/%.html.gz: html/%.html
+	sed 's/{{VERSION}}/$(VERSION)/g' $^ > $(BUILD_DIR)/$$(basename $^)
 	$(vecho) "GZ $@"
-	$(Q) $(GZ) $^ > $@
+	$(Q) $(GZ) $(BUILD_DIR)/$$(basename $^) > $@
 
 $(BUILD_DIR)/user%.bin: $(APP_OUT) $(BUILD_DIR)/index.html.gz
 	@echo $(FW_CONFIG_ID) > $(BUILD_DIR)/.config_id
@@ -297,15 +298,8 @@ $(BUILD_DIR)/user%.bin: $(APP_OUT) $(BUILD_DIR)/index.html.gz
 	$(Q) $(OC) --only-section .rodata -O binary $< $(BUILD_DIR)/eagle.app.v6.rodata.bin
 	$(Q) $(OC) --only-section .irom0.text -O binary $< $(BUILD_DIR)/eagle.app.v6.irom0text.bin
 	$(Q) cd $(BUILD_DIR) && \
-	     COMPILE=gcc python2 $(APPGEN) *.out 2 $(FLASH_MODE) $(FLASH_CLK_DIV) $(FLASH_SIZE_MAP) $(USR) > /dev/null
+	     $(APPGEN) *.out 2 $(FLASH_MODE) $(FLASH_CLK_DIV) $(FLASH_SIZE_MAP) $(USR) index.html.gz
 	$(Q) mv $(BUILD_DIR)/eagle.app.flash.bin $@
-
-	$(Q) size=$$(stat -L -c %s $@) && \
-	     offs=$$((476 * 1024 - $${size})) && \
-	     dd if=/dev/zero of=$@ oflag=append conv=notrunc bs=$${offs} count=1 status=none
-	$(Q) size=$$(stat -L -c %s $(BUILD_DIR)/index.html.gz) && \
-	     python2 -c "import sys, struct; sys.stdout.write(struct.pack('<i', $${size}))" >> $@
-	$(Q) cat $(BUILD_DIR)/index.html.gz >> $@
 	$(vecho)
 
 clean:
