@@ -31,7 +31,7 @@
                         },
                         "latest_url": {
                             "type": "string",
-                            "pattern": "^http://firmware.qtoggle.com/espqtoggle/[a-f0-9]+/[0-9ab.]+$"
+                            "pattern": "^http://firmware.qtoggle.io/espqtoggle/[a-f0-9]+/[0-9ab.]+$"
                         },
                         "status": {
                             "enum": ["idle"]
