@@ -9,7 +9,10 @@
 		    }
 		},
         {
-            "name": "wifi-ap-wait-device-disconnect"
+            "name": "sleep",
+		    "params": {
+		        "duration": 15000
+		    }
         },
 		{
 		    "name": "device-write-gpio",
@@ -32,4 +35,3 @@
 		}
 	]
 }
-
