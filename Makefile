@@ -286,8 +286,9 @@ $(APP_OUT): $(APP_AR)
 	$(Q) $(LD) $(LDFLAGS) -T$(LDSCRIPT) -Wl,--start-group $(LIB) $^ -Wl,--end-group -o $@
 
 $(BUILD_DIR)/%.html.gz: html/%.html
+	sed 's/{{VERSION}}/$(VERSION)/g' $^ > $(BUILD_DIR)/$$(basename $^)
 	$(vecho) "GZ $@"
-	$(Q) $(GZ) $^ > $@
+	$(Q) $(GZ) $(BUILD_DIR)/$$(basename $^) > $@
 
 $(BUILD_DIR)/user%.bin: $(APP_OUT) $(BUILD_DIR)/index.html.gz
 	@echo $(FW_CONFIG_ID) > $(BUILD_DIR)/.config_id
