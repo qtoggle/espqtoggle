@@ -213,10 +213,10 @@ ifeq ($(FW_CONFIG_ID),)
                      $(CONNECTED_LED_LEVEL) 0 0 0 0 0 0
     FW_CONFIG_FLAG = $(OTA) $(SSL) $(SLEEP) $(BATTERY) $(VIRTUAL) $(DEBUG) \
                      false false false false false false false false false false
-    FW_CONFIG_PORT = $(sort $(PORTS)) $(sort $(EXTRA_DRIVERS))
+    FW_CONFIG_PORT = $(sort $(PORTS)) $(sort $(EXTRA_DRIVERS)) $(sort $(PORT_ID_MAPPINGS))
     
     FW_CONFIG_ID := $(FW_CONFIG_TEXT) $(FW_CONFIG_NUMB) $(FW_CONFIG_FLAG) $(FW_CONFIG_PORT)
-    FW_CONFIG_ID := $(shell echo -n $(FW_CONFIG_ID) | tr -s ' ' | tr ' ' ':' | sha1sum | cut -b 1-8)
+    FW_CONFIG_ID := $(shell echo -n $(FW_CONFIG_ID) | tr -s ' ' | sha1sum | cut -b 1-8)
 endif
 
 CFLAGS += -DFW_CONFIG_ID=\"$(FW_CONFIG_ID)\"
@@ -286,8 +286,8 @@ $(APP_OUT): $(APP_AR)
 	$(Q) $(LD) $(LDFLAGS) -T$(LDSCRIPT) -Wl,--start-group $(LIB) $^ -Wl,--end-group -o $@
 
 $(BUILD_DIR)/%.html.gz: html/%.html
-	sed 's/{{VERSION}}/$(VERSION)/g' $^ > $(BUILD_DIR)/$$(basename $^)
 	$(vecho) "GZ $@"
+	$(Q) sed 's/{{VERSION}}/$(VERSION)/g' $^ > $(BUILD_DIR)/$$(basename $^)
 	$(Q) $(GZ) $(BUILD_DIR)/$$(basename $^) > $@
 
 $(BUILD_DIR)/user%.bin: $(APP_OUT) $(BUILD_DIR)/index.html.gz
