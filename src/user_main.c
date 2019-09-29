@@ -220,6 +220,7 @@ void user_init(void) {
 #else
     printf("\n\n");
     DEBUG("espQToggle  " FW_VERSION);
+    DEBUG("Config      " FW_CONFIG_NAME "-" FW_CONFIG_ID);
     DEBUG("API Version " API_VERSION);
     DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
 #endif /* _GDB */
