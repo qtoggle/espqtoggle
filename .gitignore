@@ -7,6 +7,6 @@
 build
 config.py
 deploy*.sh
-build*.sh
+/build*.sh
 run-tests.sh
 flash.sh

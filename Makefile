@@ -6,8 +6,6 @@ DEBUG_FLAGS ?= flashcfg httpclient httpserver ota pingwdt sleep rtc tcpserver de
 DEBUG_IP ?= # 192.168.0.1
 DEBUG_PORT ?= 48879
 
-USR   ?= 1
-
 GDB     ?= false
 OTA     ?= true
 SSL     ?= false
@@ -32,22 +30,49 @@ SETUP_MODE_LEVEL ?= 0
 SETUP_MODE_INT ?= 10
 SETUP_MODE_RESET_INT ?= 20
 SETUP_MODE_LED_PORT ?= null
+
 CONNECTED_LED_PORT ?= null
 CONNECTED_LED_LEVEL ?= 0
 
-FW_CONFIG_NAME ?= # configuration-name
+FLASH_MODE ?= qio
+FLASH_FREQ ?= 80
 
+FW_CONFIG_NAME ?= # configuration-name
 
 # ---- configurable stuff ends here ---- #
 
 SHELL = /bin/bash  # other shells will probably fail
 VERSION = $(shell cat src/ver.h | grep FW_VERSION | head -n 1 | tr -s ' ' | cut -d ' ' -f 3 | tr -d '"')
 
-FLASH_MODE = 0     	# QIO
-FLASH_CLK_DIV = 15 	# 80 MHz
+ifeq ($(FLASH_MODE),qio)
+	FLASH_MODE_INT = 0
+else ifeq ($(FLASH_MODE),qout)
+	FLASH_MODE_INT = 1
+else ifeq ($(FLASH_MODE),dio)
+	FLASH_MODE_INT = 2
+else ifeq ($(FLASH_MODE),dout)
+	FLASH_MODE_INT = 3
+endif
+
+ifeq ($(FLASH_FREQ),20)
+	FLASH_CLK_DIV = 2
+else ifeq ($(FLASH_FREQ),26)
+	FLASH_CLK_DIV = 1
+else ifeq ($(FLASH_FREQ),40)
+	FLASH_CLK_DIV = 0
+else ifeq ($(FLASH_FREQ),80)
+	FLASH_CLK_DIV = 15
+endif
+
 FLASH_SIZE_MAP = 2  # 1024 (512 + 512)
 FLASH_SIZE = 1024
+
+FLASH_BOOT_ADDR=0x00000
+FLASH_USR1_ADDR=0x01000
 FLASH_CONFIG_ADDR = 0x7C000
+FLASH_USR2_ADDR=0x81000
+FLASH_INIT_DATA_ADDR=0xFC000
+FLASH_SYS_PARAM_ADDR=0xFE000
 
 CC = xtensa-lx106-elf-gcc
 AR = xtensa-lx106-elf-ar
@@ -56,6 +81,7 @@ OC = xtensa-lx106-elf-objcopy
 MD = mkdir -p
 RM = rm -rf
 GZ = gzip -c
+DD = dd status=none
 
 ESPTOOL ?= esptool
 APPGEN ?= $(PWD)/gen_appbin.py
@@ -167,10 +193,6 @@ ifneq ($(EXTRA_DRIVERS),)
     CFLAGS += $(addprefix -DHAS_,$(shell echo $(EXTRA_DRIVERS) | tr a-z A-Z))
 endif
 
-APP_AR  = $(BUILD_DIR)/$(APP).a
-APP_OUT = $(BUILD_DIR)/$(APP).out
-FW      = $(BUILD_DIR)/user$(USR).bin
-
 ifeq ($(DEBUG), true)
     CFLAGS += -D_DEBUG
 ifneq ($(DEBUG_IP),)
@@ -199,13 +221,12 @@ CFLAGS += $(foreach p,$(PORTS),$(shell \
     fi \
 ))
 
-LDSCRIPT = eagle.app.v6.new.$(FLASH_SIZE).app$(USR).ld
-LDSCRIPT := $(SDK_BASE)/ld/$(LDSCRIPT)
+LDSCRIPT = $(SDK_BASE)/ld/eagle.app.v6.new.$(FLASH_SIZE).app$(1).ld
 
 # compute the firmware config identifier (nulls and 0s are reserved)
 ifeq ($(FW_CONFIG_ID),)
     FW_CONFIG_TEXT = $(SETUP_MODE_PORT) $(SETUP_MODE_LED_PORT) $(CONNECTED_LED_PORT) \
-                     null null null null null null null null null null null null null
+                     $(FLASH_MODE) $(FLASH_FREQ) null null null null null null null null null null null
     FW_CONFIG_NUMB = $(FLASH_SIZE) \
                      $(SETUP_MODE_LEVEL) $(BATTERY_DIV_FACTOR) \
                      $(BATTERY_VOLT_0) $(BATTERY_VOLT_20) $(BATTERY_VOLT_40) \
@@ -233,9 +254,9 @@ endif
 
 .PHONY: dirs
 .NOTPARALLEL: buildinfo
-.PRECIOUS: $(BUILD_DIR)/%.html.gz
+.PRECIOUS: $(BUILD_DIR)/%.html.gz build/$(APP)%.out
 
-all: buildinfo dirs $(FW) 
+all: buildinfo dirs $(BUILD_DIR)/full.bin
 
 dirs:
 	$(Q) mkdir -p $(BUILD_DIR)
@@ -262,9 +283,10 @@ buildinfo:
 	$(vecho) " *" SETUP_MODE_LED_PORT = $(SETUP_MODE_LED_PORT)
 	$(vecho) " *" CONNECTED_LED_PORT = $(CONNECTED_LED_PORT)
 	$(vecho) " *" CONNECTED_LED_LEVEL = $(CONNECTED_LED_LEVEL)
+	$(vecho) " *" FLASH_MODE = $(FLASH_MODE_INT)
+	$(vecho) " *" FLASH_FREQ = $(FLASH_CLK_DIV)
 	$(vecho) " *" FW_CONFIG_NAME = $(FW_CONFIG_NAME)
 	$(vecho) " *" FW_CONFIG_ID = $(FW_CONFIG_ID)
-	$(vecho) " *" USR = $(USR)
 	$(vecho) " *" CFLAGS = $(CFLAGS)
 	$(vecho) "-------------------------------"
 
@@ -277,20 +299,20 @@ $(BUILD_DIR)/gdbstub-entry.o: $(GDB_DIR)/gdbstub-entry.S
 	$(vecho) "AS $<"
 	$(Q) $(CC) $(ASFLAGS) -c -o $@ $<
 
-$(APP_AR): $(OBJ_FILES)
+$(BUILD_DIR)/$(APP).a: $(OBJ_FILES)
 	$(vecho) "AR $@"
 	$(Q) $(AR) cru $@ $^
 
-$(APP_OUT): $(APP_AR)
+$(BUILD_DIR)/$(APP)%.out:$(BUILD_DIR)/$(APP).a
 	$(vecho) "LD $@"
-	$(Q) $(LD) $(LDFLAGS) -T$(LDSCRIPT) -Wl,--start-group $(LIB) $^ -Wl,--end-group -o $@
+	$(Q) $(LD) $(LDFLAGS) -T$(call LDSCRIPT,$*) -Wl,--start-group $(LIB) $^ -Wl,--end-group -o $@
 
 $(BUILD_DIR)/%.html.gz: html/%.html
 	$(vecho) "GZ $@"
 	$(Q) sed 's/{{VERSION}}/$(VERSION)/g' $^ > $(BUILD_DIR)/$$(basename $^)
 	$(Q) $(GZ) $(BUILD_DIR)/$$(basename $^) > $@
 
-$(BUILD_DIR)/user%.bin: $(APP_OUT) $(BUILD_DIR)/index.html.gz
+$(BUILD_DIR)/user%.bin: $(BUILD_DIR)/$(APP)%.out $(BUILD_DIR)/index.html.gz
 	@echo $(FW_CONFIG_ID) > $(BUILD_DIR)/.config_id
 	@echo $(FW_CONFIG_NAME) > $(BUILD_DIR)/.config_name
 	$(vecho) "FW $@"
@@ -299,9 +321,22 @@ $(BUILD_DIR)/user%.bin: $(APP_OUT) $(BUILD_DIR)/index.html.gz
 	$(Q) $(OC) --only-section .rodata -O binary $< $(BUILD_DIR)/eagle.app.v6.rodata.bin
 	$(Q) $(OC) --only-section .irom0.text -O binary $< $(BUILD_DIR)/eagle.app.v6.irom0text.bin
 	$(Q) cd $(BUILD_DIR) && \
-	     $(APPGEN) *.out 2 $(FLASH_MODE) $(FLASH_CLK_DIV) $(FLASH_SIZE_MAP) $(USR) index.html.gz
+	     $(APPGEN) $(APP)$*.out 2 $(FLASH_MODE_INT) $(FLASH_CLK_DIV) $(FLASH_SIZE_MAP) $* index.html.gz
 	$(Q) mv $(BUILD_DIR)/eagle.app.flash.bin $@
-	$(vecho)
+
+$(BUILD_DIR)/full.bin: $(BUILD_DIR)/user1.bin $(BUILD_DIR)/user2.bin
+	$(vecho) "FW $@"
+	$(Q) $(DD) if=/dev/zero of=$@ bs=1k count=$(FLASH_SIZE)
+	$(Q) $(DD) if=$(SDK_BASE)/bin/boot.bin of=$@ bs=1k \
+	           seek=$$(($(FLASH_BOOT_ADDR) / 1024)) conv=notrunc
+	$(Q) $(DD) if=$(BUILD_DIR)/user1.bin of=$@ bs=1k \
+	           seek=$$(($(FLASH_USR1_ADDR) / 1024)) conv=notrunc
+	$(Q) $(DD) if=$(BUILD_DIR)/user2.bin of=$@ bs=1k \
+	           seek=$$(($(FLASH_USR2_ADDR) / 1024)) conv=notrunc
+	$(Q) $(DD) if=$(SDK_BASE)/bin/esp_init_data_default.bin of=$@ bs=1k \
+	           seek=$$(($(FLASH_INIT_DATA_ADDR) / 1024)) conv=notrunc
+	$(Q) $(DD) if=$(SDK_BASE)/bin/blank.bin of=$@ bs=1k \
+	           seek=$$(($(FLASH_SYS_PARAM_ADDR) / 1024)) conv=notrunc
 
 clean:
 	$(Q) $(RM) $(BUILD_DIR)
