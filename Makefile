@@ -6,8 +6,6 @@ DEBUG_FLAGS ?= flashcfg httpclient httpserver ota pingwdt sleep rtc tcpserver de
 DEBUG_IP ?= # 192.168.0.1
 DEBUG_PORT ?= 48879
 
-USR ?= 1
-
 GDB     ?= false
 OTA     ?= true
 SSL     ?= false
@@ -167,10 +165,6 @@ ifneq ($(EXTRA_DRIVERS),)
     CFLAGS += $(addprefix -DHAS_,$(shell echo $(EXTRA_DRIVERS) | tr a-z A-Z))
 endif
 
-APP_AR  = $(BUILD_DIR)/$(APP).a
-APP_OUT = $(BUILD_DIR)/$(APP).out
-FW      = $(BUILD_DIR)/user$(USR).bin
-
 ifeq ($(DEBUG), true)
     CFLAGS += -D_DEBUG
 ifneq ($(DEBUG_IP),)
@@ -199,8 +193,7 @@ CFLAGS += $(foreach p,$(PORTS),$(shell \
     fi \
 ))
 
-LDSCRIPT = eagle.app.v6.new.$(FLASH_SIZE).app$(USR).ld
-LDSCRIPT := $(SDK_BASE)/ld/$(LDSCRIPT)
+LDSCRIPT = $(SDK_BASE)/ld/eagle.app.v6.new.$(FLASH_SIZE).app$(1).ld
 
 # compute the firmware config identifier (nulls and 0s are reserved)
 ifeq ($(FW_CONFIG_ID),)
@@ -233,9 +226,9 @@ endif
 
 .PHONY: dirs
 .NOTPARALLEL: buildinfo
-.PRECIOUS: $(BUILD_DIR)/%.html.gz
+.PRECIOUS: $(BUILD_DIR)/%.html.gz build/$(APP)%.out
 
-all: buildinfo dirs $(FW) 
+all: buildinfo dirs $(BUILD_DIR)/user1.bin $(BUILD_DIR)/user2.bin
 
 dirs:
 	$(Q) mkdir -p $(BUILD_DIR)
@@ -264,7 +257,6 @@ buildinfo:
 	$(vecho) " *" CONNECTED_LED_LEVEL = $(CONNECTED_LED_LEVEL)
 	$(vecho) " *" FW_CONFIG_NAME = $(FW_CONFIG_NAME)
 	$(vecho) " *" FW_CONFIG_ID = $(FW_CONFIG_ID)
-	$(vecho) " *" USR = $(USR)
 	$(vecho) " *" CFLAGS = $(CFLAGS)
 	$(vecho) "-------------------------------"
 
@@ -277,20 +269,20 @@ $(BUILD_DIR)/gdbstub-entry.o: $(GDB_DIR)/gdbstub-entry.S
 	$(vecho) "AS $<"
 	$(Q) $(CC) $(ASFLAGS) -c -o $@ $<
 
-$(APP_AR): $(OBJ_FILES)
+$(BUILD_DIR)/$(APP).a: $(OBJ_FILES)
 	$(vecho) "AR $@"
 	$(Q) $(AR) cru $@ $^
 
-$(APP_OUT): $(APP_AR)
+$(BUILD_DIR)/$(APP)%.out:$(BUILD_DIR)/$(APP).a
 	$(vecho) "LD $@"
-	$(Q) $(LD) $(LDFLAGS) -T$(LDSCRIPT) -Wl,--start-group $(LIB) $^ -Wl,--end-group -o $@
+	$(Q) $(LD) $(LDFLAGS) -T$(call LDSCRIPT,$*) -Wl,--start-group $(LIB) $^ -Wl,--end-group -o $@
 
 $(BUILD_DIR)/%.html.gz: html/%.html
 	$(vecho) "GZ $@"
 	$(Q) sed 's/{{VERSION}}/$(VERSION)/g' $^ > $(BUILD_DIR)/$$(basename $^)
 	$(Q) $(GZ) $(BUILD_DIR)/$$(basename $^) > $@
 
-$(BUILD_DIR)/user%.bin: $(APP_OUT) $(BUILD_DIR)/index.html.gz
+$(BUILD_DIR)/user%.bin: $(BUILD_DIR)/$(APP)%.out $(BUILD_DIR)/index.html.gz
 	@echo $(FW_CONFIG_ID) > $(BUILD_DIR)/.config_id
 	@echo $(FW_CONFIG_NAME) > $(BUILD_DIR)/.config_name
 	$(vecho) "FW $@"
@@ -298,10 +290,9 @@ $(BUILD_DIR)/user%.bin: $(APP_OUT) $(BUILD_DIR)/index.html.gz
 	$(Q) $(OC) --only-section .data -O binary $< $(BUILD_DIR)/eagle.app.v6.data.bin
 	$(Q) $(OC) --only-section .rodata -O binary $< $(BUILD_DIR)/eagle.app.v6.rodata.bin
 	$(Q) $(OC) --only-section .irom0.text -O binary $< $(BUILD_DIR)/eagle.app.v6.irom0text.bin
-	$(Q) [[ $@ =~ $(BUILD_DIR)/user(.).bin ]] && usr=$${BASH_REMATCH[1]} && cd $(BUILD_DIR) && \
-	     $(APPGEN) *.out 2 $(FLASH_MODE) $(FLASH_CLK_DIV) $(FLASH_SIZE_MAP) $${usr} index.html.gz
+	$(Q) cd $(BUILD_DIR) && \
+	     $(APPGEN) $(APP)$*.out 2 $(FLASH_MODE) $(FLASH_CLK_DIV) $(FLASH_SIZE_MAP) $* index.html.gz
 	$(Q) mv $(BUILD_DIR)/eagle.app.flash.bin $@
-	$(vecho)
 	
 clean:
 	$(Q) $(RM) $(BUILD_DIR)
