@@ -321,7 +321,7 @@ $(BUILD_DIR)/user%.bin: $(BUILD_DIR)/$(APP)%.out $(BUILD_DIR)/index.html.gz
 	$(Q) $(OC) --only-section .rodata -O binary $< $(BUILD_DIR)/eagle.app.v6.rodata.bin
 	$(Q) $(OC) --only-section .irom0.text -O binary $< $(BUILD_DIR)/eagle.app.v6.irom0text.bin
 	$(Q) cd $(BUILD_DIR) && \
-	     $(APPGEN) $(APP)$*.out 2 $(FLASH_MODE) $(FLASH_CLK_DIV) $(FLASH_SIZE_MAP) $* index.html.gz
+	     $(APPGEN) $(APP)$*.out 2 $(FLASH_MODE_INT) $(FLASH_CLK_DIV) $(FLASH_SIZE_MAP) $* index.html.gz
 	$(Q) mv $(BUILD_DIR)/eagle.app.flash.bin $@
 
 $(BUILD_DIR)/full.bin: $(BUILD_DIR)/user1.bin $(BUILD_DIR)/user2.bin
