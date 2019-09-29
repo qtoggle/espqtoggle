@@ -34,16 +34,36 @@ SETUP_MODE_LED_PORT ?= null
 CONNECTED_LED_PORT ?= null
 CONNECTED_LED_LEVEL ?= 0
 
-FW_CONFIG_NAME ?= # configuration-name
+FLASH_MODE ?= qio
+FLASH_FREQ ?= 80
 
+FW_CONFIG_NAME ?= # configuration-name
 
 # ---- configurable stuff ends here ---- #
 
 SHELL = /bin/bash  # other shells will probably fail
 VERSION = $(shell cat src/ver.h | grep FW_VERSION | head -n 1 | tr -s ' ' | cut -d ' ' -f 3 | tr -d '"')
 
-FLASH_MODE = 0     	# QIO
-FLASH_CLK_DIV = 15 	# 80 MHz
+ifeq ($(FLASH_MODE),qio)
+	FLASH_MODE_INT = 0
+else ifeq ($(FLASH_MODE),qout)
+	FLASH_MODE_INT = 1
+else ifeq ($(FLASH_MODE),dio)
+	FLASH_MODE_INT = 2
+else ifeq ($(FLASH_MODE),dout)
+	FLASH_MODE_INT = 3
+endif
+
+ifeq ($(FLASH_FREQ),20)
+	FLASH_CLK_DIV = 2
+else ifeq ($(FLASH_FREQ),26)
+	FLASH_CLK_DIV = 1
+else ifeq ($(FLASH_FREQ),40)
+	FLASH_CLK_DIV = 0
+else ifeq ($(FLASH_FREQ),80)
+	FLASH_CLK_DIV = 15
+endif
+
 FLASH_SIZE_MAP = 2  # 1024 (512 + 512)
 FLASH_SIZE = 1024
 
@@ -206,7 +226,7 @@ LDSCRIPT = $(SDK_BASE)/ld/eagle.app.v6.new.$(FLASH_SIZE).app$(1).ld
 # compute the firmware config identifier (nulls and 0s are reserved)
 ifeq ($(FW_CONFIG_ID),)
     FW_CONFIG_TEXT = $(SETUP_MODE_PORT) $(SETUP_MODE_LED_PORT) $(CONNECTED_LED_PORT) \
-                     null null null null null null null null null null null null null
+                     $(FLASH_MODE) $(FLASH_FREQ) null null null null null null null null null null null
     FW_CONFIG_NUMB = $(FLASH_SIZE) \
                      $(SETUP_MODE_LEVEL) $(BATTERY_DIV_FACTOR) \
                      $(BATTERY_VOLT_0) $(BATTERY_VOLT_20) $(BATTERY_VOLT_40) \
@@ -263,6 +283,8 @@ buildinfo:
 	$(vecho) " *" SETUP_MODE_LED_PORT = $(SETUP_MODE_LED_PORT)
 	$(vecho) " *" CONNECTED_LED_PORT = $(CONNECTED_LED_PORT)
 	$(vecho) " *" CONNECTED_LED_LEVEL = $(CONNECTED_LED_LEVEL)
+	$(vecho) " *" FLASH_MODE = $(FLASH_MODE_INT)
+	$(vecho) " *" FLASH_FREQ = $(FLASH_CLK_DIV)
 	$(vecho) " *" FW_CONFIG_NAME = $(FW_CONFIG_NAME)
 	$(vecho) " *" FW_CONFIG_ID = $(FW_CONFIG_ID)
 	$(vecho) " *" CFLAGS = $(CFLAGS)
