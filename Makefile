@@ -292,6 +292,7 @@ $(BUILD_DIR)/%.html.gz: html/%.html
 
 $(BUILD_DIR)/user%.bin: $(APP_OUT) $(BUILD_DIR)/index.html.gz
 	@echo $(FW_CONFIG_ID) > $(BUILD_DIR)/.config_id
+	@echo $(FW_CONFIG_NAME) > $(BUILD_DIR)/.config_name
 	$(vecho) "FW $@"
 	$(Q) $(OC) --only-section .text -O binary $< $(BUILD_DIR)/eagle.app.v6.text.bin
 	$(Q) $(OC) --only-section .data -O binary $< $(BUILD_DIR)/eagle.app.v6.data.bin

@@ -39,4 +39,3 @@ ENV SDK_BASE="/opt/esp-nonos-sdk"
 ADD ./builder.sh /opt
 
 CMD /opt/builder.sh
-
