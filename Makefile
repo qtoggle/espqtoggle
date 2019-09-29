@@ -30,6 +30,7 @@ SETUP_MODE_LEVEL ?= 0
 SETUP_MODE_INT ?= 10
 SETUP_MODE_RESET_INT ?= 20
 SETUP_MODE_LED_PORT ?= null
+
 CONNECTED_LED_PORT ?= null
 CONNECTED_LED_LEVEL ?= 0
 
@@ -45,7 +46,13 @@ FLASH_MODE = 0     	# QIO
 FLASH_CLK_DIV = 15 	# 80 MHz
 FLASH_SIZE_MAP = 2  # 1024 (512 + 512)
 FLASH_SIZE = 1024
+
+FLASH_BOOT_ADDR=0x00000
+FLASH_USR1_ADDR=0x01000
 FLASH_CONFIG_ADDR = 0x7C000
+FLASH_USR2_ADDR=0x81000
+FLASH_INIT_DATA_ADDR=0xFC000
+FLASH_SYS_PARAM_ADDR=0xFE000
 
 CC = xtensa-lx106-elf-gcc
 AR = xtensa-lx106-elf-ar
@@ -54,6 +61,7 @@ OC = xtensa-lx106-elf-objcopy
 MD = mkdir -p
 RM = rm -rf
 GZ = gzip -c
+DD = dd status=none
 
 ESPTOOL ?= esptool
 APPGEN ?= $(PWD)/gen_appbin.py
@@ -228,7 +236,7 @@ endif
 .NOTPARALLEL: buildinfo
 .PRECIOUS: $(BUILD_DIR)/%.html.gz build/$(APP)%.out
 
-all: buildinfo dirs $(BUILD_DIR)/user1.bin $(BUILD_DIR)/user2.bin
+all: buildinfo dirs $(BUILD_DIR)/full.bin
 
 dirs:
 	$(Q) mkdir -p $(BUILD_DIR)
@@ -293,6 +301,20 @@ $(BUILD_DIR)/user%.bin: $(BUILD_DIR)/$(APP)%.out $(BUILD_DIR)/index.html.gz
 	$(Q) cd $(BUILD_DIR) && \
 	     $(APPGEN) $(APP)$*.out 2 $(FLASH_MODE) $(FLASH_CLK_DIV) $(FLASH_SIZE_MAP) $* index.html.gz
 	$(Q) mv $(BUILD_DIR)/eagle.app.flash.bin $@
-	
+
+$(BUILD_DIR)/full.bin: $(BUILD_DIR)/user1.bin $(BUILD_DIR)/user2.bin
+	$(vecho) "FW $@"
+	$(Q) $(DD) if=/dev/zero of=$@ bs=1k count=$(FLASH_SIZE)
+	$(Q) $(DD) if=$(SDK_BASE)/bin/boot.bin of=$@ bs=1k \
+	           seek=$$(($(FLASH_BOOT_ADDR) / 1024)) conv=notrunc
+	$(Q) $(DD) if=$(BUILD_DIR)/user1.bin of=$@ bs=1k \
+	           seek=$$(($(FLASH_USR1_ADDR) / 1024)) conv=notrunc
+	$(Q) $(DD) if=$(BUILD_DIR)/user2.bin of=$@ bs=1k \
+	           seek=$$(($(FLASH_USR2_ADDR) / 1024)) conv=notrunc
+	$(Q) $(DD) if=$(SDK_BASE)/bin/esp_init_data_default.bin of=$@ bs=1k \
+	           seek=$$(($(FLASH_INIT_DATA_ADDR) / 1024)) conv=notrunc
+	$(Q) $(DD) if=$(SDK_BASE)/bin/blank.bin of=$@ bs=1k \
+	           seek=$$(($(FLASH_SYS_PARAM_ADDR) / 1024)) conv=notrunc
+
 clean:
 	$(Q) $(RM) $(BUILD_DIR)
