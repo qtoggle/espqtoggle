@@ -35,7 +35,7 @@ CONNECTED_LED_PORT ?= null
 CONNECTED_LED_LEVEL ?= 0
 
 FLASH_MODE ?= qio
-FLASH_FREQ ?= 80
+FLASH_FREQ ?= 40
 
 FW_CONFIG_NAME ?= # configuration-name
 
@@ -56,12 +56,16 @@ endif
 
 ifeq ($(FLASH_FREQ),20)
 	FLASH_CLK_DIV = 2
+	FLASH_SIZE_FREQ_HEX = 22
 else ifeq ($(FLASH_FREQ),26)
 	FLASH_CLK_DIV = 1
+	FLASH_SIZE_FREQ_HEX = 21
 else ifeq ($(FLASH_FREQ),40)
 	FLASH_CLK_DIV = 0
+	FLASH_SIZE_FREQ_HEX = 20
 else ifeq ($(FLASH_FREQ),80)
 	FLASH_CLK_DIV = 15
+	FLASH_SIZE_FREQ_HEX = 2F
 endif
 
 FLASH_SIZE_MAP = 2  # 1024 (512 + 512)
@@ -283,8 +287,8 @@ buildinfo:
 	$(vecho) " *" SETUP_MODE_LED_PORT = $(SETUP_MODE_LED_PORT)
 	$(vecho) " *" CONNECTED_LED_PORT = $(CONNECTED_LED_PORT)
 	$(vecho) " *" CONNECTED_LED_LEVEL = $(CONNECTED_LED_LEVEL)
-	$(vecho) " *" FLASH_MODE = $(FLASH_MODE_INT)
-	$(vecho) " *" FLASH_FREQ = $(FLASH_CLK_DIV)
+	$(vecho) " *" FLASH_MODE = $(FLASH_MODE)
+	$(vecho) " *" FLASH_FREQ = $(FLASH_FREQ)
 	$(vecho) " *" FW_CONFIG_NAME = $(FW_CONFIG_NAME)
 	$(vecho) " *" FW_CONFIG_ID = $(FW_CONFIG_ID)
 	$(vecho) " *" CFLAGS = $(CFLAGS)
@@ -337,6 +341,8 @@ $(BUILD_DIR)/full.bin: $(BUILD_DIR)/user1.bin $(BUILD_DIR)/user2.bin
 	           seek=$$(($(FLASH_INIT_DATA_ADDR) / 1024)) conv=notrunc
 	$(Q) $(DD) if=$(SDK_BASE)/bin/blank.bin of=$@ bs=1k \
 	           seek=$$(($(FLASH_SYS_PARAM_ADDR) / 1024)) conv=notrunc
+	$(Q) echo -en "\x$(FLASH_MODE_INT)" | $(DD) of=$@ bs=1 seek=2 conv=notrunc
+	$(Q) echo -en "\x$(FLASH_SIZE_FREQ_HEX)" | $(DD) of=$@ bs=1 seek=3 conv=notrunc
 
 clean:
 	$(Q) $(RM) $(BUILD_DIR)
