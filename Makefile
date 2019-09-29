@@ -6,7 +6,7 @@ DEBUG_FLAGS ?= flashcfg httpclient httpserver ota pingwdt sleep rtc tcpserver de
 DEBUG_IP ?= # 192.168.0.1
 DEBUG_PORT ?= 48879
 
-USR   ?= 1
+USR ?= 1
 
 GDB     ?= false
 OTA     ?= true
@@ -298,10 +298,10 @@ $(BUILD_DIR)/user%.bin: $(APP_OUT) $(BUILD_DIR)/index.html.gz
 	$(Q) $(OC) --only-section .data -O binary $< $(BUILD_DIR)/eagle.app.v6.data.bin
 	$(Q) $(OC) --only-section .rodata -O binary $< $(BUILD_DIR)/eagle.app.v6.rodata.bin
 	$(Q) $(OC) --only-section .irom0.text -O binary $< $(BUILD_DIR)/eagle.app.v6.irom0text.bin
-	$(Q) cd $(BUILD_DIR) && \
-	     $(APPGEN) *.out 2 $(FLASH_MODE) $(FLASH_CLK_DIV) $(FLASH_SIZE_MAP) $(USR) index.html.gz
+	$(Q) [[ $@ =~ $(BUILD_DIR)/user(.).bin ]] && usr=$${BASH_REMATCH[1]} && cd $(BUILD_DIR) && \
+	     $(APPGEN) *.out 2 $(FLASH_MODE) $(FLASH_CLK_DIV) $(FLASH_SIZE_MAP) $${usr} index.html.gz
 	$(Q) mv $(BUILD_DIR)/eagle.app.flash.bin $@
 	$(vecho)
-
+	
 clean:
 	$(Q) $(RM) $(BUILD_DIR)
