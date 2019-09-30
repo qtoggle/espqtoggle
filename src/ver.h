@@ -22,7 +22,7 @@
 
 
 #define API_VERSION             "1.0"
-#define FW_VERSION              "0.9.0"
+#define FW_VERSION              "0.9.1"
 
 #define version_is_beta()       ((FW_VERSION[strlen(FW_VERSION) - 2] == 'b') || \
                                  (FW_VERSION[strlen(FW_VERSION) - 3] == 'b'))
