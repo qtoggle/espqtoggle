@@ -6,9 +6,6 @@
 			"params": {
 				"method": "PATCH",
 				"path": "/device",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
-				},
 				"body": {
 				    "name": "testdevice",
 				    "description": "Test Description",
