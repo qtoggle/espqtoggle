@@ -647,7 +647,7 @@ json_t *device_to_json(void) {
     /* config name & model */
     if (device_config_model_choices[0]) {
         char config_name[64];
-        snprintf(config_name, 64, "%s-%s", FW_CONFIG_NAME, device_config_model);
+        snprintf(config_name, 64, "%s/%s", FW_CONFIG_NAME, device_config_model);
         json_obj_append(json, "config_name", json_str_new(config_name));
         json_obj_append(json, "config_model", json_str_new(device_config_model));
     }
