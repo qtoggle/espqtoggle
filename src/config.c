@@ -127,22 +127,28 @@ void device_load(uint8 *data) {
         system_update_cpu_freq(frequency);
     }
 
+    /* config model */
+    char *model = string_pool_read(strings_ptr, data + CONFIG_OFFS_MODEL);
+    if (model) {
+        strncpy(device_config_model, model, API_MAX_DEVICE_CONFIG_MODEL_LEN);
+    }
+
     /* webhooks */
     if ((webhooks_host = string_pool_read_dup(strings_ptr, data + CONFIG_OFFS_WEBHOOKS_HOST))) {
-        DEBUG_DEVICE("webhooks host = \"%s\"", webhooks_host);
+        DEBUG_WEBHOOKS("webhooks host = \"%s\"", webhooks_host);
     }
     else {
-        DEBUG_DEVICE("null webhooks host");
+        DEBUG_WEBHOOKS("null webhooks host");
     }
 
     memcpy(&webhooks_port, data + CONFIG_OFFS_WEBHOOKS_PORT, 2);
-    DEBUG_DEVICE("webhooks port = %d", webhooks_port);
+    DEBUG_WEBHOOKS("webhooks port = %d", webhooks_port);
 
     if ((webhooks_path = string_pool_read_dup(strings_ptr, data + CONFIG_OFFS_WEBHOOKS_PATH))) {
-        DEBUG_DEVICE("webhooks path = \"%s\"", webhooks_path);
+        DEBUG_WEBHOOKS("webhooks path = \"%s\"", webhooks_path);
     }
     else {
-        DEBUG_DEVICE("null webhooks path");
+        DEBUG_WEBHOOKS("null webhooks path");
     }
 
     char *password_hash = string_pool_read(strings_ptr, data + CONFIG_OFFS_WEBHOOKS_PASSWORD);
@@ -150,7 +156,7 @@ void device_load(uint8 *data) {
         strncpy(webhooks_password_hash, password_hash, SHA256_HEX_LEN + 1);
     }
     if (!webhooks_password_hash[0]) {  /* use hash of empty string, by default */
-        DEBUG_DEVICE("null webhooks password");
+        DEBUG_WEBHOOKS("null webhooks password");
 
         char *hex_digest = sha256_hex("");
         strncpy(webhooks_password_hash, hex_digest, SHA256_HEX_LEN + 1);
@@ -158,16 +164,16 @@ void device_load(uint8 *data) {
     }
 
     memcpy(&webhooks_events_mask, data + CONFIG_OFFS_WEBHOOKS_EVENTS, 2);
-    DEBUG_DEVICE("webhooks events mask = %02X", webhooks_events_mask);
+    DEBUG_WEBHOOKS("webhooks events mask = %02X", webhooks_events_mask);
 
     memcpy(&webhooks_timeout, data + CONFIG_OFFS_WEBHOOKS_TIMEOUT, 2);
     webhooks_retries = data[CONFIG_OFFS_WEBHOOKS_RETRIES];
-    DEBUG_DEVICE("webhooks retries = %d", webhooks_retries);
+    DEBUG_WEBHOOKS("webhooks retries = %d", webhooks_retries);
 
     if (!webhooks_timeout) {
         webhooks_timeout = WEBHOOKS_DEF_TIMEOUT;
     }
-    DEBUG_DEVICE("webhooks timeout = %d", webhooks_timeout);
+    DEBUG_WEBHOOKS("webhooks timeout = %d", webhooks_timeout);
 
     /* ping watchdog */
     if (ping_wdt_interval) {
@@ -238,6 +244,11 @@ void device_save(uint8 *data, uint32 *strings_offs) {
     memcpy(data + CONFIG_OFFS_DEVICE_FLAGS, &device_flags, 4);
     memcpy(data + CONFIG_OFFS_CPU_FREQ, &frequency, 4);
 
+    /* config model */
+    if (!string_pool_write(strings_ptr, strings_offs, device_config_model, data + CONFIG_OFFS_MODEL)) {
+        DEBUG_DEVICE("no more string space to save config model");
+    }
+
     /* webhooks */
     if (!string_pool_write(strings_ptr, strings_offs, webhooks_host, data + CONFIG_OFFS_WEBHOOKS_HOST)) {
         DEBUG_WEBHOOKS("no more string space to save host");
@@ -277,11 +288,17 @@ void config_init(void) {
         snprintf(device_hostname, API_MAX_DEVICE_NAME_LEN, DEFAULT_HOSTNAME, system_get_chip_id());
     }
 
-    DEBUG_DEVICE("hostname is %s", device_hostname);
+    DEBUG_DEVICE("hostname is \"%s\"", device_hostname);
 
     if (!device_tcp_port) {
         device_tcp_port = DEFAULT_TCP_PORT;
     }
+
+    if (!device_config_model[0] && device_config_model_choices[0]) {
+        strncpy(device_config_model, device_config_model_choices[0], API_MAX_DEVICE_CONFIG_MODEL_LEN);
+    }
+
+    DEBUG_DEVICE("config model is \"%s\"", device_config_model);
 
     ports_init(config_data);
 

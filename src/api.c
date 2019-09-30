@@ -644,8 +644,16 @@ json_t *device_to_json(void) {
     snprintf(id, 10, "%08x", system_get_chip_id());
     json_obj_append(json, "chip_id", json_str_new(id));
 
-    /* config id/name */
-    json_obj_append(json, "config_name", json_str_new(FW_CONFIG_NAME));
+    /* config name & model */
+    if (device_config_model_choices[0]) {
+        char config_name[64];
+        snprintf(config_name, 64, "%s-%s", FW_CONFIG_NAME, device_config_model);
+        json_obj_append(json, "config_name", json_str_new(config_name));
+        json_obj_append(json, "config_model", json_str_new(device_config_model));
+    }
+    else {
+        json_obj_append(json, "config_name", json_str_new(FW_CONFIG_NAME));
+    }
 
 #ifdef _DEBUG
     json_obj_append(json, "debug", json_bool_new(TRUE));
@@ -961,6 +969,21 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
             }
         }
 #endif
+        else if (!strcmp(key, "config_model") && device_config_model_choices[0]) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD_VALUE(key);
+            }
+
+            char *model = json_str_get(child);
+            if (!validate_str(model, device_config_model_choices)) {
+                return INVALID_FIELD_VALUE(key);
+            }
+
+            strncpy(device_config_model, model, API_MAX_DEVICE_CONFIG_MODEL_LEN);
+            device_config_model[API_MAX_DEVICE_CONFIG_MODEL_LEN - 1] = 0;
+
+            DEBUG_DEVICE("config model set to %s", device_config_model);
+        }
         else if (!strcmp(key, "version") ||
                  !strcmp(key, "api_version") ||
 #ifdef _OTA
@@ -2363,6 +2386,13 @@ json_t *device_attrdefs_to_json(void) {
             "Device chip identifier.", NULL, ATTR_TYPE_STRING, FALSE /* modifiable */,
             UNDEFINED /* min */, UNDEFINED /* max */, FALSE /* integer */, 0 /* step */, NULL /* choices */,
             FALSE /* reconnect */));
+
+    if (device_config_model_choices[0]) {
+        json_obj_append(json, "config_model", attrdef_to_json(
+                "Device configuration model.", NULL, ATTR_TYPE_STRING, TRUE /* modifiable */,
+                UNDEFINED /* min */, UNDEFINED /* max */, FALSE /* integer */, 0 /* step */,
+                device_config_model_choices, FALSE /* reconnect */));
+    }
 
 #ifdef _DEBUG
     json_obj_append(json, "debug", attrdef_to_json(

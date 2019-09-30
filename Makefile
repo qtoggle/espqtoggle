@@ -38,6 +38,7 @@ FLASH_MODE ?= qio
 FLASH_FREQ ?= 40
 
 FW_CONFIG_NAME ?= # configuration-name
+FW_CONFIG_MODELS ?= # model1|model2|model3
 
 # ---- configurable stuff ends here ---- #
 
@@ -225,7 +226,16 @@ CFLAGS += $(foreach p,$(PORTS),$(shell \
     fi \
 ))
 
+_COMMA := ,
+ifneq ($(FW_CONFIG_MODELS),)
+	FW_CONFIG_MODELS_PREPARED := $(subst |,\"$(_COMMA)\",$(FW_CONFIG_MODELS))
+	FW_CONFIG_MODELS_PREPARED := \"$(FW_CONFIG_MODELS_PREPARED)\",
+else
+	FW_CONFIG_MODELS_PREPARED := 
+endif
+
 CFLAGS += -DFW_CONFIG_NAME=\"$(FW_CONFIG_NAME)\"
+CFLAGS += -DFW_CONFIG_MODELS=$(FW_CONFIG_MODELS_PREPARED)
 
 LDSCRIPT = $(SDK_BASE)/ld/eagle.app.v6.new.$(FLASH_SIZE).app$(1).ld
 
@@ -272,6 +282,7 @@ buildinfo:
 	$(vecho) " *" FLASH_MODE = $(FLASH_MODE)
 	$(vecho) " *" FLASH_FREQ = $(FLASH_FREQ)
 	$(vecho) " *" CONFIG_NAME = $(FW_CONFIG_NAME)
+	$(vecho) " *" CONFIG_MODELS = "$(FW_CONFIG_MODELS)"
 	$(vecho) " *" CFLAGS = $(CFLAGS)
 	$(vecho) "-------------------------------"
 
