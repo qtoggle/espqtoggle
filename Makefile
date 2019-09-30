@@ -38,6 +38,7 @@ FLASH_MODE ?= qio
 FLASH_FREQ ?= 40
 
 FW_CONFIG_NAME ?= # configuration-name
+FW_CONFIG_MODELS ?= # model1|model2|model3
 
 # ---- configurable stuff ends here ---- #
 
@@ -225,27 +226,18 @@ CFLAGS += $(foreach p,$(PORTS),$(shell \
     fi \
 ))
 
-LDSCRIPT = $(SDK_BASE)/ld/eagle.app.v6.new.$(FLASH_SIZE).app$(1).ld
-
-# compute the firmware config identifier (nulls and 0s are reserved)
-ifeq ($(FW_CONFIG_ID),)
-    FW_CONFIG_TEXT = $(SETUP_MODE_PORT) $(SETUP_MODE_LED_PORT) $(CONNECTED_LED_PORT) \
-                     $(FLASH_MODE) $(FLASH_FREQ) null null null null null null null null null null null
-    FW_CONFIG_NUMB = $(FLASH_SIZE) \
-                     $(SETUP_MODE_LEVEL) $(BATTERY_DIV_FACTOR) \
-                     $(BATTERY_VOLT_0) $(BATTERY_VOLT_20) $(BATTERY_VOLT_40) \
-                     $(BATTERY_VOLT_60) $(BATTERY_VOLT_80) $(BATTERY_VOLT_100) \
-                     $(CONNECTED_LED_LEVEL) 0 0 0 0 0 0
-    FW_CONFIG_FLAG = $(OTA) $(SSL) $(SLEEP) $(BATTERY) $(VIRTUAL) $(DEBUG) \
-                     false false false false false false false false false false
-    FW_CONFIG_PORT = $(sort $(PORTS)) $(sort $(EXTRA_DRIVERS)) $(sort $(PORT_ID_MAPPINGS))
-    
-    FW_CONFIG_ID := $(FW_CONFIG_TEXT) $(FW_CONFIG_NUMB) $(FW_CONFIG_FLAG) $(FW_CONFIG_PORT)
-    FW_CONFIG_ID := $(shell echo -n $(FW_CONFIG_ID) | tr -s ' ' | sha1sum | cut -b 1-8)
+_COMMA := ,
+ifneq ($(FW_CONFIG_MODELS),)
+	FW_CONFIG_MODELS_PREPARED := $(subst |,\"$(_COMMA)\",$(FW_CONFIG_MODELS))
+	FW_CONFIG_MODELS_PREPARED := \"$(FW_CONFIG_MODELS_PREPARED)\",
+else
+	FW_CONFIG_MODELS_PREPARED := 
 endif
 
-CFLAGS += -DFW_CONFIG_ID=\"$(FW_CONFIG_ID)\"
 CFLAGS += -DFW_CONFIG_NAME=\"$(FW_CONFIG_NAME)\"
+CFLAGS += -DFW_CONFIG_MODELS=$(FW_CONFIG_MODELS_PREPARED)
+
+LDSCRIPT = $(SDK_BASE)/ld/eagle.app.v6.new.$(FLASH_SIZE).app$(1).ld
 
 V ?= $(VERBOSE)
 ifeq ("$(V)","1")
@@ -289,8 +281,8 @@ buildinfo:
 	$(vecho) " *" CONNECTED_LED_LEVEL = $(CONNECTED_LED_LEVEL)
 	$(vecho) " *" FLASH_MODE = $(FLASH_MODE)
 	$(vecho) " *" FLASH_FREQ = $(FLASH_FREQ)
-	$(vecho) " *" FW_CONFIG_NAME = $(FW_CONFIG_NAME)
-	$(vecho) " *" FW_CONFIG_ID = $(FW_CONFIG_ID)
+	$(vecho) " *" CONFIG_NAME = $(FW_CONFIG_NAME)
+	$(vecho) " *" CONFIG_MODELS = "$(FW_CONFIG_MODELS)"
 	$(vecho) " *" CFLAGS = $(CFLAGS)
 	$(vecho) "-------------------------------"
 
@@ -317,7 +309,6 @@ $(BUILD_DIR)/%.html.gz: html/%.html
 	$(Q) $(GZ) $(BUILD_DIR)/$$(basename $^) > $@
 
 $(BUILD_DIR)/user%.bin: $(BUILD_DIR)/$(APP)%.out $(BUILD_DIR)/index.html.gz
-	@echo $(FW_CONFIG_ID) > $(BUILD_DIR)/.config_id
 	@echo $(FW_CONFIG_NAME) > $(BUILD_DIR)/.config_name
 	$(vecho) "FW $@"
 	$(Q) $(OC) --only-section .text -O binary $< $(BUILD_DIR)/eagle.app.v6.text.bin

@@ -54,8 +54,8 @@
 
 #define CONNECT_TIMEOUT             20000   /* milliseconds */
 
-#define FW_BASE_URL                 "http://firmware.qtoggle.io"
-#define FW_BASE_PATH                "/espqtoggle"
+#define FW_BASE_URL                 "http://provisioning.qtoggle.io"
+#define FW_BASE_PATH                "/firmware/espqtoggle"
 #define FW_LATEST_FILE              "/latest"
 #define FW_LATEST_BETA_FILE         "/latest_beta"
 #define FW_AUTO_MIN_INTERVAL        24  /* hours */
@@ -220,7 +220,7 @@ void user_init(void) {
 #else
     printf("\n\n");
     DEBUG("espQToggle  " FW_VERSION);
-    DEBUG("Config      " FW_CONFIG_NAME "-" FW_CONFIG_ID);
+    DEBUG("Config      " FW_CONFIG_NAME);
     DEBUG("API Version " API_VERSION);
     DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
 #endif /* _GDB */
@@ -236,9 +236,9 @@ void user_init(void) {
     config_init();
 #ifdef _OTA
     ota_init(/* current_version = */ FW_VERSION,
-             /* url = */             FW_BASE_URL FW_BASE_PATH "/" FW_CONFIG_NAME "-" FW_CONFIG_ID FW_LATEST_FILE,
-             /* beta_url = */        FW_BASE_URL FW_BASE_PATH "/" FW_CONFIG_NAME "-" FW_CONFIG_ID FW_LATEST_BETA_FILE,
-             /* url_template = */    FW_BASE_URL FW_BASE_PATH "/" FW_CONFIG_NAME "-" FW_CONFIG_ID "/%s");
+             /* url = */             FW_BASE_URL FW_BASE_PATH "/" FW_CONFIG_NAME FW_LATEST_FILE,
+             /* beta_url = */        FW_BASE_URL FW_BASE_PATH "/" FW_CONFIG_NAME FW_LATEST_BETA_FILE,
+             /* url_template = */    FW_BASE_URL FW_BASE_PATH "/" FW_CONFIG_NAME "/%s");
 #endif
     wifi_set_station_mode(on_wifi_connect, device_hostname);
     client_init();

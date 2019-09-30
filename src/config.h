@@ -31,7 +31,8 @@
 #define CONFIG_OFFS_VIEWONLY_PASSWORD   0x00A0 /*  32 bytes */
 
 #define CONFIG_OFFS_SSID                0x00C0 /*  32 bytes */
-#define CONFIG_OFFS_BSSID               0x00E0 /*   6 bytes - following 26 bytes free */
+#define CONFIG_OFFS_BSSID               0x00E0 /*   6 bytes */
+                                               /* 0x00E6 - 0x00FF: reserved */
 #define CONFIG_OFFS_PSK                 0x0100 /*  64 bytes */
 
 #define CONFIG_OFFS_TCP_PORT            0x0140 /*   2 bytes */
@@ -46,7 +47,9 @@
 
 #define CONFIG_OFFS_SCAN_INTERVAL       0x0159 /*   2 bytes */
 #define CONFIG_OFFS_SCAN_THRESH         0x015B /*   1 bytes */
-                                               /* 0x015C - 0x016F: reserved */
+
+#define CONFIG_OFFS_MODEL               0x015C /*   4 bytes - strings pool pointer */
+                                               /* 0x0160 - 0x016F: reserved */
 
 #define CONFIG_OFFS_WEBHOOKS_HOST       0x0170 /*   4 bytes - strings pool pointer */
 #define CONFIG_OFFS_WEBHOOKS_PORT       0x0174 /*   2 bytes */
