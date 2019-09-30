@@ -214,6 +214,12 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
             goto skip_auth;
         }
 
+        if (!strncmp(device_admin_password_hash, EMPTY_SHA256_HEX, SHA256_HEX_LEN)) {
+            DEBUG_ESPQTCLIENT_CONN(conn, "granting admin rights due to empty admin password");
+            access_level = API_ACCESS_LEVEL_ADMIN;
+            goto skip_auth;
+        }
+
         DEBUG_ESPQTCLIENT_CONN(conn, "missing authorization header");
         RESPOND_UNAUTHENTICATED();
         goto done;

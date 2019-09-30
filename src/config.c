@@ -67,33 +67,39 @@ void device_load(uint8 *data) {
     memcpy(device_viewonly_password_hash, data + CONFIG_OFFS_VIEWONLY_PASSWORD, SHA256_LEN);
 
     /* transform default (null) password hashes into hashes of empty strings */
-    uint8 *empty_digest = sha256((uint8 *) "", 0);
+    char *hex_digest;
     if (!memcmp(device_admin_password_hash, NULL_HASH, SHA256_LEN)) {
-        memcpy(device_admin_password_hash, empty_digest, SHA256_LEN);
-        DEBUG_DEVICE("null admin password");
+        memcpy(device_admin_password_hash, EMPTY_SHA256_HEX, SHA256_HEX_LEN);
+        DEBUG_DEVICE("empty admin password");
     }
+    else {
+        /* passwords are stored as binary digest, must be converted to hex digest before use */
+        hex_digest = bin2hex((uint8 *) device_admin_password_hash, SHA256_LEN);
+        strncpy(device_admin_password_hash, hex_digest, SHA256_HEX_LEN + 1);
+        free(hex_digest);
+    }
+
     if (!memcmp(device_normal_password_hash, NULL_HASH, SHA256_LEN)) {
-        memcpy(device_normal_password_hash, empty_digest, SHA256_LEN);
-        DEBUG_DEVICE("null normal password");
+        memcpy(device_normal_password_hash, EMPTY_SHA256_HEX, SHA256_HEX_LEN);
+        DEBUG_DEVICE("empty normal password");
     }
+    else {
+        /* passwords are stored as binary digest, must be converted to hex digest before use */
+        hex_digest = bin2hex((uint8 *) device_normal_password_hash, SHA256_LEN);
+        strncpy(device_normal_password_hash, hex_digest, SHA256_HEX_LEN + 1);
+        free(hex_digest);
+    }
+
     if (!memcmp(device_viewonly_password_hash, NULL_HASH, SHA256_LEN)) {
-        memcpy(device_viewonly_password_hash, empty_digest, SHA256_LEN);
-        DEBUG_DEVICE("null viewonly password");
+        memcpy(device_viewonly_password_hash, EMPTY_SHA256_HEX, SHA256_HEX_LEN);
+        DEBUG_DEVICE("empty viewonly password");
     }
-    free(empty_digest);
-
-    /* passwords are stored as binary digest, must be converted to hex digest before use */
-    char *hex_digest = bin2hex((uint8 *) device_admin_password_hash, SHA256_LEN);
-    strncpy(device_admin_password_hash, hex_digest, SHA256_HEX_LEN + 1);
-    free(hex_digest);
-
-    hex_digest = bin2hex((uint8 *) device_normal_password_hash, SHA256_LEN);
-    strncpy(device_normal_password_hash, hex_digest, SHA256_HEX_LEN + 1);
-    free(hex_digest);
-
-    hex_digest = bin2hex((uint8 *) device_viewonly_password_hash, SHA256_LEN);
-    strncpy(device_viewonly_password_hash, hex_digest, SHA256_HEX_LEN + 1);
-    free(hex_digest);
+    else {
+        /* passwords are stored as binary digest, must be converted to hex digest before use */
+        hex_digest = bin2hex((uint8 *) device_viewonly_password_hash, SHA256_LEN);
+        strncpy(device_viewonly_password_hash, hex_digest, SHA256_HEX_LEN + 1);
+        free(hex_digest);
+    }
 
     /* wifi */
     memcpy(wifi_ssid, data + CONFIG_OFFS_SSID, WIFI_SSID_MAX_LEN);
