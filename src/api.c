@@ -646,7 +646,6 @@ json_t *device_to_json(void) {
 
     /* config id/name */
     json_obj_append(json, "config_name", json_str_new(FW_CONFIG_NAME));
-    json_obj_append(json, "config_id", json_str_new(FW_CONFIG_ID));
 
 #ifdef _DEBUG
     json_obj_append(json, "debug", json_bool_new(TRUE));
@@ -978,7 +977,6 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
                  !strcmp(key, "debug") ||
                  !strcmp(key, "chip_id") ||
                  !strcmp(key, "flash_id") ||
-                 !strcmp(key, "config_id") ||
                  !strcmp(key, "config_name")) {
 
             return ATTR_NOT_MODIFIABLE(key);
@@ -2363,16 +2361,6 @@ json_t *device_attrdefs_to_json(void) {
 
     json_obj_append(json, "chip_id", attrdef_to_json(
             "Device chip identifier.", NULL, ATTR_TYPE_STRING, FALSE /* modifiable */,
-            UNDEFINED /* min */, UNDEFINED /* max */, FALSE /* integer */, 0 /* step */, NULL /* choices */,
-            FALSE /* reconnect */));
-
-    json_obj_append(json, "config_id", attrdef_to_json(
-            "Device configuration identifier.", NULL, ATTR_TYPE_STRING, FALSE /* modifiable */,
-            UNDEFINED /* min */, UNDEFINED /* max */, FALSE /* integer */, 0 /* step */, NULL /* choices */,
-            FALSE /* reconnect */));
-
-    json_obj_append(json, "config_name", attrdef_to_json(
-            "Device configuration name.", NULL, ATTR_TYPE_STRING, FALSE /* modifiable */,
             UNDEFINED /* min */, UNDEFINED /* max */, FALSE /* integer */, 0 /* step */, NULL /* choices */,
             FALSE /* reconnect */));
 

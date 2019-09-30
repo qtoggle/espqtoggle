@@ -44,7 +44,6 @@ jobs:
           # WiFi + API, common configuration
           export EB_CONF_FILES=${SRC_DIR}/test/configurations/common.conf
           /opt/builder.sh
-          export FW_CONFIG_ID=$(cat ${SRC_DIR}/build/.config_id)
           ${SRC_DIR}/test/testmyesp-helper.sh \
             --server-url ${TESTMYESP_SERVER} \
             --credentials ${TESTMYESP_USERNAME}:${TESTMYESP_PASSWORD} \
@@ -62,7 +61,6 @@ jobs:
           # sleep mode
           export EB_CONF_FILES=${SRC_DIR}/test/configurations/sleep-mode.conf
           /opt/builder.sh
-          export FW_CONFIG_ID=$(cat ${SRC_DIR}/build/.config_id)
           ${SRC_DIR}/test/testmyesp-helper.sh \
             --server-url ${TESTMYESP_SERVER} \
             --credentials ${TESTMYESP_USERNAME}:${TESTMYESP_PASSWORD} \
@@ -81,7 +79,6 @@ jobs:
           # setup mode
           export EB_CONF_FILES=${SRC_DIR}/test/configurations/setup-mode.conf
           /opt/builder.sh
-          export FW_CONFIG_ID=$(cat ${SRC_DIR}/build/.config_id)
           ${SRC_DIR}/test/testmyesp-helper.sh \
             --server-url ${TESTMYESP_SERVER} \
             --credentials ${TESTMYESP_USERNAME}:${TESTMYESP_PASSWORD} \
@@ -101,7 +98,6 @@ jobs:
           # gpio
           export EB_CONF_FILES=${SRC_DIR}/test/configurations/gpio.conf
           /opt/builder.sh
-          export FW_CONFIG_ID=$(cat ${SRC_DIR}/build/.config_id)
           ${SRC_DIR}/test/testmyesp-helper.sh \
             --server-url ${TESTMYESP_SERVER} \
             --credentials ${TESTMYESP_USERNAME}:${TESTMYESP_PASSWORD} \

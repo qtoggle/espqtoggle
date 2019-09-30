@@ -62,7 +62,6 @@
                                         "flash_id",
                                         "chip_id",
                                         "config_name",
-                                        "config_id",
                                         "definitions"
                                     ],
                                     "properties": {
@@ -133,9 +132,6 @@
                                             "type": "string"
                                         },
                                         "config_name": {
-                                            "type": "string"
-                                        },
-                                        "config_id": {
                                             "type": "string"
                                         },
                                         "debug": {

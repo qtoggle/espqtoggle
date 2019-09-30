@@ -43,13 +43,11 @@ function build() {
 
 function release() {
     CONFIG_NAME=$1
-    CONFIG_ID=$2
-    CONFIG_STR=${CONFIG_NAME}-${CONFIG_ID}
     
-    echo "**** preparing configuration ${CONFIG_STR} ****"
-    mkdir -p ${RELEASE_DIR}/${CONFIG_STR}
-    cp ${SRC_DIR}/build/user*.bin ${RELEASE_DIR}/${CONFIG_STR}
-    cp ${SRC_DIR}/build/full.bin ${RELEASE_DIR}/${CONFIG_STR}
+    echo "**** preparing configuration ${CONFIG_NAME} ****"
+    mkdir -p ${RELEASE_DIR}/${CONFIG_NAME}
+    cp ${SRC_DIR}/build/user*.bin ${RELEASE_DIR}/${CONFIG_NAME}
+    cp ${SRC_DIR}/build/full.bin ${RELEASE_DIR}/${CONFIG_NAME}
     
     if [[ "${EB_VERSION}" =~ b[0-9]+$ ]]; then  # beta version
         latest_file="latest_beta"
@@ -63,14 +61,14 @@ function release() {
     echo -n "Date: " >> ${RELEASE_DIR}/${latest_file}
     date "+%Y-%m-%d" >> ${RELEASE_DIR}/${latest_file}
 
-    s3cmd put -P --guess-mime-type ${RELEASE_DIR}/${CONFIG_STR}/user1.bin \
-                                   s3://${AWS_BUCKET}/${AWS_FOLDER}/${CONFIG_STR}/${EB_VERSION}/user1.bin
-    s3cmd put -P --guess-mime-type ${RELEASE_DIR}/${CONFIG_STR}/user2.bin \
-                                   s3://${AWS_BUCKET}/${AWS_FOLDER}/${CONFIG_STR}/${EB_VERSION}/user2.bin
-    s3cmd put -P --guess-mime-type ${RELEASE_DIR}/${CONFIG_STR}/full.bin \
-                                   s3://${AWS_BUCKET}/${AWS_FOLDER}/${CONFIG_STR}/${EB_VERSION}/full.bin
+    s3cmd put -P --guess-mime-type ${RELEASE_DIR}/${CONFIG_NAME}/user1.bin \
+                                   s3://${AWS_BUCKET}/${AWS_FOLDER}/${CONFIG_NAME}/${EB_VERSION}/user1.bin
+    s3cmd put -P --guess-mime-type ${RELEASE_DIR}/${CONFIG_NAME}/user2.bin \
+                                   s3://${AWS_BUCKET}/${AWS_FOLDER}/${CONFIG_NAME}/${EB_VERSION}/user2.bin
+    s3cmd put -P --guess-mime-type ${RELEASE_DIR}/${CONFIG_NAME}/full.bin \
+                                   s3://${AWS_BUCKET}/${AWS_FOLDER}/${CONFIG_NAME}/${EB_VERSION}/full.bin
     s3cmd put -P --guess-mime-type ${RELEASE_DIR}/${latest_file} \
-                                   s3://${AWS_BUCKET}/${AWS_FOLDER}/${CONFIG_STR}/${latest_file}
+                                   s3://${AWS_BUCKET}/${AWS_FOLDER}/${CONFIG_NAME}/${latest_file}
 }
 
 function clean() {
@@ -87,6 +85,6 @@ for conf in ${EB_CONF_FILES}; do
     echo -e "\n\n**** building configuration ${conf} ****"
     (source ${conf} && build)
     if [[ -n "${AWS_ACCESS_KEY}" && -n "${AWS_SECRET_KEY}" && -n "${AWS_BUCKET}" && -n "${AWS_FOLDER}" && "${DO_RELEASE}" == "true" ]]; then
-        release $(cat ${SRC_DIR}/build/.config_name) $(cat ${SRC_DIR}/build/.config_id)
+        release $(cat ${SRC_DIR}/build/.config_name)
     fi
 done
