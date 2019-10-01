@@ -103,7 +103,8 @@ BUILD_DIR = build
 INC = $(SRC_MAIN_DIR) $(SDK_BASE)/include $(GDB_DIR)
 LIB = c gcc hal pp phy net80211 lwip wpa crypto upgrade m main
 CFLAGS = -Wpointer-arith -Wall -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals \
-         -ffunction-sections -fdata-sections -mforce-l32 -Wmissing-prototypes \
+         -ffunction-sections -fdata-sections -mforce-l32 -Wmissing-prototypes -fno-builtin-printf \
+         -fno-guess-branch-probability -freorder-blocks-and-partition -fno-cse-follow-jumps \
          -D__ets__ -DICACHE_FLASH -DUSE_OPTIMIZE_PRINTF \
          -DFLASH_CONFIG_ADDR=$(FLASH_CONFIG_ADDR)
 LDFLAGS	= -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static -L$(SDK_BASE)/lib -Wl,--gc-sections
