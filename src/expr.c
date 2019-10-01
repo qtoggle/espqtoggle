@@ -75,6 +75,7 @@ ICACHE_FLASH_ATTR static double     _round_callback(expr_t *expr, int argc, doub
 ICACHE_FLASH_ATTR static double     _time_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _held_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _delay_callback(expr_t *expr, int argc, double *args);
+ICACHE_FLASH_ATTR static double     _hyst_callback(expr_t *expr, int argc, double *args);
 
 ICACHE_FLASH_ATTR static const_t *  find_const_by_name(char *name);
 ICACHE_FLASH_ATTR static func_t *   find_func_by_name(char *name);
@@ -347,6 +348,23 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
     return expr->value;
 }
 
+double _hyst_callback(expr_t *expr, int argc, double *args) {
+    double value = args[0];
+    double threshold1 = args[1];
+    double threshold2 = args[2];
+
+    /* expr->value is used as last value */
+
+    if (IS_UNDEFINED(expr->value)) { /* very first expression eval call */
+        expr->value = 0;
+    }
+
+    expr->value = ((expr->value == 0 && value > threshold1) ||
+                   (expr->value != 0 && value >= threshold2));
+
+    return expr->value;
+}
+
 
 func_t _add =    {.name = "ADD",    .argc = -2, .callback = _add_callback};
 func_t _sub =    {.name = "SUB",    .argc = 2,  .callback = _sub_callback};
@@ -379,6 +397,7 @@ func_t _round =  {.name = "ROUND",  .argc = -1, .callback = _round_callback};
 func_t _time =   {.name = "TIME",   .argc = 0,  .callback = _time_callback};
 func_t _held =   {.name = "HELD",   .argc = 3,  .callback = _held_callback};
 func_t _delay =  {.name = "DELAY",  .argc = 2,  .callback = _delay_callback};
+func_t _hyst =   {.name = "HYST",   .argc = 3,  .callback = _hyst_callback};
 
 func_t *funcs[] = {
     &_add,
@@ -412,6 +431,7 @@ func_t *funcs[] = {
     &_time,
     &_held,
     &_delay,
+    &_hyst,
     NULL
 };
 
