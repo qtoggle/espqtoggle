@@ -227,7 +227,7 @@ static port_t _dht0_h = {
 
 };
 
-port_t *dt0 = &_dht0;
+port_t *dht0 = &_dht0;
 port_t *dht0_h = &_dht0_h;
 #endif
 
@@ -645,10 +645,10 @@ void write_wire(port_t *port, bool value) {
 
 void dht_init_ports(void) {
 #ifdef HAS_DHT0
-    port_register(dt0);
+    port_register(dht0);
     port_register(dht0_h);
 
-    dht0_extra_info.temperature_port = dt0;
+    dht0_extra_info.temperature_port = dht0;
     dht0_extra_info.humidity_port = dht0_h;
 #endif
 
