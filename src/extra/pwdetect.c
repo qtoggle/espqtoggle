@@ -162,6 +162,7 @@ static char                           * gpio_choices[] = {"gpio 0", "gpio 2", "g
 static attrdef_t trigger_gpio_attrdef = {
 
     .name = "trigger_gpio",
+    .display_name = "Trigger GPIO",
     .description = "The trigger GPIO.",
     .type = ATTR_TYPE_STRING,
     .choices = gpio_choices,
@@ -174,6 +175,7 @@ static attrdef_t trigger_gpio_attrdef = {
 static attrdef_t read_gpio_attrdef = {
 
     .name = "read_gpio",
+    .display_name = "Read GPIO",
     .description = "The read GPIO.",
     .type = ATTR_TYPE_STRING,
     .choices = gpio_choices,
@@ -186,6 +188,7 @@ static attrdef_t read_gpio_attrdef = {
 static attrdef_t measure_interval_attrdef = {
 
     .name = "measure_interval",
+    .display_name = "Measure Interval",
     .description = "The interval between two successive pulse-width measurements.",
     .unit = "microseconds",
     .type = ATTR_TYPE_NUMBER,
@@ -202,6 +205,7 @@ static attrdef_t measure_interval_attrdef = {
 static attrdef_t trigger_interval_attrdef = {
 
     .name = "trigger_interval",
+    .display_name = "Trigger Interval",
     .description = "The trigger signal interval.",
     .unit = "microseconds",
     .type = ATTR_TYPE_NUMBER,
@@ -218,6 +222,7 @@ static attrdef_t trigger_interval_attrdef = {
 static attrdef_t trigger_inverted_attrdef = {
 
     .name = "trigger_inverted",
+    .display_name = "Trigger Inverted",
     .description = "Indicates whether the trigger signal is normal or inverted.",
     .type = ATTR_TYPE_BOOLEAN,
     .modifiable = TRUE,
@@ -230,6 +235,7 @@ static attrdef_t trigger_inverted_attrdef = {
 static attrdef_t pulse_start_timeout_attrdef = {
 
     .name = "pulse_start_timeout",
+    .display_name = "Pulse Start Timeout",
     .description = "The timeout to wait for the pulse start.",
     .unit = "microseconds",
     .type = ATTR_TYPE_NUMBER,
@@ -246,6 +252,7 @@ static attrdef_t pulse_start_timeout_attrdef = {
 static attrdef_t pulse_stop_timeout_attrdef = {
 
     .name = "pulse_stop_timeout",
+    .display_name = "Pulse Stop Timeout",
     .description = "The timeout to wait for the pulse stop.",
     .unit = "microseconds",
     .type = ATTR_TYPE_NUMBER,
@@ -262,6 +269,7 @@ static attrdef_t pulse_stop_timeout_attrdef = {
 static attrdef_t pulse_inverted_attrdef = {
 
     .name = "pulse_inverted",
+    .display_name = "Pulse Inverted",
     .description = "Indicates whether the pulse signal is normal or inverted.",
     .type = ATTR_TYPE_BOOLEAN,
     .modifiable = TRUE,

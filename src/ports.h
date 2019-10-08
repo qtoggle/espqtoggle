@@ -113,6 +113,7 @@ typedef void   (* float_setter_t)(struct port *port, double value);
 typedef struct attrdef {
 
     char          * name;
+    char          * display_name;
     char          * description;
     char          * unit;
     char            type;

@@ -97,6 +97,7 @@ static char                           * gpio_choices[] = {"GPIO0", "GPIO1", "GPI
 static attrdef_t gpio_attrdef = {
 
     .name = "gpio",
+    .display_name = "GPIO Number",
     .description = "The GPIO where the sensor is attached.",
     .type = ATTR_TYPE_STRING,
     .choices = gpio_choices,

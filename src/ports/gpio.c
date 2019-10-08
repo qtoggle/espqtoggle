@@ -53,6 +53,7 @@ typedef struct {
 static attrdef_t pull_up_attrdef = {
 
     .name = "pull_up",
+    .display_name = "Pull-Up",
     .description = "Enables the internal weak pull-up.",
     .type = ATTR_TYPE_BOOLEAN,
     .modifiable = TRUE,
@@ -64,6 +65,7 @@ static attrdef_t pull_up_attrdef = {
 static attrdef_t output_attrdef = {
 
     .name = "output",
+    .display_name = "Output Mode",
     .description = "Makes this GPIO an output pin.",
     .type = ATTR_TYPE_BOOLEAN,
     .modifiable = TRUE,

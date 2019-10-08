@@ -117,6 +117,7 @@ static char *COLOR_STR[] = {
 static attrdef_t gpio_r_attrdef = {
 
     .name = "gpio_r",
+    .display_name = "Red GPIO",
     .description = "The red signal GPIO.",
     .type = ATTR_TYPE_STRING,
     .choices = gpio_choices,
@@ -129,6 +130,7 @@ static attrdef_t gpio_r_attrdef = {
 static attrdef_t gpio_g_attrdef = {
 
     .name = "gpio_g",
+    .display_name = "Green GPIO",
     .description = "The green signal GPIO.",
     .type = ATTR_TYPE_STRING,
     .choices = gpio_choices,
@@ -141,6 +143,7 @@ static attrdef_t gpio_g_attrdef = {
 static attrdef_t gpio_b_attrdef = {
 
     .name = "gpio_b",
+    .display_name = "Blue GPIO",
     .description = "The blue signal GPIO.",
     .type = ATTR_TYPE_STRING,
     .choices = gpio_choices,

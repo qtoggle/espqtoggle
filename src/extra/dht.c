@@ -129,6 +129,7 @@ static char                           * gpio_choices[] = {"gpio 0", "gpio 2", "g
 static attrdef_t model_attrdef = {
 
     .name = "model",
+    .display_name = "Model",
     .description = "The sensor model.",
     .type = ATTR_TYPE_STRING,
     .choices = model_choices,
@@ -141,6 +142,7 @@ static attrdef_t model_attrdef = {
 static attrdef_t gpio_attrdef = {
 
     .name = "gpio",
+    .display_name = "GPIO Number",
     .description = "The GPIO where the sensor is attached.",
     .type = ATTR_TYPE_STRING,
     .choices = gpio_choices,
@@ -153,6 +155,7 @@ static attrdef_t gpio_attrdef = {
 static attrdef_t retries_attrdef = {
 
     .name = "retries",
+    .display_name = "Retries",
     .description = "The number of measurement retries, in case of error.",
     .type = ATTR_TYPE_NUMBER,
     .modifiable = TRUE,

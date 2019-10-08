@@ -285,6 +285,7 @@ ICACHE_FLASH_ATTR static void       attr_set_output_pulse_off_len(port_t *port, 
 static attrdef_t closed_input_attrdef = {
 
     .name = "closed_input",
+    .display_name = "Closed GPIO",
     .description = "Closed state input pin.",
     .type = ATTR_TYPE_STRING,
     .modifiable = TRUE,
@@ -297,6 +298,7 @@ static attrdef_t closed_input_attrdef = {
 static attrdef_t moving_input_attrdef = {
 
     .name = "moving_input",
+    .display_name = "Moving GPIO",
     .description = "Moving state input pin.",
     .type = ATTR_TYPE_STRING,
     .modifiable = TRUE,
@@ -309,6 +311,7 @@ static attrdef_t moving_input_attrdef = {
 static attrdef_t closed_input_level_attrdef = {
 
     .name = "closed_input_level",
+    .display_name = "Closed Input Level",
     .description = "Closed input active level.",
     .type = ATTR_TYPE_STRING,
     .modifiable = TRUE,
@@ -321,7 +324,8 @@ static attrdef_t closed_input_level_attrdef = {
 static attrdef_t debounce_duration_attrdef = {
 
     .name = "debounce_duration",
-    .description = "The time span used by the debouncing filter.",
+    .display_name = "Debounce Duration",
+    .description = "The time window used by the debouncing filter.",
     .unit = "milliseconds",
     .type = ATTR_TYPE_NUMBER,
     .modifiable = TRUE,
@@ -337,6 +341,7 @@ static attrdef_t debounce_duration_attrdef = {
 static attrdef_t closed_moving_delay_attrdef = {
 
     .name = "closed_moving_delay",
+    .display_name = "Closed/Moving Delay",
     .description = "Delay between closed and moving inputs (can be negative).",
     .unit = "milliseconds",
     .type = ATTR_TYPE_NUMBER,
@@ -353,6 +358,7 @@ static attrdef_t closed_moving_delay_attrdef = {
 static attrdef_t moving_input_level_attrdef = {
 
     .name = "moving_input_level",
+    .display_name = "Moving Input Level",
     .description = "Moving input active level.",
     .type = ATTR_TYPE_STRING,
     .modifiable = TRUE,
@@ -365,6 +371,7 @@ static attrdef_t moving_input_level_attrdef = {
 static attrdef_t open_output_attrdef = {
 
     .name = "open_output",
+    .display_name = "Open GPIO",
     .description = "Open command output pin.",
     .type = ATTR_TYPE_STRING,
     .modifiable = TRUE,
@@ -377,6 +384,7 @@ static attrdef_t open_output_attrdef = {
 static attrdef_t close_output_attrdef = {
 
     .name = "close_output",
+    .display_name = "Close GPIO",
     .description = "Close command output pin.",
     .type = ATTR_TYPE_STRING,
     .modifiable = TRUE,
@@ -389,6 +397,7 @@ static attrdef_t close_output_attrdef = {
 static attrdef_t stop_output_attrdef = {
 
     .name = "stop_output",
+    .display_name = "Stop GPIO",
     .description = "Stop command output pin.",
     .type = ATTR_TYPE_STRING,
     .modifiable = TRUE,
@@ -401,6 +410,7 @@ static attrdef_t stop_output_attrdef = {
 static attrdef_t output_level_attrdef = {
 
     .name = "output_level",
+    .display_name = "Output Level",
     .description = "Command output active level.",
     .type = ATTR_TYPE_STRING,
     .modifiable = TRUE,
@@ -413,6 +423,7 @@ static attrdef_t output_level_attrdef = {
 static attrdef_t output_pulse_on_len_attrdef = {
 
     .name = "output_pulse_on_len",
+    .display_name = "Output Pulse ON Length",
     .description = "Command output pulse on length.",
     .unit = "milliseconds",
     .type = ATTR_TYPE_NUMBER,
@@ -429,6 +440,7 @@ static attrdef_t output_pulse_on_len_attrdef = {
 static attrdef_t output_pulse_off_len_attrdef = {
 
     .name = "output_pulse_off_len",
+    .display_name = "Output Pulse OFF Length",
     .description = "Command output pulse off length.",
     .unit = "milliseconds",
     .type = ATTR_TYPE_NUMBER,
