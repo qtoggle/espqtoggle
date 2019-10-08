@@ -45,7 +45,7 @@
                                     "additionalProperties": false,
                                     "required": [
                                         "id",
-                                        "description",
+                                        "display_name",
                                         "unit",
                                         "writable",
                                         "enabled",
@@ -64,7 +64,7 @@
                                     ],
                                     "properties": {
                                         "id": {"enum": ["test_port"]},
-                                        "description": {"enum": [""]},
+                                        "display_name": {"enum": [""]},
                                         "unit": {"enum": [""]},
                                         "writable": {"enum": [true]},
                                         "enabled": {"enum": [true]},

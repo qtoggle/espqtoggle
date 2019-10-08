@@ -12,7 +12,7 @@
 					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
 				},
 				"body": {
-				    "description": "test description {{TEST_CASE_NAME}}"
+				    "display_name": "test display name {{TEST_CASE_NAME}}"
 				},
 				"expected_status": 204
 			}
@@ -37,7 +37,7 @@
                             "additionalProperties": false,
                             "required": [
                                 "name",
-                                "description",
+                                "display_name",
                                 "version",
                                 "api_version",
                                 "admin_password",
@@ -65,8 +65,8 @@
                                 "name": {
                                     "type": "string"
                                 },
-                                "description": {
-                                    "enum": ["test description {{TEST_CASE_NAME}}"]
+                                "display_name": {
+                                    "enum": ["test display name {{TEST_CASE_NAME}}"]
                                 },
                                 "version": {
                                     "type": "string"

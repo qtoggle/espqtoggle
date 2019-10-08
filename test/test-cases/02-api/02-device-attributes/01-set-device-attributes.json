@@ -8,7 +8,7 @@
 				"path": "/device",
 				"body": {
 				    "name": "testdevice",
-				    "description": "Test Description",
+				    "display_name": "Test Display Name",
 				    "admin_password": "${TEST_PASSWORD}",
 				    "normal_password": "${TEST_PASSWORD}",
 				    "viewonly_password": "${TEST_PASSWORD}",
@@ -44,7 +44,7 @@
                     "additionalProperties": true,
                     "required": [
                         "name",
-                        "description",
+                        "display_name",
                         "admin_password",
                         "normal_password",
                         "viewonly_password",
@@ -54,8 +54,8 @@
                         "name": {
                             "enum": ["testdevice"]
                         },
-                        "description": {
-                            "enum": ["Test Description"]
+                        "display_name": {
+                            "enum": ["Test Display Name"]
                         },
                         "admin_password": {
                             "enum": [""]

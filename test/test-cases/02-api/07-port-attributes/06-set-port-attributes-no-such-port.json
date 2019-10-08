@@ -10,7 +10,7 @@
 					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
 				},
 				"body": {
-				    "description": 0
+				    "display_name": 0
 				},
 				"expected_status": 404,
 				"expected_body": {

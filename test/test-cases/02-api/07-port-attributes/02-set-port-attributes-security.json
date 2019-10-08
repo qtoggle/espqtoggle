@@ -10,7 +10,7 @@
 					"Authorization": "Bearer inexistent"
 				},
 				"body": {
-				    "description": "test description"
+				    "display_name": "test display name"
 				},
 				"expected_status": 401
 			}
@@ -24,7 +24,7 @@
                     "Authorization": "Bearer ${TEST_JWT_VIEWONLY}"
                 },
 				"body": {
-				    "description": "test description"
+				    "display_name": "test display name"
 				},
                 "expected_status": 403
             }
@@ -38,7 +38,7 @@
                     "Authorization": "Bearer ${TEST_JWT_NORMAL}"
                 },
 				"body": {
-				    "description": "test description"
+				    "display_name": "test display name"
 				},
                 "expected_status": 403
             }

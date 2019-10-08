@@ -15,7 +15,7 @@
                     "additionalProperties": false,
                     "required": [
                         "name",
-                        "description",
+                        "display_name",
                         "version",
                         "api_version",
                         "admin_password",
@@ -43,8 +43,8 @@
                         "name": {
                             "enum": ["testdevice"]
                         },
-                        "description": {
-                            "enum": ["Test Description"]
+                        "display_name": {
+                            "enum": ["Test Display Name"]
                         },
                         "version": {
                             "enum": ["${VERSION}"]

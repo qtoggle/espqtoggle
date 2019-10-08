@@ -12,7 +12,7 @@
 					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
 				},
 				"body": {
-				    "description": "test description {{TEST_CASE_NAME}}"
+				    "display_name": "test display_ name {{TEST_CASE_NAME}}"
 				},
 				"expected_status": 204
 			}
@@ -40,14 +40,14 @@
                                     "additionalProperties": true,
                                     "required": [
                                         "id",
-                                        "description"
+                                        "display_name"
                                     ],
                                     "properties": {
                                         "id": {
                                             "enum": ["gpio0"]
                                         },
-                                        "description": {
-                                            "enum": ["test description {{TEST_CASE_NAME}}"]
+                                        "display_name": {
+                                            "enum": ["test display name {{TEST_CASE_NAME}}"]
                                         }
                                     }
                                 }
@@ -68,7 +68,7 @@
 					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
 				},
 				"body": {
-				    "description": "test description {{TEST_CASE_NAME}}2"
+				    "display_name": "test display name {{TEST_CASE_NAME}}2"
 				},
 				"expected_status": 204
 			}
@@ -96,14 +96,14 @@
                                     "additionalProperties": true,
                                     "required": [
                                         "id",
-                                        "description"
+                                        "display_name"
                                     ],
                                     "properties": {
                                         "id": {
                                             "enum": ["gpio0"]
                                         },
-                                        "description": {
-                                            "enum": ["test description {{TEST_CASE_NAME}}2"]
+                                        "display_name": {
+                                            "enum": ["test display name {{TEST_CASE_NAME}}2"]
                                         }
                                     }
                                 }

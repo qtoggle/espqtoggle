@@ -12,7 +12,7 @@
 					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
 				},
 				"body": {
-				    "description": "test description {{TEST_CASE_NAME}}"
+				    "display_name": "test display name {{TEST_CASE_NAME}}"
 				},
 				"expected_status": 204
 			}
@@ -36,7 +36,7 @@
                             "type": "object",
                             "required": [
                                 "id",
-                                "description",
+                                "display_name",
                                 "unit",
                                 "writable",
                                 "enabled",
@@ -51,8 +51,8 @@
                                 "id": {
                                     "enum": ["gpio0"]
                                 },
-                                "description": {
-                                    "enum": ["test description {{TEST_CASE_NAME}}"]
+                                "display_name": {
+                                    "enum": ["test display name {{TEST_CASE_NAME}}"]
                                 },
                                 "unit": {
                                     "type": "string"

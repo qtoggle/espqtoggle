@@ -20,7 +20,7 @@
                 "expected_status": 201,
                 "expected_body": {
                     "id": "test_port",
-                    "description": "",
+                    "display_name": "",
                     "unit": "",
                     "writable": true,
                     "enabled": true,
