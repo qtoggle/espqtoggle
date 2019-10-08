@@ -41,7 +41,7 @@
 #define API_MAX_EXPR_LEN                    1024
 
 #define API_MAX_DEVICE_NAME_LEN             32
-#define API_MAX_DEVICE_DESC_LEN             64
+#define API_MAX_DEVICE_DISP_NAME_LEN        64
 #define API_MAX_DEVICE_CONFIG_MODEL_LEN     64
 
 #define API_MIN_SEQUENCE_DELAY              1

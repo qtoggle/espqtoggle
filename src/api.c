@@ -531,7 +531,7 @@ json_t *device_to_json(void) {
 
     /* common attributes */
     json_obj_append(json, "name", json_str_new(device_hostname));
-    json_obj_append(json, "description", json_str_new(device_description));
+    json_obj_append(json, "description", json_str_new(device_display_name));
     json_obj_append(json, "version", json_str_new(FW_VERSION));
     json_obj_append(json, "api_version", json_str_new(API_VERSION));
 
@@ -769,15 +769,15 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
 
             httpserver_set_name(device_hostname);
         }
-        else if (!strcmp(key, "description")) {
+        else if (!strcmp(key, "display_name")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
                 return INVALID_FIELD_VALUE(key);
             }
 
-            strncpy(device_description, json_str_get(child), API_MAX_DEVICE_DESC_LEN);
-            device_description[API_MAX_DEVICE_DESC_LEN - 1] = 0;
+            strncpy(device_display_name, json_str_get(child), API_MAX_DEVICE_DISP_NAME_LEN);
+            device_display_name[API_MAX_DEVICE_DISP_NAME_LEN - 1] = 0;
             
-            DEBUG_DEVICE("description set to %s", device_description);
+            DEBUG_DEVICE("display name set to %s", device_display_name);
         }
         else if (!strcmp(key, "admin_password")) {
             if (json_get_type(child) != JSON_TYPE_STR) {

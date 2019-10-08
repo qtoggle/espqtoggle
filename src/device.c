@@ -23,7 +23,7 @@
 
 
 char                    device_hostname[API_MAX_DEVICE_NAME_LEN + 1] = {0};
-char                    device_description[API_MAX_DEVICE_DESC_LEN + 1] = {0};
+char                    device_display_name[API_MAX_DEVICE_DISP_NAME_LEN + 1] = {0};
 char                    device_admin_password_hash[SHA256_HEX_LEN + 1] = {0};
 char                    device_normal_password_hash[SHA256_HEX_LEN + 1] = {0};
 char                    device_viewonly_password_hash[SHA256_HEX_LEN + 1] = {0};
