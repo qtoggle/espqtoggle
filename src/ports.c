@@ -48,9 +48,9 @@ void port_load(port_t *port, uint8 *data) {
     uint8 *base_ptr = data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * port->slot;
     char *strings_ptr = (char *) data + CONFIG_OFFS_STR_BASE;
 
-    /* description */
-    port->description = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_DESC);
-    DEBUG_PORT(port, "description = \"%s\"", port->description);
+    /* display name */
+    port->display_name = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_DISP_NAME);
+    DEBUG_PORT(port, "display_name = \"%s\"", port->display_name);
 
     /* unit */
     port->unit = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_UNIT);
@@ -195,9 +195,9 @@ void port_save(port_t *port, uint8 *data, uint32 *strings_offs) {
         }
     }
 
-    /* description */
-    if (!string_pool_write(strings_ptr, strings_offs, port->description, base_ptr + CONFIG_OFFS_PORT_DESC)) {
-        DEBUG_PORT(port, "no more string space to save description");
+    /* display name */
+    if (!string_pool_write(strings_ptr, strings_offs, port->display_name, base_ptr + CONFIG_OFFS_PORT_DISP_NAME)) {
+        DEBUG_PORT(port, "no more string space to save display name");
     }
 
     /* unit */

@@ -393,7 +393,7 @@ json_t *port_to_json(port_t *port) {
     /* common to all ports */
 
     json_obj_append(json, "id", json_str_new(port->id));
-    json_obj_append(json, "description", json_str_new(port->description ? port->description : ""));
+    json_obj_append(json, "display_name", json_str_new(port->display_name ? port->display_name : ""));
     json_obj_append(json, "unit", json_str_new(port->unit ? port->unit : ""));
     json_obj_append(json, "writable", json_bool_new(IS_OUTPUT(port)));
     json_obj_append(json, "enabled", json_bool_new(IS_ENABLED(port)));
@@ -531,7 +531,7 @@ json_t *device_to_json(void) {
 
     /* common attributes */
     json_obj_append(json, "name", json_str_new(device_hostname));
-    json_obj_append(json, "description", json_str_new(device_display_name));
+    json_obj_append(json, "display_name", json_str_new(device_display_name));
     json_obj_append(json, "version", json_str_new(FW_VERSION));
     json_obj_append(json, "api_version", json_str_new(API_VERSION));
 
@@ -777,7 +777,7 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
             strncpy(device_display_name, json_str_get(child), API_MAX_DEVICE_DISP_NAME_LEN);
             device_display_name[API_MAX_DEVICE_DISP_NAME_LEN - 1] = 0;
             
-            DEBUG_DEVICE("display name set to %s", device_display_name);
+            DEBUG_DEVICE("display name set to \"%s\"", device_display_name);
         }
         else if (!strcmp(key, "admin_password")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
@@ -1391,18 +1391,18 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
         key = json_obj_key_at(request_json, i);
         child = json_obj_value_at(request_json, i);
 
-        if (!strcmp(key, "description")) {
+        if (!strcmp(key, "display_name")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
                 return INVALID_FIELD_VALUE(key);
             }
 
-            free(port->description);
-            port->description = NULL;
+            free(port->display_name);
+            port->display_name = NULL;
             if (*json_str_get(child)) {
-                port->description = strndup(json_str_get(child), PORT_MAX_DESC_LEN);
+                port->display_name = strndup(json_str_get(child), PORT_MAX_DISP_NAME_LEN);
             }
 
-            DEBUG_PORT(port, "description set to \"%s\"", port->description);
+            DEBUG_PORT(port, "display_name set to \"%s\"", port->display_name);
         }
         else if (!strcmp(key, "unit")) {
             if (json_get_type(child) != JSON_TYPE_STR) {

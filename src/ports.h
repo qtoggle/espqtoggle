@@ -38,7 +38,7 @@
 #define PORT_MAX_DEBOUNCE_TIME          1000
 
 #define PORT_MAX_ID_LEN                 64
-#define PORT_MAX_DESC_LEN               64
+#define PORT_MAX_DISP_NAME_LEN          64
 #define PORT_MAX_UNIT_LEN               16
 
 #define PORT_MAX_SAMP_INT               86400000    /* milliseconds */
@@ -84,7 +84,7 @@
 #define FILTER_TYPE(port)               ((port)->flags & PORT_FLAG_FILTER_MASK)
 
 #define CONFIG_OFFS_PORT_ID             0x00    /*   4 bytes */
-#define CONFIG_OFFS_PORT_DESC           0x04    /*   4 bytes */
+#define CONFIG_OFFS_PORT_DISP_NAME      0x04    /*   4 bytes */
 #define CONFIG_OFFS_PORT_UNIT           0x08    /*   4 bytes */
 #define CONFIG_OFFS_PORT_MIN            0x0C    /*   8 bytes */
 #define CONFIG_OFFS_PORT_MAX            0x14    /*   8 bytes */
@@ -172,7 +172,7 @@ typedef struct port {
 
     /* common attributes */
     char            id[PORT_MAX_ID_LEN + 1];
-    char          * description;
+    char          * display_name;
     char            type;
     char          * unit;
     int             flags;
