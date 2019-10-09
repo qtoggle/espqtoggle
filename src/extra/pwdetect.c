@@ -124,29 +124,29 @@ ICACHE_FLASH_ATTR static double         read_value(port_t *port);
 ICACHE_FLASH_ATTR static void           configure(port_t *port);
 ICACHE_FLASH_ATTR static void           heart_beat(port_t *port);
 
-ICACHE_FLASH_ATTR static int            attr_get_trigger_gpio(port_t *port);
-ICACHE_FLASH_ATTR static void           attr_set_trigger_gpio(port_t *port, int index);
+ICACHE_FLASH_ATTR static int            attr_get_trigger_gpio(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void           attr_set_trigger_gpio(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int            attr_get_read_gpio(port_t *port);
-ICACHE_FLASH_ATTR static void           attr_set_read_gpio(port_t *port, int index);
+ICACHE_FLASH_ATTR static int            attr_get_read_gpio(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void           attr_set_read_gpio(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static void           attr_set_measure_interval(port_t *port, int value);
-ICACHE_FLASH_ATTR static int            attr_get_measure_interval(port_t *port);
+ICACHE_FLASH_ATTR static void           attr_set_measure_interval(port_t *port, attrdef_t *attrdef, int value);
+ICACHE_FLASH_ATTR static int            attr_get_measure_interval(port_t *port, attrdef_t *attrdef);
 
-ICACHE_FLASH_ATTR static void           attr_set_trigger_interval(port_t *port, int value);
-ICACHE_FLASH_ATTR static int            attr_get_trigger_interval(port_t *port);
+ICACHE_FLASH_ATTR static void           attr_set_trigger_interval(port_t *port, attrdef_t *attrdef, int value);
+ICACHE_FLASH_ATTR static int            attr_get_trigger_interval(port_t *port, attrdef_t *attrdef);
 
-ICACHE_FLASH_ATTR static void           attr_set_trigger_inverted(port_t *port, bool value);
-ICACHE_FLASH_ATTR static bool           attr_get_trigger_inverted(port_t *port);
+ICACHE_FLASH_ATTR static void           attr_set_trigger_inverted(port_t *port, attrdef_t *attrdef, bool value);
+ICACHE_FLASH_ATTR static bool           attr_get_trigger_inverted(port_t *port, attrdef_t *attrdef);
 
-ICACHE_FLASH_ATTR static void           attr_set_pulse_start_timeout(port_t *port, int value);
-ICACHE_FLASH_ATTR static int            attr_get_pulse_start_timeout(port_t *port);
+ICACHE_FLASH_ATTR static void           attr_set_pulse_start_timeout(port_t *port, attrdef_t *attrdef, int value);
+ICACHE_FLASH_ATTR static int            attr_get_pulse_start_timeout(port_t *port, attrdef_t *attrdef);
 
-ICACHE_FLASH_ATTR static void           attr_set_pulse_stop_timeout(port_t *port, int value);
-ICACHE_FLASH_ATTR static int            attr_get_pulse_stop_timeout(port_t *port);
+ICACHE_FLASH_ATTR static void           attr_set_pulse_stop_timeout(port_t *port, attrdef_t *attrdef, int value);
+ICACHE_FLASH_ATTR static int            attr_get_pulse_stop_timeout(port_t *port, attrdef_t *attrdef);
 
-ICACHE_FLASH_ATTR static void           attr_set_pulse_inverted(port_t *port, bool value);
-ICACHE_FLASH_ATTR static bool           attr_get_pulse_inverted(port_t *port);
+ICACHE_FLASH_ATTR static void           attr_set_pulse_inverted(port_t *port, attrdef_t *attrdef, bool value);
+ICACHE_FLASH_ATTR static bool           attr_get_pulse_inverted(port_t *port, attrdef_t *attrdef);
 
 ICACHE_FLASH_ATTR static void           trigger_start(port_t *port);
 ICACHE_FLASH_ATTR static void           trigger_stop(port_t *port);
