@@ -584,7 +584,7 @@ void heart_beat(port_t *port) {
     set_state(port, state);
 }
 
-int attr_get_trigger_gpio(port_t *port) {
+int attr_get_trigger_gpio(port_t *port, attrdef_t * attrdef) {
     uint8 value;
 
     /* read from persisted data */
@@ -596,7 +596,7 @@ int attr_get_trigger_gpio(port_t *port) {
     return value;
 }
 
-void attr_set_trigger_gpio(port_t *port, int index) {
+void attr_set_trigger_gpio(port_t *port, attrdef_t * attrdef, int index) {
     uint8 value = index;
 
     /* update cached value */
@@ -606,7 +606,7 @@ void attr_set_trigger_gpio(port_t *port, int index) {
     memcpy(port->extra_data + TRIGGER_GPIO_CONFIG_OFFS, &value, 1);
 }
 
-int attr_get_read_gpio(port_t *port) {
+int attr_get_read_gpio(port_t *port, attrdef_t * attrdef) {
     uint8 value;
 
     /* read from persisted data */
@@ -618,7 +618,7 @@ int attr_get_read_gpio(port_t *port) {
     return value;
 }
 
-void attr_set_read_gpio(port_t *port, int index) {
+void attr_set_read_gpio(port_t *port, attrdef_t * attrdef, int index) {
     uint8 value = index;
 
     /* update cached value */
@@ -628,7 +628,7 @@ void attr_set_read_gpio(port_t *port, int index) {
     memcpy(port->extra_data + READ_GPIO_CONFIG_OFFS, &value, 1);
 }
 
-void attr_set_measure_interval(port_t *port, int value) {
+void attr_set_measure_interval(port_t *port, attrdef_t * attrdef, int value) {
     uint16 config_value = value / 100;
 
     /* update cached value */
@@ -638,7 +638,7 @@ void attr_set_measure_interval(port_t *port, int value) {
     memcpy(port->extra_data + MEASURE_INTERVAL_CONFIG_OFFS, &config_value, 2);
 }
 
-int attr_get_measure_interval(port_t *port) {
+int attr_get_measure_interval(port_t *port, attrdef_t * attrdef) {
     uint32 config_value;
     uint16 value;
 
@@ -657,7 +657,7 @@ int attr_get_measure_interval(port_t *port) {
     return value;
 }
 
-void attr_set_trigger_interval(port_t *port, int value) {
+void attr_set_trigger_interval(port_t *port, attrdef_t * attrdef, int value) {
     uint16 config_value = value / 100;
 
     /* update cached value */
@@ -667,7 +667,7 @@ void attr_set_trigger_interval(port_t *port, int value) {
     memcpy(port->extra_data + TRIGGER_INTERVAL_CONFIG_OFFS, &config_value, 2);
 }
 
-int attr_get_trigger_interval(port_t *port) {
+int attr_get_trigger_interval(port_t *port, attrdef_t * attrdef) {
     uint16 config_value;
     uint32 value;
 
@@ -686,15 +686,15 @@ int attr_get_trigger_interval(port_t *port) {
     return value;
 }
 
-void attr_set_trigger_inverted(port_t *port, bool value) {
+void attr_set_trigger_inverted(port_t *port, attrdef_t * attrdef, bool value) {
     set_trigger_inverted(port, value);
 }
 
-bool attr_get_trigger_inverted(port_t *port) {
+bool attr_get_trigger_inverted(port_t *port, attrdef_t * attrdef) {
     return get_trigger_inverted(port);
 }
 
-void attr_set_pulse_start_timeout(port_t *port, int value) {
+void attr_set_pulse_start_timeout(port_t *port, attrdef_t * attrdef, int value) {
     uint16 config_value = value / 100;
 
     /* update cached value */
@@ -704,7 +704,7 @@ void attr_set_pulse_start_timeout(port_t *port, int value) {
     memcpy(port->extra_data + PULSE_START_TO_CONFIG_OFFS, &config_value, 2);
 }
 
-int attr_get_pulse_start_timeout(port_t *port) {
+int attr_get_pulse_start_timeout(port_t *port, attrdef_t * attrdef) {
     uint16 config_value;
     uint32 value;
 
@@ -723,7 +723,7 @@ int attr_get_pulse_start_timeout(port_t *port) {
     return value;
 }
 
-void attr_set_pulse_stop_timeout(port_t *port, int value) {
+void attr_set_pulse_stop_timeout(port_t *port, attrdef_t * attrdef, int value) {
     uint16 config_value = value / 100;
 
     /* update cached value */
@@ -733,7 +733,7 @@ void attr_set_pulse_stop_timeout(port_t *port, int value) {
     memcpy(port->extra_data + PULSE_STOP_TO_CONFIG_OFFS, &config_value, 2);
 }
 
-int attr_get_pulse_stop_timeout(port_t *port) {
+int attr_get_pulse_stop_timeout(port_t *port, attrdef_t * attrdef) {
     uint16 config_value;
     uint32 value;
 
@@ -752,11 +752,11 @@ int attr_get_pulse_stop_timeout(port_t *port) {
     return value;
 }
 
-void attr_set_pulse_inverted(port_t *port, bool value) {
+void attr_set_pulse_inverted(port_t *port, attrdef_t * attrdef, bool value) {
     set_pulse_inverted(port, value);
 }
 
-bool attr_get_pulse_inverted(port_t *port) {
+bool attr_get_pulse_inverted(port_t *port, attrdef_t * attrdef) {
     return get_pulse_inverted(port);
 }
 

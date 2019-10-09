@@ -517,21 +517,21 @@ json_t *port_to_json(port_t *port) {
         while ((a = *attrdefs++)) {
             switch (a->type) {
                 case ATTR_TYPE_BOOLEAN:
-                    json_obj_append(json, a->name, json_bool_new(((int_getter_t) a->get)(port)));
+                    json_obj_append(json, a->name, json_bool_new(((int_getter_t) a->get)(port, a)));
                     break;
 
                 case ATTR_TYPE_NUMBER:
                     if (a->choices) {
                         /* when dealing with choices, the getter returns the index inside the choices array */
-                        index = ((int_getter_t) a->get)(port);
+                        index = ((int_getter_t) a->get)(port, a);
                         json_obj_append(json, a->name, json_double_new(get_choice_value_num(a->choices[index])));
                     }
                     else {
                         if (a->integer) {
-                            json_obj_append(json, a->name, json_int_new(((int_getter_t) a->get)(port)));
+                            json_obj_append(json, a->name, json_int_new(((int_getter_t) a->get)(port, a)));
                         }
                         else { /* float */
-                            json_obj_append(json, a->name, json_int_new(((float_getter_t) a->get)(port)));
+                            json_obj_append(json, a->name, json_int_new(((float_getter_t) a->get)(port, a)));
                         }
                     }
                     break;
@@ -539,11 +539,11 @@ json_t *port_to_json(port_t *port) {
                 case ATTR_TYPE_STRING:
                     if (a->choices) {
                         /* when dealing with choices, the getter returns the index inside the choices array */
-                        index = ((int_getter_t) a->get)(port);
+                        index = ((int_getter_t) a->get)(port, a);
                         json_obj_append(json, a->name, json_str_new(get_choice_value_str(a->choices[index])));
                     }
                     else {
-                        json_obj_append(json, a->name, json_str_new(((str_getter_t) a->get)(port)));
+                        json_obj_append(json, a->name, json_str_new(((str_getter_t) a->get)(port, a)));
                     }
                     break;
             }
@@ -1778,7 +1778,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
 
                                 bool value = json_bool_get(child);
 
-                                ((int_setter_t) a->set)(port, value);
+                                ((int_setter_t) a->set)(port, a, value);
 
                                 DEBUG_PORT(port, "%s set to %d", a->name, value);
 
@@ -1799,14 +1799,14 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                                 }
 
                                 if (a->choices) {
-                                    ((int_setter_t) a->set)(port, idx - 1);
+                                    ((int_setter_t) a->set)(port, a, idx - 1);
                                 }
                                 else {
                                     if (a->integer) {
-                                        ((int_setter_t) a->set)(port, (int) value);
+                                        ((int_setter_t) a->set)(port, a, (int) value);
                                     }
                                     else { /* float */
-                                        ((float_setter_t) a->set)(port, value);
+                                        ((float_setter_t) a->set)(port, a, value);
                                     }
                                 }
 
@@ -1827,10 +1827,10 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                                 }
 
                                 if (a->choices) {
-                                    ((int_setter_t) a->set)(port, idx - 1);
+                                    ((int_setter_t) a->set)(port, a, idx - 1);
                                 }
                                 else {
-                                    ((str_setter_t) a->set)(port,  value);
+                                    ((str_setter_t) a->set)(port, a, value);
                                 }
 
                                 DEBUG_PORT(port, "%s set to %s", a->name, value);

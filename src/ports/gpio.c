@@ -32,11 +32,11 @@ ICACHE_FLASH_ATTR static double     read_value(port_t *port);
 ICACHE_FLASH_ATTR static bool       write_value(port_t *port, double value);
 ICACHE_FLASH_ATTR static void       configure(port_t *port);
 
-ICACHE_FLASH_ATTR static bool       attr_get_pull_up(port_t *port);
-ICACHE_FLASH_ATTR static void       attr_set_pull_up(port_t *port, bool pull_up);
+ICACHE_FLASH_ATTR static bool       attr_get_pull_up(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_pull_up(port_t *port, attrdef_t *attrdef, bool pull_up);
 
-ICACHE_FLASH_ATTR static bool       attr_get_output(port_t *port);
-ICACHE_FLASH_ATTR static void       attr_set_output(port_t *port, bool output);
+ICACHE_FLASH_ATTR static bool       attr_get_output(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_output(port_t *port, attrdef_t *attrdef, bool output);
 
 
 typedef struct {
@@ -475,11 +475,11 @@ void configure(port_t *port) {
     }
 }
 
-bool attr_get_pull_up(port_t *port) {
+bool attr_get_pull_up(port_t *port, attrdef_t * attrdef) {
     return IS_PULL_UP(port);
 }
 
-void attr_set_pull_up(port_t *port, bool value) {
+void attr_set_pull_up(port_t *port, attrdef_t * attrdef, bool value) {
     if (value) {
         port->flags |= PORT_FLAG_PULL_UP;
     }
@@ -488,11 +488,11 @@ void attr_set_pull_up(port_t *port, bool value) {
     }
 }
 
-bool attr_get_output(port_t *port) {
+bool attr_get_output(port_t *port, attrdef_t *attrdef) {
     return IS_OUTPUT(port);
 }
 
-void attr_set_output(port_t *port, bool value) {
+void attr_set_output(port_t *port, attrdef_t *attrdef, bool value) {
     if (value) {
         port->flags |= PORT_FLAG_OUTPUT;
     }

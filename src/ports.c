@@ -60,11 +60,11 @@ void port_load(port_t *port, uint8 *data) {
 
     /* display name */
     port->display_name = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_DISP_NAME);
-    DEBUG_PORT(port, "display_name = \"%s\"", port->display_name);
+    DEBUG_PORT(port, "display_name = \"%s\"", port->display_name ? port->display_name : "");
 
     /* unit */
     port->unit = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_UNIT);
-    DEBUG_PORT(port, "unit = \"%s\"", port->unit);
+    DEBUG_PORT(port, "unit = \"%s\"", port->unit ? port->unit : "");
 
     /* flags */
     bool initially_output = port->flags & PORT_FLAG_OUTPUT;
@@ -522,7 +522,7 @@ void port_configure(port_t *port) {
         attrdef_t *a, **attrdefs = port->attrdefs;
         while ((a = *attrdefs++)) {
             if (a->get) {
-                ((int_getter_t) a->get)(port);
+                ((int_getter_t) a->get)(port, a);
             }
         }
     }

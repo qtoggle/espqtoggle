@@ -101,15 +101,6 @@
 #define CONFIG_OFFS_PORT_DATA           0x70    /*  16 bytes for custom data */
 
 
-typedef int    (* int_getter_t)(struct port *port);
-typedef void   (* int_setter_t)(struct port *port, int value);
-
-typedef char * (* str_getter_t)(struct port *port);
-typedef void   (* str_setter_t)(struct port *port, char *value);
-
-typedef double (* float_getter_t)(struct port *port);
-typedef void   (* float_setter_t)(struct port *port, double value);
-
 typedef struct attrdef {
 
     char          * name;
@@ -197,6 +188,15 @@ typedef struct port {
     attrdef_t    ** attrdefs;
 
 } port_t;
+
+typedef int    (* int_getter_t)(struct port *port, attrdef_t * attrdef);
+typedef void   (* int_setter_t)(struct port *port, attrdef_t * attrdef, int value);
+
+typedef char * (* str_getter_t)(struct port *port, attrdef_t * attrdef);
+typedef void   (* str_setter_t)(struct port *port, attrdef_t * attrdef, char *value);
+
+typedef double (* float_getter_t)(struct port *port, attrdef_t * attrdef);
+typedef void   (* float_setter_t)(struct port *port, attrdef_t * attrdef, double value);
 
 
 extern char       * filter_choices[];
