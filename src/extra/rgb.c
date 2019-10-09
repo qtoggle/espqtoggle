@@ -40,8 +40,6 @@
 #define GPIO_G_CONFIG_OFFS          0x02    /* 1 byte */
 #define GPIO_B_CONFIG_OFFS          0x03    /* 1 byte */
 
-#define GPIO_CHOICES_LEN            8
-
 enum {
 
     RGB_BLACK,                      /* 0 */
@@ -93,10 +91,6 @@ ICACHE_FLASH_ATTR static int        attr_get_gpio_b(port_t *port);
 ICACHE_FLASH_ATTR static void       attr_set_gpio_b(port_t *port, int index);
 
 
-static uint8                        gpio_mapping[] = {0, 2, 4, 5, 12, 13, 14, 15};
-static char                       * gpio_choices[] = {"gpio 0", "gpio 2", "gpio 4", "gpio 5", "gpio 12", "gpio 13",
-                                                      "gpio 14", "gpio 15", NULL};
-
 #if defined(_DEBUG) && defined(_DEBUG_RGB)
 
 static char *COLOR_STR[] = {
@@ -119,8 +113,8 @@ static attrdef_t gpio_r_attrdef = {
     .name = "gpio_r",
     .display_name = "Red GPIO",
     .description = "The red signal GPIO.",
-    .type = ATTR_TYPE_STRING,
-    .choices = gpio_choices,
+    .type = ATTR_TYPE_NUMBER,
+    .choices = all_gpio_choices,
     .modifiable = TRUE,
     .set = attr_set_gpio_r,
     .get = attr_get_gpio_r
@@ -132,8 +126,8 @@ static attrdef_t gpio_g_attrdef = {
     .name = "gpio_g",
     .display_name = "Green GPIO",
     .description = "The green signal GPIO.",
-    .type = ATTR_TYPE_STRING,
-    .choices = gpio_choices,
+    .type = ATTR_TYPE_NUMBER,
+    .choices = all_gpio_choices,
     .modifiable = TRUE,
     .set = attr_set_gpio_g,
     .get = attr_get_gpio_g
@@ -145,8 +139,8 @@ static attrdef_t gpio_b_attrdef = {
     .name = "gpio_b",
     .display_name = "Blue GPIO",
     .description = "The blue signal GPIO.",
-    .type = ATTR_TYPE_STRING,
-    .choices = gpio_choices,
+    .type = ATTR_TYPE_NUMBER,
+    .choices = all_gpio_choices,
     .modifiable = TRUE,
     .set = attr_set_gpio_b,
     .get = attr_get_gpio_b
@@ -365,7 +359,6 @@ void configure(port_t *port) {
 }
 
 int attr_get_gpio_r(port_t *port) {
-    int i;
     uint8 value;
 
     /* read from persisted data */
@@ -374,18 +367,11 @@ int attr_get_gpio_r(port_t *port) {
     /* update cached value */
     set_gpio_r(port, value);
 
-    for (i = 0; i < GPIO_CHOICES_LEN; i++) {
-        if (gpio_mapping[i] == value) {
-            /* return choice index */
-            return i;
-        }
-    }
-
-    return 0;
+    return value;
 }
 
 void attr_set_gpio_r(port_t *port, int index) {
-    uint8 value = gpio_mapping[index];
+    uint8 value = index;
 
     /* update cached value */
     set_gpio_r(port, value);
@@ -395,7 +381,6 @@ void attr_set_gpio_r(port_t *port, int index) {
 }
 
 int attr_get_gpio_g(port_t *port) {
-    int i;
     uint8 value;
 
     /* read from persisted data */
@@ -404,18 +389,11 @@ int attr_get_gpio_g(port_t *port) {
     /* update cached value */
     set_gpio_g(port, value);
 
-    for (i = 0; i < GPIO_CHOICES_LEN; i++) {
-        if (gpio_mapping[i] == value) {
-            /* return choice index */
-            return i;
-        }
-    }
-
-    return 0;
+    return value;
 }
 
 void attr_set_gpio_g(port_t *port, int index) {
-    uint8 value = gpio_mapping[index];
+    uint8 value = index;
 
     /* update cached value */
     set_gpio_g(port, value);
@@ -425,7 +403,6 @@ void attr_set_gpio_g(port_t *port, int index) {
 }
 
 int attr_get_gpio_b(port_t *port) {
-    int i;
     uint8 value;
 
     /* read from persisted data */
@@ -434,18 +411,11 @@ int attr_get_gpio_b(port_t *port) {
     /* update cached value */
     set_gpio_b(port, value);
 
-    for (i = 0; i < GPIO_CHOICES_LEN; i++) {
-        if (gpio_mapping[i] == value) {
-            /* return choice index */
-            return i;
-        }
-    }
-
-    return 0;
+    return value;
 }
 
 void attr_set_gpio_b(port_t *port, int index) {
-    uint8 value = gpio_mapping[index];
+    uint8 value = index;
 
     /* update cached value */
     set_gpio_b(port, value);
