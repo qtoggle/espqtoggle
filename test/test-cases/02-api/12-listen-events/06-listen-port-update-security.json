@@ -34,7 +34,9 @@
                             "additionalProperties": false,
                             "required": ["type", "params"],
                             "properties": {
-                                "type": {"enum": ["port-update"]},
+                                "type": {
+                                    "enum": ["port-update"]
+                                },
                                 "params": {
                                     "type": "object",
                                     "additionalProperties": true,
@@ -90,7 +92,9 @@
                             "additionalProperties": false,
                             "required": ["type", "params"],
                             "properties": {
-                                "type": {"enum": ["port-update"]},
+                                "type": {
+                                    "enum": ["port-update"]
+                                },
                                 "params": {
                                     "type": "object",
                                     "additionalProperties": true,

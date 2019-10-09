@@ -34,7 +34,9 @@
                             "additionalProperties": false,
                             "required": ["type", "params"],
                             "properties": {
-                                "type": {"enum": ["device-update"]},
+                                "type": {
+                                    "enum": ["device-update"]
+                                },
                                 "params": {
                                     "type": "object",
                                     "additionalProperties": false,

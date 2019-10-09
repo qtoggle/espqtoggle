@@ -39,7 +39,9 @@
                             "additionalProperties": true,
                             "required": ["type", "params"],
                             "properties": {
-                                "type": {"enum": ["port-add"]}
+                                "type": {
+                                    "enum": ["port-add"]
+                                }
                             }
                         }
                     ]
@@ -95,7 +97,9 @@
                             "additionalProperties": true,
                             "required": ["type", "params"],
                             "properties": {
-                                "type": {"enum": ["port-add"]}
+                                "type": {
+                                    "enum": ["port-add"]
+                                }
                             }
                         }
                     ]

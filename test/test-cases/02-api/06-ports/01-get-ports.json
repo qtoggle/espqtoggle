@@ -89,6 +89,7 @@
                                     "sampling_interval": {
                                         "type": "object",
                                         "required": [
+                                            "display_name",
                                             "description",
                                             "unit",
                                             "modifiable",
@@ -98,6 +99,9 @@
                                             "integer"
                                         ],
                                         "properties": {
+                                            "display_name": {
+                                                "type": "string"
+                                            },
                                             "description": {
                                                 "type": "string"
                                             },
@@ -124,12 +128,16 @@
                                     "pull_up": {
                                         "type": "object",
                                         "required": [
+                                            "display_name",
                                             "description",
                                             "unit",
                                             "modifiable",
                                             "type"
                                         ],
                                         "properties": {
+                                            "display_name": {
+                                                "type": "string"
+                                            },
                                             "description": {
                                                 "type": "string"
                                             },
@@ -147,12 +155,16 @@
                                     "output": {
                                         "type": "object",
                                         "required": [
+                                            "display_name",
                                             "description",
                                             "unit",
                                             "modifiable",
                                             "type"
                                         ],
                                         "properties": {
+                                            "display_name": {
+                                                "type": "string"
+                                            },
                                             "description": {
                                                 "type": "string"
                                             },

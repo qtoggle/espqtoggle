@@ -144,6 +144,7 @@
                                     "type": "object",
                                     "additionalProperties": false,
                                     "required": [
+                                        "display_name",
                                         "description",
                                         "unit",
                                         "modifiable",
@@ -152,6 +153,9 @@
                                         "choices"
                                     ],
                                     "properties": {
+                                        "display_name": {
+                                            "type": "string"
+                                        },
                                         "description": {
                                             "type": "string"
                                         },
@@ -179,6 +183,7 @@
                                     "type": "object",
                                     "additionalProperties": false,
                                     "required": [
+                                        "display_name",
                                         "description",
                                         "unit",
                                         "modifiable",
@@ -188,6 +193,9 @@
                                         "integer"
                                     ],
                                     "properties": {
+                                        "display_name": {
+                                            "type": "string"
+                                        },
                                         "description": {
                                             "type": "string"
                                         },
@@ -215,11 +223,15 @@
                                     "type": "object",
                                     "additionalProperties": false,
                                     "required": [
+                                        "display_name",
                                         "description",
                                         "modifiable",
                                         "type"
                                     ],
                                     "properties": {
+                                        "display_name": {
+                                            "type": "string"
+                                        },
                                         "description": {
                                             "type": "string"
                                         },
@@ -237,11 +249,15 @@
                                     "type": "object",
                                     "additionalProperties": false,
                                     "required": [
+                                        "display_name",
                                         "description",
                                         "modifiable",
                                         "type"
                                     ],
                                     "properties": {
+                                        "display_name": {
+                                            "type": "string"
+                                        },
                                         "description": {
                                             "type": "string"
                                         },
@@ -257,6 +273,7 @@
                                     "type": "object",
                                     "additionalProperties": false,
                                     "required": [
+                                        "display_name",
                                         "description",
                                         "unit",
                                         "modifiable",
@@ -265,6 +282,9 @@
                                         "choices"
                                     ],
                                     "properties": {
+                                        "display_name": {
+                                            "type": "string"
+                                        },
                                         "description": {
                                             "type": "string"
                                         },
@@ -292,11 +312,15 @@
                                     "type": "object",
                                     "additionalProperties": false,
                                     "required": [
+                                        "display_name",
                                         "description",
                                         "modifiable",
                                         "type"
                                     ],
                                     "properties": {
+                                        "display_name": {
+                                            "type": "string"
+                                        },
                                         "description": {
                                             "type": "string"
                                         },
@@ -312,6 +336,7 @@
                                     "type": "object",
                                     "additionalProperties": false,
                                     "required": [
+                                        "display_name",
                                         "description",
                                         "unit",
                                         "modifiable",
@@ -319,6 +344,9 @@
                                         "integer"
                                     ],
                                     "properties": {
+                                        "display_name": {
+                                            "type": "string"
+                                        },
                                         "description": {
                                             "type": "string"
                                         },
@@ -340,6 +368,7 @@
                                     "type": "object",
                                     "additionalProperties": false,
                                     "required": [
+                                        "display_name",
                                         "description",
                                         "unit",
                                         "modifiable",
@@ -347,6 +376,9 @@
                                         "integer"
                                     ],
                                     "properties": {
+                                        "display_name": {
+                                            "type": "string"
+                                        },
                                         "description": {
                                             "type": "string"
                                         },
@@ -368,11 +400,15 @@
                                     "type": "object",
                                     "additionalProperties": false,
                                     "required": [
+                                        "display_name",
                                         "description",
                                         "modifiable",
                                         "type"
                                     ],
                                     "properties": {
+                                        "display_name": {
+                                            "type": "string"
+                                        },
                                         "description": {
                                             "type": "string"
                                         },
@@ -388,11 +424,15 @@
                                     "type": "object",
                                     "additionalProperties": false,
                                     "required": [
+                                        "display_name",
                                         "description",
                                         "modifiable",
                                         "type"
                                     ],
                                     "properties": {
+                                        "display_name": {
+                                            "type": "string"
+                                        },
                                         "description": {
                                             "type": "string"
                                         },
@@ -408,11 +448,15 @@
                                     "type": "object",
                                     "additionalProperties": false,
                                     "required": [
+                                        "display_name",
                                         "description",
                                         "modifiable",
                                         "type"
                                     ],
                                     "properties": {
+                                        "display_name": {
+                                            "type": "string"
+                                        },
                                         "description": {
                                             "type": "string"
                                         },

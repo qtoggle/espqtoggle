@@ -50,7 +50,9 @@
                             "additionalProperties": true,
                             "required": ["type", "params"],
                             "properties": {
-                                "type": {"enum": ["port-remove"]},
+                                "type": {
+                                    "enum": ["port-remove"]
+                                },
                                 "params": {
                                     "type": "object",
                                     "additionalProperties": false,
@@ -58,7 +60,9 @@
                                         "id"
                                     ],
                                     "properties": {
-                                        "id": {"enum": ["test_port"]}
+                                        "id": {
+                                            "enum": ["test_port"]
+                                        }
                                     }
                                 }
                             }
@@ -116,7 +120,9 @@
                             "additionalProperties": true,
                             "required": ["type", "params"],
                             "properties": {
-                                "type": {"enum": ["port-remove"]},
+                                "type": {
+                                    "enum": ["port-remove"]
+                                },
                                 "params": {
                                     "type": "object",
                                     "additionalProperties": false,
@@ -124,7 +130,9 @@
                                         "id"
                                     ],
                                     "properties": {
-                                        "id": {"enum": ["test_port"]}
+                                        "id": {
+                                            "enum": ["test_port"]
+                                        }
                                     }
                                 }
                             }
