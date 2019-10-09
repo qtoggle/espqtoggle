@@ -27,6 +27,7 @@
 #include "espgoodies/utils.h"
 #include "espgoodies/system.h"
 
+#include "api.h"
 #include "ports.h"
 #include "extra/fsg.h"
 

@@ -26,6 +26,7 @@
 #include "espgoodies/common.h"
 #include "espgoodies/utils.h"
 
+#include "api.h"
 #include "ports.h"
 #include "extra/rgb.h"
 
