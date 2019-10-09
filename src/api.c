@@ -389,6 +389,37 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
     return response_json;
 }
 
+void api_conn_set(struct espconn *conn, int access_level) {
+    if (api_conn) {
+        DEBUG_API("overwriting existing API connection");
+    }
+
+    api_conn = conn;
+    api_access_level = access_level;
+}
+
+bool api_conn_busy(void) {
+    return !!api_conn;
+}
+
+bool api_conn_equal(struct espconn *conn) {
+    if (!api_conn) {
+        return FALSE;
+    }
+
+    return CONN_EQUAL(conn, api_conn);
+}
+
+uint8 api_conn_access_level_get(void) {
+    return api_access_level;
+}
+
+void api_conn_reset(void) {
+    api_conn = NULL;
+    api_access_level = API_ACCESS_LEVEL_NONE;
+}
+
+
 json_t *port_to_json(port_t *port) {
     json_t *json = json_obj_new();
 
@@ -482,6 +513,7 @@ json_t *port_to_json(port_t *port) {
     /* extra attributes */
     if (port->attrdefs) {
         attrdef_t *a, **attrdefs = port->attrdefs;
+        int index;
         while ((a = *attrdefs++)) {
             switch (a->type) {
                 case ATTR_TYPE_BOOLEAN:
@@ -491,7 +523,8 @@ json_t *port_to_json(port_t *port) {
                 case ATTR_TYPE_NUMBER:
                     if (a->choices) {
                         /* when dealing with choices, the getter returns the index inside the choices array */
-                        json_obj_append(json, a->name, json_str_new(a->choices[((int_getter_t) a->get)(port)])); // TODO !!! choices
+                        index = ((int_getter_t) a->get)(port);
+                        json_obj_append(json, a->name, json_double_new(get_choice_value_num(a->choices[index])));
                     }
                     else {
                         if (a->integer) {
@@ -506,7 +539,8 @@ json_t *port_to_json(port_t *port) {
                 case ATTR_TYPE_STRING:
                     if (a->choices) {
                         /* when dealing with choices, the getter returns the index inside the choices array */
-                        json_obj_append(json, a->name, json_str_new(a->choices[((int_getter_t) a->get)(port)])); // TODO !!! choices
+                        index = ((int_getter_t) a->get)(port);
+                        json_obj_append(json, a->name, json_str_new(get_choice_value_str(a->choices[index])));
                     }
                     else {
                         json_obj_append(json, a->name, json_str_new(((str_getter_t) a->get)(port)));
@@ -685,36 +719,43 @@ json_t *device_to_json(void) {
     return json;
 }
 
-void api_conn_set(struct espconn *conn, int access_level) {
-    if (api_conn) {
-        DEBUG_API("overwriting existing API connection");
+double get_choice_value_num(char *choice) {
+    return strtod(get_choice_value_str(choice), NULL);
+}
+
+char *get_choice_value_str(char *choice) {
+    static char *value = NULL;  /* acts as a reentrant buffer */
+    if (value) {
+        free(value);
     }
 
-    api_conn = conn;
-    api_access_level = access_level;
-}
-
-bool api_conn_busy(void) {
-    return !!api_conn;
-}
-
-bool api_conn_equal(struct espconn *conn) {
-    if (!api_conn) {
-        return FALSE;
+    char *p = strchr(choice, ':');
+    if (p) {
+        value = strndup(choice, p - choice);
+    }
+    else {
+        return choice;
     }
 
-    return CONN_EQUAL(conn, api_conn);
+    return value;
 }
 
-uint8 api_conn_access_level_get(void) {
-    return api_access_level;
-}
+char *get_choice_display_name(char *choice) {
+    static char *display_name = NULL;  /* acts as a reentrant buffer */
+    if (display_name) {
+        free(display_name);
+    }
 
-void api_conn_reset(void) {
-    api_conn = NULL;
-    api_access_level = API_ACCESS_LEVEL_NONE;
-}
+    char *p = strchr(choice, ':');
+    if (p) {
+        display_name = strdup(p + 1);
+    }
+    else {
+        return NULL;
+    }
 
+    return display_name;
+}
 
 json_t *get_device(json_t *query_json, int *code) {
     json_t *response_json = NULL;
@@ -2517,22 +2558,18 @@ json_t *attrdef_to_json(char *display_name, char *description, char *unit, char 
 
 json_t *choice_to_json(char *choice, char type) {
     json_t *choice_json = json_obj_new();
-    char *p = strchr(choice, ':');
-    char *value;
 
-    if (!p) {
-        json_obj_append(choice_json, "display_name", json_str_new(p + 1));
-        p = choice + strlen(choice);
+    char *display_name = get_choice_display_name(choice);
+    if (display_name) {
+        json_obj_append(choice_json, "display_name", json_str_new(display_name));
     }
 
-    value = strndup(choice, p - choice);
     if (type == ATTR_TYPE_NUMBER) /* also PORT_TYPE_NUMBER */ {
-        json_obj_append(choice_json, "value", json_double_new(strtod(value, NULL)));
+        json_obj_append(choice_json, "value", json_double_new(get_choice_value_num(choice)));
     }
     else {
-        json_obj_append(choice_json, "value", json_str_new(value));
+        json_obj_append(choice_json, "value", json_str_new(get_choice_value_str(choice)));
     }
-    free(value);
 
     return choice_json;
 }
@@ -2543,19 +2580,12 @@ bool validate_num(double value, double min, double max, bool integer, double ste
     }
 
     if (choices) {
-        char *c, *p;
+        char *c;
         int i = 0;
         while ((c = *choices++)) {
-            p = strchr(c, ':');
-            if (!p) {
-                p = c + strlen(c);
-            }
-            c = strndup(c, p - c);
-            if (strtod(c, NULL) == value) {
-                free(c);
+            if (get_choice_value_num(c) == value) {
                 return i + 1;
             }
-            free(c);
 
             i++;
         }
@@ -2581,14 +2611,10 @@ bool validate_num(double value, double min, double max, bool integer, double ste
 
 bool validate_str(char *value, char **choices) {
     if (choices) {
-        char *c, *p;
+        char *c;
         int i = 0;
         while ((c = *choices++)) {
-            p = strchr(c, ':');
-            if (!p) {
-                p = c + strlen(c);
-            }
-            if (!strncmp(c, value, p - c)) {
+            if (!strcmp(get_choice_value_str(c), value)) {
                 return i + 1;
             }
 
