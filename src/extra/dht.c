@@ -60,8 +60,6 @@
 #define GPIO_CONFIG_OFFS                0x01    /* 1 byte */
 #define RETRIES_CONFIG_OFFS             0x05    /* 1 byte */
 
-#define GPIO_CHOICES_LEN                8
-
 
 typedef struct {
 
@@ -121,10 +119,7 @@ ICACHE_FLASH_ATTR static bool           read_wire(port_t *port);
 ICACHE_FLASH_ATTR static void           write_wire(port_t *port, bool value);
 
 
-static char                           * model_choices[] = {"DHT11", "DHT22", NULL};
-static uint8                            gpio_mapping[] = {0, 2, 4, 5, 12, 13, 14, 15};
-static char                           * gpio_choices[] = {"gpio 0", "gpio 2", "gpio 4", "gpio 5", "gpio 12", "gpio 13",
-                                                          "gpio 14", "gpio 15", NULL};
+static char                           * model_choices[] = {"dht11:DHT11", "dht22:DHT22", NULL};
 
 static attrdef_t model_attrdef = {
 
@@ -144,8 +139,8 @@ static attrdef_t gpio_attrdef = {
     .name = "gpio",
     .display_name = "GPIO Number",
     .description = "The GPIO where the sensor is attached.",
-    .type = ATTR_TYPE_STRING,
-    .choices = gpio_choices,
+    .type = ATTR_TYPE_NUMBER,
+    .choices = all_gpio_choices,
     .modifiable = TRUE,
     .set = attr_set_gpio,
     .get = attr_get_gpio
@@ -459,7 +454,6 @@ void attr_set_model(port_t *port, int value) {
 }
 
 int attr_get_gpio(port_t *port) {
-    int i;
     uint8 value;
 
     /* read from persisted data */
@@ -468,18 +462,11 @@ int attr_get_gpio(port_t *port) {
     /* update cached value */
     set_gpio(port, value);
 
-    for (i = 0; i < GPIO_CHOICES_LEN; i++) {
-        if (gpio_mapping[i] == value) {
-            /* return choice index */
-            return i;
-        }
-    }
-
-    return 0;
+    return value;
 }
 
 void attr_set_gpio(port_t *port, int index) {
-    uint8 value = gpio_mapping[index];
+    uint8 value = index;
 
     /* update cached value */
     set_gpio(port, value);
