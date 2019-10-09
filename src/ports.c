@@ -40,8 +40,13 @@ ICACHE_FLASH_ATTR static void       port_save(port_t *port, uint8 *data, uint32 
 ICACHE_FLASH_ATTR static int        compare_numbers(const void *a, const void *b);
 
 
-port_t **all_ports = NULL;
-static int all_ports_count = 0;
+port_t                           ** all_ports = NULL;
+char                              * all_gpio_choices[] = {"0:GPIO0", "1:GPIO1", "2:GPIO2", "3:GPIO3", "4:GPIO4",
+                                                          "5:GPIO5", "6:GPIO6", "7:GPIO7", "8:GPIO8", "9:GPIO9",
+                                                          "10:GPIO10", "11:GPIO11", "12:GPIO12", "13:GPIO13",
+                                                          "14:GPIO14", "15:GPIO15", "16:GPIO16", NULL};
+
+static int                          all_ports_count = 0;
 
 
 void port_load(port_t *port, uint8 *data) {

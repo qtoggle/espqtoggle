@@ -100,6 +100,8 @@
 #define CONFIG_OFFS_PORT_SAMP_INT       0x6C    /*   4 bytes */
 #define CONFIG_OFFS_PORT_DATA           0x70    /*  16 bytes for custom data */
 
+#define ALL_GPIO_CHOICES_LEN            17
+
 
 typedef int    (* int_getter_t)(struct port *port);
 typedef void   (* int_setter_t)(struct port *port, int value);
@@ -201,6 +203,7 @@ typedef struct port {
 
 extern char       * filter_choices[];
 extern port_t    ** all_ports;
+extern char       * all_gpio_choices[];
 
 
 ICACHE_FLASH_ATTR void      ports_init(uint8 *data);
