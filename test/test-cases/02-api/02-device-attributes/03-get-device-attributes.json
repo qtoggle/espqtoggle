@@ -174,7 +174,18 @@
                                         "choices": {
                                             "type": "array",
                                             "items": {
-                                                "enum": [80, 160]
+                                                "type": "object",
+                                                "additionalProperties": false,
+                                                "required": [
+                                                    "value",
+                                                    "display_name"
+                                                ],
+                                                "value": {
+                                                    "enum": [80, 160]
+                                                },
+                                                "display_name": {
+                                                    "type": "string"
+                                                }
                                             }
                                         }
                                     }
@@ -303,7 +314,18 @@
                                         "choices": {
                                             "type": "array",
                                             "items": {
-                                                "enum": [0, 1, 5, 10, 30, 60, 120]
+                                                "type": "object",
+                                                "additionalProperties": false,
+                                                "required": [
+                                                    "value",
+                                                    "display_name"
+                                                ],
+                                                "value": {
+                                                    "enum": [0, 1, 5, 10, 30, 60, 120]
+                                                },
+                                                "display_name": {
+                                                    "type": "string"
+                                                }
                                             }
                                         }
                                     }

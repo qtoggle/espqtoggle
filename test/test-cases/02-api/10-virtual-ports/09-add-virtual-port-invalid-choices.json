@@ -40,6 +40,54 @@
                     "error": "invalid field: choices"
                 }
             }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "id": "test_port",
+                    "type": "number",
+                    "integer": true,
+                    "choices": [
+                        {
+                            "display_name": "missing_value"
+                        }
+                    ]
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: choices"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "id": "test_port",
+                    "type": "number",
+                    "integer": true,
+                    "choices": [
+                        {
+                            "value": "should_have_been_a_number"
+                        }
+                    ]
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: choices"
+                }
+            }
         }
     ]
 }
