@@ -46,8 +46,6 @@
 #define CMD_STOP                        0
 #define CMD_OPEN                        1
 
-#define INPUT_CHOICES_LEN               4
-
 #define BOOT_DELAY                      2000    /* milliseconds */
 #define HEART_BEAT_INTERVAL             20      /* milliseconds */
 #define INPUT_DEBOUNCE_HIST_LEN         100     /* up to 2s, with heart beat 20ms */
@@ -201,12 +199,6 @@ typedef struct {
 #define closed_input_delay_hist(p)      (((extra_info_t *) (p)->extra_info)->closed_input_delay_hist)
 #define moving_input_delay_hist(p)      (((extra_info_t *) (p)->extra_info)->moving_input_delay_hist)
 
-static int8                             input_mapping[] = {-1, 0, 4, 15};
-static char                           * input_choices[] = {"none", "input 0", "input 4", "input 15", NULL};
-
-static int8                             output_mapping[] = {-1, 5, 14};
-static char                           * output_choices[] = {"none", "output 5", "output 14", NULL};
-
 static char                           * level_choices[] = {"low", "high", NULL};
 
 #if defined(_DEBUG) && defined(_DEBUG_FSG)
@@ -287,11 +279,11 @@ static attrdef_t closed_input_attrdef = {
     .name = "closed_input",
     .display_name = "Closed GPIO",
     .description = "Closed state input pin.",
-    .type = ATTR_TYPE_STRING,
+    .type = ATTR_TYPE_NUMBER,
     .modifiable = TRUE,
     .set = attr_set_closed_input,
     .get = attr_get_closed_input,
-    .choices = input_choices
+    .choices = all_gpio_none_choices
 
 };
 
@@ -304,7 +296,7 @@ static attrdef_t moving_input_attrdef = {
     .modifiable = TRUE,
     .set = attr_set_moving_input,
     .get = attr_get_moving_input,
-    .choices = input_choices
+    .choices = all_gpio_none_choices
 
 };
 
@@ -377,7 +369,7 @@ static attrdef_t open_output_attrdef = {
     .modifiable = TRUE,
     .set = attr_set_open_output,
     .get = attr_get_open_output,
-    .choices = output_choices
+    .choices = all_gpio_none_choices
 
 };
 
@@ -390,7 +382,7 @@ static attrdef_t close_output_attrdef = {
     .modifiable = TRUE,
     .set = attr_set_close_output,
     .get = attr_get_close_output,
-    .choices = output_choices
+    .choices = all_gpio_none_choices
 
 };
 
@@ -403,7 +395,7 @@ static attrdef_t stop_output_attrdef = {
     .modifiable = TRUE,
     .set = attr_set_stop_output,
     .get = attr_get_stop_output,
-    .choices = output_choices
+    .choices = all_gpio_none_choices
 
 };
 
@@ -1238,7 +1230,6 @@ int8 pop_output(port_t *port) {
 }
 
 int attr_get_closed_input(port_t *port) {
-    int i;
     int8 value;
 
     /* read from persisted data */
@@ -1247,18 +1238,11 @@ int attr_get_closed_input(port_t *port) {
     /* update cached value */
     set_closed_input(port, value);
 
-    for (i = 0; i < INPUT_CHOICES_LEN; i++) {
-        if (input_mapping[i] == value) {
-            /* return choice index */
-            return i;
-        }
-    }
-
-    return 0;
+    return value;
 }
 
 void attr_set_closed_input(port_t *port, int index) {
-    uint8 value = input_mapping[index];
+    uint8 value = index;
 
     /* update cached value */
     set_closed_input(port, value);
@@ -1268,7 +1252,6 @@ void attr_set_closed_input(port_t *port, int index) {
 }
 
 int attr_get_moving_input(port_t *port) {
-    int i;
     int8 value;
 
     /* read from persisted data */
@@ -1277,18 +1260,11 @@ int attr_get_moving_input(port_t *port) {
     /* update cached value */
     set_moving_input(port, value);
 
-    for (i = 0; i < INPUT_CHOICES_LEN; i++) {
-        if (input_mapping[i] == value) {
-            /* return choice index */
-            return i;
-        }
-    }
-
-    return 0;
+    return value;
 }
 
 void attr_set_moving_input(port_t *port, int index) {
-    uint8 value = input_mapping[index];
+    uint8 value = index;
 
     /* update cached value */
     set_moving_input(port, value);
@@ -1366,7 +1342,6 @@ void attr_set_closed_moving_delay(port_t *port, int value) {
 }
 
 int attr_get_open_output(port_t *port) {
-    int i;
     int8 value;
 
     /* read from persisted data */
@@ -1375,18 +1350,11 @@ int attr_get_open_output(port_t *port) {
     /* update cached value */
     set_open_output(port, value);
 
-    for (i = 0; i < OUTPUT_CHOICES_LEN; i++) {
-        if (output_mapping[i] == value) {
-            /* return choice index */
-            return i;
-        }
-    }
-
-    return 0;
+    return value;
 }
 
 void attr_set_open_output(port_t *port, int index) {
-    uint8 value = output_mapping[index];
+    uint8 value = index;
 
     /* update cached value */
     set_open_output(port, value);
@@ -1396,7 +1364,6 @@ void attr_set_open_output(port_t *port, int index) {
 }
 
 int attr_get_close_output(port_t *port) {
-    int i;
     int8 value;
 
     /* read from persisted data */
@@ -1405,18 +1372,11 @@ int attr_get_close_output(port_t *port) {
     /* update cached value */
     set_close_output(port, value);
 
-    for (i = 0; i < OUTPUT_CHOICES_LEN; i++) {
-        if (output_mapping[i] == value) {
-            /* return choice index */
-            return i;
-        }
-    }
-
-    return 0;
+    return value;
 }
 
 void attr_set_close_output(port_t *port, int index) {
-    uint8 value = output_mapping[index];
+    uint8 value = index;
 
     /* update cached value */
     set_close_output(port, value);
@@ -1426,7 +1386,6 @@ void attr_set_close_output(port_t *port, int index) {
 }
 
 int attr_get_stop_output(port_t *port) {
-    int i;
     int8 value;
 
     /* read from persisted data */
@@ -1435,18 +1394,11 @@ int attr_get_stop_output(port_t *port) {
     /* update cached value */
     set_stop_output(port, value);
 
-    for (i = 0; i < OUTPUT_CHOICES_LEN; i++) {
-        if (output_mapping[i] == value) {
-            /* return choice index */
-            return i;
-        }
-    }
-
-    return 0;
+    return value;
 }
 
 void attr_set_stop_output(port_t *port, int index) {
-    uint8 value = output_mapping[index];
+    uint8 value = index;
 
     /* update cached value */
     set_stop_output(port, value);
