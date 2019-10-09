@@ -2366,7 +2366,7 @@ json_t *device_attrdefs_to_json(void) {
 
     attrdef_json = attrdef_to_json("Network BSSID", "The BSSID of the currently connected AP.", /* unit = */ NULL,
                                    ATTR_TYPE_STRING, /* modifiable = */ FALSE, /* min = */ UNDEFINED,
-                                   /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0, /* choices  = */ NULL,
+                                   /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
                                    /* reconnect = */ FALSE);
     json_obj_append(json, "network_bssid", attrdef_json);
 
@@ -2427,12 +2427,13 @@ json_t *device_attrdefs_to_json(void) {
 
     attrdef_json = attrdef_to_json("Flash ID", "Device flash model identifier.", /* unit = */ NULL, ATTR_TYPE_STRING,
                                    /* modifiable = */ FALSE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
-                                   /* integer = */ FALSE, /* step = */ 0,  NULL /* choices */, /* reconnect = */ FALSE);
+                                   /* integer = */ FALSE, /* step = */ 0,  /* choices = */ NULL,
+                                   /* reconnect = */ FALSE);
     json_obj_append(json, "flash_id", attrdef_json);
 
     attrdef_json = attrdef_to_json("Chip ID", "Device chip identifier.", /* unit = */ NULL, ATTR_TYPE_STRING,
                                    /* modifiable = */ FALSE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
-                                   /* integer = */ FALSE, /* step = */ 0, /* choices  = */ NULL,
+                                   /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
                                    /* reconnect = */ FALSE);
     json_obj_append(json, "chip_id", attrdef_json);
 
@@ -2501,12 +2502,7 @@ json_t *attrdef_to_json(char *display_name, char *description, char *unit, char 
         json_t *list = json_list_new();
         char *c;
         while ((c = *choices++)) {
-            if (type == ATTR_TYPE_NUMBER) {
-                json_list_append(list, json_double_new(strtod(c, NULL)));
-            }
-            else { /* assuming ATTR_TYPE_STRING */
-                json_list_append(list, json_str_new(c));
-            }
+            json_list_append(list, choice_to_json(c, ATTR_TYPE_NUMBER));
         }
 
         json_obj_append(json, "choices", list);
@@ -2547,12 +2543,19 @@ bool validate_num(double value, double min, double max, bool integer, double ste
     }
 
     if (choices) {
-        char *c;
+        char *c, *p;
         int i = 0;
         while ((c = *choices++)) {
+            p = strchr(c, ':');
+            if (!p) {
+                p = c + strlen(c);
+            }
+            c = strndup(c, p - c);
             if (strtod(c, NULL) == value) {
+                free(c);
                 return i + 1;
             }
+            free(c);
 
             i++;
         }
@@ -2578,10 +2581,14 @@ bool validate_num(double value, double min, double max, bool integer, double ste
 
 bool validate_str(char *value, char **choices) {
     if (choices) {
-        char *c;
+        char *c, *p;
         int i = 0;
         while ((c = *choices++)) {
-            if (!strcmp(c, value)) {
+            p = strchr(c, ':');
+            if (!p) {
+                p = c + strlen(c);
+            }
+            if (!strncmp(c, value, p - c)) {
                 return i + 1;
             }
 
