@@ -475,11 +475,11 @@ void configure(port_t *port) {
     }
 }
 
-bool attr_get_pull_up(port_t *port, attrdef_t * attrdef) {
+bool attr_get_pull_up(port_t *port, attrdef_t *attrdef) {
     return IS_PULL_UP(port);
 }
 
-void attr_set_pull_up(port_t *port, attrdef_t * attrdef, bool value) {
+void attr_set_pull_up(port_t *port, attrdef_t *attrdef, bool value) {
     if (value) {
         port->flags |= PORT_FLAG_PULL_UP;
     }

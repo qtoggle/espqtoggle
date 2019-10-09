@@ -237,41 +237,41 @@ ICACHE_FLASH_ATTR static int8       is_moving(port_t *port);
 ICACHE_FLASH_ATTR static void       push_cmd(port_t *port, int8 cmd);
 ICACHE_FLASH_ATTR static int8       pop_output(port_t *port);
 
-ICACHE_FLASH_ATTR static int        attr_get_closed_input(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_closed_input(port_t *port, attrdef_t * attrdef, int index);
+ICACHE_FLASH_ATTR static int        attr_get_closed_input(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_closed_input(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int        attr_get_moving_input(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_moving_input(port_t *port, attrdef_t * attrdef, int index);
+ICACHE_FLASH_ATTR static int        attr_get_moving_input(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_moving_input(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int        attr_get_closed_input_level(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_closed_input_level(port_t *port, attrdef_t * attrdef, int index);
+ICACHE_FLASH_ATTR static int        attr_get_closed_input_level(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_closed_input_level(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int        attr_get_moving_input_level(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_moving_input_level(port_t *port, attrdef_t * attrdef, int index);
+ICACHE_FLASH_ATTR static int        attr_get_moving_input_level(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_moving_input_level(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int        attr_get_debounce_duration(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_debounce_duration(port_t *port, attrdef_t * attrdef, int value);
+ICACHE_FLASH_ATTR static int        attr_get_debounce_duration(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_debounce_duration(port_t *port, attrdef_t *attrdef, int value);
 
-ICACHE_FLASH_ATTR static int        attr_get_closed_moving_delay(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_closed_moving_delay(port_t *port, attrdef_t * attrdef, int value);
+ICACHE_FLASH_ATTR static int        attr_get_closed_moving_delay(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_closed_moving_delay(port_t *port, attrdef_t *attrdef, int value);
 
-ICACHE_FLASH_ATTR static int        attr_get_open_output(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_open_output(port_t *port, attrdef_t * attrdef, int index);
+ICACHE_FLASH_ATTR static int        attr_get_open_output(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_open_output(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int        attr_get_close_output(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_close_output(port_t *port, attrdef_t * attrdef, int index);
+ICACHE_FLASH_ATTR static int        attr_get_close_output(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_close_output(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int        attr_get_stop_output(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_stop_output(port_t *port, attrdef_t * attrdef, int index);
+ICACHE_FLASH_ATTR static int        attr_get_stop_output(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_stop_output(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int        attr_get_output_level(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_output_level(port_t *port, attrdef_t * attrdef, int index);
+ICACHE_FLASH_ATTR static int        attr_get_output_level(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_output_level(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int        attr_get_output_pulse_on_len(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_output_pulse_on_len(port_t *port, attrdef_t * attrdef, int value);
+ICACHE_FLASH_ATTR static int        attr_get_output_pulse_on_len(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_output_pulse_on_len(port_t *port, attrdef_t *attrdef, int value);
 
-ICACHE_FLASH_ATTR static int        attr_get_output_pulse_off_len(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_output_pulse_off_len(port_t *port, attrdef_t * attrdef, int value);
+ICACHE_FLASH_ATTR static int        attr_get_output_pulse_off_len(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_output_pulse_off_len(port_t *port, attrdef_t *attrdef, int value);
 
 
 static attrdef_t closed_input_attrdef = {
@@ -1229,69 +1229,73 @@ int8 pop_output(port_t *port) {
     return output;
 }
 
-int attr_get_closed_input(port_t *port, attrdef_t * attrdef) {
+int attr_get_closed_input(port_t *port, attrdef_t *attrdef) {
     int8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + CLOSED_INPUT_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_closed_input(port, value);
+    set_closed_input(port, get_choice_value_num(attrdef->choices[value]));
 
     return value;
 }
 
-void attr_set_closed_input(port_t *port, attrdef_t * attrdef, int index) {
+void attr_set_closed_input(port_t *port, attrdef_t *attrdef, int index) {
     uint8 value = index;
 
     /* update cached value */
-    set_closed_input(port, value);
+    set_closed_input(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + CLOSED_INPUT_CONFIG_OFFS, &value, 1);
 }
 
-int attr_get_moving_input(port_t *port, attrdef_t * attrdef) {
+int attr_get_moving_input(port_t *port, attrdef_t *attrdef) {
     int8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + MOVING_INPUT_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_moving_input(port, value);
+    set_moving_input(port, get_choice_value_num(attrdef->choices[value]));
 
     return value;
 }
 
-void attr_set_moving_input(port_t *port, attrdef_t * attrdef, int index) {
+void attr_set_moving_input(port_t *port, attrdef_t *attrdef, int index) {
     uint8 value = index;
 
     /* update cached value */
-    set_moving_input(port, value);
+    set_moving_input(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + MOVING_INPUT_CONFIG_OFFS, &value, 1);
 }
 
-int attr_get_closed_input_level(port_t *port, attrdef_t * attrdef) {
+int attr_get_closed_input_level(port_t *port, attrdef_t *attrdef) {
+    /* value is stored in port flags so it's already loaded */
+
     /* return choice index */
     return (int) get_closed_input_level(port);
 }
 
-void attr_set_closed_input_level(port_t *port, attrdef_t * attrdef, int index) {
+void attr_set_closed_input_level(port_t *port, attrdef_t *attrdef, int index) {
     set_closed_input_level(port, !!index);
 }
 
-int attr_get_moving_input_level(port_t *port, attrdef_t * attrdef) {
+int attr_get_moving_input_level(port_t *port, attrdef_t *attrdef) {
+    /* value is stored in port flags so it's already loaded */
+
     /* return choice index */
     return (int) get_moving_input_level(port);
 }
 
-void attr_set_moving_input_level(port_t *port, attrdef_t * attrdef, int index) {
+void attr_set_moving_input_level(port_t *port, attrdef_t *attrdef, int index) {
     set_moving_input_level(port, !!index);
 }
 
-int attr_get_debounce_duration(port_t *port, attrdef_t * attrdef) {
+int attr_get_debounce_duration(port_t *port, attrdef_t *attrdef) {
     int16 value;
     uint32 duration;
 
@@ -1306,7 +1310,7 @@ int attr_get_debounce_duration(port_t *port, attrdef_t * attrdef) {
     return duration;
 }
 
-void attr_set_debounce_duration(port_t *port, attrdef_t * attrdef, int value) {
+void attr_set_debounce_duration(port_t *port, attrdef_t *attrdef, int value) {
     /* update cached value */
     set_debounce_duration(port, value);
 
@@ -1316,7 +1320,7 @@ void attr_set_debounce_duration(port_t *port, attrdef_t * attrdef, int value) {
     memcpy(port->extra_data + DEBOUNCE_DURATION_CONFIG_OFFS, &config_value, 2);
 }
 
-int attr_get_closed_moving_delay(port_t *port, attrdef_t * attrdef) {
+int attr_get_closed_moving_delay(port_t *port, attrdef_t *attrdef) {
     int16 value;
     uint32 delay;
 
@@ -1331,7 +1335,7 @@ int attr_get_closed_moving_delay(port_t *port, attrdef_t * attrdef) {
     return delay;
 }
 
-void attr_set_closed_moving_delay(port_t *port, attrdef_t * attrdef, int value) {
+void attr_set_closed_moving_delay(port_t *port, attrdef_t *attrdef, int value) {
     /* update cached value */
     set_closed_moving_delay(port, value);
 
@@ -1341,82 +1345,84 @@ void attr_set_closed_moving_delay(port_t *port, attrdef_t * attrdef, int value) 
     memcpy(port->extra_data + CLOSED_MOVING_DELAY_CONFIG_OFFS, &config_value, 2);
 }
 
-int attr_get_open_output(port_t *port, attrdef_t * attrdef) {
+int attr_get_open_output(port_t *port, attrdef_t *attrdef) {
     int8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + OPEN_OUTPUT_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_open_output(port, value);
+    set_open_output(port, get_choice_value_num(attrdef->choices[value]));
 
     return value;
 }
 
-void attr_set_open_output(port_t *port, attrdef_t * attrdef, int index) {
+void attr_set_open_output(port_t *port, attrdef_t *attrdef, int index) {
     uint8 value = index;
 
     /* update cached value */
-    set_open_output(port, value);
+    set_open_output(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + OPEN_OUTPUT_CONFIG_OFFS, &value, 1);
 }
 
-int attr_get_close_output(port_t *port, attrdef_t * attrdef) {
+int attr_get_close_output(port_t *port, attrdef_t *attrdef) {
     int8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + CLOSE_OUTPUT_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_close_output(port, value);
+    set_close_output(port, get_choice_value_num(attrdef->choices[value]));
 
     return value;
 }
 
-void attr_set_close_output(port_t *port, attrdef_t * attrdef, int index) {
+void attr_set_close_output(port_t *port, attrdef_t *attrdef, int index) {
     uint8 value = index;
 
     /* update cached value */
-    set_close_output(port, value);
+    set_close_output(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + CLOSE_OUTPUT_CONFIG_OFFS, &value, 1);
 }
 
-int attr_get_stop_output(port_t *port, attrdef_t * attrdef) {
+int attr_get_stop_output(port_t *port, attrdef_t *attrdef) {
     int8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + STOP_OUTPUT_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_stop_output(port, value);
+    set_stop_output(port, get_choice_value_num(attrdef->choices[value]));
 
     return value;
 }
 
-void attr_set_stop_output(port_t *port, attrdef_t * attrdef, int index) {
+void attr_set_stop_output(port_t *port, attrdef_t *attrdef, int index) {
     uint8 value = index;
 
     /* update cached value */
-    set_stop_output(port, value);
+    set_stop_output(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + STOP_OUTPUT_CONFIG_OFFS, &value, 1);
 }
 
-int attr_get_output_level(port_t *port, attrdef_t * attrdef) {
+int attr_get_output_level(port_t *port, attrdef_t *attrdef) {
+    /* value is stored in port flags so it's already loaded */
+
     /* return choice index */
     return (int) get_output_level(port);
 }
 
-void attr_set_output_level(port_t *port, attrdef_t * attrdef, int index) {
+void attr_set_output_level(port_t *port, attrdef_t *attrdef, int index) {
     set_output_level(port, !!index);
 }
 
-int attr_get_output_pulse_on_len(port_t *port, attrdef_t * attrdef) {
+int attr_get_output_pulse_on_len(port_t *port, attrdef_t *attrdef) {
     uint16 value;
     uint32 len;
 
@@ -1434,7 +1440,7 @@ int attr_get_output_pulse_on_len(port_t *port, attrdef_t * attrdef) {
     return len;
 }
 
-void attr_set_output_pulse_on_len(port_t *port, attrdef_t * attrdef, int value) {
+void attr_set_output_pulse_on_len(port_t *port, attrdef_t *attrdef, int value) {
     /* update cached value */
     set_output_pulse_on_len(port, value);
 
@@ -1444,7 +1450,7 @@ void attr_set_output_pulse_on_len(port_t *port, attrdef_t * attrdef, int value) 
     memcpy(port->extra_data + PULSE_ON_LEN_CONFIG_OFFS, &config_value, 2);
 }
 
-int attr_get_output_pulse_off_len(port_t *port, attrdef_t * attrdef) {
+int attr_get_output_pulse_off_len(port_t *port, attrdef_t *attrdef) {
     uint16 value;
     uint32 len;
 
@@ -1462,7 +1468,7 @@ int attr_get_output_pulse_off_len(port_t *port, attrdef_t * attrdef) {
     return len;
 }
 
-void attr_set_output_pulse_off_len(port_t *port, attrdef_t * attrdef, int value) {
+void attr_set_output_pulse_off_len(port_t *port, attrdef_t *attrdef, int value) {
     /* update cached value */
     set_output_pulse_off_len(port, value);
 

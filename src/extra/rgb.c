@@ -81,14 +81,14 @@ ICACHE_FLASH_ATTR static double     read_value(port_t *port);
 ICACHE_FLASH_ATTR static bool       write_value(port_t *port, double value);
 ICACHE_FLASH_ATTR static void       configure(port_t *port);
 
-ICACHE_FLASH_ATTR static int        attr_get_gpio_r(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_gpio_r(port_t *port, attrdef_t * attrdef, int index);
+ICACHE_FLASH_ATTR static int        attr_get_gpio_r(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_gpio_r(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int        attr_get_gpio_g(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_gpio_g(port_t *port, attrdef_t * attrdef, int index);
+ICACHE_FLASH_ATTR static int        attr_get_gpio_g(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_gpio_g(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int        attr_get_gpio_b(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_gpio_b(port_t *port, attrdef_t * attrdef, int index);
+ICACHE_FLASH_ATTR static int        attr_get_gpio_b(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_gpio_b(port_t *port, attrdef_t *attrdef, int index);
 
 
 #if defined(_DEBUG) && defined(_DEBUG_RGB)
@@ -358,67 +358,67 @@ void configure(port_t *port) {
     gpio_set_pullup(gpio_b, false);
 }
 
-int attr_get_gpio_r(port_t *port, attrdef_t * attrdef) {
+int attr_get_gpio_r(port_t *port, attrdef_t *attrdef) {
     uint8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + GPIO_R_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_gpio_r(port, value);
+    set_gpio_r(port, get_choice_value_num(attrdef->choices[value]));
 
     return value;
 }
 
-void attr_set_gpio_r(port_t *port, attrdef_t * attrdef, int index) {
+void attr_set_gpio_r(port_t *port, attrdef_t *attrdef, int index) {
     uint8 value = index;
 
     /* update cached value */
-    set_gpio_r(port, value);
+    set_gpio_r(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + GPIO_R_CONFIG_OFFS, &value, 1);
 }
 
-int attr_get_gpio_g(port_t *port, attrdef_t * attrdef) {
+int attr_get_gpio_g(port_t *port, attrdef_t *attrdef) {
     uint8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + GPIO_G_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_gpio_g(port, value);
+    set_gpio_g(port, get_choice_value_num(attrdef->choices[value]));
 
     return value;
 }
 
-void attr_set_gpio_g(port_t *port, attrdef_t * attrdef, int index) {
+void attr_set_gpio_g(port_t *port, attrdef_t *attrdef, int index) {
     uint8 value = index;
 
     /* update cached value */
-    set_gpio_g(port, value);
+    set_gpio_g(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + GPIO_G_CONFIG_OFFS, &value, 1);
 }
 
-int attr_get_gpio_b(port_t *port, attrdef_t * attrdef) {
+int attr_get_gpio_b(port_t *port, attrdef_t *attrdef) {
     uint8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + GPIO_B_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_gpio_b(port, value);
+    set_gpio_b(port, get_choice_value_num(attrdef->choices[value]));
 
     return value;
 }
 
-void attr_set_gpio_b(port_t *port, attrdef_t * attrdef, int index) {
+void attr_set_gpio_b(port_t *port, attrdef_t *attrdef, int index) {
     uint8 value = index;
 
     /* update cached value */
-    set_gpio_b(port, value);
+    set_gpio_b(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + GPIO_B_CONFIG_OFFS, &value, 1);

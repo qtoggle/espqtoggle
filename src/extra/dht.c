@@ -28,6 +28,7 @@
 #include "espgoodies/utils.h"
 
 #include "events.h"
+#include "api.h"
 #include "ports.h"
 #include "extra/dht.h"
 
@@ -97,14 +98,14 @@ ICACHE_FLASH_ATTR static void           configure_temperature(port_t *port);
 ICACHE_FLASH_ATTR static void           configure_humidity(port_t *port);
 ICACHE_FLASH_ATTR static void           heart_beat_temperature(port_t *port);
 
-ICACHE_FLASH_ATTR static int            attr_get_model(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void           attr_set_model(port_t *port, attrdef_t * attrdef, int value);
+ICACHE_FLASH_ATTR static int            attr_get_model(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void           attr_set_model(port_t *port, attrdef_t *attrdef, int value);
 
-ICACHE_FLASH_ATTR static int            attr_get_gpio(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void           attr_set_gpio(port_t *port, attrdef_t * attrdef, int index);
+ICACHE_FLASH_ATTR static int            attr_get_gpio(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void           attr_set_gpio(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int            attr_get_retries(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void           attr_set_retries(port_t *port, attrdef_t * attrdef, int value);
+ICACHE_FLASH_ATTR static int            attr_get_retries(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void           attr_set_retries(port_t *port, attrdef_t *attrdef, int value);
 
 #if defined(_DEBUG) && defined(_DEBUG_DHT)
 ICACHE_FLASH_ATTR static char *         get_model_str(port_t *port);
@@ -433,61 +434,63 @@ void heart_beat_temperature(port_t *port) {
     }
 }
 
-int attr_get_model(port_t *port, attrdef_t * attrdef) {
+int attr_get_model(port_t *port, attrdef_t *attrdef) {
     uint8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + MODEL_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_model(port, value);
+    set_model(port, get_choice_value_num(attrdef->choices[value]));
 
     return value;
 }
 
-void attr_set_model(port_t *port, attrdef_t * attrdef, int value) {
+void attr_set_model(port_t *port, attrdef_t *attrdef, int index) {
+    uint8 value = index;
+
     /* update cached value */
-    set_model(port, value);
+    set_model(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + MODEL_CONFIG_OFFS, &value, 1);
 }
 
-int attr_get_gpio(port_t *port, attrdef_t * attrdef) {
+int attr_get_gpio(port_t *port, attrdef_t *attrdef) {
     uint8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + GPIO_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_gpio(port, value);
+    set_gpio(port, get_choice_value_num(attrdef->choices[value]));
 
     return value;
 }
 
-void attr_set_gpio(port_t *port, attrdef_t * attrdef, int index) {
+void attr_set_gpio(port_t *port, attrdef_t *attrdef, int index) {
     uint8 value = index;
 
     /* update cached value */
-    set_gpio(port, value);
+    set_gpio(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + GPIO_CONFIG_OFFS, &value, 1);
 }
 
-int attr_get_retries(port_t *port, attrdef_t * attrdef) {
+int attr_get_retries(port_t *port, attrdef_t *attrdef) {
     uint8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + RETRIES_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_retries(port, value);
+    set_retries(port, get_choice_value_num(attrdef->choices[value]));
 
     return value;
 }
 
-void attr_set_retries(port_t *port, attrdef_t * attrdef, int value) {
+void attr_set_retries(port_t *port, attrdef_t *attrdef, int value) {
     /* update cached value */
     set_retries(port, value);
 

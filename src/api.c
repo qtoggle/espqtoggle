@@ -757,6 +757,7 @@ char *get_choice_display_name(char *choice) {
     return display_name;
 }
 
+
 json_t *get_device(json_t *query_json, int *code) {
     json_t *response_json = NULL;
 

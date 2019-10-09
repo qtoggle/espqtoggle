@@ -189,14 +189,14 @@ typedef struct port {
 
 } port_t;
 
-typedef int    (* int_getter_t)(struct port *port, attrdef_t * attrdef);
-typedef void   (* int_setter_t)(struct port *port, attrdef_t * attrdef, int value);
+typedef int    (* int_getter_t)(struct port *port, attrdef_t *attrdef);
+typedef void   (* int_setter_t)(struct port *port, attrdef_t *attrdef, int value);
 
-typedef char * (* str_getter_t)(struct port *port, attrdef_t * attrdef);
-typedef void   (* str_setter_t)(struct port *port, attrdef_t * attrdef, char *value);
+typedef char * (* str_getter_t)(struct port *port, attrdef_t *attrdef);
+typedef void   (* str_setter_t)(struct port *port, attrdef_t *attrdef, char *value);
 
-typedef double (* float_getter_t)(struct port *port, attrdef_t * attrdef);
-typedef void   (* float_setter_t)(struct port *port, attrdef_t * attrdef, double value);
+typedef double (* float_getter_t)(struct port *port, attrdef_t *attrdef);
+typedef void   (* float_setter_t)(struct port *port, attrdef_t *attrdef, double value);
 
 
 extern char       * filter_choices[];

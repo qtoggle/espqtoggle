@@ -29,6 +29,7 @@
 #include "espgoodies/system.h"
 #include "espgoodies/utils.h"
 
+#include "api.h"
 #include "ports.h"
 #include "extra/dallastemp.h"
 
@@ -76,8 +77,8 @@ ICACHE_FLASH_ATTR static double         read_value(port_t *port);
 ICACHE_FLASH_ATTR static void           configure(port_t *port);
 ICACHE_FLASH_ATTR static void           heart_beat(port_t *port);
 
-ICACHE_FLASH_ATTR static int            attr_get_gpio(port_t *port, attrdef_t * attrdef);
-ICACHE_FLASH_ATTR static void           attr_set_gpio(port_t *port, attrdef_t * attrdef, int index);
+ICACHE_FLASH_ATTR static int            attr_get_gpio(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void           attr_set_gpio(port_t *port, attrdef_t *attrdef, int index);
 
 #if defined(_DEBUG) && defined(_DEBUG_DALLASTEMP)
 ICACHE_FLASH_ATTR static char *         get_model_str(uint8 *addr);
@@ -370,23 +371,23 @@ void heart_beat(port_t *port) {
 }
 
 
-int attr_get_gpio(port_t *port, attrdef_t * attrdef) {
+int attr_get_gpio(port_t *port, attrdef_t *attrdef) {
     uint8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + GPIO_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_gpio(port, value);
+    set_gpio(port, get_choice_value_num(attrdef->choices[value]));
 
     return value;
 }
 
-void attr_set_gpio(port_t *port, attrdef_t * attrdef, int index) {
+void attr_set_gpio(port_t *port, attrdef_t *attrdef, int index) {
     uint8 value = index;
 
     /* update cached value */
-    set_gpio(port, value);
+    set_gpio(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + GPIO_CONFIG_OFFS, &value, 1);
