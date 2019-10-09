@@ -169,6 +169,8 @@ ICACHE_FLASH_ATTR static json_t       * attrdef_to_json(char *display_name, char
                                                         bool modifiable, double min, double max, bool integer,
                                                         double step, char **choices, bool reconnect);
 
+ICACHE_FLASH_ATTR static json_t       * choice_to_json(char *choice, char type);
+
 ICACHE_FLASH_ATTR static bool           validate_num(double value, double min, double max, bool integer,
                                                      double step, char **choices);
 ICACHE_FLASH_ATTR static bool           validate_str(char *value, char **choices);
@@ -437,7 +439,7 @@ json_t *port_to_json(port_t *port) {
             json_t *list = json_list_new();
             char *c, **choices = port->choices;
             while ((c = *choices++)) {
-                json_list_append(list, json_double_new(strtod(c, NULL)));
+                json_list_append(list, choice_to_json(c, PORT_TYPE_NUMBER));
             }
 
             json_obj_append(json, "choices", list);
@@ -489,7 +491,7 @@ json_t *port_to_json(port_t *port) {
                 case ATTR_TYPE_NUMBER:
                     if (a->choices) {
                         /* when dealing with choices, the getter returns the index inside the choices array */
-                        json_obj_append(json, a->name, json_str_new(a->choices[((int_getter_t) a->get)(port)]));
+                        json_obj_append(json, a->name, json_str_new(a->choices[((int_getter_t) a->get)(port)])); // TODO !!! choices
                     }
                     else {
                         if (a->integer) {
@@ -504,7 +506,7 @@ json_t *port_to_json(port_t *port) {
                 case ATTR_TYPE_STRING:
                     if (a->choices) {
                         /* when dealing with choices, the getter returns the index inside the choices array */
-                        json_obj_append(json, a->name, json_str_new(a->choices[((int_getter_t) a->get)(port)]));
+                        json_obj_append(json, a->name, json_str_new(a->choices[((int_getter_t) a->get)(port)])); // TODO !!! choices
                     }
                     else {
                         json_obj_append(json, a->name, json_str_new(((str_getter_t) a->get)(port)));
@@ -897,11 +899,13 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
                     return INVALID_FIELD_VALUE(key);
                 }
 
-                if (!validate_num(scan_interval, WIFI_SCAN_INTERVAL_MIN, WIFI_SCAN_INTERVAL_MAX, TRUE, 0, NULL /* choices */)) {
+                if (!validate_num(scan_interval, WIFI_SCAN_INTERVAL_MIN, WIFI_SCAN_INTERVAL_MAX, /* integer = */ TRUE,
+                                  /* step = */ 0, /* choices = */ NULL)) {
                     return INVALID_FIELD_VALUE(key);
                 }
 
-                if (!validate_num(scan_threshold, WIFI_SCAN_THRESH_MIN, WIFI_SCAN_THRESH_MAX, TRUE, 0, NULL /* choices */)) {
+                if (!validate_num(scan_threshold, WIFI_SCAN_THRESH_MIN, WIFI_SCAN_THRESH_MAX, /* integer = */ TRUE,
+                                  /* step = */ 0, /* choices = */ NULL)) {
                     return INVALID_FIELD_VALUE(key);
                 }
 
@@ -915,7 +919,8 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
             }
 
             int interval = json_int_get(child);
-            if (!validate_num(interval, UNDEFINED, UNDEFINED, TRUE, 0, ping_watchdog_interval_choices)) {
+            if (!validate_num(interval, /* min = */ UNDEFINED, /* max = */ UNDEFINED, /* integer = */ TRUE,
+                              /* step = */ 0, ping_watchdog_interval_choices)) {
                 return INVALID_FIELD_VALUE(key);
             }
 
@@ -1193,8 +1198,9 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
     }
 
     int i;
-    json_t *child, *c;
+    json_t *child, *c, *c2;
     port_t *new_port = zalloc(sizeof(port_t));
+    char *choice;
 
     /* will automatically allocate slot */
     new_port->slot = -1;
@@ -1339,18 +1345,44 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
             return INVALID_FIELD_VALUE("choices");
         }
 
-        new_port->choices = malloc((json_list_get_len(child) + 1) * sizeof(char *));
+        new_port->choices = zalloc((json_list_get_len(child) + 1) * sizeof(char *));
         for (i = 0; i < len; i++) {
             c = json_list_value_at(child, i);
-            if (json_get_type(c) == JSON_TYPE_INT) {
-                new_port->choices[i] = strdup(dtostr(json_int_get(c), /* decimals = */ 0));
+            if (json_get_type(c) != JSON_TYPE_OBJ) {
+                free(new_port); // TODO free port->choices as well
+                return INVALID_FIELD_VALUE("choices");
             }
-            else if (json_get_type(c) == JSON_TYPE_DOUBLE) {
-                new_port->choices[i] = strdup(dtostr(json_double_get(c), /* decimals = */ -1));
+
+            /* value */
+            c2 = json_obj_lookup_key(c, "value");
+            if (!c2) {
+                free(new_port); // TODO free port->choices as well
+                return INVALID_FIELD_VALUE("choices");
+            }
+
+            if (json_get_type(c2) == JSON_TYPE_INT) {
+                new_port->choices[i] = strdup(dtostr(json_int_get(c2), /* decimals = */ 0));
+            }
+            else if (json_get_type(c2) == JSON_TYPE_DOUBLE) {
+                new_port->choices[i] = strdup(dtostr(json_double_get(c2), /* decimals = */ -1));
             }
             else {
-                free(new_port);
+                free(new_port); // TODO free port->choices as well
                 return INVALID_FIELD_VALUE("choices");
+            }
+
+            /* display name */
+            c2 = json_obj_lookup_key(c, "display_name");
+            if (c2) {
+                if (json_get_type(c2) != JSON_TYPE_STR) {
+                    free(new_port); // TODO free port->choices as well
+                    return INVALID_FIELD_VALUE("choices");
+                }
+
+                choice = new_port->choices[i];
+                choice = realloc(choice, strlen(choice) + 2 + strlen(json_str_get(c2)));
+                strcat(choice, ":");
+                strcat(choice, json_str_get(c2));
             }
         }
 
@@ -2485,6 +2517,28 @@ json_t *attrdef_to_json(char *display_name, char *description, char *unit, char 
     }
 
     return json;
+}
+
+json_t *choice_to_json(char *choice, char type) {
+    json_t *choice_json = json_obj_new();
+    char *p = strchr(choice, ':');
+    char *value;
+
+    if (!p) {
+        json_obj_append(choice_json, "display_name", json_str_new(p + 1));
+        p = choice + strlen(choice);
+    }
+
+    value = strndup(choice, p - choice);
+    if (type == ATTR_TYPE_NUMBER) /* also PORT_TYPE_NUMBER */ {
+        json_obj_append(choice_json, "value", json_double_new(strtod(value, NULL)));
+    }
+    else {
+        json_obj_append(choice_json, "value", json_str_new(value));
+    }
+    free(value);
+
+    return choice_json;
 }
 
 bool validate_num(double value, double min, double max, bool integer, double step, char **choices) {
