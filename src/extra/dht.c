@@ -186,7 +186,7 @@ static extra_info_t dht0_extra_info = {
 
 static port_t _dht0_t = {
 
-    .slot = PORT_SLOT_EXTRA0,
+    .slot = PORT_SLOT_AUTO,
 
     .id = DHT0T_ID,
     .type = PORT_TYPE_NUMBER,
@@ -215,7 +215,7 @@ port_t *dht0_t = &_dht0_t;
 
 static port_t _dht0_h = {
 
-    .slot = PORT_SLOT_EXTRA1,
+    .slot = PORT_SLOT_AUTO,
 
     .id = DHT0H_ID,
     .type = PORT_TYPE_NUMBER,
@@ -251,7 +251,7 @@ static extra_info_t dht1_extra_info = {
 
 static port_t _dht1_t = {
 
-    .slot = PORT_SLOT_EXTRA2,
+    .slot = PORT_SLOT_AUTO,
 
     .id = DHT1T_ID,
     .type = PORT_TYPE_NUMBER,
@@ -280,7 +280,7 @@ port_t *dht1_t = &_dht1_t;
 
 static port_t _dht1_h = {
 
-    .slot = PORT_SLOT_EXTRA3,
+    .slot = PORT_SLOT_AUTO,
 
     .id = DHT1H_ID,
     .type = PORT_TYPE_NUMBER,
@@ -316,7 +316,7 @@ static extra_info_t dht2_extra_info = {
 
 static port_t _dht2_t = {
 
-    .slot = PORT_SLOT_EXTRA4,
+    .slot = PORT_SLOT_AUTO,
 
     .id = DHT2T_ID,
     .type = PORT_TYPE_NUMBER,
@@ -345,7 +345,7 @@ port_t *dht2_t = &_dht2_t;
 
 static port_t _dht2_h = {
 
-    .slot = PORT_SLOT_EXTRA5,
+    .slot = PORT_SLOT_AUTO,
 
     .id = DHT2H_ID,
     .type = PORT_TYPE_NUMBER,
