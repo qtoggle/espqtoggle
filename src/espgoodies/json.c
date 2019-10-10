@@ -403,7 +403,7 @@ void json_dump_rec(json_t *json, char **output, int *len, int *size, bool also_f
     switch (json->type) {
         case JSON_TYPE_NULL:
             *size = realloc_chunks(output, *size, *len + 4);
-            strncpy(*output + *len, "null", 4);
+            strncpy(*output + *len, "null", 5);
             *len += 4;
 
             break;
@@ -411,12 +411,12 @@ void json_dump_rec(json_t *json, char **output, int *len, int *size, bool also_f
         case JSON_TYPE_BOOL:
             if (json_bool_get(json)) {
                 *size = realloc_chunks(output, *size, *len + 4);
-                strncpy(*output + *len, "true", 4);
+                strncpy(*output + *len, "true", 5);
                 *len += 4;
             }
             else {
                 *size = realloc_chunks(output, *size, *len + 5);
-                strncpy(*output + *len, "false", 5);
+                strncpy(*output + *len, "false", 6);
                 *len += 5;
             }
             
