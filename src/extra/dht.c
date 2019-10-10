@@ -94,10 +94,13 @@ typedef struct {
 
 
 ICACHE_FLASH_ATTR static double         read_temperature(port_t *port);
-ICACHE_FLASH_ATTR static double         read_humidity(port_t *port);
 ICACHE_FLASH_ATTR static void           configure_temperature(port_t *port);
-ICACHE_FLASH_ATTR static void           configure_humidity(port_t *port);
 ICACHE_FLASH_ATTR static void           heart_beat_temperature(port_t *port);
+
+#if defined(HAS_DHT0H) || defined(HAS_DHT1H) || defined(HAS_DHT2H)
+ICACHE_FLASH_ATTR static double         read_humidity(port_t *port);
+ICACHE_FLASH_ATTR static void           configure_humidity(port_t *port);
+#endif
 
 ICACHE_FLASH_ATTR static int            attr_get_model(port_t *port);
 ICACHE_FLASH_ATTR static void           attr_set_model(port_t *port, int value);
@@ -173,18 +176,19 @@ static attrdef_t *attrdefs[] = {
 
 };
 
-#ifdef HAS_DHT0
+#ifdef HAS_DHT0T
+
 static extra_info_t dht0_extra_info = {
 
     .last_data = -1
 
 };
 
-static port_t _dht0 = {
+static port_t _dht0_t = {
 
-    .slot = PORT_SLOT_EXTRA0,
+    .slot = PORT_SLOT_AUTO,
 
-    .id = DHT0_ID,
+    .id = DHT0T_ID,
     .type = PORT_TYPE_NUMBER,
     .min = TEMP_MIN,
     .max = TEMP_MAX,
@@ -205,11 +209,15 @@ static port_t _dht0 = {
 
 };
 
+port_t *dht0_t = &_dht0_t;
+
+#ifdef HAS_DHT0H
+
 static port_t _dht0_h = {
 
-    .slot = PORT_SLOT_EXTRA1,
+    .slot = PORT_SLOT_AUTO,
 
-    .id = DHT0_ID "h",
+    .id = DHT0H_ID,
     .type = PORT_TYPE_NUMBER,
     .min = RH_MIN,
     .max = RH_MAX,
@@ -227,22 +235,25 @@ static port_t _dht0_h = {
 
 };
 
-port_t *dt0 = &_dht0;
 port_t *dht0_h = &_dht0_h;
-#endif
 
-#ifdef HAS_DHT1
+#endif /* HAS_DHT0H */
+
+#endif /* HAS_DHT0T */
+
+#ifdef HAS_DHT1T
+
 static extra_info_t dht1_extra_info = {
 
     .last_data = -1
 
 };
 
-static port_t _dht1 = {
+static port_t _dht1_t = {
 
-    .slot = PORT_SLOT_EXTRA2,
+    .slot = PORT_SLOT_AUTO,
 
-    .id = DHT1_ID,
+    .id = DHT1T_ID,
     .type = PORT_TYPE_NUMBER,
     .min = TEMP_MIN,
     .max = TEMP_MAX,
@@ -263,11 +274,15 @@ static port_t _dht1 = {
 
 };
 
+port_t *dht1_t = &_dht1_t;
+
+#ifdef HAS_DHT1H
+
 static port_t _dht1_h = {
 
-    .slot = PORT_SLOT_EXTRA3,
+    .slot = PORT_SLOT_AUTO,
 
-    .id = DHT1_ID "h",
+    .id = DHT1H_ID,
     .type = PORT_TYPE_NUMBER,
     .min = RH_MIN,
     .max = RH_MAX,
@@ -285,22 +300,25 @@ static port_t _dht1_h = {
 
 };
 
-port_t *dht1 = &_dht1;
 port_t *dht1_h = &_dht1_h;
-#endif
 
-#ifdef HAS_DHT2
+#endif /* HAS_DHT1H */
+
+#endif /* HAS_DHT1T */
+
+#ifdef HAS_DHT2T
+
 static extra_info_t dht2_extra_info = {
 
     .last_data = -1
 
 };
 
-static port_t _dht2 = {
+static port_t _dht2_t = {
 
-    .slot = PORT_SLOT_EXTRA4,
+    .slot = PORT_SLOT_AUTO,
 
-    .id = DHT2_ID,
+    .id = DHT2T_ID,
     .type = PORT_TYPE_NUMBER,
     .min = TEMP_MIN,
     .max = TEMP_MAX,
@@ -321,11 +339,15 @@ static port_t _dht2 = {
 
 };
 
+port_t *dht2_t = &_dht2_t;
+
+#ifdef HAS_DHT2H
+
 static port_t _dht2_h = {
 
-    .slot = PORT_SLOT_EXTRA5,
+    .slot = PORT_SLOT_AUTO,
 
-    .id = DHT2_ID "h",
+    .id = DHT2H_ID,
     .type = PORT_TYPE_NUMBER,
     .min = RH_MIN,
     .max = RH_MAX,
@@ -343,9 +365,11 @@ static port_t _dht2_h = {
 
 };
 
-port_t *dht2 = &_dht2;
 port_t *dht2_h = &_dht2_h;
-#endif
+
+#endif /* HAS_DHT2H */
+
+#endif /* HAS_DHT2T */
 
 
 double read_temperature(port_t *port) {
@@ -371,24 +395,6 @@ double read_temperature(port_t *port) {
     return UNDEFINED;
 }
 
-double read_humidity(port_t *port) {
-    uint64 last_data = get_last_data(port);
-
-    if (!data_valid(port, last_data)) {
-        return UNDEFINED;
-    }
-
-    switch (get_model(port)) {
-        case MODEL_DHT11:
-            return ((last_data >> 32) & 0xFF);
-
-        case MODEL_DHT22:
-            return ((last_data >> 24) & 0xFFFF) / 10.0;
-    }
-
-    return UNDEFINED;
-}
-
 void configure_temperature(port_t *port) {
     gpio_select_func(get_gpio(port));
 
@@ -407,18 +413,6 @@ void configure_temperature(port_t *port) {
     }
 }
 
-void configure_humidity(port_t *port) {
-    /* temperature and humidity ports are always enabled or disabled together */
-    if (IS_ENABLED(port) && !IS_ENABLED(get_temperature_port(port))) {
-        port_enable(get_temperature_port(port));
-        event_push_port_update(get_temperature_port(port));
-    }
-    else if (!IS_ENABLED(port) && IS_ENABLED(get_temperature_port(port))) {
-        port_disable(get_temperature_port(port));
-        event_push_port_update(get_temperature_port(port));
-    }
-}
-
 void heart_beat_temperature(port_t *port) {
     uint8 r = get_retries(port) + 1;
     uint64 last_data;
@@ -434,6 +428,40 @@ void heart_beat_temperature(port_t *port) {
         DEBUG_DHT(port, "read failure, retries = %d", r);
     }
 }
+
+#if defined(HAS_DHT0H) || defined(HAS_DHT1H) || defined(HAS_DHT2H)
+
+double read_humidity(port_t *port) {
+    uint64 last_data = get_last_data(port);
+
+    if (!data_valid(port, last_data)) {
+        return UNDEFINED;
+    }
+
+    switch (get_model(port)) {
+        case MODEL_DHT11:
+            return ((last_data >> 32) & 0xFF);
+
+        case MODEL_DHT22:
+            return ((last_data >> 24) & 0xFFFF) / 10.0;
+    }
+
+    return UNDEFINED;
+}
+
+void configure_humidity(port_t *port) {
+    /* temperature and humidity ports are always enabled or disabled together */
+    if (IS_ENABLED(port) && !IS_ENABLED(get_temperature_port(port))) {
+        port_enable(get_temperature_port(port));
+        event_push_port_update(get_temperature_port(port));
+    }
+    else if (!IS_ENABLED(port) && IS_ENABLED(get_temperature_port(port))) {
+        port_disable(get_temperature_port(port));
+        event_push_port_update(get_temperature_port(port));
+    }
+}
+
+#endif  /* HAS_DHT0H || HAS_DHT1H || HAS_DHT2H */
 
 int attr_get_model(port_t *port) {
     uint8 value;
@@ -644,28 +672,34 @@ void write_wire(port_t *port, bool value) {
 
 
 void dht_init_ports(void) {
-#ifdef HAS_DHT0
-    port_register(dt0);
-    port_register(dht0_h);
+#ifdef HAS_DHT0T
+    port_register(dht0_t);
+    dht0_extra_info.temperature_port = dht0_t;
 
-    dht0_extra_info.temperature_port = dt0;
+#ifdef HAS_DHT0H
+    port_register(dht0_h);
     dht0_extra_info.humidity_port = dht0_h;
 #endif
-
-#ifdef HAS_DHT1
-    port_register(dht1);
-    port_register(dht1_h);
-
-    dht1_extra_info.temperature_port = dht1;
-    dht1_extra_info.humidity_port = dht1_h;
 #endif
 
-#ifdef HAS_DHT2
-    port_register(dht2);
-    port_register(dht2_h);
+#ifdef HAS_DHT1T
+    port_register(dht1_t);
+    dht1_extra_info.temperature_port = dht1_t;
 
-    dht2_extra_info.temperature_port = dht2;
+#ifdef HAS_DHT1H
+    port_register(dht1_h);
+    dht1_extra_info.humidity_port = dht1_h;
+#endif
+#endif
+
+#ifdef HAS_DHT2T
+    port_register(dht2_t);
+    dht2_extra_info.temperature_port = dht2_t;
+
+#ifdef HAS_DHT2H
+    port_register(dht2_h);
     dht2_extra_info.humidity_port = dht2_h;
+#endif
 #endif
 }
 
