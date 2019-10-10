@@ -298,7 +298,7 @@ static extra_info_t pwdetect0_extra_info = {
 
 static port_t _pwdetect0 = {
 
-    .slot = PORT_SLOT_EXTRA0,
+    .slot = PORT_SLOT_AUTO,
 
     .id = PWDETECT0_ID,
     .type = PORT_TYPE_NUMBER,
@@ -331,7 +331,7 @@ static extra_info_t pwdetect1_extra_info = {
 
 static port_t _pwdetect1 = {
 
-    .slot = PORT_SLOT_EXTRA1,
+    .slot = PORT_SLOT_AUTO,
 
     .id = PWDETECT1_ID,
     .type = PORT_TYPE_NUMBER,
@@ -364,7 +364,7 @@ static extra_info_t pwdetect2_extra_info = {
 
 static port_t _pwdetect2 = {
 
-    .slot = PORT_SLOT_EXTRA2,
+    .slot = PORT_SLOT_AUTO,
 
     .id = PWDETECT2_ID,
     .type = PORT_TYPE_NUMBER,
@@ -397,7 +397,7 @@ static extra_info_t pwdetect3_extra_info = {
 
 static port_t _pwdetect3 = {
 
-    .slot = PORT_SLOT_EXTRA3,
+    .slot = PORT_SLOT_AUTO,
 
     .id = PWDETECT3_ID,
     .type = PORT_TYPE_NUMBER,
@@ -430,7 +430,7 @@ static extra_info_t pwdetect4_extra_info = {
 
 static port_t _pwdetect4 = {
 
-    .slot = PORT_SLOT_EXTRA4,
+    .slot = PORT_SLOT_AUTO,
 
     .id = PWDETECT4_ID,
     .type = PORT_TYPE_NUMBER,
@@ -463,7 +463,7 @@ static extra_info_t pwdetect5_extra_info = {
 
 static port_t _pwdetect5 = {
 
-    .slot = PORT_SLOT_EXTRA5,
+    .slot = PORT_SLOT_AUTO,
 
     .id = PWDETECT5_ID,
     .type = PORT_TYPE_NUMBER,

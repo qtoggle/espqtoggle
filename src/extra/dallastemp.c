@@ -114,7 +114,7 @@ static extra_info_t dt0_extra_info;
 
 static port_t _dt0 = {
 
-    .slot = PORT_SLOT_EXTRA0,
+    .slot = PORT_SLOT_AUTO,
 
     .id = DT0_ID,
     .type = PORT_TYPE_NUMBER,
@@ -144,7 +144,7 @@ static extra_info_t dt1_extra_info;
 
 static port_t _dt1 = {
 
-    .slot = PORT_SLOT_EXTRA1,
+    .slot = PORT_SLOT_AUTO,
 
     .id = DT1_ID,
     .type = PORT_TYPE_NUMBER,
@@ -174,7 +174,7 @@ static extra_info_t dt2_extra_info;
 
 static port_t _dt2 = {
 
-    .slot = PORT_SLOT_EXTRA2,
+    .slot = PORT_SLOT_AUTO,
 
     .id = DT2_ID,
     .type = PORT_TYPE_NUMBER,
@@ -204,7 +204,7 @@ static extra_info_t dt3_extra_info;
 
 static port_t _dt3 = {
 
-    .slot = PORT_SLOT_EXTRA3,
+    .slot = PORT_SLOT_AUTO,
 
     .id = DT3_ID,
     .type = PORT_TYPE_NUMBER,
@@ -234,7 +234,7 @@ static extra_info_t dt4_extra_info;
 
 static port_t _dt4 = {
 
-    .slot = PORT_SLOT_EXTRA4,
+    .slot = PORT_SLOT_AUTO,
 
     .id = DT4_ID,
     .type = PORT_TYPE_NUMBER,
@@ -264,7 +264,7 @@ static extra_info_t dt5_extra_info;
 
 static port_t _dt5 = {
 
-    .slot = PORT_SLOT_EXTRA5,
+    .slot = PORT_SLOT_AUTO,
 
     .id = DT5_ID,
     .type = PORT_TYPE_NUMBER,

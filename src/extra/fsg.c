@@ -484,7 +484,7 @@ static extra_info_t fsg0_extra_info = {
 
 static port_t _fsg0 = {
 
-    .slot = PORT_SLOT_EXTRA0,
+    .slot = PORT_SLOT_AUTO,
 
     .id = FSG0_ID,
     .type = PORT_TYPE_NUMBER,
@@ -529,7 +529,7 @@ static extra_info_t fsg1_extra_info = {
 
 static port_t _fsg1 = {
 
-    .slot = PORT_SLOT_EXTRA1,
+    .slot = PORT_SLOT_AUTO,
 
     .id = FSG1_ID,
     .type = PORT_TYPE_NUMBER,
@@ -574,7 +574,7 @@ static extra_info_t fsg2_extra_info = {
 
 static port_t _fsg2 = {
 
-    .slot = PORT_SLOT_EXTRA2,
+    .slot = PORT_SLOT_AUTO,
 
     .id = FSG2_ID,
     .type = PORT_TYPE_NUMBER,
@@ -619,7 +619,7 @@ static extra_info_t fsg3_extra_info = {
 
 static port_t _fsg3 = {
 
-    .slot = PORT_SLOT_EXTRA3,
+    .slot = PORT_SLOT_AUTO,
 
     .id = FSG3_ID,
     .type = PORT_TYPE_NUMBER,
@@ -664,7 +664,7 @@ static extra_info_t fsg4_extra_info = {
 
 static port_t _fsg4 = {
 
-    .slot = PORT_SLOT_EXTRA4,
+    .slot = PORT_SLOT_AUTO,
 
     .id = FSG4_ID,
     .type = PORT_TYPE_NUMBER,
@@ -709,7 +709,7 @@ static extra_info_t fsg5_extra_info = {
 
 static port_t _fsg5 = {
 
-    .slot = PORT_SLOT_EXTRA5,
+    .slot = PORT_SLOT_AUTO,
 
     .id = FSG5_ID,
     .type = PORT_TYPE_NUMBER,

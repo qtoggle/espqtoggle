@@ -162,7 +162,7 @@ static extra_info_t rgb0_extra_info;
 
 static port_t _rgb0 = {
 
-    .slot = PORT_SLOT_EXTRA0,
+    .slot = PORT_SLOT_AUTO,
 
     .id = RGB0_ID,
     .type = PORT_TYPE_NUMBER,
@@ -191,7 +191,7 @@ static extra_info_t rgb1_extra_info;
 
 static port_t _rgb1 = {
 
-    .slot = PORT_SLOT_EXTRA2,
+    .slot = PORT_SLOT_AUTO,
 
     .id = RGB1_ID,
     .type = PORT_TYPE_NUMBER,
@@ -219,7 +219,7 @@ static extra_info_t rgb2_extra_info;
 
 static port_t _rgb2 = {
 
-    .slot = PORT_SLOT_EXTRA2,
+    .slot = PORT_SLOT_AUTO,
 
     .id = RGB2_ID,
     .type = PORT_TYPE_NUMBER,
@@ -247,7 +247,7 @@ static extra_info_t rgb3_extra_info;
 
 static port_t _rgb3 = {
 
-    .slot = PORT_SLOT_EXTRA3,
+    .slot = PORT_SLOT_AUTO,
 
     .id = RGB3_ID,
     .type = PORT_TYPE_NUMBER,
@@ -275,7 +275,7 @@ static extra_info_t rgb4_extra_info;
 
 static port_t _rgb4 = {
 
-    .slot = PORT_SLOT_EXTRA4,
+    .slot = PORT_SLOT_AUTO,
 
     .id = RGB4_ID,
     .type = PORT_TYPE_NUMBER,
@@ -303,7 +303,7 @@ static extra_info_t rgb5_extra_info;
 
 static port_t _rgb5 = {
 
-    .slot = PORT_SLOT_EXTRA5,
+    .slot = PORT_SLOT_AUTO,
 
     .id = RGB5_ID,
     .type = PORT_TYPE_NUMBER,

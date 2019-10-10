@@ -68,12 +68,14 @@
 #define PORT_FLAG_VIRTUAL_TYPE          0x00004000  /* 0x00008000 - reserved */
 #define PORT_FLAG_VIRTUAL_ACTIVE        0x00010000
 
+#define PORT_SLOT_AUTO                  -1
 #define PORT_SLOT_EXTRA0                18
 #define PORT_SLOT_EXTRA1                19
 #define PORT_SLOT_EXTRA2                20
 #define PORT_SLOT_EXTRA3                21
 #define PORT_SLOT_EXTRA4                22
 #define PORT_SLOT_EXTRA5                23
+#define PORT_SLOT_EXTRA_MAX             PORT_SLOT_EXTRA5
 
 #define IS_ENABLED(port)                ((port)->flags & PORT_FLAG_ENABLED)
 #define IS_OUTPUT(port)                 ((port)->flags & PORT_FLAG_OUTPUT)
