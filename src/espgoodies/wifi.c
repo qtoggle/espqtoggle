@@ -39,7 +39,7 @@
 #define WIFI_BETTER_COUNT           3   /* a network has to be better 3 times in a row */
 #define WIFI_SCAN_INTERVAL_QUICK    5   /* seconds */
 #define WIFI_WATCHDOG_INTERVAL      10  /* seconds */
-#define WIFI_WATCHDOG_MAX_COUNT     6   /* disconnected times, in a row, that trigger a reset */
+#define WIFI_WATCHDOG_MAX_COUNT     3   /* disconnected times, in a row, that trigger a reset */
 
 
 /* we have to maintain a separate connected status,
