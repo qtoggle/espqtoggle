@@ -10,7 +10,7 @@
 					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
 				},
 				"body": {
-				    "expression": "AND(true, false)"
+				    "expression": "AND(true, false, true)"
 				},
 				"expected_status": 204
 			}
@@ -36,7 +36,7 @@
 					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
 				},
 				"body": {
-				    "expression": "OR(true, false)"
+				    "expression": "OR(true, false, false)"
 				},
 				"expected_status": 204
 			}
