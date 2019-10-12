@@ -465,7 +465,9 @@ json_t *port_to_json(port_t *port) {
         if (!IS_UNDEFINED(port->step)) {
             json_obj_append(json, "step", json_double_new(port->step));
         }
-        json_obj_append(json, "integer", json_bool_new(port->integer));
+        if (port->integer) {
+            json_obj_append(json, "integer", json_bool_new(TRUE));
+        }
 
         if (port->choices) {
             json_t *list = json_list_new();
@@ -2536,7 +2538,10 @@ json_t *attrdef_to_json(char *display_name, char *description, char *unit, char 
             json_obj_append(json, "max", json_double_new(max));
         }
 
-        json_obj_append(json, "integer", json_bool_new(integer));
+        if (integer) {
+            json_obj_append(json, "integer", json_bool_new(TRUE));
+        }
+
         if (step && !IS_UNDEFINED(step)) {
             json_obj_append(json, "step", json_double_new(step));
         }

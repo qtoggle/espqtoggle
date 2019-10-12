@@ -83,10 +83,6 @@
                     "virtual": true,
                     "transform_read": "",
                     "type": "number",
-                    "min": 0,
-                    "max": 100,
-                    "step": 5,
-                    "integer": true,
                     "choices": [
                         {
                             "value": 10,
