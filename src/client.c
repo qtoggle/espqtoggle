@@ -440,7 +440,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         response_json = api_call_handle(method, path, query_json, request_json, &code);
 
         /* serve the HTML page only in setup mode and on any 404 */
-        if (code == 404 && system_setup_mode_active()) {
+        if (code == 404 && system_setup_mode_active() && method == HTTP_METHOD_GET) {
             json_free(response_json);
             api_conn_reset();
 

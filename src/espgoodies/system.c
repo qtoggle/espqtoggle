@@ -160,6 +160,8 @@ bool system_setup_mode_active(void) {
 
 void system_setup_mode_toggle(void) {
     if (setup_mode) {
+        DEBUG_SYSTEM("exiting setup mode");
+
         system_reset(/* delayed = */ FALSE);
     }
     else {
