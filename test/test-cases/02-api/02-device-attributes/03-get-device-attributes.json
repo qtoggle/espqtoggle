@@ -177,14 +177,15 @@
                                                 "type": "object",
                                                 "additionalProperties": false,
                                                 "required": [
-                                                    "value",
-                                                    "display_name"
+                                                    "value"
                                                 ],
-                                                "value": {
-                                                    "enum": [80, 160]
-                                                },
-                                                "display_name": {
-                                                    "type": "string"
+                                                "properties": {
+	                                                "value": {
+	                                                    "enum": [80, 160]
+	                                                },
+	                                                "display_name": {
+	                                                    "type": "string"
+	                                                }
                                                 }
                                             }
                                         }
@@ -317,14 +318,15 @@
                                                 "type": "object",
                                                 "additionalProperties": false,
                                                 "required": [
-                                                    "value",
-                                                    "display_name"
+                                                    "value"
                                                 ],
-                                                "value": {
-                                                    "enum": [0, 1, 5, 10, 30, 60, 120]
-                                                },
-                                                "display_name": {
-                                                    "type": "string"
+                                                "properties": {
+                                                    "value": {
+                                                        "enum": [0, 1, 5, 10, 30, 60, 120]
+                                                    },
+                                                    "display_name": {
+                                                        "type": "string"
+                                                    }
                                                 }
                                             }
                                         }
