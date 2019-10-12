@@ -126,11 +126,23 @@ double _mod_callback(expr_t *expr, int argc, double *args) {
 }
 
 double _and_callback(expr_t *expr, int argc, double *args) {
-    return args[0] && args[1];
+    int i;
+    bool r = TRUE;
+    for (i = 0; i < argc; i++) {
+        r = r && args[i];
+    }
+
+    return r;
 }
 
 double _or_callback(expr_t *expr, int argc, double *args) {
-    return args[0] || args[1];
+    int i;
+    bool r = FALSE;
+    for (i = 0; i < argc; i++) {
+        r = r || args[i];
+    }
+
+    return r;
 }
 
 double _not_callback(expr_t *expr, int argc, double *args) {
