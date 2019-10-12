@@ -39,8 +39,7 @@
 
 #define TASK_POLL_PORTS             0x02
 #define TASK_LISTEN_RESPOND         0x03
-#define TASK_FORCE_EVAL_EXPR        0x04
-#define TASK_UPDATE_SYSTEM          0x05
+#define TASK_UPDATE_SYSTEM          0x04
 
 #define MAX_EXPRESSION_DEPS_DEPTH   4
 #define PORT_SAVE_INTERVAL          5
@@ -62,6 +61,7 @@ static os_event_t                   task_queue[TASK_QUEUE_SIZE];
 
 
 ICACHE_FLASH_ATTR static void       system_task(os_event_t *e);
+ICACHE_FLASH_ATTR static void       poll_ports(void);
 ICACHE_FLASH_ATTR static void       on_value_change(void);
 
 
@@ -75,8 +75,11 @@ void core_listen_respond(session_t *session) {
     system_os_post(USER_TASK_PRIO_0, TASK_LISTEN_RESPOND, (os_param_t) session);
 }
 
-void force_expr_eval(void) {
-    system_os_post(USER_TASK_PRIO_0, TASK_FORCE_EVAL_EXPR, (os_param_t) NULL);
+void update_expressions(void) {
+    DEBUG("updating all expressions");
+
+    change_mask = -1;
+    poll_ports();
 }
 
 void port_mark_for_saving(port_t *port) {
@@ -102,115 +105,7 @@ void system_task(os_event_t *e) {
         case TASK_POLL_PORTS: {
             /* schedule next ports polling */
             system_os_post(USER_TASK_PRIO_0, TASK_POLL_PORTS, (os_param_t) NULL);
-
-#ifdef _OTA
-            /* prevent port polling and related logic during OTA */
-            if (ota_current_state() == OTA_STATE_DOWNLOADING) {
-                break;
-            }
-#endif
-
-            double value;
-            int i, now = system_uptime();
-            long long now_ms = system_uptime_us() / 1000;
-
-            /* evaluate time-dependent expressions */
-            if (now != last_expr_time) {
-                last_expr_time = now;
-                change_mask |= (1 << EXPR_TIME_DEP_BIT);
-            }
-
-            change_mask |= (1 << EXPR_TIME_MS_DEP_BIT);
-
-            /* port saving routine */
-            if (port_save_mask && (now - last_port_save_time > PORT_SAVE_INTERVAL)) {
-                last_port_save_time = now;
-
-                config_save();
-
-                port_save_mask = 0;
-            }
-
-            /* determine changed ports */
-            port_t **port = all_ports, *p;
-            while ((p = *port++)) {
-                if (!IS_ENABLED(p)) {
-                    continue;
-                }
-
-                if (system_setup_mode_led_gpio_no == p->slot && system_setup_mode_active()) {
-                    /* don't mess with the led while in setup mode */
-                    continue;
-                }
-
-                if (p->heart_beat && (now_ms - p->last_heart_beat_time >= p->heart_beat_interval)) {
-                    p->last_heart_beat_time = now_ms;
-                    p->heart_beat(p);
-                }
-
-                /* don't read value more often than indicated by sampling interval */
-                if (now_ms - p->last_sample_time < p->sampling_interval) {
-                    continue;
-                }
-
-                value = p->read_value(p);
-                p->last_sample_time = now_ms;
-                if (IS_UNDEFINED(value)) {
-                    continue;
-                }
-
-                if (p->transform_read) {
-                    /* temporarily set the new value to the port,
-                     * so that the transform expression uses the newly read value */
-                    double prev_value = p->value;
-                    p->value = value;
-                    value = expr_eval(p->transform_read);
-                    p->value = prev_value;
-
-                    /* ignore invalid value yielded by expression */
-                    if (IS_UNDEFINED(value)) {
-                        continue;
-                    }
-                }
-
-                if (!IS_OUTPUT(p) && FILTER_TYPE(p)) {
-                    value = port_filter_apply(p, value);
-                }
-
-                if (IS_UNDEFINED(value)) { /* value could have become undefined after filtering */
-                    continue;
-                }
-
-                if (p->value != value) {
-                    p->changed = TRUE;
-                    if (IS_UNDEFINED(p->value)) {
-                        DEBUG_PORT(p, "detected value change: (undefined) -> %d", (int) value);
-                    }
-                    else {
-                        DEBUG_PORT(p, "detected value change: %d -> %d", (int) p->value, (int) value);
-                    }
-                    p->value = value;
-                    change_mask |= 1 << p->slot;
-                }
-            }
-
-            if (change_mask) {
-                /* call on_value_change() multiple times to cover
-                 * multiple levels of port expression dependencies */
-                for (i = 0; (i < MAX_EXPRESSION_DEPS_DEPTH) && change_mask; i++) {
-                    on_value_change();
-                }
-
-                /* reset all changed flags, as some of them might have not been covered */
-                port = all_ports;
-                while ((p = *port++)) {
-                    p->changed = FALSE;
-                }
-
-                /* reset changed ports and reasons */
-                change_mask = 0;
-                change_reasons = 0;
-            }
+            poll_ports();
 
             break;
         }
@@ -236,15 +131,121 @@ void system_task(os_event_t *e) {
 
             break;
         }
-
-        case TASK_FORCE_EVAL_EXPR: {
-            change_mask = -1;
-            break;
-        }
     }
 }
 
-void on_value_change() {
+void poll_ports(void) {
+#ifdef _OTA
+    /* prevent port polling and related logic during OTA */
+    if (ota_current_state() == OTA_STATE_DOWNLOADING) {
+        return;
+    }
+#endif
+
+    double value;
+    int i, now = system_uptime();
+    long long now_ms = system_uptime_us() / 1000;
+
+    /* evaluate time-dependent expressions */
+    if (now != last_expr_time) {
+        last_expr_time = now;
+        change_mask |= (1 << EXPR_TIME_DEP_BIT);
+    }
+
+    change_mask |= (1 << EXPR_TIME_MS_DEP_BIT);
+
+    /* port saving routine */
+    if (port_save_mask && (now - last_port_save_time > PORT_SAVE_INTERVAL)) {
+        last_port_save_time = now;
+
+        config_save();
+
+        port_save_mask = 0;
+    }
+
+    /* determine changed ports */
+    port_t **port = all_ports, *p;
+    while ((p = *port++)) {
+        if (!IS_ENABLED(p)) {
+            continue;
+        }
+
+        if (system_setup_mode_led_gpio_no == p->slot && system_setup_mode_active()) {
+            /* don't mess with the led while in setup mode */
+            continue;
+        }
+
+        if (p->heart_beat && (now_ms - p->last_heart_beat_time >= p->heart_beat_interval)) {
+            p->last_heart_beat_time = now_ms;
+            p->heart_beat(p);
+        }
+
+        /* don't read value more often than indicated by sampling interval */
+        if (now_ms - p->last_sample_time < p->sampling_interval) {
+            continue;
+        }
+
+        value = p->read_value(p);
+        p->last_sample_time = now_ms;
+        if (IS_UNDEFINED(value)) {
+            continue;
+        }
+
+        if (p->transform_read) {
+            /* temporarily set the new value to the port,
+             * so that the transform expression uses the newly read value */
+            double prev_value = p->value;
+            p->value = value;
+            value = expr_eval(p->transform_read);
+            p->value = prev_value;
+
+            /* ignore invalid value yielded by expression */
+            if (IS_UNDEFINED(value)) {
+                continue;
+            }
+        }
+
+        if (!IS_OUTPUT(p) && FILTER_TYPE(p)) {
+            value = port_filter_apply(p, value);
+        }
+
+        if (IS_UNDEFINED(value)) { /* value could have become undefined after filtering */
+            continue;
+        }
+
+        if (p->value != value) {
+            p->changed = TRUE;
+            if (IS_UNDEFINED(p->value)) {
+                DEBUG_PORT(p, "detected value change: (undefined) -> %d", (int) value);
+            }
+            else {
+                DEBUG_PORT(p, "detected value change: %d -> %d", (int) p->value, (int) value);
+            }
+            p->value = value;
+            change_mask |= 1 << p->slot;
+        }
+    }
+
+    if (change_mask) {
+        /* call on_value_change() multiple times to cover
+         * multiple levels of port expression dependencies */
+        for (i = 0; (i < MAX_EXPRESSION_DEPS_DEPTH) && change_mask; i++) {
+            on_value_change();
+        }
+
+        /* reset all changed flags, as some of them might have not been covered */
+        port = all_ports;
+        while ((p = *port++)) {
+            p->changed = FALSE;
+        }
+
+        /* reset changed ports and reasons */
+        change_mask = 0;
+        change_reasons = 0;
+    }
+}
+
+void on_value_change(void) {
     int new_change_mask = 0;
 
     port_t **port = all_ports, *p;
