@@ -23,14 +23,14 @@
 #include <os_type.h>
 
 
-#define JSON_TYPE_NULL                  1
-#define JSON_TYPE_BOOL                  2
-#define JSON_TYPE_INT                   3
-#define JSON_TYPE_DOUBLE                4
-#define JSON_TYPE_STR                   5
-#define JSON_TYPE_LIST                  6
-#define JSON_TYPE_OBJ                   7
-#define JSON_TYPE_STRINGIFIED           10
+#define JSON_TYPE_NULL                  'n'
+#define JSON_TYPE_BOOL                  'b'
+#define JSON_TYPE_INT                   'i'
+#define JSON_TYPE_DOUBLE                'd'
+#define JSON_TYPE_STR                   's'
+#define JSON_TYPE_LIST                  'l'
+#define JSON_TYPE_OBJ                   'o'
+#define JSON_TYPE_STRINGIFIED           't'
 
 #define JSON_MAX_NAME_LEN               64
 #define JSON_MAX_VALUE_LEN              1024
