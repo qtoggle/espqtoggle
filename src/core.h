@@ -28,7 +28,7 @@
 ICACHE_FLASH_ATTR void                  core_init(void);
 ICACHE_FLASH_ATTR void                  core_listen_respond(session_t *session);
 
-ICACHE_FLASH_ATTR void                  force_expr_eval(void);
+ICACHE_FLASH_ATTR void                  update_expressions(void);
 ICACHE_FLASH_ATTR void                  port_mark_for_saving(port_t *port);
 ICACHE_FLASH_ATTR void                  ensure_ports_saved(void);
 

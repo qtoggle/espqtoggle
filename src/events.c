@@ -60,6 +60,8 @@ void event_push(int type, json_t *params, port_t *port) {
 }
 
 void event_push_value_change(port_t *port) {
+    DEBUG_PORT(port, "generating value-change event");
+
     json_t *params = json_obj_new();
     json_obj_append(params, "id", json_str_new(port->id));
 
@@ -70,18 +72,24 @@ void event_push_value_change(port_t *port) {
 }
 
 void event_push_port_update(port_t *port) {
+    DEBUG_PORT(port, "generating port-update event");
+
     json_t *params = port_to_json(port);
     event_push(EVENT_TYPE_PORT_UPDATE, params, NULL);
     json_free(params);
 }
 
 void event_push_port_add(port_t *port) {
+    DEBUG_PORT(port, "generating port-add event");
+
     json_t *params = port_to_json(port);
     event_push(EVENT_TYPE_PORT_ADD, params, NULL);
     json_free(params);
 }
 
 void event_push_port_remove(char *port_id) {
+    DEBUG("generating port-remove event");
+
     json_t *params = json_obj_new();
     json_obj_append(params, "id", json_str_new(port_id));
     event_push(EVENT_TYPE_PORT_REMOVE, params, NULL);
@@ -89,6 +97,8 @@ void event_push_port_remove(char *port_id) {
 }
 
 void event_push_device_update(void) {
+    DEBUG_DEVICE("generating device-update event");
+
     json_t *params = device_to_json();
     event_push(EVENT_TYPE_DEVICE_UPDATE, params, NULL);
     json_free(params);
