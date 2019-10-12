@@ -640,7 +640,7 @@ json_t *json_dup(json_t *json) {
 
 void json_dump_rec(json_t *json, char **output, int *len, int *size, bool also_free) {
     int i, l;
-    char s[32];
+    char s[32], *s2, c;
     
     switch (json->type) {
         case JSON_TYPE_NULL:
@@ -682,11 +682,72 @@ void json_dump_rec(json_t *json, char **output, int *len, int *size, bool also_f
             break;
 
         case JSON_TYPE_STR:
-            // TODO escapes
-            l = strlen(json_str_get(json)) + 2;
+            s2 = json_str_get(json);
+            l = 2; /* for the two quotes */
+            while ((c = *s2++)) {
+                if (c == '"' || c == '\\' || c == '\b' || c == '\f' || c == '\n' || c == '\r' || c == '\t') {
+                    l += 2;
+                }
+                else {
+                    l++;
+                }
+            }
+
             *size = realloc_chunks(output, *size, *len + l);
             (*output)[*len] = '"';
-            strncpy(*output + *len + 1, json_str_get(json), l - 2);
+
+            s2 = json_str_get(json);
+            i = 1;
+            while ((c = *s2++)) {
+                switch (c) {
+                    case '"':
+                        (*output)[*len + i] = '\\';
+                        (*output)[*len + i + 1] = '"';
+                        i += 2;
+                        break;
+
+                    case '\\':
+                        (*output)[*len + i] = '\\';
+                        (*output)[*len + i + 1] = '\\';
+                        i += 2;
+                        break;
+
+                    case '\b':
+                        (*output)[*len + i] = '\\';
+                        (*output)[*len + i + 1] = 'b';
+                        i += 2;
+                        break;
+
+                    case '\f':
+                        (*output)[*len + i] = '\\';
+                        (*output)[*len + i + 1] = 'f';
+                        i += 2;
+                        break;
+
+                    case '\n':
+                        (*output)[*len + i] = '\\';
+                        (*output)[*len + i + 1] = 'n';
+                        i += 2;
+                        break;
+
+                    case '\r':
+                        (*output)[*len + i] = '\\';
+                        (*output)[*len + i + 1] = 'r';
+                        i += 2;
+                        break;
+
+                    case '\t':
+                        (*output)[*len + i] = '\\';
+                        (*output)[*len + i + 1] = 't';
+                        i += 2;
+                        break;
+
+                    default:
+                        (*output)[*len + i] = c;
+                        i++;
+                }
+            }
+
             *len += l;
             (*output)[*len - 1] = '"';
 
