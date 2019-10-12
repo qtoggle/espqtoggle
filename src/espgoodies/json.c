@@ -199,6 +199,7 @@ json_t *json_parse(char *input) {
                 waiting_elem = FALSE;
 
                 i = ++pos;
+                s[0] = 0;
                 sl = 0;
                 end_found = FALSE;
                 for (i = pos; !end_found && (i < length); i++) {
@@ -644,7 +645,7 @@ void json_dump_rec(json_t *json, char **output, int *len, int *size, bool also_f
     
     switch (json->type) {
         case JSON_TYPE_NULL:
-            *size = realloc_chunks(output, *size, *len + 4);
+            *size = realloc_chunks(output, *size, *len + 5);
             strncpy(*output + *len, "null", 5);
             *len += 4;
 
@@ -652,12 +653,12 @@ void json_dump_rec(json_t *json, char **output, int *len, int *size, bool also_f
 
         case JSON_TYPE_BOOL:
             if (json_bool_get(json)) {
-                *size = realloc_chunks(output, *size, *len + 4);
+                *size = realloc_chunks(output, *size, *len + 5);
                 strncpy(*output + *len, "true", 5);
                 *len += 4;
             }
             else {
-                *size = realloc_chunks(output, *size, *len + 5);
+                *size = realloc_chunks(output, *size, *len + 6);
                 strncpy(*output + *len, "false", 6);
                 *len += 5;
             }
