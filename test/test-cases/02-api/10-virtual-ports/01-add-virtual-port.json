@@ -87,6 +87,16 @@
                     "max": 100,
                     "step": 5,
                     "integer": true,
+                    "choices": [
+                        {
+                            "value": 10,
+                            "display_name": "Ten"
+                        },
+                        {
+                            "value": 11,
+                            "display_name": "Eleven"
+                        }
+                    ],
                     "expression": "",
                     "transform_write": "",
                     "value": 0,

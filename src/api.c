@@ -1425,6 +1425,8 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
                 choice = realloc(choice, strlen(choice) + 2 + strlen(json_str_get(c2)));
                 strcat(choice, ":");
                 strcat(choice, json_str_get(c2));
+
+                new_port->choices[i] = choice;
             }
         }
 
