@@ -331,11 +331,15 @@ json_t *json_parse(char *input) {
 
                 waiting_elem = FALSE;
 
-                if (c >= '0' && c <= '9') {
+                if ((c >= '0' && c <= '9') || (c == '-')) {
                     /* number */
                     i = pos;
+                    if (c == '-') {
+                        i++;
+                    }
+
                     point_seen = FALSE; /* one single point allowed in numerals */
-                    for (i = pos; i < length; i++) {
+                    while (i < length) {
                         c = input[i];
                         if (c == '.') {
                             if (point_seen) {
@@ -348,6 +352,8 @@ json_t *json_parse(char *input) {
                         else if (c < '0' || c > '9') {
                             break;
                         }
+
+                        i++;
                     }
 
                     strncpy(s, input + pos, i - pos + 1);
