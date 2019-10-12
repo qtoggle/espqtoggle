@@ -170,6 +170,7 @@ ICACHE_FLASH_ATTR static json_t       * attrdef_to_json(char *display_name, char
                                                         double step, char **choices, bool reconnect);
 
 ICACHE_FLASH_ATTR static json_t       * choice_to_json(char *choice, char type);
+ICACHE_FLASH_ATTR static void           free_choices(char **choices);
 
 ICACHE_FLASH_ATTR static bool           validate_num(double value, double min, double max, bool integer,
                                                      double step, char **choices);
@@ -1391,14 +1392,16 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
         for (i = 0; i < len; i++) {
             c = json_list_value_at(child, i);
             if (json_get_type(c) != JSON_TYPE_OBJ) {
-                free(new_port); // TODO free port->choices as well
+                free_choices(new_port->choices);
+                free(new_port);
                 return INVALID_FIELD_VALUE("choices");
             }
 
             /* value */
             c2 = json_obj_lookup_key(c, "value");
             if (!c2) {
-                free(new_port); // TODO free port->choices as well
+                free_choices(new_port->choices);
+                free(new_port);
                 return INVALID_FIELD_VALUE("choices");
             }
 
@@ -1409,7 +1412,8 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
                 new_port->choices[i] = strdup(dtostr(json_double_get(c2), /* decimals = */ -1));
             }
             else {
-                free(new_port); // TODO free port->choices as well
+                free_choices(new_port->choices);
+                free(new_port);
                 return INVALID_FIELD_VALUE("choices");
             }
 
@@ -1417,7 +1421,8 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
             c2 = json_obj_lookup_key(c, "display_name");
             if (c2) {
                 if (json_get_type(c2) != JSON_TYPE_STR) {
-                    free(new_port); // TODO free port->choices as well
+                    free_choices(new_port->choices);
+                    free(new_port);
                     return INVALID_FIELD_VALUE("choices");
                 }
 
@@ -1890,12 +1895,7 @@ json_t *delete_port(port_t *port, json_t *query_json, int *code) {
 
     /* free choices */
     if (port->choices) {
-        char *c, **choices = port->choices;
-        while ((c = *choices++)) {
-            free(c);
-        }
-
-        free(port->choices);
+        free_choices(port->choices);
         port->choices = NULL;
     }
 
@@ -2575,6 +2575,15 @@ json_t *choice_to_json(char *choice, char type) {
     }
 
     return choice_json;
+}
+
+void free_choices(char **choices) {
+    char *c;
+    while ((c = *choices++)) {
+        free(c);
+    }
+
+    free(choices);
 }
 
 bool validate_num(double value, double min, double max, bool integer, double step, char **choices) {
