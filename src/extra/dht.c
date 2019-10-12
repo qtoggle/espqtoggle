@@ -97,8 +97,8 @@ ICACHE_FLASH_ATTR static void           configure_temperature(port_t *port);
 ICACHE_FLASH_ATTR static void           heart_beat_temperature(port_t *port);
 
 #if defined(HAS_DHT0H) || defined(HAS_DHT1H) || defined(HAS_DHT2H)
-ICACHE_FLASH_ATTR static double         read_humidity(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void           configure_humidity(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static double         read_humidity(port_t *port);
+ICACHE_FLASH_ATTR static void           configure_humidity(port_t *port);
 #endif
 
 ICACHE_FLASH_ATTR static int            attr_get_model(port_t *port, attrdef_t *attrdef);
@@ -462,7 +462,7 @@ void configure_humidity(port_t *port) {
 
 #endif  /* HAS_DHT0H || HAS_DHT1H || HAS_DHT2H */
 
-int attr_get_model(port_t *port) {
+int attr_get_model(port_t *port, attrdef_t *attrdef) {
     uint8 value;
 
     /* read from persisted data */
