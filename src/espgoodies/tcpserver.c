@@ -193,7 +193,7 @@ void on_client_recv(void *arg, char *data, uint16 len) {
     struct espconn *conn = (struct espconn *) arg;
     if (conn->reverse) {
         conn_info_t *info = conn->reverse;
-        tcp_recv_cb(conn, info->app_info, data, len);
+        tcp_recv_cb(conn, info->app_info, (uint8 *) data, len);
     }
 }
 

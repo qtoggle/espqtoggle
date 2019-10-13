@@ -40,6 +40,8 @@
         "Content-Length: %d\r\n"                            \
         "Connection: close\r\n"
 
+#define DEF_REQUEST_TIMEOUT         8
+
 #define STATUS_MSG_200              "OK"
 #define STATUS_MSG_201              "Created"
 #define STATUS_MSG_204              "No Content"
@@ -54,11 +56,13 @@
 
 
 static char                       * server_name = NULL;
+static uint32                       request_timeout = 8;
 
 
 ICACHE_FLASH_ATTR static void       handle_header_value_ready(httpserver_context_t *hc);
 ICACHE_FLASH_ATTR static void       handle_invalid(httpserver_context_t *hc, char c);
 ICACHE_FLASH_ATTR static void       handle_request(httpserver_context_t *hc);
+ICACHE_FLASH_ATTR static void       handle_request_timeout(void *arg);
 
 
 void handle_header_value_ready(httpserver_context_t *hc) {
@@ -82,9 +86,21 @@ void handle_invalid(httpserver_context_t *hc, char c) {
     }
 }
 
+void handle_request_timeout(void *arg) {
+    httpserver_context_t *hc = arg;
+
+    DEBUG_HTTPSERVER_CTX(hc, "request timeout");
+
+    if (hc->timeout_callback) {
+        hc->timeout_callback(hc->callback_arg);
+    }
+}
+
 void handle_request(httpserver_context_t *hc) {
     DEBUG_HTTPSERVER_CTX(hc, "body = \"%s\"", hc->body ? hc->body : "");
     DEBUG_HTTPSERVER_CTX(hc, "request ready");
+
+    os_timer_disarm(&hc->timer);
 
     if (hc->request_callback) {
         hc->request_callback(hc->callback_arg, hc->method, hc->path, hc->query,
@@ -102,12 +118,22 @@ void httpserver_set_name(char *name) {
     DEBUG_HTTPSERVER("server name set to %s", name);
 }
 
-void httpserver_register_callbacks(httpserver_context_t *hc, void *arg,
-                                   http_invalid_callback_t ic,
-                                   http_request_callback_t rc) {
+void httpserver_set_request_timeout(uint32 timeout) {
+    request_timeout = timeout;
+    DEBUG_HTTPSERVER("request timeout set to %d", request_timeout);
+}
+
+void httpserver_setup_connection(httpserver_context_t *hc, void *arg,
+                                 http_invalid_callback_t ic,
+                                 http_timeout_callback_t tc,
+                                 http_request_callback_t rc) {
     hc->callback_arg = arg;
     hc->invalid_callback = ic;
+    hc->timeout_callback = tc;
     hc->request_callback = rc;
+
+    os_timer_setfn(&hc->timer, handle_request_timeout, hc);
+    os_timer_arm(&hc->timer, request_timeout * 1000, /* repeat = */ FALSE);
 }
 
 void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
@@ -372,7 +398,7 @@ void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
     }
 }
 
-void httpserver_reset_state(httpserver_context_t *hc) {
+void httpserver_context_reset(httpserver_context_t *hc) {
     if (hc->body) {
         free(hc->body);
         hc->body = NULL;
@@ -394,6 +420,8 @@ void httpserver_reset_state(httpserver_context_t *hc) {
     int slot_index = hc->slot_index;
     memset(hc, 0, sizeof(httpserver_context_t));
     hc->slot_index = slot_index; /* restore slot index */
+
+    os_timer_disarm(&hc->timer);
 }
 
 uint8 *httpserver_build_response(int status, char *content_type, char *header_names[], char *header_values[],

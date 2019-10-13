@@ -44,6 +44,7 @@
 
 
 #define MAX_PARALLEL_HTTP_REQ       4
+#define HTTP_SERVER_REQUEST_TIMEOUT 4
 #define MIN_HTTP_FREE_MEM           8192  /* at least 8k of free heap to serve an HTTP request */
 
 #define JSON_CONTENT_TYPE           "application/json; charset=utf-8"
@@ -52,17 +53,18 @@
 #define RESPOND_UNAUTHENTICATED()   respond_error(conn, 401, "authentication required");
 
 
-static httpserver_context_t         http_state_array[MAX_PARALLEL_HTTP_REQ];
+static httpserver_context_t         http_contexts[MAX_PARALLEL_HTTP_REQ];
 
 static char                       * unprotected_paths[] = {"/access", NULL};
 
 
 ICACHE_FLASH_ATTR static void     * on_tcp_conn(struct espconn *conn);
-ICACHE_FLASH_ATTR static void       on_tcp_recv(struct espconn *conn, httpserver_context_t *hc, char *data, int len);
+ICACHE_FLASH_ATTR static void       on_tcp_recv(struct espconn *conn, httpserver_context_t *hc, uint8 *data, int len);
 ICACHE_FLASH_ATTR static void       on_tcp_sent(struct espconn *conn, httpserver_context_t *hc);
 ICACHE_FLASH_ATTR static void       on_tcp_disc(struct espconn *conn, httpserver_context_t *hc);
 
 ICACHE_FLASH_ATTR static void       on_invalid_http_request(struct espconn *conn);
+ICACHE_FLASH_ATTR static void       on_http_request_timeout(struct espconn *conn);
 ICACHE_FLASH_ATTR static void       on_http_request(struct espconn *conn, int method, char *path, char *query,
                                                     char *header_names[], char *header_values[], int header_count,
                                                     char *body);
@@ -74,8 +76,8 @@ void *on_tcp_conn(struct espconn *conn) {
     int i;
 
     for (i = 0; i < MAX_PARALLEL_HTTP_REQ; i++) {
-        if (http_state_array[i].req_state == HTTP_STATE_IDLE) {
-            hc = http_state_array + i;
+        if (http_contexts[i].req_state == HTTP_STATE_IDLE) {
+            hc = http_contexts + i;
             break;
         }
     }
@@ -99,14 +101,15 @@ void *on_tcp_conn(struct espconn *conn) {
     memcpy(hc->ip, conn->proto.tcp->remote_ip, 4);
     hc->port = conn->proto.tcp->remote_port;
 
-    httpserver_register_callbacks(hc, conn,
-                                  (http_invalid_callback_t) on_invalid_http_request,
-                                  (http_request_callback_t) on_http_request);
+    httpserver_setup_connection(hc, conn,
+                                (http_invalid_callback_t) on_invalid_http_request,
+                                (http_timeout_callback_t) on_http_request_timeout,
+                                (http_request_callback_t) on_http_request);
 
     return hc;
 }
 
-void on_tcp_recv(struct espconn *conn, httpserver_context_t *hc, char *data, int len) {
+void on_tcp_recv(struct espconn *conn, httpserver_context_t *hc, uint8 *data, int len) {
     if (!hc) {
         DEBUG_ESPQTCLIENT_CONN(conn, "ignoring data from rejected client");
         return;
@@ -141,8 +144,9 @@ void on_tcp_disc(struct espconn *conn, httpserver_context_t *hc) {
         api_conn_reset();
     }
 
-    httpserver_reset_state(hc);
+    httpserver_context_reset(hc);
 }
+
 
 /* http request/response handling */
 
@@ -150,6 +154,12 @@ void on_invalid_http_request(struct espconn *conn) {
     DEBUG_ESPQTCLIENT_CONN(conn, "ignoring invalid request");
 
     respond_error(conn, 400, "malformed request");
+}
+
+void on_http_request_timeout(struct espconn *conn) {
+    DEBUG_ESPQTCLIENT_CONN(conn, "closing connection due to request timeout");
+
+    tcp_disconnect(conn);
 }
 
 void on_http_request(struct espconn *conn, int method, char *path, char *query,
@@ -489,7 +499,8 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
 void client_init(void) {
     int i;
     for (i = 0; i < MAX_PARALLEL_HTTP_REQ; i++) {
-        http_state_array[i].slot_index = i;
+        http_contexts[i].slot_index = i;
+        httpserver_context_reset(http_contexts + i);
     }
 
     DEBUG_ESPQTCLIENT("http server can handle %d parallel requests", MAX_PARALLEL_HTTP_REQ);
@@ -502,6 +513,7 @@ void client_init(void) {
 
     httpclient_set_user_agent("espQToggle " FW_VERSION);
     httpserver_set_name(device_hostname);
+    httpserver_set_request_timeout(HTTP_SERVER_REQUEST_TIMEOUT);
 }
 
 void respond_json(struct espconn *conn, int status, json_t *json) {

@@ -40,7 +40,7 @@ ICACHE_FLASH_ATTR void                          DEBUG_CONN(char *module, struct 
 
 
 typedef void* (*tcp_conn_cb_t) (struct espconn* conn);
-typedef void  (*tcp_recv_cb_t) (struct espconn* conn, void *app_info, char *data, int len);
+typedef void  (*tcp_recv_cb_t) (struct espconn* conn, void *app_info, uint8 *data, int len);
 typedef void  (*tcp_sent_cb_t) (struct espconn* conn, void *app_info);
 typedef void  (*tcp_disc_cb_t) (struct espconn* conn, void *app_info);
 

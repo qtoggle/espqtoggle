@@ -58,39 +58,43 @@
 
 
 typedef void (*http_invalid_callback_t)(void *arg);
+typedef void (*http_timeout_callback_t)(void *arg);
 typedef void (*http_request_callback_t)(void *arg, int method, char *path, char *query,
                                         char *header_names[], char *header_values[], int header_count,
                                         char *body);
 
 typedef struct {
 
-    uint8   req_state;
+    uint8                   req_state;
 
-    char    method_str[HTTP_MAX_METHOD_LEN + 1];
-    char    path[HTTP_MAX_PATH_LEN + 1];
-    char    query[HTTP_MAX_QUERY_LEN + 1];
+    char                    method_str[HTTP_MAX_METHOD_LEN + 1];
+    char                    path[HTTP_MAX_PATH_LEN + 1];
+    char                    query[HTTP_MAX_QUERY_LEN + 1];
 
-    uint8   method;
-    int     content_length;
+    uint8                   method;
+    int                     content_length;
 
-    char ** header_names;
-    char ** header_values;
-    uint8   header_count;
-    char    header_name[HTTP_MAX_HEADER_NAME_LEN + 1];
-    char    header_value[HTTP_MAX_HEADER_VALUE_LEN + 1];
+    char                 ** header_names;
+    char                 ** header_values;
+    uint8                   header_count;
+    char                    header_name[HTTP_MAX_HEADER_NAME_LEN + 1];
+    char                    header_value[HTTP_MAX_HEADER_VALUE_LEN + 1];
 
-    char  * body;
-    int     body_len;
-    int     body_alloc_len;
+    char                  * body;
+    int                     body_len;
+    int                     body_alloc_len;
 
     http_invalid_callback_t invalid_callback;
+    http_timeout_callback_t timeout_callback;
     http_request_callback_t request_callback;
-    void  * callback_arg;
+    void                  * callback_arg;
+
+    os_timer_t              timer;
 
     /* for debugging purposes */
-    uint8   slot_index;
-    uint8   ip[4];
-    uint16  port;
+    uint8                   slot_index;
+    uint8                   ip[4];
+    uint16                  port;
 
 } httpserver_context_t;
 
@@ -105,11 +109,13 @@ ICACHE_FLASH_ATTR void              DEBUG_HTTPSERVER_CTX(httpserver_context_t *h
 
 
 ICACHE_FLASH_ATTR void              httpserver_set_name(char *name);
-ICACHE_FLASH_ATTR void              httpserver_register_callbacks(httpserver_context_t *hc, void *arg,
-                                                                  http_invalid_callback_t ic,
-                                                                  http_request_callback_t rc);
+ICACHE_FLASH_ATTR void              httpserver_set_request_timeout(uint32 timeout);
+ICACHE_FLASH_ATTR void              httpserver_setup_connection(httpserver_context_t *hc, void *arg,
+                                                                http_invalid_callback_t ic,
+                                                                http_timeout_callback_t tc,
+                                                                http_request_callback_t rc);
 ICACHE_FLASH_ATTR void              httpserver_parse_req_char(httpserver_context_t *hc, int c);
-ICACHE_FLASH_ATTR void              httpserver_reset_state(httpserver_context_t *hc);
+ICACHE_FLASH_ATTR void              httpserver_context_reset(httpserver_context_t *hc);
 
     /* the response returned by this function must be freed after use */
 ICACHE_FLASH_ATTR uint8           * httpserver_build_response(int status, char *content_type,
