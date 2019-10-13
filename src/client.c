@@ -44,6 +44,8 @@
 
 
 #define MAX_PARALLEL_HTTP_REQ       4
+#define MIN_HTTP_FREE_MEM           8192  /* at least 8k of free heap to serve an HTTP request */
+
 #define JSON_CONTENT_TYPE           "application/json; charset=utf-8"
 #define HTML_CONTENT_TYPE           "text/html; charset=utf-8"
 
@@ -80,6 +82,14 @@ void *on_tcp_conn(struct espconn *conn) {
 
     if (!hc) {
         DEBUG_ESPQTCLIENT_CONN(conn, "too many parallel HTTP requests");
+        respond_error(conn, 503, "busy");
+        return NULL;
+    }
+
+    uint32 free_mem = system_get_free_heap_size();
+    DEBUG_ESPQTCLIENT_CONN(conn, "!!! MEMORY %d bytes", free_mem);
+    if (free_mem < MIN_HTTP_FREE_MEM) {
+        DEBUG_ESPQTCLIENT_CONN(conn, "low memory (%d bytes available), rejecting HTTP request", free_mem);
         respond_error(conn, 503, "busy");
         return NULL;
     }
