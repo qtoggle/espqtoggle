@@ -87,7 +87,6 @@ void *on_tcp_conn(struct espconn *conn) {
     }
 
     uint32 free_mem = system_get_free_heap_size();
-    DEBUG_ESPQTCLIENT_CONN(conn, "!!! MEMORY %d bytes", free_mem);
     if (free_mem < MIN_HTTP_FREE_MEM) {
         DEBUG_ESPQTCLIENT_CONN(conn, "low memory (%d bytes available), rejecting HTTP request", free_mem);
         respond_error(conn, 503, "busy");
