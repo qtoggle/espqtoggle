@@ -22,7 +22,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -yq \
 RUN apt-get clean
 
 # xtensa-lx106 toolchain 
-ADD https://gitlab.com/qtoggle/espqtoggle/uploads/8f1b68d934f365a9563e36aa9096b006/xtensa-lx106-elf.tar.xz /opt
+ADD https://qtoggle.s3.amazonaws.com/various/xtensa-lx106-elf.tar.xz /opt
 RUN cd /opt && tar xvf xtensa-lx106-elf.tar.xz && rm xtensa-lx106-elf.tar.xz
 
 # esp8266 sdk
