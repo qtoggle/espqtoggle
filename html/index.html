@@ -236,7 +236,9 @@
                         callback([]);
                     };
 
-                    request.send();
+                    setTimeout(function () {
+                        request.send();
+                    }, 2000);
                 }
                 
                 function sendSettings() {

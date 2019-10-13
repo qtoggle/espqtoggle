@@ -25,200 +25,397 @@
 #include "utils.h"
 #include "json.h"
 
+#define ctx_get_size(ctx)           ((ctx)->stack_size)
+#define ctx_has_key(ctx)            ((ctx)->stack_size > 0 && (ctx)->stack[(ctx)->stack_size - 1].key != NULL)
+#define ctx_get_key(ctx)            ((ctx)->stack_size > 0 ? (ctx)->stack[(ctx)->stack_size - 1].key : NULL)
 
-ICACHE_FLASH_ATTR static void   json_dump_rec(json_t *json, char **output, int *len, int *size, bool also_free);
+
+typedef struct {
+
+    json_t    * json;
+    char      * key;
+
+} stack_t;
+
+typedef struct {
+
+    uint32      stack_size;
+    stack_t   * stack;
+
+} ctx_t;
 
 
-/* !!! WARNING: this is a small implementation that only works with one object on the root level,
- *              and one level depth of objects and lists, in general !!! */
+ICACHE_FLASH_ATTR static void       json_dump_rec(json_t *json, char **output, int *len, int *size, bool also_free);
+
+ICACHE_FLASH_ATTR static ctx_t    * ctx_new(char *input);
+ICACHE_FLASH_ATTR static void       ctx_set_key(ctx_t *ctx, char *key);
+ICACHE_FLASH_ATTR static void       ctx_clear_key(ctx_t *ctx);
+ICACHE_FLASH_ATTR static json_t   * ctx_get_current(ctx_t *ctx);
+ICACHE_FLASH_ATTR static bool       ctx_add(ctx_t *ctx, json_t *json);
+ICACHE_FLASH_ATTR static void       ctx_push(ctx_t *ctx, json_t *json);
+ICACHE_FLASH_ATTR static json_t   * ctx_pop(ctx_t *ctx);
+ICACHE_FLASH_ATTR static void       ctx_free(ctx_t *ctx);
+
+
 json_t *json_parse(char *input) {
-    char name[JSON_MAX_NAME_LEN + 1];
-    char value[JSON_MAX_VALUE_LIST_LEN + 1];
-    name[0] = 0;
-    value[0] = 0;
+    char c, c2;
+    char s[JSON_MAX_VALUE_LEN + 1];
+    bool end_found, point_seen, waiting_elem = TRUE;
+    uint32 i, sl, pos = 0;
+    uint32 length = strlen(input);
+    ctx_t *ctx = ctx_new(input);
+    json_t *json, *root = NULL;
 
-    char *s = input;
-    int c, pc = 0, state = 0;
-    bool quotes = FALSE; /* inside double quotes, used for string values */
-    bool brackets = FALSE; /* inside brackets, used for list values */
-    bool had_quotes = FALSE; /* true for values that are in quotes */
-    bool had_brackets = FALSE; /* true for values that are in brackets */
-    
-    /* skip any leading spaces */
-    while ((int) isspace((int) s[0])) {
-        s++;
+    /* remove all whitespace at the end of input */
+    while (isspace((int) input[length - 1])) {
+        length--;
     }
 
-    /* wrap any non-dictionary input in a dummy dictionary, as a workaround */
-    char *tmp_input = NULL;
-    if (s[0] != '{') {
-        int len = strlen(input) + 7;
-        tmp_input = malloc(len);
-        snprintf(tmp_input, len, "{\"v\":%s}", s);
-        s = tmp_input;
-    }
+    while (pos < length) {
+        c = input[pos];
 
-    json_t *root = json_obj_new();
-
-    while ((c = *s++)) {
-        switch (state) {
-            case 0: { /* outside fields */
-                if (c == '"') {
-                    state = 1; /* name */
-                }
-
-                break;
-            }
-
-            case 1: { /* name */
-                if (c == '"') { /* name ends */
-                    state = 2; /* between name and value */
-                }
-                else {
-                    append_max_len(name, c, JSON_MAX_NAME_LEN);
-                }
-
-                break;
-            }
-
-            case 2: { /* between name and value */
-                if (c == ':') { /* value starts */
-                    state = 3; /* value */
-                }
-
-                break;
-
-            case 3: /* value */
-                if (quotes) {
-                    if (c == '\\') {
-                        if (pc == '\\') { /* escaped backslash */
-                            append_max_len(value, c, JSON_MAX_VALUE_LIST_LEN);
-                        }
-                    }
-                    else if (c == '"' && !brackets) {
-                        if (pc == '\\') { /* escaped double quote */
-                            append_max_len(value, c, JSON_MAX_VALUE_LIST_LEN);
-                        }
-                        else if (c == ',') { /* comma inside quoted value */
-                            append_max_len(value, c, JSON_MAX_VALUE_LIST_LEN);
-                        }
-                        else { /* closing quotes */
-                            quotes = FALSE;
-                            had_quotes = TRUE;
-                        }
-                    }
-                    else {
-                        append_max_len(value, c, JSON_MAX_VALUE_LIST_LEN);
-                    }
-                }
-                else { /* outside quotes */
-                    if (c == '"' && !brackets) { /* opening quotes */
-                        quotes = TRUE;
-                    }
-                    else if (isspace(c)) {
-                        /* ignore spaces outside of quotes */
-                    }
-                    else if ((c == ',' && !brackets) || c == '}') { /* comma as field separator or object end */
-                        if (had_quotes) { /* string */
-                            json_obj_append(root, name, json_str_new(value));
-                        }
-                        else if (had_brackets) { /* list */
-                            json_t *child = json_list_new();
-                            int q = 0, hq = 0, e = 0, i = 0;
-                            char v[JSON_MAX_VALUE_LEN + 1] = {0};
-                            append_max_len(value, ',', JSON_MAX_VALUE_LIST_LEN); /* always terminate a list with comma */
-                            while ((c = value[i])) {
-                                if (e) {
-                                    append_max_len(v, c, JSON_MAX_VALUE_LEN);
-                                    e = 0;
-                                    i++;
-                                    continue;
-                                }
-
-                                if (c == '\\') {
-                                    e = 1;
-                                }
-                                else if (c == ',') {
-                                    if (hq) {
-                                        json_list_append(child, json_str_new(v));
-                                    }
-                                    else if (!strcmp(v, "null")) {
-                                        json_list_append(child, json_null_new());
-                                    }
-                                    else if (!strcmp(v, "false")) {
-                                        json_list_append(child, json_bool_new(FALSE));
-                                    }
-                                    else if (!strcmp(v, "true")) {
-                                        json_list_append(child, json_bool_new(TRUE));
-                                    }
-                                    else if (v[0]) {
-                                        if (strchr(v, '.')) {
-                                            json_list_append(child, json_double_new(strtod(v, NULL)));
-                                        }
-                                        else {
-                                            json_list_append(child, json_int_new(strtol(v, NULL, 10)));
-                                        }
-                                    }
-
-                                    v[0] = q = hq = e = 0;
-                                }
-                                else if (c == '"') {
-                                    q = !q;
-                                    hq = 1;
-                                } 
-                                else {
-                                    append_max_len(v, c, JSON_MAX_VALUE_LEN);
-                                }
-
-                                i++;
-                            }
-
-                            json_obj_append(root, name, child);
-                        }
-                        else if (!strcmp(value, "null")) {
-                            json_obj_append(root, name, json_null_new());
-                        }
-                        else if (!strcmp(value, "false")) {
-                            json_obj_append(root, name, json_bool_new(FALSE));
-                        }
-                        else if (!strcmp(value, "true")) {
-                            json_obj_append(root, name, json_bool_new(TRUE));
-                        }
-                        else if (strchr(value, '.')) { /* double */
-                            json_obj_append(root, name, json_double_new(strtod(value, NULL)));
-                        }
-                        else { /* assuming integer */
-                            json_obj_append(root, name, json_int_new(strtol(value, NULL, 10)));
-                        }
-
-                        state = 0; /* outside fields */
-                        name[0] = 0;
-                        value[0] = 0;
-                        had_quotes = FALSE;
-                        had_brackets = FALSE;
-                    }
-                    else if (c == '[' || c == ']') {
-                        brackets = !brackets;
-                        had_brackets = TRUE;
-                    }
-                    else {
-                        append_max_len(value, c, JSON_MAX_VALUE_LIST_LEN);
-                    }
-                }
-
-                break;
-            }
+        /* if root already popped, we don't expect any more characters */
+        if (root) {
+            DEBUG("unexpected character %c at pos %d", c, pos);
+            json_free(root);
+            ctx_free(ctx);
+            return NULL;
         }
 
-        pc = c;
+        switch (c) {
+            case '{':
+                if (!waiting_elem) {
+                    DEBUG("unexpected character %c at pos %d", c, pos);
+                    ctx_free(ctx);
+                    return NULL;
+                }
+
+                ctx_push(ctx, json_obj_new());
+
+                /* waiting for a key, not an element */
+                waiting_elem = FALSE;
+
+                pos++;
+                break;
+
+            case '}':
+                json = ctx_get_current(ctx);
+                if (!json || json_get_type(json) != JSON_TYPE_OBJ ||
+                    (waiting_elem && json_obj_get_len(json) > 0)) {
+
+                    DEBUG("unexpected character %c at pos %d", c, pos);
+                    ctx_free(ctx);
+                    return NULL;
+                }
+
+                waiting_elem = FALSE;
+                root = ctx_pop(ctx);
+                pos++;
+                break;
+
+            case '[':
+                if (!waiting_elem) {
+                    DEBUG("unexpected character %c at pos %d", c, pos);
+                    ctx_free(ctx);
+                    return NULL;
+                }
+
+                ctx_push(ctx, json_list_new());
+                pos++;
+                break;
+
+            case ']':
+                json = ctx_get_current(ctx);
+                if (!json || json_get_type(json) != JSON_TYPE_LIST ||
+                    (waiting_elem && json_list_get_len(json) > 0)) {
+
+                    DEBUG("unexpected character %c at pos %d", c, pos);
+                    ctx_free(ctx);
+                    return NULL;
+                }
+
+                waiting_elem = FALSE;
+                root = ctx_pop(ctx);
+                pos++;
+                break;
+
+            case ',':
+                json = ctx_get_current(ctx);
+                if (!json || waiting_elem) {
+                    DEBUG("unexpected character %c at pos %d", c, pos);
+                    ctx_free(ctx);
+                    return NULL;
+                }
+
+                if (json_get_type(json) == JSON_TYPE_LIST) {
+                    waiting_elem = TRUE;
+                }
+
+                pos++;
+                break;
+
+            case ':':
+                json = ctx_get_current(ctx);
+                if (!json || json_get_type(json) != JSON_TYPE_OBJ || !ctx_has_key(ctx) || waiting_elem) {
+                    DEBUG("unexpected character %c at pos %d", c, pos);
+                    ctx_free(ctx);
+                    return NULL;
+                }
+
+                waiting_elem = TRUE;
+
+                pos++;
+                break;
+
+            case ' ':
+            case '\b':
+            case '\f':
+            case '\n':
+            case '\r':
+            case '\t':
+                /* skip whitespace */
+                pos++;
+                break;
+
+            case '"':
+                /* parse a string, which can be either a standalone string element or an object key */
+
+                json = ctx_get_current(ctx);
+                if (json && json_get_type(json) == JSON_TYPE_OBJ) {
+                    if (ctx_has_key(ctx) != waiting_elem) {
+                        DEBUG("unexpected character %c at pos %d", c, pos);
+                        ctx_free(ctx);
+                        return NULL;
+                    }
+                }
+                else { /* no parent or not an object */
+                    if (!waiting_elem) {
+                        DEBUG("unexpected character %c at pos %d", c, pos);
+                        ctx_free(ctx);
+                        return NULL;
+                    }
+                }
+
+                waiting_elem = FALSE;
+
+                i = ++pos;
+                s[0] = 0;
+                sl = 0;
+                end_found = FALSE;
+                for (i = pos; !end_found && (i < length); i++) {
+                    c = input[i];
+                    switch (c) {
+                        case '\\':
+                            /* escape codes */
+                            if (i < length - 1) {
+                                c2 = input[i + 1];
+                                i++;
+                                switch (c2) {
+                                    case 'b':
+                                        if (sl < JSON_MAX_VALUE_LEN) {
+                                            s[sl] = '\b'; s[++sl] = 0;
+                                        }
+
+                                        break;
+
+                                    case 'f':
+                                        if (sl < JSON_MAX_VALUE_LEN) {
+                                            s[sl] = '\f'; s[++sl] = 0;
+                                        }
+
+                                        break;
+
+                                    case 'n':
+                                        if (sl < JSON_MAX_VALUE_LEN) {
+                                            s[sl] = '\n'; s[++sl] = 0;
+                                        }
+
+                                        break;
+
+                                    case 'r':
+                                        if (sl < JSON_MAX_VALUE_LEN) {
+                                            s[sl] = '\r'; s[++sl] = 0;
+                                        }
+
+                                        break;
+
+                                    case 't':
+                                        if (sl < JSON_MAX_VALUE_LEN) {
+                                            s[sl] = '\t'; s[++sl] = 0;
+                                        }
+
+                                        break;
+
+                                    case '"':
+                                        if (sl < JSON_MAX_VALUE_LEN) {
+                                            s[sl] = '"'; s[++sl] = 0;
+                                        }
+
+                                        break;
+
+                                    case '\\':
+                                        if (sl < JSON_MAX_VALUE_LEN) {
+                                            s[sl] = '\\'; s[++sl] = 0;
+                                        }
+
+                                        break;
+
+                                    default:
+                                        if (sl < JSON_MAX_VALUE_LEN) {
+                                            s[sl] = c; s[++sl] = 0;
+                                        }
+                                }
+                            }
+                            else { /* the last char in input string is a backslash */
+                                if (sl < JSON_MAX_VALUE_LEN) {
+                                    s[sl] = '\\'; s[++sl] = 0;
+                                }
+                            }
+
+                            break;
+
+                        case '"':
+                            /* string end */
+                            pos = i + 1;
+                            end_found = TRUE;
+                            break;
+
+                        default:
+                            /* regular character inside string */
+                            if (sl < JSON_MAX_VALUE_LEN) {
+                                s[sl] = c; s[++sl] = 0;
+                            }
+                    }
+                }
+
+                if (!end_found) {
+                    DEBUG("unterminated string at pos %d", pos);
+                    ctx_free(ctx);
+                    return NULL;
+                }
+
+                json = ctx_get_current(ctx);
+                if (json) {
+                    if (json_get_type(json) == JSON_TYPE_OBJ) {
+                        if (ctx_has_key(ctx)) { /* string is a value */
+                            ctx_add(ctx, json_str_new(s));
+                        }
+                        else { /* string is a key */
+                            ctx_set_key(ctx, s);
+                        }
+                    }
+                    else if (json_get_type(json) == JSON_TYPE_LIST) {
+                        ctx_add(ctx, json_str_new(s));
+                    }
+                    else {
+                        DEBUG("unexpected string at pos %d", pos);
+                        ctx_free(ctx);
+                        return NULL;
+                    }
+                }
+                else { /* root element is a string */
+                    ctx_add(ctx, json_str_new(s));
+                }
+
+                break;
+
+            default:
+                /* null, true, false, a number or unexpected character */
+
+                json = ctx_get_current(ctx);
+                if ((json && json_get_type(json) == JSON_TYPE_OBJ && !ctx_has_key(ctx)) || !waiting_elem) {
+                    DEBUG("unexpected character %c at pos %d", c, pos);
+                    ctx_free(ctx);
+                    return NULL;
+                }
+
+                waiting_elem = FALSE;
+
+                if ((c >= '0' && c <= '9') || (c == '-')) {
+                    /* number */
+                    i = pos;
+                    if (c == '-') {
+                        i++;
+                    }
+
+                    point_seen = FALSE; /* one single point allowed in numerals */
+                    while (i < length) {
+                        c = input[i];
+                        if (c == '.') {
+                            if (point_seen) {
+                                break;
+                            }
+                            else {
+                                point_seen = TRUE;
+                            }
+                        }
+                        else if (c < '0' || c > '9') {
+                            break;
+                        }
+
+                        i++;
+                    }
+
+                    strncpy(s, input + pos, i - pos + 1);
+                    s[i - pos + 1] = 0;
+                    if (point_seen) { /* floating point */
+                        ctx_add(ctx, json_double_new(strtod(s, NULL)));
+                    }
+                    else { /* integer */
+                        ctx_add(ctx, json_int_new(strtol(s, NULL, 10)));
+                    }
+                    pos = i;
+                }
+                else if (!strncmp(input + pos, "null", 4)) {
+                    ctx_add(ctx, json_null_new());
+                    pos += 4;
+                }
+                else if (!strncmp(input + pos, "false", 5)) {
+                    ctx_add(ctx, json_bool_new(FALSE));
+                    pos += 5;
+                }
+                else if (!strncmp(input + pos, "true", 4)) {
+                    ctx_add(ctx, json_bool_new(TRUE));
+                    pos += 4;
+                }
+                else {
+                    DEBUG("unexpected character %c at pos %d", c, pos);
+                    ctx_free(ctx);
+                    return NULL;
+                }
+        }
     }
-    
-    if (tmp_input) {
-        json_t *tmp_root = json_dup(json_obj_lookup_key(root, "v"));
-        json_free(root);
-        root = tmp_root;
-        free(tmp_input);
+
+    if (!root) {
+        if (ctx_get_size(ctx) < 1) {
+            DEBUG("empty input");
+            ctx_free(ctx);
+            return NULL;
+        }
+
+        if (ctx_get_size(ctx) > 1) {
+            DEBUG("unbalanced brackets");
+            ctx_free(ctx);
+            return NULL;
+        }
+
+        root = ctx_pop(ctx);
+        if (json_get_type(root) == JSON_TYPE_LIST || json_get_type(root) == JSON_TYPE_OBJ) {
+            /* list and object roots should have already been popped as soon as closing brackets were encountered */
+            json_free(root);
+            DEBUG("unbalanced brackets");
+            ctx_free(ctx);
+            return NULL;
+        }
     }
+
+    if (json_get_type(root) == JSON_TYPE_OBJ && ctx_has_key(ctx)) {
+        DEBUG("expected element at pos %d", pos);
+        ctx_free(ctx);
+        return NULL;
+    }
+
+    ctx_free(ctx);
 
     return root;
 }
@@ -395,28 +592,80 @@ void json_obj_append(json_t *json, char *key, json_t *child) {
     json->obj_data.children[(int) json->obj_data.len++] = child;
 }
 
+json_t *json_dup(json_t *json) {
+    switch (json->type) {
+        case JSON_TYPE_NULL:
+            return json_null_new();
+
+        case JSON_TYPE_BOOL:
+            return json_bool_new(json_bool_get(json));
+
+        case JSON_TYPE_INT:
+            return json_int_new(json_int_get(json));
+
+        case JSON_TYPE_DOUBLE:
+            return json_double_new(json_double_get(json));
+
+        case JSON_TYPE_STR:
+            return json_str_new(json_str_get(json));
+
+        case JSON_TYPE_LIST: {
+            json_t *list = json_list_new();
+            int i;
+            for (i = 0; i < json->list_data.len; i++) {
+                json_list_append(list, json_dup(json->list_data.children[i]));
+            }
+
+            return list;
+        }
+
+        case JSON_TYPE_OBJ: {
+            json_t *obj = json_obj_new();
+            int i;
+            for (i = 0; i < json->obj_data.len; i++) {
+                json_obj_append(obj,
+                                json->obj_data.keys[i],
+                                json_dup(json->obj_data.children[i]));
+            }
+
+            return obj;
+        }
+
+        case JSON_TYPE_STRINGIFIED: {
+            json_t *new_json = malloc(sizeof(json_t));
+            new_json->type = JSON_TYPE_STRINGIFIED;
+            new_json->str_value = strdup(json->str_value);
+
+            return new_json;
+        }
+
+        default:
+            return NULL;
+    }
+}
+
 
 void json_dump_rec(json_t *json, char **output, int *len, int *size, bool also_free) {
     int i, l;
-    char s[32];
+    char s[32], *s2, c;
     
     switch (json->type) {
         case JSON_TYPE_NULL:
-            *size = realloc_chunks(output, *size, *len + 4);
-            strncpy(*output + *len, "null", 4);
+            *size = realloc_chunks(output, *size, *len + 5);
+            strncpy(*output + *len, "null", 5);
             *len += 4;
 
             break;
 
         case JSON_TYPE_BOOL:
             if (json_bool_get(json)) {
-                *size = realloc_chunks(output, *size, *len + 4);
-                strncpy(*output + *len, "true", 4);
+                *size = realloc_chunks(output, *size, *len + 5);
+                strncpy(*output + *len, "true", 5);
                 *len += 4;
             }
             else {
-                *size = realloc_chunks(output, *size, *len + 5);
-                strncpy(*output + *len, "false", 5);
+                *size = realloc_chunks(output, *size, *len + 6);
+                strncpy(*output + *len, "false", 6);
                 *len += 5;
             }
             
@@ -440,11 +689,72 @@ void json_dump_rec(json_t *json, char **output, int *len, int *size, bool also_f
             break;
 
         case JSON_TYPE_STR:
-            // TODO escapes
-            l = strlen(json_str_get(json)) + 2;
+            s2 = json_str_get(json);
+            l = 2; /* for the two quotes */
+            while ((c = *s2++)) {
+                if (c == '"' || c == '\\' || c == '\b' || c == '\f' || c == '\n' || c == '\r' || c == '\t') {
+                    l += 2;
+                }
+                else {
+                    l++;
+                }
+            }
+
             *size = realloc_chunks(output, *size, *len + l);
             (*output)[*len] = '"';
-            strncpy(*output + *len + 1, json_str_get(json), l - 2);
+
+            s2 = json_str_get(json);
+            i = 1;
+            while ((c = *s2++)) {
+                switch (c) {
+                    case '"':
+                        (*output)[*len + i] = '\\';
+                        (*output)[*len + i + 1] = '"';
+                        i += 2;
+                        break;
+
+                    case '\\':
+                        (*output)[*len + i] = '\\';
+                        (*output)[*len + i + 1] = '\\';
+                        i += 2;
+                        break;
+
+                    case '\b':
+                        (*output)[*len + i] = '\\';
+                        (*output)[*len + i + 1] = 'b';
+                        i += 2;
+                        break;
+
+                    case '\f':
+                        (*output)[*len + i] = '\\';
+                        (*output)[*len + i + 1] = 'f';
+                        i += 2;
+                        break;
+
+                    case '\n':
+                        (*output)[*len + i] = '\\';
+                        (*output)[*len + i + 1] = 'n';
+                        i += 2;
+                        break;
+
+                    case '\r':
+                        (*output)[*len + i] = '\\';
+                        (*output)[*len + i + 1] = 'r';
+                        i += 2;
+                        break;
+
+                    case '\t':
+                        (*output)[*len + i] = '\\';
+                        (*output)[*len + i + 1] = 't';
+                        i += 2;
+                        break;
+
+                    default:
+                        (*output)[*len + i] = c;
+                        i++;
+                }
+            }
+
             *len += l;
             (*output)[*len - 1] = '"';
 
@@ -514,55 +824,123 @@ void json_dump_rec(json_t *json, char **output, int *len, int *size, bool also_f
     }
 }
 
-json_t *json_dup(json_t *json) {
-    switch (json->type) {
-        case JSON_TYPE_NULL:
-            return json_null_new();
+ctx_t *ctx_new(char *input) {
+    return zalloc(sizeof(ctx_t));
+}
 
-        case JSON_TYPE_BOOL:
-            return json_bool_new(json_bool_get(json));
+void ctx_set_key(ctx_t *ctx, char *key) {
+    if (ctx->stack_size < 1) {
+        return;
+    }
 
-        case JSON_TYPE_INT:
-            return json_int_new(json_int_get(json));
+    stack_t *stack_item = ctx->stack + (ctx->stack_size - 1);
+    if (stack_item->key) {
+        free(stack_item->key);
+        stack_item->key = NULL;
+    }
 
-        case JSON_TYPE_DOUBLE:
-            return json_double_new(json_double_get(json));
-
-        case JSON_TYPE_STR:
-            return json_str_new(json_str_get(json));
-
-        case JSON_TYPE_LIST: {
-            json_t *list = json_list_new();
-            int i;
-            for (i = 0; i < json->list_data.len; i++) {
-                json_list_append(list, json_dup(json->list_data.children[i]));
-            }
-            
-            return list;
-        }
-
-        case JSON_TYPE_OBJ: {
-            json_t *obj = json_obj_new();
-            int i;
-            for (i = 0; i < json->obj_data.len; i++) {
-                json_obj_append(obj,
-                                json->obj_data.keys[i],
-                                json_dup(json->obj_data.children[i]));
-            }
-
-            return obj;
-        }
-        
-        case JSON_TYPE_STRINGIFIED: {
-            json_t *new_json = malloc(sizeof(json_t));
-            new_json->type = JSON_TYPE_STRINGIFIED;
-            new_json->str_value = strdup(json->str_value);
-
-            return new_json;
-        }
-
-        default:
-            return NULL;
+    if (key) {
+        stack_item->key = strdup(key);
     }
 }
 
+void ctx_clear_key(ctx_t *ctx) {
+    ctx_set_key(ctx, NULL);
+}
+
+json_t *ctx_get_current(ctx_t *ctx) {
+    if (ctx->stack_size < 1) {
+        return NULL;
+    }
+
+    return ctx->stack[ctx->stack_size - 1].json;
+}
+
+bool ctx_add(ctx_t *ctx, json_t *json) {
+    if (ctx->stack_size < 1) {
+        ctx_push(ctx, json);
+        return TRUE;
+    }
+
+    json_t *current = ctx->stack[ctx->stack_size - 1].json;
+    if (current->type == JSON_TYPE_LIST) {
+        if (ctx_has_key(ctx)) {
+            return FALSE; /* refuse to add to list if key is set */
+        }
+
+        json_list_append(current, json);
+    }
+    else if (current->type == JSON_TYPE_OBJ) {
+        if (!ctx_has_key(ctx)) {
+            return FALSE; /* refuse to add to object if key is unset */
+        }
+
+        json_obj_append(current, ctx_get_key(ctx), json);
+        ctx_clear_key(ctx);
+    }
+    else {
+        return FALSE; /* cannot add child to to primitive element */
+    }
+
+    return TRUE;
+}
+
+void ctx_push(ctx_t *ctx, json_t *json) {
+    ctx->stack = realloc(ctx->stack, sizeof(stack_t) * (++ctx->stack_size));
+    ctx->stack[ctx->stack_size - 1].json = json;
+    ctx->stack[ctx->stack_size - 1].key = NULL;
+}
+
+json_t *ctx_pop(ctx_t *ctx) {
+    if (ctx->stack_size == 0) {
+        return NULL; /* shouldn't happen */
+    }
+
+    if (ctx->stack_size == 1) {
+        /* when popping root element, return it */
+        ctx->stack_size--;
+        json_t *root = ctx->stack[0].json;
+        if (ctx->stack[0].key) {
+            free(ctx->stack[0].key);
+        }
+        free(ctx->stack);
+        ctx->stack = NULL;
+
+        return root;
+    }
+
+    json_t *current = ctx->stack[ctx->stack_size - 1].json;
+    ctx->stack = realloc(ctx->stack, sizeof(stack_t) * (--ctx->stack_size));
+
+    /* add popped element to parent */
+    ctx_add(ctx, current);
+
+    /* return NULL to indicated that popped element has been added to parent */
+    return NULL;
+}
+
+void ctx_free(ctx_t *ctx) {
+    if (ctx->stack_size) {
+        /* will free all JSON elements in hierarchy */
+        json_free(ctx->stack[0].json);
+
+        /* current element is not part of hierarchy */
+        if (ctx->stack_size > 1) {
+            json_free(ctx->stack[ctx->stack_size - 1].json);
+        }
+
+        /* free keys */
+        int i;
+        for (i = 0; i < ctx->stack_size; i++) {
+            if (ctx->stack[i].key) {
+                free(ctx->stack[i].key);
+            }
+        }
+
+        free(ctx->stack);
+        ctx->stack_size = 0;
+        ctx->stack = NULL;
+    }
+
+    free(ctx);
+}

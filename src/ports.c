@@ -42,6 +42,7 @@ ICACHE_FLASH_ATTR static int        compare_numbers(const void *a, const void *b
 
 port_t **all_ports = NULL;
 static int all_ports_count = 0;
+static uint8 next_extra_slot = PORT_SLOT_EXTRA0;
 
 
 void port_load(port_t *port, uint8 *data) {
@@ -331,6 +332,15 @@ void ports_save(uint8 *data, uint32 *strings_offs) {
 }
 
 void port_register(port_t *port) {
+    if (port->slot == PORT_SLOT_AUTO) {
+        if (next_extra_slot > PORT_SLOT_EXTRA_MAX) {
+            DEBUG("already reached max extra port slots");
+        }
+
+        port->slot = next_extra_slot++;
+        DEBUG_PORT(port, "automatically allocated extra slot %d", port->slot);
+    }
+
     all_ports = realloc(all_ports, (all_ports_count + 2) * sizeof(port_t *));
     all_ports[all_ports_count++] = port;
     all_ports[all_ports_count] = NULL;

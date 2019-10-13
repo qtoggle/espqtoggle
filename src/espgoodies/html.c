@@ -27,6 +27,7 @@
 
 #define USER1_FLASH_HTML_ADDR       0x78000
 #define USER2_FLASH_HTML_ADDR       0xF8000
+#define MAX_HTML_LEN                16384
 
 
 uint8 *html_load(uint32 *len) {
@@ -38,8 +39,14 @@ uint8 *html_load(uint32 *len) {
     }
 
     DEBUG_HTML("HTML length is %d bytes", *len);
-    if (*len > 16384) {
-        DEBUG_HTML("refusing to read HTML longer than 16k");
+    if (*len > MAX_HTML_LEN) {
+        DEBUG_HTML("refusing to read HTML longer than %d bytes", MAX_HTML_LEN);
+        return NULL;
+    }
+
+    uint32 free_mem = system_get_free_heap_size();
+    if (free_mem < (*len) * 2) {
+        DEBUG_HTML("not enough memory to load HTML");
         return NULL;
     }
 
