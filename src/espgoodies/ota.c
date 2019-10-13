@@ -199,7 +199,7 @@ void on_ota_start(void *arg) {
     info->pespconn->state = ESPCONN_NONE;
 
     info->check_cb = on_ota_finish_check;
-    info->check_times = 20000;
+    info->check_times = 60000;
     info->url = (uint8 *) zalloc(512);
 
     char *host = ota_url;

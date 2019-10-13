@@ -252,9 +252,10 @@ void wifi_connect(uint8 *bssid) {
     }
     conf.threshold.rssi = -127;
 
+
     memcpy(conf.ssid, wifi_ssid, WIFI_SSID_MAX_LEN);
     memcpy(conf.bssid, bssid, WIFI_BSSID_LEN);
-    memcpy(conf.password, wifi_psk, WIFI_PSK_MAX_LEN);
+    strncpy((char *) conf.password, wifi_psk, WIFI_PSK_MAX_LEN);
 
     DEBUG_WIFI("connecting to bssid " BSSID_FMT, BSSID2STR(bssid));
 

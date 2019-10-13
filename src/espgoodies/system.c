@@ -29,6 +29,7 @@
 #include "device.h"
 #include "flashcfg.h"
 #include "dnsserver.h"
+#include "ota.h"
 #include "system.h"
 
 
@@ -160,6 +161,8 @@ bool system_setup_mode_active(void) {
 
 void system_setup_mode_toggle(void) {
     if (setup_mode) {
+        DEBUG_SYSTEM("exiting setup mode");
+
         system_reset(/* delayed = */ FALSE);
     }
     else {
@@ -206,7 +209,8 @@ void system_setup_mode_update(void) {
 
     if (system_setup_mode_led_gpio_no != -1) {
         /* blink the setup mode led */
-        if (setup_mode) {
+        int ota_state = ota_current_state();
+        if (setup_mode || ota_state == OTA_STATE_DOWNLOADING || ota_state == OTA_STATE_RESTARTING) {
             bool old_blink_value = GPIO_INPUT_GET(system_setup_mode_led_gpio_no);
             bool new_blink_value = (system_get_time() * 6 / 1000000) % 2;
             if (old_blink_value != new_blink_value) {
