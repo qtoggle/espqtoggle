@@ -11,7 +11,7 @@
 				},
 				"body": {
 				    "name": "testdevice2",
-				    "description": "Test Description2"
+				    "display_name": "Test Display Name 2"
 				},
 				"expected_status": 204,
 				"expected_body": null
@@ -26,7 +26,7 @@
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "body": {
-                    "description": "test description2",
+                    "display_name": "test display name 2",
                     "unit": "test unit2",
                     "enabled": true,
                     "persisted": true,
@@ -75,14 +75,14 @@
                     "additionalProperties": true,
                     "required": [
                         "name",
-                        "description"
+                        "display_name"
                     ],
                     "properties": {
                         "name": {
                             "enum": ["testdevice2"]
                         },
-                        "description": {
-                            "enum": ["Test Description2"]
+                        "display_name": {
+                            "enum": ["Test Display Name 2"]
                         }
                     }
                 }
@@ -105,7 +105,7 @@
                             "type": "object",
                             "required": [
                                 "id",
-                                "description",
+                                "display_name",
                                 "unit",
                                 "enabled",
                                 "persisted",
@@ -118,8 +118,8 @@
                                 "id": {
                                     "enum": ["gpio0"]
                                 },
-                                "description": {
-                                    "enum": ["test description2"]
+                                "display_name": {
+                                    "enum": ["test display name 2"]
                                 },
                                 "unit": {
                                     "enum": ["test unit2"]

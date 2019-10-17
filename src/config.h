@@ -23,7 +23,7 @@
 #define CONFIG_PORT_SIZE                0x0080 /*  128 bytes for each port */
 
 #define CONFIG_OFFS_HOSTNAME            0x0000 /*  32 bytes */
-#define CONFIG_OFFS_DESCRIPTION         0x0020 /*  64 bytes */
+#define CONFIG_OFFS_DISP_NAME           0x0020 /*  64 bytes */
 
 #define CONFIG_OFFS_ADMIN_PASSWORD      0x0060 /*  32 bytes */
 #define CONFIG_OFFS_NORMAL_PASSWORD     0x0080 /*  32 bytes */

@@ -16,7 +16,7 @@
                         "type": "object",
                         "required": [
                             "id",
-                            "description",
+                            "display_name",
                             "unit",
                             "writable",
                             "enabled",
@@ -31,7 +31,7 @@
                             "id": {
                                 "enum": ["gpio0", "gpio2", "gpio4", "gpio5", "pwm12", "pwm13", "pwm14", "pwm15", "pwm_freq", "adc0"]
                             },
-                            "description": {
+                            "display_name": {
                                 "enum": [""]
                             },
                             "unit": {
@@ -89,6 +89,7 @@
                                     "sampling_interval": {
                                         "type": "object",
                                         "required": [
+                                            "display_name",
                                             "description",
                                             "unit",
                                             "modifiable",
@@ -98,6 +99,9 @@
                                             "integer"
                                         ],
                                         "properties": {
+                                            "display_name": {
+                                                "type": "string"
+                                            },
                                             "description": {
                                                 "type": "string"
                                             },
@@ -124,12 +128,16 @@
                                     "pull_up": {
                                         "type": "object",
                                         "required": [
+                                            "display_name",
                                             "description",
                                             "unit",
                                             "modifiable",
                                             "type"
                                         ],
                                         "properties": {
+                                            "display_name": {
+                                                "type": "string"
+                                            },
                                             "description": {
                                                 "type": "string"
                                             },
@@ -147,12 +155,16 @@
                                     "output": {
                                         "type": "object",
                                         "required": [
+                                            "display_name",
                                             "description",
                                             "unit",
                                             "modifiable",
                                             "type"
                                         ],
                                         "properties": {
+                                            "display_name": {
+                                                "type": "string"
+                                            },
                                             "description": {
                                                 "type": "string"
                                             },

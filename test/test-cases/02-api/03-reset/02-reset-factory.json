@@ -85,7 +85,7 @@
 				},
 				"body": {
 				    "name": "testdevice",
-				    "description": "Test Description",
+				    "display_name": "Test Display Name",
 				    "admin_password": "${TEST_PASSWORD}",
 				    "normal_password": "${TEST_PASSWORD}",
 				    "viewonly_password": "${TEST_PASSWORD}"

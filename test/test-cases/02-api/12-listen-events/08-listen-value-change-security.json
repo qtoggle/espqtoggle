@@ -50,7 +50,9 @@
                             "additionalProperties": false,
                             "required": ["type", "params"],
                             "properties": {
-                                "type": {"enum": ["value-change"]},
+                                "type": {
+                                    "enum": ["value-change"]
+                                },
                                 "params": {
                                     "type": "object",
                                     "additionalProperties": false,
@@ -122,7 +124,9 @@
                             "additionalProperties": false,
                             "required": ["type", "params"],
                             "properties": {
-                                "type": {"enum": ["value-change"]},
+                                "type": {
+                                    "enum": ["value-change"]
+                                },
                                 "params": {
                                     "type": "object",
                                     "additionalProperties": false,
