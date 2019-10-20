@@ -2551,7 +2551,7 @@ json_t *attrdef_to_json(char *display_name, char *description, char *unit, char 
         json_t *list = json_list_new();
         char *c;
         while ((c = *choices++)) {
-            json_list_append(list, choice_to_json(c, ATTR_TYPE_NUMBER));
+            json_list_append(list, choice_to_json(c, type));
         }
 
         json_obj_append(json, "choices", list);
