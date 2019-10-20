@@ -730,6 +730,7 @@ char *get_choice_value_str(char *choice) {
     static char *value = NULL;  /* acts as a reentrant buffer */
     if (value) {
         free(value);
+        value = NULL;
     }
 
     char *p = strchr(choice, ':');
