@@ -49,9 +49,9 @@ function release() {
     cp ${SRC_DIR}/build/user*.bin ${RELEASE_DIR}/${CONFIG_NAME}
     cp ${SRC_DIR}/build/full.bin ${RELEASE_DIR}/${CONFIG_NAME}
     
-    if [[ "${EB_VERSION}" =~ b[0-9]+$ ]]; then  # beta version
+    if [[ "${EB_VERSION}" =~ beta.[0-9]+$ ]]; then  # beta version
         latest_file="latest_beta"
-    elif [[ "${EB_VERSION}" =~ a[0-9]+$ ]]; then  # alpha version
+    elif [[ "${EB_VERSION}" =~ alpha.[0-9]+$ ]]; then  # alpha version
         latest_file="latest_alpha"
     else  # stable version
         latest_file="latest"
