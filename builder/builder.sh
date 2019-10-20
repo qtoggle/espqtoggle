@@ -80,6 +80,9 @@ if [ -n "${EB_REPO}" ]; then
     clone
 fi
 
+# replace hardcoded source version
+sed -r "s/(FW_VERSION *)\"unknown\"/\1\"${EB_VERSION}\"/" src/ver.h
+
 for conf in ${EB_CONF_FILES}; do
     clean
     echo -e "\n\n**** building configuration ${conf} ****"
