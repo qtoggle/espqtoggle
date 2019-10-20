@@ -78,7 +78,10 @@ function clean() {
 
 if [ -n "${EB_REPO}" ]; then
     clone
-    sed -r "s/(FW_VERSION *)\"unknown\"/\1\"${EB_VERSION}\"/" src/ver.h
+fi
+
+if [ -d "${SRC_DIR}" ]; then
+    sed -ri "s/\(FW_VERSION *\)\"unknown\"/\1\"${EB_VERSION}\"/" src/ver.h
 fi
 
 for conf in ${EB_CONF_FILES}; do
