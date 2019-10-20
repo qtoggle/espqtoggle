@@ -31,10 +31,15 @@
 #define JSON_TYPE_LIST                  'l'
 #define JSON_TYPE_OBJ                   'o'
 #define JSON_TYPE_STRINGIFIED           't'
+#define JSON_TYPE_MEMBERS_FREED         'f'
 
 #define JSON_MAX_NAME_LEN               64
 #define JSON_MAX_VALUE_LEN              1024
 #define JSON_MAX_VALUE_LIST_LEN         4096
+
+#define JSON_FREE_NOTHING               0
+#define JSON_FREE_MEMBERS               1
+#define JSON_FREE_EVERYTHING            2
 
 
 typedef struct json {
@@ -65,7 +70,7 @@ typedef struct json {
 
 
 ICACHE_FLASH_ATTR json_t *      json_parse(char *input);
-ICACHE_FLASH_ATTR char *        json_dump(json_t *json, bool also_free);
+ICACHE_FLASH_ATTR char *        json_dump(json_t *json, uint8 free_mode);
 ICACHE_FLASH_ATTR void          json_stringify(json_t *json);
 ICACHE_FLASH_ATTR void          json_free(json_t *json);
 

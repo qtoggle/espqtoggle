@@ -748,6 +748,7 @@ char *get_choice_display_name(char *choice) {
     static char *display_name = NULL;  /* acts as a reentrant buffer */
     if (display_name) {
         free(display_name);
+        display_name = NULL;
     }
 
     char *p = strchr(choice, ':');
@@ -2386,13 +2387,16 @@ json_t *port_attrdefs_to_json(port_t *port) {
     if (port->attrdefs) {
         attrdef_t *a, **attrdefs = port->attrdefs;
         while ((a = *attrdefs++)) {
-            json_obj_append(json, a->name,
-                            attrdef_to_json(a->display_name ? a->display_name : "",
-                                            a->description ? a->description : "",
-                                            a->unit ? a->unit : "", a->type, a->modifiable,
-                                            a->min, a->max, a->integer, a->step, a->choices, a->reconnect));
+            json_t *attrdef_json = attrdef_to_json(a->display_name ? a->display_name : "",
+                                                   a->description ? a->description : "",
+                                                   a->unit ? a->unit : "", a->type, a->modifiable,
+                                                   a->min, a->max, a->integer, a->step, a->choices, a->reconnect);
+            json_stringify(attrdef_json);
+            json_obj_append(json, a->name, attrdef_json);
         }
     }
+
+    json_stringify(json);
 
     return json;
 }

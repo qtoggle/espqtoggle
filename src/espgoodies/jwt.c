@@ -60,12 +60,12 @@ char *jwt_dump(jwt_t *jwt, char *secret) {
             return NULL;
     }
 
-    char *header_str = json_dump(header, /* also_free = */ FALSE);
+    char *header_str = json_dump(header, /* free_mode = */ JSON_FREE_NOTHING);
     json_free(header);
     char *header_b64 = b64_encode((uint8 *) header_str, strlen(header_str), /* padding = */ FALSE);
     free(header_str);
 
-    char *payload_str = json_dump(jwt->claims, /* also_free = */ FALSE);
+    char *payload_str = json_dump(jwt->claims, /* free_mode = */ JSON_FREE_NOTHING);
     char *payload_b64 = b64_encode((uint8 *) payload_str, strlen(payload_str), /* padding = */ FALSE);
     free(payload_str);
 
