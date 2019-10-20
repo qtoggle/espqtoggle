@@ -28,7 +28,7 @@
 #include "utils.h"
 
 
-#define REALLOC_CHUNK_SIZE      32
+#define REALLOC_CHUNK_SIZE      8
 #define DTOSTR_BUF_LEN          32
 
 #if defined(_DEBUG) && defined(_DEBUG_IP)
@@ -49,8 +49,9 @@ void append_max_len(char *s, char c, int max_len) {
 int realloc_chunks(char **p, int current_size, int req_size) {
     while (current_size < req_size) {
         current_size += REALLOC_CHUNK_SIZE;
-        *p = realloc(*p, current_size);
     }
+
+    *p = realloc(*p, current_size);
 
     return current_size;
 }
