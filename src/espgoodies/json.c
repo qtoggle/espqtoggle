@@ -450,6 +450,7 @@ void json_free(json_t *json) {
         case JSON_TYPE_BOOL:
         case JSON_TYPE_INT:
         case JSON_TYPE_DOUBLE:
+        case JSON_TYPE_MEMBERS_FREED:
             break;
 
         case JSON_TYPE_STR:
@@ -478,6 +479,8 @@ void json_free(json_t *json) {
 }
 
 json_t *json_obj_lookup_key(json_t *json, char *key) {
+    JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ);
+
     int i;
     for (i = 0; i < json->obj_data.len; i++) {
         if (!strcmp(key, json->obj_data.keys[i])) {
@@ -538,6 +541,8 @@ json_t *json_list_new() {
 }
 
 void json_list_append(json_t *json, json_t *child) {
+    JSON_ASSERT_TYPE(json, JSON_TYPE_LIST);
+
     json->list_data.children = realloc(json->list_data.children, sizeof(json_t *) * (json->list_data.len + 1));
     json->list_data.children[(int) json->list_data.len++] = child;
 }
@@ -554,6 +559,8 @@ json_t *json_obj_new() {
 }
 
 void json_obj_append(json_t *json, char *key, json_t *child) {
+    JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ);
+
     json->obj_data.children = realloc(json->obj_data.children, sizeof(json_t *) * (json->obj_data.len + 1));
     json->obj_data.keys = realloc(json->obj_data.keys, sizeof(char *) * (json->obj_data.len + 1));
     json->obj_data.keys[(int) json->obj_data.len] = strdup(key);
@@ -606,6 +613,10 @@ json_t *json_dup(json_t *json) {
 
             return new_json;
         }
+
+        case JSON_TYPE_MEMBERS_FREED:
+            DEBUG("cannot duplicate JSON with freed members");
+            return NULL;
 
         default:
             return NULL;
@@ -779,11 +790,15 @@ void json_dump_rec(json_t *json, char **output, int *len, int *size, uint8 free_
             break;
 
         case JSON_TYPE_STRINGIFIED:
-            l = strlen(json_str_get(json));
+            l = strlen(json->str_value);
             *size = realloc_chunks(output, *size, *len + l);
-            strncpy(*output + *len, json_str_get(json), l);
+            strncpy(*output + *len, json->str_value, l);
             *len += l;
 
+            break;
+
+        case JSON_TYPE_MEMBERS_FREED:
+            DEBUG("cannot dump JSON with freed members");
             break;
     }
 

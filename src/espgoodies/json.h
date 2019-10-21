@@ -41,6 +41,11 @@
 #define JSON_FREE_MEMBERS               1
 #define JSON_FREE_EVERYTHING            2
 
+#define JSON_ASSERT_TYPE(json, t)       {\
+    if ((json)->type != t) DEBUG("unexpected JSON type at %s:%d: wanted %c, got %c",\
+                                 __FILE__, __LINE__, t, (json)->type);\
+}
+
 
 typedef struct json {
 
@@ -75,17 +80,26 @@ ICACHE_FLASH_ATTR void          json_stringify(json_t *json);
 ICACHE_FLASH_ATTR void          json_free(json_t *json);
 
 #define                         json_get_type(json) ((json)->type)
-#define                         json_bool_get(json) ((json)->bool_value)
-#define                         json_int_get(json) ((json)->int_value)
-#define                         json_double_get(json) ((json)->double_value)
-#define                         json_str_get(json) ((json)->str_value)
-#define                         json_list_value_at(json, index) (json->list_data.children[(index)])
-#define                         json_list_get_len(json) (json->list_data.len)
-#define                         json_obj_key_at(json, index) (json->obj_data.keys[(index)])
-#define                         json_obj_value_at(json, index) (json->obj_data.children[(index)])
-#define                         json_obj_get_len(json) (json->obj_data.len)
-ICACHE_FLASH_ATTR json_t *      json_obj_lookup_key(json_t *json, char *key);
+#define                         json_bool_get(json) ({JSON_ASSERT_TYPE(json, JSON_TYPE_BOOL);\
+                                                      ((json)->bool_value);})
+#define                         json_int_get(json) ({JSON_ASSERT_TYPE(json, JSON_TYPE_INT);\
+                                                     ((json)->int_value);})
+#define                         json_double_get(json) ({JSON_ASSERT_TYPE(json, JSON_TYPE_DOUBLE);\
+                                                        ((json)->double_value);})
+#define                         json_str_get(json) ({JSON_ASSERT_TYPE(json, JSON_TYPE_STR);\
+                                                     ((json)->str_value);})
+#define                         json_list_value_at(json, index) ({JSON_ASSERT_TYPE(json, JSON_TYPE_LIST);\
+                                                                  (json->list_data.children[(index)]);})
+#define                         json_list_get_len(json) ({JSON_ASSERT_TYPE(json, JSON_TYPE_LIST);\
+                                                          (json->list_data.len);})
+#define                         json_obj_key_at(json, index) ({JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ);\
+                                                               (json->obj_data.keys[(index)]);})
+#define                         json_obj_value_at(json, index) ({JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ);\
+                                                                 (json->obj_data.children[(index)]);})
+#define                         json_obj_get_len(json) ({JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ);\
+                                                         (json->obj_data.len);})
 
+ICACHE_FLASH_ATTR json_t *      json_obj_lookup_key(json_t *json, char *key);
 ICACHE_FLASH_ATTR json_t *      json_null_new(void);
 ICACHE_FLASH_ATTR json_t *      json_bool_new(bool value);
 ICACHE_FLASH_ATTR json_t *      json_int_new(int value);
