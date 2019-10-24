@@ -573,6 +573,7 @@ json_t *device_to_json(void) {
     json_obj_append(json, "display_name", json_str_new(device_display_name));
     json_obj_append(json, "version", json_str_new(FW_VERSION));
     json_obj_append(json, "api_version", json_str_new(API_VERSION));
+    json_obj_append(json, "vendor", json_str_new(VENDOR));
 
     /* passwords - never reveal them */
     json_obj_append(json, "admin_password", json_str_new(""));
@@ -1037,6 +1038,7 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
         else if (!strcmp(key, "version") ||
                  !strcmp(key, "api_version") ||
+                 !strcmp(key, "vendor") ||
 #ifdef _OTA
                  !strcmp(key, "firmware") ||
 #endif

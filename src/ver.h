@@ -22,6 +22,7 @@
 
 #define API_VERSION             "1.0"
 #define FW_VERSION              "unknown"
+#define VENDOR                  "qtoggle/espqtoggle"
 
 #define version_is_alpha()      strstr(FW_VERSION, "-alpha")
 #define version_is_beta()       strstr(FW_VERSION, "-beta")
