@@ -45,6 +45,7 @@
                                         "display_name",
                                         "version",
                                         "api_version",
+                                        "vendor",
                                         "admin_password",
                                         "normal_password",
                                         "viewonly_password",
@@ -79,6 +80,9 @@
                                         "api_version": {
                                             "type": "string"
                                         },
+				                        "vendor": {
+				                            "type": "string"
+				                        },
                                         "admin_password": {
                                             "type": "string"
                                         },

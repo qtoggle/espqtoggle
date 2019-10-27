@@ -18,6 +18,7 @@
                         "display_name",
                         "version",
                         "api_version",
+                        "vendor",
                         "admin_password",
                         "normal_password",
                         "viewonly_password",
@@ -51,6 +52,9 @@
                         },
                         "api_version": {
                             "enum": ["1.0"]
+                        },
+                        "vendor": {
+                            "enum": ["qtoggle/espqtoggle"]
                         },
                         "admin_password": {
                             "enum": [""]
