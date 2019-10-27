@@ -598,7 +598,6 @@ json_t *json_list_pop_at(json_t *json, uint32 index) {
         json->list_data.children[i] = json->list_data.children[i + 1];
     }
 
-    json->list_data.children = realloc(json->list_data.children, sizeof(json_t *) * (json->list_data.len - 1));
     json->list_data.len--;
 
     return child;
@@ -640,8 +639,6 @@ json_t *json_obj_pop_key(json_t *json, char *key) {
         json->obj_data.keys[i] = json->obj_data.keys[i + 1];
     }
 
-    json->obj_data.children = realloc(json->obj_data.children, sizeof(json_t *) * (json->obj_data.len - 1));
-    json->obj_data.keys = realloc(json->obj_data.keys, sizeof(char *) * (json->obj_data.len - 1));
     json->obj_data.len--;
 
     return child;

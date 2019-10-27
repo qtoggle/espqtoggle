@@ -1480,6 +1480,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
     child = json_obj_pop_key(request_json, key);
     if (child) {
         if (json_get_type(child) != JSON_TYPE_BOOL) {
+            json_free(child);
             return INVALID_FIELD_VALUE(key);
         }
 
@@ -1501,12 +1502,14 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
             child = json_obj_pop_key(request_json, key);
             if (child) {
                 if (!a->modifiable) {
+                    json_free(child);
                     return ATTR_NOT_MODIFIABLE(key);
                 }
 
                 switch (a->type) {
                     case ATTR_TYPE_BOOLEAN: {
                         if (json_get_type(child) != JSON_TYPE_BOOL) {
+                            json_free(child);
                             return INVALID_FIELD_VALUE(key);
                         }
 
@@ -1522,6 +1525,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                     case ATTR_TYPE_NUMBER: {
                         if (json_get_type(child) != JSON_TYPE_INT &&
                             (json_get_type(child) != JSON_TYPE_DOUBLE || a->integer)) {
+                            json_free(child);
                             return INVALID_FIELD_VALUE(key);
                         }
 
@@ -1529,6 +1533,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                                        json_int_get(child) : json_double_get(child);
                         int idx = validate_num(value, a->min, a->max, a->integer, a->step, a->choices);
                         if (!idx) {
+                            json_free(child);
                             return INVALID_FIELD_VALUE(key);
                         }
 
@@ -1551,12 +1556,14 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
 
                     case ATTR_TYPE_STRING: {
                         if (json_get_type(child) != JSON_TYPE_STR) {
+                            json_free(child);
                             return INVALID_FIELD_VALUE(key);
                         }
 
                         char *value = json_str_get(child);
                         int idx = validate_str(value, a->choices);
                         if (!idx) {
+                            json_free(child);
                             return INVALID_FIELD_VALUE(key);
                         }
 
