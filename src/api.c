@@ -1474,6 +1474,24 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
     int i;
     char *key;
     json_t *child;
+
+    key = "enabled";
+    child = json_obj_pop_key(request_json, key);
+    if (child) {
+        if (json_get_type(child) != JSON_TYPE_BOOL) {
+            return INVALID_FIELD_VALUE(key);
+        }
+
+        if (json_bool_get(child) && !IS_ENABLED(port)) {
+            port_enable(port);
+        }
+        else if (!json_bool_get(child) && IS_ENABLED(port)) {
+            port_disable(port);
+        }
+
+        json_free(child);
+    }
+
     for (i = 0; i < json_obj_get_len(request_json); i++) {
         key = json_obj_key_at(request_json, i);
         child = json_obj_value_at(request_json, i);
@@ -1503,18 +1521,6 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
             }
 
             DEBUG_PORT(port, "unit set to \"%s\"", port->unit);
-        }
-        else if (!strcmp(key, "enabled")) {
-            if (json_get_type(child) != JSON_TYPE_BOOL) {
-                return INVALID_FIELD_VALUE(key);
-            }
-
-            if (json_bool_get(child) && !IS_ENABLED(port)) {
-                port_enable(port);
-            }
-            else if (!json_bool_get(child) && IS_ENABLED(port)) {
-                port_disable(port);
-            }
         }
         else if (IS_OUTPUT(port) && !strcmp(key, "expression")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
