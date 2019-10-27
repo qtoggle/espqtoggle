@@ -1475,6 +1475,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
     char *key;
     json_t *child;
 
+    /* handle enabled attribute first */
     key = "enabled";
     child = json_obj_pop_key(request_json, key);
     if (child) {
@@ -1492,6 +1493,92 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
         json_free(child);
     }
 
+    /* then handle port-specific attributes */
+    if (port->attrdefs) {
+        attrdef_t *a, **attrdefs = port->attrdefs;
+        while ((a = *attrdefs++)) {
+            key = a->name;
+            child = json_obj_pop_key(request_json, key);
+            if (child) {
+                if (!a->modifiable) {
+                    return ATTR_NOT_MODIFIABLE(key);
+                }
+
+                switch (a->type) {
+                    case ATTR_TYPE_BOOLEAN: {
+                        if (json_get_type(child) != JSON_TYPE_BOOL) {
+                            return INVALID_FIELD_VALUE(key);
+                        }
+
+                        bool value = json_bool_get(child);
+
+                        ((int_setter_t) a->set)(port, a, value);
+
+                        DEBUG_PORT(port, "%s set to %d", a->name, value);
+
+                        break;
+                    }
+
+                    case ATTR_TYPE_NUMBER: {
+                        if (json_get_type(child) != JSON_TYPE_INT &&
+                            (json_get_type(child) != JSON_TYPE_DOUBLE || a->integer)) {
+                            return INVALID_FIELD_VALUE(key);
+                        }
+
+                        double value = json_get_type(child) == JSON_TYPE_INT ?
+                                       json_int_get(child) : json_double_get(child);
+                        int idx = validate_num(value, a->min, a->max, a->integer, a->step, a->choices);
+                        if (!idx) {
+                            return INVALID_FIELD_VALUE(key);
+                        }
+
+                        if (a->choices) {
+                            ((int_setter_t) a->set)(port, a, idx - 1);
+                        }
+                        else {
+                            if (a->integer) {
+                                ((int_setter_t) a->set)(port, a, (int) value);
+                            }
+                            else { /* float */
+                                ((float_setter_t) a->set)(port, a, value);
+                            }
+                        }
+
+                        DEBUG_PORT(port, "%s set to %d", a->name, !!value);
+
+                        break;
+                    }
+
+                    case ATTR_TYPE_STRING: {
+                        if (json_get_type(child) != JSON_TYPE_STR) {
+                            return INVALID_FIELD_VALUE(key);
+                        }
+
+                        char *value = json_str_get(child);
+                        int idx = validate_str(value, a->choices);
+                        if (!idx) {
+                            return INVALID_FIELD_VALUE(key);
+                        }
+
+                        if (a->choices) {
+                            ((int_setter_t) a->set)(port, a, idx - 1);
+                        }
+                        else {
+                            ((str_setter_t) a->set)(port, a, value);
+                        }
+
+                        DEBUG_PORT(port, "%s set to %s", a->name, value);
+
+                        break;
+                    }
+                }
+
+                json_free(child);
+            }
+        }
+    }
+
+    /* finally, handle common attributes */
     for (i = 0; i < json_obj_get_len(request_json); i++) {
         key = json_obj_key_at(request_json, i);
         child = json_obj_value_at(request_json, i);
@@ -1781,92 +1868,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
             return ATTR_NOT_MODIFIABLE(key);
         }
         else {
-            bool found = FALSE;
-            if (port->attrdefs) {
-                attrdef_t *a, **attrdefs = port->attrdefs;
-                while ((a = *attrdefs++)) {
-                    if (!strcmp(key, a->name)) {
-                        if (!a->modifiable) {
-                            return ATTR_NOT_MODIFIABLE(key);
-                        }
-
-                        switch (a->type) {
-                            case ATTR_TYPE_BOOLEAN: {
-                                if (json_get_type(child) != JSON_TYPE_BOOL) {
-                                    return INVALID_FIELD_VALUE(key);
-                                }
-
-                                bool value = json_bool_get(child);
-
-                                ((int_setter_t) a->set)(port, a, value);
-
-                                DEBUG_PORT(port, "%s set to %d", a->name, value);
-
-                                break;
-                            }
-
-                            case ATTR_TYPE_NUMBER: {
-                                if (json_get_type(child) != JSON_TYPE_INT &&
-                                    (json_get_type(child) != JSON_TYPE_DOUBLE || a->integer)) {
-                                    return INVALID_FIELD_VALUE(key);
-                                }
-
-                                double value = json_get_type(child) == JSON_TYPE_INT ?
-                                               json_int_get(child) : json_double_get(child);
-                                int idx = validate_num(value, a->min, a->max, a->integer, a->step, a->choices);
-                                if (!idx) {
-                                    return INVALID_FIELD_VALUE(key);
-                                }
-
-                                if (a->choices) {
-                                    ((int_setter_t) a->set)(port, a, idx - 1);
-                                }
-                                else {
-                                    if (a->integer) {
-                                        ((int_setter_t) a->set)(port, a, (int) value);
-                                    }
-                                    else { /* float */
-                                        ((float_setter_t) a->set)(port, a, value);
-                                    }
-                                }
-
-                                DEBUG_PORT(port, "%s set to %d", a->name, !!value);
-
-                                break;
-                            }
-
-                            case ATTR_TYPE_STRING: {
-                                if (json_get_type(child) != JSON_TYPE_STR) {
-                                    return INVALID_FIELD_VALUE(key);
-                                }
-
-                                char *value = json_str_get(child);
-                                int idx = validate_str(value, a->choices);
-                                if (!idx) {
-                                    return INVALID_FIELD_VALUE(key);
-                                }
-
-                                if (a->choices) {
-                                    ((int_setter_t) a->set)(port, a, idx - 1);
-                                }
-                                else {
-                                    ((str_setter_t) a->set)(port, a, value);
-                                }
-
-                                DEBUG_PORT(port, "%s set to %s", a->name, value);
-
-                                break;
-                            }
-                        }
-
-                        found = TRUE;
-                        break;
-                    }
-                }
-            }
-            if (!found) {
-                return NO_SUCH_ATTRIBUTE(key);
-            }
+            return NO_SUCH_ATTRIBUTE(key);
         }
     }
     
