@@ -1,15 +1,15 @@
 {
     "name": "set-webhooks-invalid-events",
     "instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/webhooks",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/webhooks",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
                     "enabled": true,
                     "scheme": "http",
                     "host": "{{HOST_IP_ADDRESS}}",
@@ -20,21 +20,21 @@
                     "timeout": 2,
                     "retries": 0
                 },
-				"expected_status": 400,
-				"expected_body": {
-				    "error": "invalid field: events"
-				}
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/webhooks",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: events"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/webhooks",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
                     "enabled": true,
                     "scheme": "http",
                     "host": "{{HOST_IP_ADDRESS}}",
@@ -45,12 +45,12 @@
                     "timeout": 2,
                     "retries": 0
                 },
-				"expected_status": 400,
-				"expected_body": {
-				    "error": "invalid field: events"
-				}
-			}
-		}
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: events"
+                }
+            }
+        }
     ]
 }
 

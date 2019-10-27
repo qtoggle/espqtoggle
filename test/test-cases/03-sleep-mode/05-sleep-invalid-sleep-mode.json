@@ -1,74 +1,74 @@
 {
     "name": "sleep-invalid-sleep-mode",
     "instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/device",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
-				},
-				"body": {
-				    "sleep_mode": "invalid"
-				},
-				"expected_status": 400,
-				"expected_body": {
-				    "error": "invalid field: sleep_mode"
-				}
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/device",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
-				},
-				"body": {
-				    "sleep_mode": "10"
-				},
-				"expected_status": 400,
-				"expected_body": {
-				    "error": "invalid field: sleep_mode"
-				}
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/device",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
-				},
-				"body": {
-				    "sleep_mode": "10081:10"
-				},
-				"expected_status": 400,
-				"expected_body": {
-				    "error": "invalid field: sleep_mode"
-				}
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/device",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
-				},
-				"body": {
-				    "sleep_mode": "1:3601"
-				},
-				"expected_status": 400,
-				"expected_body": {
-				    "error": "invalid field: sleep_mode"
-				}
-			}
-		}
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "sleep_mode": "invalid"
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: sleep_mode"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "sleep_mode": "10"
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: sleep_mode"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "sleep_mode": "10081:10"
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: sleep_mode"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "sleep_mode": "1:3601"
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: sleep_mode"
+                }
+            }
+        }
     ]
 }
 

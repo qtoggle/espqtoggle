@@ -1,20 +1,20 @@
 {
-	"name": "get-device-attributes-security",
-	"instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/device",
-				"headers": {
-					"Authorization": "Bearer inexistent"
-				},
-				"expected_status": 401,
-				"expected_body": {
-				    "error": "authentication required" 
-				}
-			}
-		},
+    "name": "get-device-attributes-security",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer inexistent"
+                },
+                "expected_status": 401,
+                "expected_body": {
+                    "error": "authentication required" 
+                }
+            }
+        },
         {
             "name": "json-http-client",
             "params": {
@@ -45,6 +45,6 @@
                 }
             }
         }
-	]
+    ]
 }
 

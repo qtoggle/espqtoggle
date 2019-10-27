@@ -1,15 +1,15 @@
 {
     "name": "set-webhooks-invalid-scheme",
     "instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/webhooks",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/webhooks",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
                     "enabled": true,
                     "scheme": "invalid",
                     "host": "{{HOST_IP_ADDRESS}}",
@@ -20,12 +20,12 @@
                     "timeout": 2,
                     "retries": 0
                 },
-				"expected_status": 400,
-				"expected_body": {
-				    "error": "invalid field: scheme"
-				}
-			}
-		}
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: scheme"
+                }
+            }
+        }
     ]
 }
 

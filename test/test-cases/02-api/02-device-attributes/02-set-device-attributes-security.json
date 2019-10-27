@@ -1,20 +1,20 @@
 {
-	"name": "set-device-attributes-security",
-	"instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/device",
-				"headers": {
-					"Authorization": "Bearer inexistent"
-				},
-				"body": {
-				    "display_name": "test display name"
-				},
-				"expected_status": 401
-			}
-		},
+    "name": "set-device-attributes-security",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer inexistent"
+                },
+                "body": {
+                    "display_name": "test display name"
+                },
+                "expected_status": 401
+            }
+        },
         {
             "name": "json-http-client",
             "params": {
@@ -23,9 +23,9 @@
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_VIEWONLY}"
                 },
-				"body": {
-				    "display_name": "test display name"
-				},
+                "body": {
+                    "display_name": "test display name"
+                },
                 "expected_status": 403
             }
         },
@@ -37,12 +37,12 @@
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_NORMAL}"
                 },
-				"body": {
-				    "display_name": "test display name"
-				},
+                "body": {
+                    "display_name": "test display name"
+                },
                 "expected_status": 403
             }
         }
-	]
+    ]
 }
 

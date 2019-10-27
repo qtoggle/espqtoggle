@@ -1,110 +1,110 @@
 {
     "name": "expressions-type-coercion",
     "instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/bool_port",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "expression": "2"
-				},
-				"expected_status": 204
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/ports/bool_port/value",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body": true
-			}
-		},	
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/bool_port",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "expression": "0"
-				},
-				"expected_status": 204
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/ports/bool_port/value",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body": false
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/num_port",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "expression": "true"
-				},
-				"expected_status": 204
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/ports/num_port/value",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body": 1
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/num_port",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "expression": "false"
-				},
-				"expected_status": 204
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/ports/bool_port/value",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body": 0
-			}
-		}
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/bool_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "2"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/bool_port/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": true
+            }
+        },    
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/bool_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "0"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/bool_port/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": false
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "true"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/num_port/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": 1
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "false"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/bool_port/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": 0
+            }
+        }
     ]
 }
 

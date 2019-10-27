@@ -1,17 +1,17 @@
 {
-	"name": "update-firmware-security",
-	"instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/firmware",
-				"headers": {
-					"Authorization": "Bearer inexistent"
-				},
-				"expected_status": 401
-			}
-		},
+    "name": "update-firmware-security",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/firmware",
+                "headers": {
+                    "Authorization": "Bearer inexistent"
+                },
+                "expected_status": 401
+            }
+        },
         {
             "name": "json-http-client",
             "params": {
@@ -34,6 +34,6 @@
                 "expected_status": 403
             }
         }
-	]
+    ]
 }
 

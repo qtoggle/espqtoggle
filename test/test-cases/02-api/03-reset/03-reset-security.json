@@ -1,17 +1,17 @@
 {
-	"name": "reset-security",
-	"instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "POST",
-				"path": "/reset",
-				"headers": {
-					"Authorization": "Bearer inexistent"
-				},
-				"expected_status": 401
-			}
-		},
+    "name": "reset-security",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/reset",
+                "headers": {
+                    "Authorization": "Bearer inexistent"
+                },
+                "expected_status": 401
+            }
+        },
         {
             "name": "json-http-client",
             "params": {
@@ -34,6 +34,6 @@
                 "expected_status": 403
             }
         }
-	]
+    ]
 }
 

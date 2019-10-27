@@ -1,31 +1,31 @@
 {
-	"name": "update-firmware",
-	"instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/firmware",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "url": "${SERVER_URL_HTTP}/jobs/{{JOB_ID}}/assets"
-				},
-				"expected_status": 204,
-				"expected_body": null
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/firmware",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body_schema": {
+    "name": "update-firmware",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/firmware",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "url": "${SERVER_URL_HTTP}/jobs/{{JOB_ID}}/assets"
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/firmware",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
                     "type": "object",
                     "additionalProperties": true,
                     "required": [
@@ -37,14 +37,14 @@
                         }
                     }
                 }
-			}
-		},
-		{
-			"name": "wifi-ap-wait-device-disconnect"
-		},
-		{
-			"name": "wifi-ap-wait-device-connect"
-		}
-	]
+            }
+        },
+        {
+            "name": "wifi-ap-wait-device-disconnect"
+        },
+        {
+            "name": "wifi-ap-wait-device-connect"
+        }
+    ]
 }
 

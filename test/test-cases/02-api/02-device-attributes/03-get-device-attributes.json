@@ -1,16 +1,16 @@
 {
-	"name": "get-device-attributes",
-	"instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/device",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body_schema": {
+    "name": "get-device-attributes",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
                     "type": "object",
                     "additionalProperties": false,
                     "required": [
@@ -184,12 +184,12 @@
                                                     "value"
                                                 ],
                                                 "properties": {
-	                                                "value": {
-	                                                    "enum": [80, 160]
-	                                                },
-	                                                "display_name": {
-	                                                    "type": "string"
-	                                                }
+                                                    "value": {
+                                                        "enum": [80, 160]
+                                                    },
+                                                    "display_name": {
+                                                        "type": "string"
+                                                    }
                                                 }
                                             }
                                         }
@@ -500,8 +500,8 @@
                         }
                     }
                 }
-			}
-		}
-	]
+            }
+        }
+    ]
 }
 

@@ -1,23 +1,23 @@
 {
-	"name": "set-device-attributes-attribute-not-modifiable",
-	"instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/device",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "version": "dummy"
-				},
-				"expected_status": 400,
-				"expected_body": {
-				    "error": "attribute not modifiable: version"
-				}
-			}
-		}
-	]
+    "name": "set-device-attributes-attribute-not-modifiable",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "version": "dummy"
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "attribute not modifiable: version"
+                }
+            }
+        }
+    ]
 }
 

@@ -1,22 +1,22 @@
 {
     "name": "set-port-sequence-security",
     "instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "POST",
-				"path": "/ports/gpio0/sequence",
-				"headers": {
-					"Authorization": "Bearer inexistent"
-				},
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports/gpio0/sequence",
+                "headers": {
+                    "Authorization": "Bearer inexistent"
+                },
                 "body": {
                     "values": [true, false],
                     "delays": [10, 10],
                     "repeat": 2
                 },
-				"expected_status": 401
-			}
-		},
+                "expected_status": 401
+            }
+        },
         {
             "name": "json-http-client",
             "params": {

@@ -1,23 +1,23 @@
 {
-	"name": "update-firmware-invalid-url",
-	"instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/firmware",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "url": 16
-				},
-				"expected_status": 400,
-				"expected_body": {
-				    "error": "invalid field: url"
-				}
-			}
-		}
-	]
+    "name": "update-firmware-invalid-url",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/firmware",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "url": 16
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: url"
+                }
+            }
+        }
+    ]
 }
 

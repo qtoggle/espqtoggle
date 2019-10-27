@@ -1,105 +1,105 @@
 {
     "name": "expressions-invalid-expression",
     "instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/num_port",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "expression": "some random text"
-				},
-				"expected_status": 400,
-				"expected_body": {
-				    "error": "invalid field: expression"
-				}
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/num_port",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "expression": "UNKNOWN_FUNC(${DOLLAR}gpio0, ${DOLLAR}gpio1)"
-				},
-				"expected_status": 400,
-				"expected_body": {
-				    "error": "invalid field: expression"
-				}
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/num_port",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "expression": "ADD(${DOLLAR}unbalanced, ${DOLLAR}parentheses))"
-				},
-				"expected_status": 400,
-				"expected_body": {
-				    "error": "invalid field: expression"
-				}
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/num_port",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "expression": "ABS(${DOLLAR}wrong, ${DOLLAR}number, ${DOLLAR}of, ${DOLLAR}arguments)"
-				},
-				"expected_status": 400,
-				"expected_body": {
-				    "error": "invalid field: expression"
-				}
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/num_port2",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "expression": "${DOLLAR}num_port"
-				},
-				"expected_status": 204
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/num_port",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "expression": "${DOLLAR}num_port2"
-				},
-				"expected_status": 400,
-				"expected_body": {
-				    "error": "invalid field: expression"
-				}
-			}
-		}
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "some random text"
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: expression"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "UNKNOWN_FUNC(${DOLLAR}gpio0, ${DOLLAR}gpio1)"
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: expression"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "ADD(${DOLLAR}unbalanced, ${DOLLAR}parentheses))"
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: expression"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "ABS(${DOLLAR}wrong, ${DOLLAR}number, ${DOLLAR}of, ${DOLLAR}arguments)"
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: expression"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port2",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "${DOLLAR}num_port"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "${DOLLAR}num_port2"
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: expression"
+                }
+            }
+        }
     ]
 }
 

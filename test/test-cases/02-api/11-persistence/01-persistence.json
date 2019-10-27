@@ -1,22 +1,22 @@
 {
     "name": "persistence",
     "instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/device",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "name": "testdevice2",
-				    "display_name": "Test Display Name 2"
-				},
-				"expected_status": 204,
-				"expected_body": null
-			}
-		},
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "name": "testdevice2",
+                    "display_name": "Test Display Name 2"
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
         {
             "name": "json-http-client",
             "params": {
@@ -61,16 +61,16 @@
         {
             "name": "device-reset"
         },
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/device",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body_schema": {
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
                     "type": "object",
                     "additionalProperties": true,
                     "required": [
@@ -86,8 +86,8 @@
                         }
                     }
                 }
-			}
-		},
+            }
+        },
         {
             "name": "json-http-client",
             "params": {

@@ -1,19 +1,19 @@
 {
     "name": "listen",
     "instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/listen?session_id=test-{{TEST_CASE_NAME}}&timeout=1",
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/listen?session_id=test-{{TEST_CASE_NAME}}&timeout=1",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
-				"expected_status": 200,
-				"expected_body": [
-				]
-			}
-		}
-	]
+                "expected_status": 200,
+                "expected_body": [
+                ]
+            }
+        }
+    ]
 }
 

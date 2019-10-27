@@ -1,23 +1,23 @@
 {
-	"name": "set-port-attributes-no-such-attribute",
-	"instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/gpio0",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "inexistent": "dummy"
-				},
-				"expected_status": 400,
-				"expected_body": {
-				    "error": "no such attribute: inexistent"
-				}
-			}
-		}
-	]
+    "name": "set-port-attributes-no-such-attribute",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "inexistent": "dummy"
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "no such attribute: inexistent"
+                }
+            }
+        }
+    ]
 }
 

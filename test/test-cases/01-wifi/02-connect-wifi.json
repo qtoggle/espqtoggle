@@ -1,14 +1,14 @@
 {
-	"name": "connect-wifi",
-	"instructions": [
-		{
-			"name": "wifi-ap-start",
-			"params": {
-				"ssid": "${TEST_SSID}",
-				"psk": "${TEST_PSK}",
-				"wait_device_connect": true
-			}
-		}
-	]
+    "name": "connect-wifi",
+    "instructions": [
+        {
+            "name": "wifi-ap-start",
+            "params": {
+                "ssid": "${TEST_SSID}",
+                "psk": "${TEST_PSK}",
+                "wait_device_connect": true
+            }
+        }
+    ]
 }
 
