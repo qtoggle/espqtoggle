@@ -1,16 +1,16 @@
 {
-	"name": "get-firmware",
-	"instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/firmware",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body_schema": {
+    "name": "get-firmware",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/firmware",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
                     "type": "object",
                     "additionalProperties": false,
                     "required": [
@@ -38,8 +38,8 @@
                         }
                     }
                 }
-			}
-		}
-	]
+            }
+        }
+    ]
 }
 

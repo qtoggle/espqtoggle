@@ -1,21 +1,21 @@
 {
     "name": "add-virtual-port-security",
     "instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "POST",
-				"path": "/ports",
-				"headers": {
-					"Authorization": "Bearer inexistent"
-				},
-				"body": {
-				    "id": "test_port",
-				    "type": "boolean"
-				},
-				"expected_status": 401
-			}
-		},
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer inexistent"
+                },
+                "body": {
+                    "id": "test_port",
+                    "type": "boolean"
+                },
+                "expected_status": 401
+            }
+        },
         {
             "name": "json-http-client",
             "params": {
@@ -24,10 +24,10 @@
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_VIEWONLY}"
                 },
-				"body": {
-				    "id": "test_port",
-				    "type": "boolean"
-				},
+                "body": {
+                    "id": "test_port",
+                    "type": "boolean"
+                },
                 "expected_status": 403
             }
         },
@@ -39,10 +39,10 @@
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_NORMAL}"
                 },
-				"body": {
-				    "id": "test_port",
-				    "type": "boolean"
-				},
+                "body": {
+                    "id": "test_port",
+                    "type": "boolean"
+                },
                 "expected_status": 403
             }
         }

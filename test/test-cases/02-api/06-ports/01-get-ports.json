@@ -1,16 +1,16 @@
 {
-	"name": "get-ports",
-	"instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/ports",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body_schema": {
+    "name": "get-ports",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
                     "type": "array",
                     "items": {
                         "type": "object",
@@ -184,8 +184,8 @@
                         }
                     }
                 }
-			}
-		}
-	]
+            }
+        }
+    ]
 }
 

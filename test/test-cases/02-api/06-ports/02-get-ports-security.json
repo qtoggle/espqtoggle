@@ -1,17 +1,17 @@
 {
-	"name": "get-ports-security",
-	"instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/ports",
-				"headers": {
-					"Authorization": "Bearer inexistent"
-				},
-				"expected_status": 401
-			}
-		},
+    "name": "get-ports-security",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer inexistent"
+                },
+                "expected_status": 401
+            }
+        },
         {
             "name": "json-http-client",
             "params": {
@@ -34,6 +34,6 @@
                 "expected_status": 200
             }
         }
-	]
+    ]
 }
 

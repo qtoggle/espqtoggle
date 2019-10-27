@@ -1,22 +1,22 @@
 {
     "name": "webhooks-port-update",
     "instructions": [
-		{
-			"name": "json-http-client",
-			"fire_and_forget": true,
-			"fire_delay": 1000,
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/gpio0",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "display_name": "test display name {{TEST_CASE_NAME}}"
-				},
-				"expected_status": 204
-			}
-		},
+        {
+            "name": "json-http-client",
+            "fire_and_forget": true,
+            "fire_delay": 1000,
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "display_name": "test display name {{TEST_CASE_NAME}}"
+                },
+                "expected_status": 204
+            }
+        },
         {
             "name": "json-http-server",
             "params": {

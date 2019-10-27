@@ -1,38 +1,38 @@
 {
     "name": "webhooks-value-change",
     "instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/gpio0/value",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": false,
-				"expected_status": 204
-			}
-		},
-		{
-		    "name": "sleep",
-		    "params": {
-		        "duration": 500
-		    }
-		},
-		{
-			"name": "json-http-client",
-			"fire_and_forget": true,
-			"fire_delay": 1000,
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/gpio0/value",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": true,
-				"expected_status": 204
-			}
-		},
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio0/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": false,
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "sleep",
+            "params": {
+                "duration": 500
+            }
+        },
+        {
+            "name": "json-http-client",
+            "fire_and_forget": true,
+            "fire_delay": 1000,
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio0/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": true,
+                "expected_status": 204
+            }
+        },
         {
             "name": "json-http-server",
             "params": {

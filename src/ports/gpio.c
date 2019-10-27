@@ -76,8 +76,8 @@ static attrdef_t output_attrdef = {
 
 static attrdef_t *attrdefs[] = {
 
-    &pull_up_attrdef,
     &output_attrdef,
+    &pull_up_attrdef,
     NULL
 
 };

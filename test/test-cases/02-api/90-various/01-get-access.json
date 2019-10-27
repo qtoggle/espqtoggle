@@ -1,62 +1,62 @@
 {
-	"name": "get-access",
-	"instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/access",
-				"headers": {
-					"Authorization": "Bearer inexistent"
-				},
-				"expected_status": 200,
-				"expected_body": {
-				    "level": "none" 
-				}
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/access",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_VIEWONLY}"
-				},
-				"expected_status": 200,
-				"expected_body": {
-				    "level": "viewonly"
-				}
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/access",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_NORMAL}"
-				},
-				"expected_status": 200,
-				"expected_body": {
-				    "level": "normal"
-				}
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/access",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body": {
-				    "level": "admin"
-				}
-			}
-		}
-	]
+    "name": "get-access",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/access",
+                "headers": {
+                    "Authorization": "Bearer inexistent"
+                },
+                "expected_status": 200,
+                "expected_body": {
+                    "level": "none" 
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/access",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_VIEWONLY}"
+                },
+                "expected_status": 200,
+                "expected_body": {
+                    "level": "viewonly"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/access",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_NORMAL}"
+                },
+                "expected_status": 200,
+                "expected_body": {
+                    "level": "normal"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/access",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": {
+                    "level": "admin"
+                }
+            }
+        }
+    ]
 }
 

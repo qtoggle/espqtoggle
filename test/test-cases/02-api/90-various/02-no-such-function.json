@@ -1,62 +1,62 @@
 {
-	"name": "no-such-function",
-	"instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/inexistent",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 404,
-				"expected_body": {
-				    "error": "no such function"
-				}
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "POST",
-				"path": "/inexistent",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 404,
-				"expected_body": {
-				    "error": "no such function"
-				}
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/inexistent",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 404,
-				"expected_body": {
-				    "error": "no such function"
-				}
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "DELETE",
-				"path": "/inexistent",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 404,
-				"expected_body": {
-				    "error": "no such function"
-				}
-			}
-		}
-	]
+    "name": "no-such-function",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/inexistent",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 404,
+                "expected_body": {
+                    "error": "no such function"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/inexistent",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 404,
+                "expected_body": {
+                    "error": "no such function"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/inexistent",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 404,
+                "expected_body": {
+                    "error": "no such function"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "DELETE",
+                "path": "/inexistent",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 404,
+                "expected_body": {
+                    "error": "no such function"
+                }
+            }
+        }
+    ]
 }
 

@@ -1,16 +1,16 @@
 {
-	"name": "get-device-attributes",
-	"instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/device",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body_schema": {
+    "name": "get-device-attributes",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
                     "type": "object",
                     "additionalProperties": false,
                     "required": [
@@ -18,6 +18,7 @@
                         "display_name",
                         "version",
                         "api_version",
+                        "vendor",
                         "admin_password",
                         "normal_password",
                         "viewonly_password",
@@ -51,6 +52,9 @@
                         },
                         "api_version": {
                             "enum": ["1.0"]
+                        },
+                        "vendor": {
+                            "enum": ["qtoggle/espqtoggle"]
                         },
                         "admin_password": {
                             "enum": [""]
@@ -180,12 +184,12 @@
                                                     "value"
                                                 ],
                                                 "properties": {
-	                                                "value": {
-	                                                    "enum": [80, 160]
-	                                                },
-	                                                "display_name": {
-	                                                    "type": "string"
-	                                                }
+                                                    "value": {
+                                                        "enum": [80, 160]
+                                                    },
+                                                    "display_name": {
+                                                        "type": "string"
+                                                    }
                                                 }
                                             }
                                         }
@@ -496,8 +500,8 @@
                         }
                     }
                 }
-			}
-		}
-	]
+            }
+        }
+    ]
 }
 

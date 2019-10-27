@@ -22,8 +22,8 @@
         },
         {
             "name": "json-http-client",
-			"fire_and_forget": true,
-			"fire_delay": 1000,
+            "fire_and_forget": true,
+            "fire_delay": 1000,
             "params": {
                 "method": "DELETE",
                 "path": "/ports/test_port",
