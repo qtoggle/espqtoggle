@@ -478,19 +478,6 @@ void json_free(json_t *json) {
     free(json);
 }
 
-json_t *json_obj_lookup_key(json_t *json, char *key) {
-    JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ);
-
-    int i;
-    for (i = 0; i < json->obj_data.len; i++) {
-        if (!strcmp(key, json->obj_data.keys[i])) {
-            return json->obj_data.children[i];
-        }
-    }
-
-    return NULL;
-}
-
 json_t *json_null_new() {
     json_t *json = malloc(sizeof(json_t));
     json->type = JSON_TYPE_NULL;
@@ -545,6 +532,49 @@ void json_list_append(json_t *json, json_t *child) {
 
     json->list_data.children = realloc(json->list_data.children, sizeof(json_t *) * (json->list_data.len + 1));
     json->list_data.children[(int) json->list_data.len++] = child;
+}
+
+json_t *json_obj_lookup_key(json_t *json, char *key) {
+    JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ);
+
+    int i;
+    for (i = 0; i < json->obj_data.len; i++) {
+        if (!strcmp(key, json->obj_data.keys[i])) {
+            return json->obj_data.children[i];
+        }
+    }
+
+    return NULL;
+}
+
+json_t *json_obj_pop_key(json_t *json, char *key) {
+    JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ);
+
+    int i, p = -1;
+    for (i = 0; i < json->obj_data.len; i++) {
+        if (!strcmp(key, json->obj_data.keys[i])) {
+            p = i;
+            break;
+        }
+    }
+
+    if (p < 0) {
+        return NULL;
+    }
+
+    json_t *child = json->obj_data.children[p];
+    free(json->obj_data.keys[p]);
+
+    for (i = p; i < json->obj_data.len - 1; i++) {
+        json->obj_data.children[i] = json->obj_data.children[i + 1];
+        json->obj_data.keys[i] = json->obj_data.keys[i + 1];
+    }
+
+    json->obj_data.children = realloc(json->obj_data.children, sizeof(json_t *) * (json->obj_data.len - 1));
+    json->obj_data.keys = realloc(json->obj_data.keys, sizeof(char *) * (json->obj_data.len - 1));
+    json->obj_data.len--;
+
+    return child;
 }
 
 json_t *json_obj_new() {
