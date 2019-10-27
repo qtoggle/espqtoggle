@@ -478,6 +478,62 @@ void json_free(json_t *json) {
     free(json);
 }
 
+json_t *json_dup(json_t *json) {
+    switch (json->type) {
+        case JSON_TYPE_NULL:
+            return json_null_new();
+
+        case JSON_TYPE_BOOL:
+            return json_bool_new(json_bool_get(json));
+
+        case JSON_TYPE_INT:
+            return json_int_new(json_int_get(json));
+
+        case JSON_TYPE_DOUBLE:
+            return json_double_new(json_double_get(json));
+
+        case JSON_TYPE_STR:
+            return json_str_new(json_str_get(json));
+
+        case JSON_TYPE_LIST: {
+            json_t *list = json_list_new();
+            int i;
+            for (i = 0; i < json->list_data.len; i++) {
+                json_list_append(list, json_dup(json->list_data.children[i]));
+            }
+
+            return list;
+        }
+
+        case JSON_TYPE_OBJ: {
+            json_t *obj = json_obj_new();
+            int i;
+            for (i = 0; i < json->obj_data.len; i++) {
+                json_obj_append(obj,
+                                json->obj_data.keys[i],
+                                json_dup(json->obj_data.children[i]));
+            }
+
+            return obj;
+        }
+
+        case JSON_TYPE_STRINGIFIED: {
+            json_t *new_json = malloc(sizeof(json_t));
+            new_json->type = JSON_TYPE_STRINGIFIED;
+            new_json->str_value = strdup(json->str_value);
+
+            return new_json;
+        }
+
+        case JSON_TYPE_MEMBERS_FREED:
+            DEBUG("cannot duplicate JSON with freed members");
+            return NULL;
+
+        default:
+            return NULL;
+    }
+}
+
 json_t *json_null_new() {
     json_t *json = malloc(sizeof(json_t));
     json->type = JSON_TYPE_NULL;
@@ -532,6 +588,20 @@ void json_list_append(json_t *json, json_t *child) {
 
     json->list_data.children = realloc(json->list_data.children, sizeof(json_t *) * (json->list_data.len + 1));
     json->list_data.children[(int) json->list_data.len++] = child;
+}
+
+json_t *json_list_pop_at(json_t *json, uint32 index) {
+    json_t *child = json->obj_data.children[index];
+
+    int i;
+    for (i = index; i < json->list_data.len - 1; i++) {
+        json->list_data.children[i] = json->list_data.children[i + 1];
+    }
+
+    json->list_data.children = realloc(json->list_data.children, sizeof(json_t *) * (json->list_data.len - 1));
+    json->list_data.len--;
+
+    return child;
 }
 
 json_t *json_obj_lookup_key(json_t *json, char *key) {
@@ -595,62 +665,6 @@ void json_obj_append(json_t *json, char *key, json_t *child) {
     json->obj_data.keys = realloc(json->obj_data.keys, sizeof(char *) * (json->obj_data.len + 1));
     json->obj_data.keys[(int) json->obj_data.len] = strdup(key);
     json->obj_data.children[(int) json->obj_data.len++] = child;
-}
-
-json_t *json_dup(json_t *json) {
-    switch (json->type) {
-        case JSON_TYPE_NULL:
-            return json_null_new();
-
-        case JSON_TYPE_BOOL:
-            return json_bool_new(json_bool_get(json));
-
-        case JSON_TYPE_INT:
-            return json_int_new(json_int_get(json));
-
-        case JSON_TYPE_DOUBLE:
-            return json_double_new(json_double_get(json));
-
-        case JSON_TYPE_STR:
-            return json_str_new(json_str_get(json));
-
-        case JSON_TYPE_LIST: {
-            json_t *list = json_list_new();
-            int i;
-            for (i = 0; i < json->list_data.len; i++) {
-                json_list_append(list, json_dup(json->list_data.children[i]));
-            }
-
-            return list;
-        }
-
-        case JSON_TYPE_OBJ: {
-            json_t *obj = json_obj_new();
-            int i;
-            for (i = 0; i < json->obj_data.len; i++) {
-                json_obj_append(obj,
-                                json->obj_data.keys[i],
-                                json_dup(json->obj_data.children[i]));
-            }
-
-            return obj;
-        }
-
-        case JSON_TYPE_STRINGIFIED: {
-            json_t *new_json = malloc(sizeof(json_t));
-            new_json->type = JSON_TYPE_STRINGIFIED;
-            new_json->str_value = strdup(json->str_value);
-
-            return new_json;
-        }
-
-        case JSON_TYPE_MEMBERS_FREED:
-            DEBUG("cannot duplicate JSON with freed members");
-            return NULL;
-
-        default:
-            return NULL;
-    }
 }
 
 
