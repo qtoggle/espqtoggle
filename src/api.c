@@ -2614,7 +2614,7 @@ void free_choices(char **choices) {
 }
 
 bool validate_num(double value, double min, double max, bool integer, double step, char **choices) {
-    if ((!IS_UNDEFINED(min) && value < min) || (!IS_UNDEFINED(max) && value > max)) {
+    if ((min != max) && ((!IS_UNDEFINED(min) && value < min) || (!IS_UNDEFINED(max) && value > max))) {
         return FALSE;
     }
 

@@ -355,6 +355,16 @@ void port_register(port_t *port) {
     all_ports[all_ports_count++] = port;
     all_ports[all_ports_count] = NULL;
 
+    /* set min/max to UNDEFINED for all attrdefs */
+    if (port->attrdefs) {
+        attrdef_t *a, **attrdefs = port->attrdefs;
+        while ((a = *attrdefs++)) {
+            if (a->min == 0 && a->max == 0) {
+                a->min = a->max = UNDEFINED;
+            }
+        }
+    }
+
     DEBUG_PORT(port, "registered");
 }
 
