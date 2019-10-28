@@ -434,12 +434,24 @@ char *json_dump(json_t *json, uint8 free_mode) {
     return output;
 }
 
+char *json_dump_r(json_t *json, uint8 free_mode) {
+    int len = 0;
+    static char *dump_buffer = NULL;
+    static int dump_buffer_size = 0;
+
+    json_dump_rec(json, &dump_buffer, &len, &dump_buffer_size, free_mode);
+    dump_buffer_size = realloc_chunks(&dump_buffer, dump_buffer_size, len + 1);
+    dump_buffer[len] = 0;
+
+    return dump_buffer;
+}
+
 void json_stringify(json_t *json) {
     if (json->type == JSON_TYPE_STRINGIFIED) {
         return; /* already stringified */
     }
 
-    char *stringified = json_dump(json, /* free_mode = */ JSON_FREE_MEMBERS);
+    char *stringified = json_dump_r(json, /* free_mode = */ JSON_FREE_MEMBERS);
 
     uint16 i = 0, chunks = 0, chunk, pos;
     char c, *s = stringified;
@@ -459,8 +471,6 @@ void json_stringify(json_t *json) {
 
     json->stringified_data.len = i;
     json->type = JSON_TYPE_STRINGIFIED;
-
-    free(stringified);
 }
 
 void json_free(json_t *json) {
@@ -569,6 +579,7 @@ json_t *json_dup(json_t *json) {
 
             new_json->stringified_data.chunks = malloc(sizeof(char *) * n);
             for (i = 0; i < n; i++) {
+                new_json->stringified_data.chunks[i] = malloc(STRINGIFIED_CHUNK_SIZE);
                 memcpy(new_json->stringified_data.chunks[i], json->stringified_data.chunks[i], STRINGIFIED_CHUNK_SIZE);
             }
 

@@ -202,7 +202,7 @@ void do_webhook_request(event_t *event) {
 
     /* body */
     json_t *event_json = event_to_json(event);
-    char *body = json_dump(event_json, /* free_mode = */ JSON_FREE_EVERYTHING);
+    char *body = json_dump_r(event_json, /* free_mode = */ JSON_FREE_EVERYTHING);
 
     DEBUG_WEBHOOKS("request POST %s: %s", url, body);
     /* actual request */
@@ -210,7 +210,6 @@ void do_webhook_request(event_t *event) {
     httpclient_request("POST", url, (uint8 *) body, strlen(body), header_names, header_values, header_count,
                        on_webhook_response, webhooks_timeout);
 
-    free(body);
     free(auth_header);
 }
 

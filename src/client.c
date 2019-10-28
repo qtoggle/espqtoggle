@@ -525,7 +525,7 @@ void respond_json(struct espconn *conn, int status, json_t *json) {
     int free_mem_before_dump = system_get_free_heap_size();
 #endif
 
-    body = json_dump(json, /* free_mode = */ JSON_FREE_EVERYTHING);
+    body = json_dump_r(json, /* free_mode = */ JSON_FREE_EVERYTHING);
 
 #if defined(_DEBUG) && defined(_DEBUG_ESPQTCLIENT)
     int free_mem_after_dump = system_get_free_heap_size();
@@ -551,7 +551,6 @@ void respond_json(struct espconn *conn, int status, json_t *json) {
         DEBUG_ESPQTCLIENT_CONN(conn, "responding with status %d", status);
     }
 
-    free(body);
     tcp_send(conn, response, len, /* free on sent = */ TRUE);
 
 #if defined(_DEBUG) && defined(_DEBUG_ESPQTCLIENT)
