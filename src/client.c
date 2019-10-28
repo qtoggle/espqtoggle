@@ -56,6 +56,7 @@
 static httpserver_context_t         http_contexts[MAX_PARALLEL_HTTP_REQ];
 
 static char                       * unprotected_paths[] = {"/access", NULL};
+static char                       * extra_header_names[] = {"ESP-Free-Memory", NULL};
 
 
 ICACHE_FLASH_ATTR static void     * on_tcp_conn(struct espconn *conn);
@@ -535,10 +536,13 @@ void respond_json(struct espconn *conn, int status, json_t *json) {
         len = 0;  /* 204 No Content */
     }
 
+    static char free_mem_str[16];
+    snprintf(free_mem_str, 16, "%d", system_get_free_heap_size());
+    char *extra_header_values[] = {free_mem_str, NULL};
     response = httpserver_build_response(status, JSON_CONTENT_TYPE,
-                                         /* header_names = */ NULL,
-                                         /* header_values = */ NULL,
-                                         /* header_count = */ 0, (uint8 *) body, &len);
+                                         extra_header_names,
+                                         extra_header_values,
+                                         /* header_count = */ 1, (uint8 *) body, &len);
 
     if (status >= 400) {
         DEBUG_ESPQTCLIENT_CONN(conn, "responding with status %d: %s", status, body);
