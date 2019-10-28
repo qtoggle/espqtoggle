@@ -47,6 +47,10 @@ void append_max_len(char *s, char c, int max_len) {
 }
 
 int realloc_chunks(char **p, int current_size, int req_size) {
+    if (current_size >= req_size) {
+        return current_size;
+    }
+
     while (current_size < req_size) {
         current_size += REALLOC_CHUNK_SIZE;
     }
