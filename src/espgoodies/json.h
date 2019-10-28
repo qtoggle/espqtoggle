@@ -46,6 +46,7 @@
                                  __FILE__, __LINE__, t, (json)->type);\
 }
 
+#pragma pack(push, 1)
 
 typedef struct json {
 
@@ -60,9 +61,14 @@ typedef struct json {
 
         struct {
             uint8           len;
-            char **         keys;
+            char         ** keys;
             struct json  ** children;
         } obj_data;
+
+        struct {
+            uint16          len;
+            char         ** chunks;
+        } stringified_data;
 
         bool                bool_value;
         int                 int_value;
@@ -72,6 +78,8 @@ typedef struct json {
     };
 
 } json_t;
+
+#pragma pack(pop)
 
 
 #define                         json_get_type(json) ((json)->type)
