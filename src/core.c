@@ -30,6 +30,8 @@
 #include "espgoodies/ota.h"
 #endif
 
+#include "drivers/uart.h" // TODO
+
 #include "config.h"
 #include "device.h"
 #include "core.h"
@@ -101,6 +103,13 @@ void ensure_ports_saved(void) {
 
 
 void system_task(os_event_t *e) {
+    uint8 buff[256];
+    uint16 len = uart_read(UART0, buff, 255, 1000);
+    if (len > 0) {
+        buff[len] = 0;
+        DEBUG("!!! SERIAL [%s]", (char *) buff);
+    }
+
     switch (e->sig) {
         case TASK_POLL_PORTS: {
             /* schedule next ports polling */
