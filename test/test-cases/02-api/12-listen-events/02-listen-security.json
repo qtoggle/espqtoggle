@@ -1,17 +1,17 @@
 {
     "name": "listen-security",
     "instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/listen?session_id=test&timeout=1",
-				"headers": {
-					"Authorization": "Bearer inexistent"
-				},
-				"expected_status": 401
-			}
-		},
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/listen?session_id=test&timeout=1",
+                "headers": {
+                    "Authorization": "Bearer inexistent"
+                },
+                "expected_status": 401
+            }
+        },
         {
             "name": "json-http-client",
             "params": {

@@ -1,17 +1,17 @@
 {
     "name": "get-webhooks-security",
     "instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/webhooks",
-				"headers": {
-					"Authorization": "Bearer inexistent"
-				},
-				"expected_status": 401
-			}
-		},
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/webhooks",
+                "headers": {
+                    "Authorization": "Bearer inexistent"
+                },
+                "expected_status": 401
+            }
+        },
         {
             "name": "json-http-client",
             "params": {

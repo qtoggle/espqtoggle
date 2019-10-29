@@ -27,6 +27,7 @@
 #include "espgoodies/utils.h"
 #include "espgoodies/system.h"
 
+#include "api.h"
 #include "ports.h"
 #include "extra/fsg.h"
 
@@ -45,8 +46,6 @@
 #define CMD_CLOSE                      -1
 #define CMD_STOP                        0
 #define CMD_OPEN                        1
-
-#define INPUT_CHOICES_LEN               4
 
 #define BOOT_DELAY                      2000    /* milliseconds */
 #define HEART_BEAT_INTERVAL             20      /* milliseconds */
@@ -201,12 +200,6 @@ typedef struct {
 #define closed_input_delay_hist(p)      (((extra_info_t *) (p)->extra_info)->closed_input_delay_hist)
 #define moving_input_delay_hist(p)      (((extra_info_t *) (p)->extra_info)->moving_input_delay_hist)
 
-static int8                             input_mapping[] = {-1, 0, 4, 15};
-static char                           * input_choices[] = {"none", "input 0", "input 4", "input 15", NULL};
-
-static int8                             output_mapping[] = {-1, 5, 14};
-static char                           * output_choices[] = {"none", "output 5", "output 14", NULL};
-
 static char                           * level_choices[] = {"low", "high", NULL};
 
 #if defined(_DEBUG) && defined(_DEBUG_FSG)
@@ -245,70 +238,73 @@ ICACHE_FLASH_ATTR static int8       is_moving(port_t *port);
 ICACHE_FLASH_ATTR static void       push_cmd(port_t *port, int8 cmd);
 ICACHE_FLASH_ATTR static int8       pop_output(port_t *port);
 
-ICACHE_FLASH_ATTR static int        attr_get_closed_input(port_t *port);
-ICACHE_FLASH_ATTR static void       attr_set_closed_input(port_t *port, int index);
+ICACHE_FLASH_ATTR static int        attr_get_closed_input(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_closed_input(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int        attr_get_moving_input(port_t *port);
-ICACHE_FLASH_ATTR static void       attr_set_moving_input(port_t *port, int index);
+ICACHE_FLASH_ATTR static int        attr_get_moving_input(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_moving_input(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int        attr_get_closed_input_level(port_t *port);
-ICACHE_FLASH_ATTR static void       attr_set_closed_input_level(port_t *port, int index);
+ICACHE_FLASH_ATTR static int        attr_get_closed_input_level(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_closed_input_level(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int        attr_get_moving_input_level(port_t *port);
-ICACHE_FLASH_ATTR static void       attr_set_moving_input_level(port_t *port, int index);
+ICACHE_FLASH_ATTR static int        attr_get_moving_input_level(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_moving_input_level(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int        attr_get_debounce_duration(port_t *port);
-ICACHE_FLASH_ATTR static void       attr_set_debounce_duration(port_t *port, int value);
+ICACHE_FLASH_ATTR static int        attr_get_debounce_duration(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_debounce_duration(port_t *port, attrdef_t *attrdef, int value);
 
-ICACHE_FLASH_ATTR static int        attr_get_closed_moving_delay(port_t *port);
-ICACHE_FLASH_ATTR static void       attr_set_closed_moving_delay(port_t *port, int value);
+ICACHE_FLASH_ATTR static int        attr_get_closed_moving_delay(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_closed_moving_delay(port_t *port, attrdef_t *attrdef, int value);
 
-ICACHE_FLASH_ATTR static int        attr_get_open_output(port_t *port);
-ICACHE_FLASH_ATTR static void       attr_set_open_output(port_t *port, int index);
+ICACHE_FLASH_ATTR static int        attr_get_open_output(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_open_output(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int        attr_get_close_output(port_t *port);
-ICACHE_FLASH_ATTR static void       attr_set_close_output(port_t *port, int index);
+ICACHE_FLASH_ATTR static int        attr_get_close_output(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_close_output(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int        attr_get_stop_output(port_t *port);
-ICACHE_FLASH_ATTR static void       attr_set_stop_output(port_t *port, int index);
+ICACHE_FLASH_ATTR static int        attr_get_stop_output(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_stop_output(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int        attr_get_output_level(port_t *port);
-ICACHE_FLASH_ATTR static void       attr_set_output_level(port_t *port, int index);
+ICACHE_FLASH_ATTR static int        attr_get_output_level(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_output_level(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int        attr_get_output_pulse_on_len(port_t *port);
-ICACHE_FLASH_ATTR static void       attr_set_output_pulse_on_len(port_t *port, int value);
+ICACHE_FLASH_ATTR static int        attr_get_output_pulse_on_len(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_output_pulse_on_len(port_t *port, attrdef_t *attrdef, int value);
 
-ICACHE_FLASH_ATTR static int        attr_get_output_pulse_off_len(port_t *port);
-ICACHE_FLASH_ATTR static void       attr_set_output_pulse_off_len(port_t *port, int value);
+ICACHE_FLASH_ATTR static int        attr_get_output_pulse_off_len(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_output_pulse_off_len(port_t *port, attrdef_t *attrdef, int value);
 
 
 static attrdef_t closed_input_attrdef = {
 
     .name = "closed_input",
+    .display_name = "Closed GPIO",
     .description = "Closed state input pin.",
-    .type = ATTR_TYPE_STRING,
+    .type = ATTR_TYPE_NUMBER,
     .modifiable = TRUE,
     .set = attr_set_closed_input,
     .get = attr_get_closed_input,
-    .choices = input_choices
+    .choices = all_gpio_none_choices
 
 };
 
 static attrdef_t moving_input_attrdef = {
 
     .name = "moving_input",
+    .display_name = "Moving GPIO",
     .description = "Moving state input pin.",
-    .type = ATTR_TYPE_STRING,
+    .type = ATTR_TYPE_NUMBER,
     .modifiable = TRUE,
     .set = attr_set_moving_input,
     .get = attr_get_moving_input,
-    .choices = input_choices
+    .choices = all_gpio_none_choices
 
 };
 
 static attrdef_t closed_input_level_attrdef = {
 
     .name = "closed_input_level",
+    .display_name = "Closed Input Level",
     .description = "Closed input active level.",
     .type = ATTR_TYPE_STRING,
     .modifiable = TRUE,
@@ -321,7 +317,8 @@ static attrdef_t closed_input_level_attrdef = {
 static attrdef_t debounce_duration_attrdef = {
 
     .name = "debounce_duration",
-    .description = "The time span used by the debouncing filter.",
+    .display_name = "Debounce Duration",
+    .description = "The time window used by the debouncing filter.",
     .unit = "milliseconds",
     .type = ATTR_TYPE_NUMBER,
     .modifiable = TRUE,
@@ -337,6 +334,7 @@ static attrdef_t debounce_duration_attrdef = {
 static attrdef_t closed_moving_delay_attrdef = {
 
     .name = "closed_moving_delay",
+    .display_name = "Closed/Moving Delay",
     .description = "Delay between closed and moving inputs (can be negative).",
     .unit = "milliseconds",
     .type = ATTR_TYPE_NUMBER,
@@ -353,6 +351,7 @@ static attrdef_t closed_moving_delay_attrdef = {
 static attrdef_t moving_input_level_attrdef = {
 
     .name = "moving_input_level",
+    .display_name = "Moving Input Level",
     .description = "Moving input active level.",
     .type = ATTR_TYPE_STRING,
     .modifiable = TRUE,
@@ -365,42 +364,46 @@ static attrdef_t moving_input_level_attrdef = {
 static attrdef_t open_output_attrdef = {
 
     .name = "open_output",
+    .display_name = "Open GPIO",
     .description = "Open command output pin.",
-    .type = ATTR_TYPE_STRING,
+    .type = ATTR_TYPE_NUMBER,
     .modifiable = TRUE,
     .set = attr_set_open_output,
     .get = attr_get_open_output,
-    .choices = output_choices
+    .choices = all_gpio_none_choices
 
 };
 
 static attrdef_t close_output_attrdef = {
 
     .name = "close_output",
+    .display_name = "Close GPIO",
     .description = "Close command output pin.",
-    .type = ATTR_TYPE_STRING,
+    .type = ATTR_TYPE_NUMBER,
     .modifiable = TRUE,
     .set = attr_set_close_output,
     .get = attr_get_close_output,
-    .choices = output_choices
+    .choices = all_gpio_none_choices
 
 };
 
 static attrdef_t stop_output_attrdef = {
 
     .name = "stop_output",
+    .display_name = "Stop GPIO",
     .description = "Stop command output pin.",
-    .type = ATTR_TYPE_STRING,
+    .type = ATTR_TYPE_NUMBER,
     .modifiable = TRUE,
     .set = attr_set_stop_output,
     .get = attr_get_stop_output,
-    .choices = output_choices
+    .choices = all_gpio_none_choices
 
 };
 
 static attrdef_t output_level_attrdef = {
 
     .name = "output_level",
+    .display_name = "Output Level",
     .description = "Command output active level.",
     .type = ATTR_TYPE_STRING,
     .modifiable = TRUE,
@@ -413,6 +416,7 @@ static attrdef_t output_level_attrdef = {
 static attrdef_t output_pulse_on_len_attrdef = {
 
     .name = "output_pulse_on_len",
+    .display_name = "Output Pulse ON Length",
     .description = "Command output pulse on length.",
     .unit = "milliseconds",
     .type = ATTR_TYPE_NUMBER,
@@ -429,6 +433,7 @@ static attrdef_t output_pulse_on_len_attrdef = {
 static attrdef_t output_pulse_off_len_attrdef = {
 
     .name = "output_pulse_off_len",
+    .display_name = "Output Pulse OFF Length",
     .description = "Command output pulse off length.",
     .unit = "milliseconds",
     .type = ATTR_TYPE_NUMBER,
@@ -1225,85 +1230,73 @@ int8 pop_output(port_t *port) {
     return output;
 }
 
-int attr_get_closed_input(port_t *port) {
-    int i;
+int attr_get_closed_input(port_t *port, attrdef_t *attrdef) {
     int8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + CLOSED_INPUT_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_closed_input(port, value);
+    set_closed_input(port, get_choice_value_num(attrdef->choices[value]));
 
-    for (i = 0; i < INPUT_CHOICES_LEN; i++) {
-        if (input_mapping[i] == value) {
-            /* return choice index */
-            return i;
-        }
-    }
-
-    return 0;
+    return value;
 }
 
-void attr_set_closed_input(port_t *port, int index) {
-    uint8 value = input_mapping[index];
+void attr_set_closed_input(port_t *port, attrdef_t *attrdef, int index) {
+    uint8 value = index;
 
     /* update cached value */
-    set_closed_input(port, value);
+    set_closed_input(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + CLOSED_INPUT_CONFIG_OFFS, &value, 1);
 }
 
-int attr_get_moving_input(port_t *port) {
-    int i;
+int attr_get_moving_input(port_t *port, attrdef_t *attrdef) {
     int8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + MOVING_INPUT_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_moving_input(port, value);
+    set_moving_input(port, get_choice_value_num(attrdef->choices[value]));
 
-    for (i = 0; i < INPUT_CHOICES_LEN; i++) {
-        if (input_mapping[i] == value) {
-            /* return choice index */
-            return i;
-        }
-    }
-
-    return 0;
+    return value;
 }
 
-void attr_set_moving_input(port_t *port, int index) {
-    uint8 value = input_mapping[index];
+void attr_set_moving_input(port_t *port, attrdef_t *attrdef, int index) {
+    uint8 value = index;
 
     /* update cached value */
-    set_moving_input(port, value);
+    set_moving_input(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + MOVING_INPUT_CONFIG_OFFS, &value, 1);
 }
 
-int attr_get_closed_input_level(port_t *port) {
+int attr_get_closed_input_level(port_t *port, attrdef_t *attrdef) {
+    /* value is stored in port flags so it's already loaded */
+
     /* return choice index */
     return (int) get_closed_input_level(port);
 }
 
-void attr_set_closed_input_level(port_t *port, int index) {
+void attr_set_closed_input_level(port_t *port, attrdef_t *attrdef, int index) {
     set_closed_input_level(port, !!index);
 }
 
-int attr_get_moving_input_level(port_t *port) {
+int attr_get_moving_input_level(port_t *port, attrdef_t *attrdef) {
+    /* value is stored in port flags so it's already loaded */
+
     /* return choice index */
     return (int) get_moving_input_level(port);
 }
 
-void attr_set_moving_input_level(port_t *port, int index) {
+void attr_set_moving_input_level(port_t *port, attrdef_t *attrdef, int index) {
     set_moving_input_level(port, !!index);
 }
 
-int attr_get_debounce_duration(port_t *port) {
+int attr_get_debounce_duration(port_t *port, attrdef_t *attrdef) {
     int16 value;
     uint32 duration;
 
@@ -1318,7 +1311,7 @@ int attr_get_debounce_duration(port_t *port) {
     return duration;
 }
 
-void attr_set_debounce_duration(port_t *port, int value) {
+void attr_set_debounce_duration(port_t *port, attrdef_t *attrdef, int value) {
     /* update cached value */
     set_debounce_duration(port, value);
 
@@ -1328,7 +1321,7 @@ void attr_set_debounce_duration(port_t *port, int value) {
     memcpy(port->extra_data + DEBOUNCE_DURATION_CONFIG_OFFS, &config_value, 2);
 }
 
-int attr_get_closed_moving_delay(port_t *port) {
+int attr_get_closed_moving_delay(port_t *port, attrdef_t *attrdef) {
     int16 value;
     uint32 delay;
 
@@ -1343,7 +1336,7 @@ int attr_get_closed_moving_delay(port_t *port) {
     return delay;
 }
 
-void attr_set_closed_moving_delay(port_t *port, int value) {
+void attr_set_closed_moving_delay(port_t *port, attrdef_t *attrdef, int value) {
     /* update cached value */
     set_closed_moving_delay(port, value);
 
@@ -1353,106 +1346,84 @@ void attr_set_closed_moving_delay(port_t *port, int value) {
     memcpy(port->extra_data + CLOSED_MOVING_DELAY_CONFIG_OFFS, &config_value, 2);
 }
 
-int attr_get_open_output(port_t *port) {
-    int i;
+int attr_get_open_output(port_t *port, attrdef_t *attrdef) {
     int8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + OPEN_OUTPUT_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_open_output(port, value);
+    set_open_output(port, get_choice_value_num(attrdef->choices[value]));
 
-    for (i = 0; i < OUTPUT_CHOICES_LEN; i++) {
-        if (output_mapping[i] == value) {
-            /* return choice index */
-            return i;
-        }
-    }
-
-    return 0;
+    return value;
 }
 
-void attr_set_open_output(port_t *port, int index) {
-    uint8 value = output_mapping[index];
+void attr_set_open_output(port_t *port, attrdef_t *attrdef, int index) {
+    uint8 value = index;
 
     /* update cached value */
-    set_open_output(port, value);
+    set_open_output(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + OPEN_OUTPUT_CONFIG_OFFS, &value, 1);
 }
 
-int attr_get_close_output(port_t *port) {
-    int i;
+int attr_get_close_output(port_t *port, attrdef_t *attrdef) {
     int8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + CLOSE_OUTPUT_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_close_output(port, value);
+    set_close_output(port, get_choice_value_num(attrdef->choices[value]));
 
-    for (i = 0; i < OUTPUT_CHOICES_LEN; i++) {
-        if (output_mapping[i] == value) {
-            /* return choice index */
-            return i;
-        }
-    }
-
-    return 0;
+    return value;
 }
 
-void attr_set_close_output(port_t *port, int index) {
-    uint8 value = output_mapping[index];
+void attr_set_close_output(port_t *port, attrdef_t *attrdef, int index) {
+    uint8 value = index;
 
     /* update cached value */
-    set_close_output(port, value);
+    set_close_output(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + CLOSE_OUTPUT_CONFIG_OFFS, &value, 1);
 }
 
-int attr_get_stop_output(port_t *port) {
-    int i;
+int attr_get_stop_output(port_t *port, attrdef_t *attrdef) {
     int8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + STOP_OUTPUT_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_stop_output(port, value);
+    set_stop_output(port, get_choice_value_num(attrdef->choices[value]));
 
-    for (i = 0; i < OUTPUT_CHOICES_LEN; i++) {
-        if (output_mapping[i] == value) {
-            /* return choice index */
-            return i;
-        }
-    }
-
-    return 0;
+    return value;
 }
 
-void attr_set_stop_output(port_t *port, int index) {
-    uint8 value = output_mapping[index];
+void attr_set_stop_output(port_t *port, attrdef_t *attrdef, int index) {
+    uint8 value = index;
 
     /* update cached value */
-    set_stop_output(port, value);
+    set_stop_output(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + STOP_OUTPUT_CONFIG_OFFS, &value, 1);
 }
 
-int attr_get_output_level(port_t *port) {
+int attr_get_output_level(port_t *port, attrdef_t *attrdef) {
+    /* value is stored in port flags so it's already loaded */
+
     /* return choice index */
     return (int) get_output_level(port);
 }
 
-void attr_set_output_level(port_t *port, int index) {
+void attr_set_output_level(port_t *port, attrdef_t *attrdef, int index) {
     set_output_level(port, !!index);
 }
 
-int attr_get_output_pulse_on_len(port_t *port) {
+int attr_get_output_pulse_on_len(port_t *port, attrdef_t *attrdef) {
     uint16 value;
     uint32 len;
 
@@ -1470,7 +1441,7 @@ int attr_get_output_pulse_on_len(port_t *port) {
     return len;
 }
 
-void attr_set_output_pulse_on_len(port_t *port, int value) {
+void attr_set_output_pulse_on_len(port_t *port, attrdef_t *attrdef, int value) {
     /* update cached value */
     set_output_pulse_on_len(port, value);
 
@@ -1480,7 +1451,7 @@ void attr_set_output_pulse_on_len(port_t *port, int value) {
     memcpy(port->extra_data + PULSE_ON_LEN_CONFIG_OFFS, &config_value, 2);
 }
 
-int attr_get_output_pulse_off_len(port_t *port) {
+int attr_get_output_pulse_off_len(port_t *port, attrdef_t *attrdef) {
     uint16 value;
     uint32 len;
 
@@ -1498,7 +1469,7 @@ int attr_get_output_pulse_off_len(port_t *port) {
     return len;
 }
 
-void attr_set_output_pulse_off_len(port_t *port, int value) {
+void attr_set_output_pulse_off_len(port_t *port, attrdef_t *attrdef, int value) {
     /* update cached value */
     set_output_pulse_off_len(port, value);
 

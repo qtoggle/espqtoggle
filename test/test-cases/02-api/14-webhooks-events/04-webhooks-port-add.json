@@ -3,8 +3,8 @@
     "instructions": [
         {
             "name": "json-http-client",
-			"fire_and_forget": true,
-			"fire_delay": 1000,
+            "fire_and_forget": true,
+            "fire_delay": 1000,
             "params": {
                 "method": "POST",
                 "path": "/ports",
@@ -36,13 +36,15 @@
                     "additionalProperties": false,
                     "required": ["type", "params"],
                     "properties": {
-                        "type": {"enum": ["port-add"]},
+                        "type": {
+                            "enum": ["port-add"]
+                        },
                         "params": {
                             "type": "object",
                             "additionalProperties": false,
                             "required": [
                                 "id",
-                                "description",
+                                "display_name",
                                 "unit",
                                 "writable",
                                 "enabled",
@@ -60,23 +62,57 @@
                                 "definitions"
                             ],
                             "properties": {
-                                "id": {"enum": ["test_port"]},
-                                "description": {"enum": [""]},
-                                "unit": {"enum": [""]},
-                                "writable": {"enum": [true]},
-                                "enabled": {"enum": [true]},
-                                "persisted": {"enum": [false]},
-                                "virtual": {"enum": [true]},
-                                "transform_read": {"enum": [""]},
-                                "type": {"enum": ["number"]},
-                                "min": {"enum": [0]},
-                                "max": {"enum": [100]},
-                                "step": {"enum": [5]},
-                                "integer": {"enum": [true]},
-                                "expression": {"enum": [""]},
-                                "transform_write": {"enum": [""]},
-                                "value": {"enum": [0]},
-                                "definitions": {"type": "object"}
+                                "id": {
+                                    "enum": ["test_port"]
+                                },
+                                "display_name": {
+                                    "enum": [""]
+                                },
+                                "unit": {
+                                    "enum": [""]
+                                },
+                                "writable": {
+                                    "enum": [true]
+                                },
+                                "enabled": {
+                                    "enum": [true]
+                                },
+                                "persisted": {
+                                    "enum": [false]
+                                },
+                                "virtual": {
+                                    "enum": [true]
+                                },
+                                "transform_read": {
+                                    "enum": [""]
+                                },
+                                "type": {
+                                    "enum": ["number"]
+                                },
+                                "min": {
+                                    "enum": [0]
+                                },
+                                "max": {
+                                    "enum": [100]
+                                },
+                                "step": {
+                                    "enum": [5]
+                                },
+                                "integer": {
+                                    "enum": [true]
+                                },
+                                "expression": {
+                                    "enum": [""]
+                                },
+                                "transform_write": {
+                                    "enum": [""]
+                                },
+                                "value": {
+                                    "enum": [0]
+                                },
+                                "definitions": {
+                                    "type": "object"
+                                }
                             }
                         }
                     }

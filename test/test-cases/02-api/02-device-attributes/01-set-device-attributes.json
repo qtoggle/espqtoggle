@@ -1,50 +1,50 @@
 {
-	"name": "set-device-attributes",
-	"instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/device",
-				"body": {
-				    "name": "testdevice",
-				    "description": "Test Description",
-				    "admin_password": "${TEST_PASSWORD}",
-				    "normal_password": "${TEST_PASSWORD}",
-				    "viewonly_password": "${TEST_PASSWORD}",
-				    "network_ip": "${TEST_NETWORK_DEVICE_IP}/${TEST_NETWORK_MASK}:${TEST_NETWORK_HOST_IP}:${TEST_NETWORK_HOST_IP}"
-				},
-				"expected_status": 204,
-				"expected_body": null
-			}
-		},
-		{
-			"name": "wifi-ap-start",
-			"params": {
-				"ssid": "${TEST_SSID}",
-				"psk": "${TEST_PSK}",
-				"host_ip_address": "${TEST_NETWORK_HOST_IP}/16",
-				"device_ip_address": "${TEST_NETWORK_DEVICE_IP}",
-				"start_ip_address": "${TEST_NETWORK_START_IP}",
-				"stop_ip_address": "${TEST_NETWORK_STOP_IP}",
-				"wait_device_connect": true
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/device",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body_schema": {
+    "name": "set-device-attributes",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "body": {
+                    "name": "testdevice",
+                    "display_name": "Test Display Name",
+                    "admin_password": "${TEST_PASSWORD}",
+                    "normal_password": "${TEST_PASSWORD}",
+                    "viewonly_password": "${TEST_PASSWORD}",
+                    "network_ip": "${TEST_NETWORK_DEVICE_IP}/${TEST_NETWORK_MASK}:${TEST_NETWORK_HOST_IP}:${TEST_NETWORK_HOST_IP}"
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "wifi-ap-start",
+            "params": {
+                "ssid": "${TEST_SSID}",
+                "psk": "${TEST_PSK}",
+                "host_ip_address": "${TEST_NETWORK_HOST_IP}/16",
+                "device_ip_address": "${TEST_NETWORK_DEVICE_IP}",
+                "start_ip_address": "${TEST_NETWORK_START_IP}",
+                "stop_ip_address": "${TEST_NETWORK_STOP_IP}",
+                "wait_device_connect": true
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
                     "type": "object",
                     "additionalProperties": true,
                     "required": [
                         "name",
-                        "description",
+                        "display_name",
                         "admin_password",
                         "normal_password",
                         "viewonly_password",
@@ -54,8 +54,8 @@
                         "name": {
                             "enum": ["testdevice"]
                         },
-                        "description": {
-                            "enum": ["Test Description"]
+                        "display_name": {
+                            "enum": ["Test Display Name"]
                         },
                         "admin_password": {
                             "enum": [""]
@@ -71,8 +71,8 @@
                         }
                     }
                 }
-			}
-		}
-	]
+            }
+        }
+    ]
 }
 

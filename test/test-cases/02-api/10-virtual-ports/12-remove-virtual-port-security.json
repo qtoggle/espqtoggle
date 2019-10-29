@@ -1,36 +1,36 @@
 {
     "name": "remove-virtual-port-security",
     "instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "POST",
-				"path": "/ports",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "id": "test_port",
-				    "type": "boolean"
-				},
-				"expected_status": 201
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "DELETE",
-				"path": "/ports/test_port",
-				"headers": {
-					"Authorization": "Bearer inexistent"
-				},
-				"body": {
-				    "id": "test_port",
-				    "type": "boolean"
-				},
-				"expected_status": 401
-			}
-		},
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "id": "test_port",
+                    "type": "boolean"
+                },
+                "expected_status": 201
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "DELETE",
+                "path": "/ports/test_port",
+                "headers": {
+                    "Authorization": "Bearer inexistent"
+                },
+                "body": {
+                    "id": "test_port",
+                    "type": "boolean"
+                },
+                "expected_status": 401
+            }
+        },
         {
             "name": "json-http-client",
             "params": {
@@ -39,10 +39,10 @@
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_VIEWONLY}"
                 },
-				"body": {
-				    "id": "test_port",
-				    "type": "boolean"
-				},
+                "body": {
+                    "id": "test_port",
+                    "type": "boolean"
+                },
                 "expected_status": 403
             }
         },
@@ -54,24 +54,24 @@
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_NORMAL}"
                 },
-				"body": {
-				    "id": "test_port",
-				    "type": "boolean"
-				},
+                "body": {
+                    "id": "test_port",
+                    "type": "boolean"
+                },
                 "expected_status": 403
             }
         },
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "DELETE",
-				"path": "/ports/test_port",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 204
-			}
-		}
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "DELETE",
+                "path": "/ports/test_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 204
+            }
+        }
     ]
 }
 

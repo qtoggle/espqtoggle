@@ -1,136 +1,136 @@
 {
     "name": "expressions-arithmetic",
     "instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/num_port",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "expression": "ADD(10, 20, 30)"
-				},
-				"expected_status": 204
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/ports/num_port/value",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body": 60
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/num_port",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "expression": "SUB(30, 20)"
-				},
-				"expected_status": 204
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/ports/num_port/value",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body": 10
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/num_port",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "expression": "MUL(10, 20, 30)"
-				},
-				"expected_status": 204
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/ports/num_port/value",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body": 6000
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/num_port",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "expression": "DIV(20, 10)"
-				},
-				"expected_status": 204
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/ports/num_port/value",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body": 2
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/num_port",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "expression": "MOD(23, 10)"
-				},
-				"expected_status": 204
-			}
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/ports/num_port/value",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body": 3
-			}
-		}
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "ADD(10, 20, 30)"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/num_port/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": 60
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "SUB(30, 20)"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/num_port/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": 10
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "MUL(10, 20, 30)"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/num_port/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": 6000
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "DIV(20, 10)"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/num_port/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": 2
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "MOD(23, 10)"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/num_port/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": 3
+            }
+        }
     ]
 }
 

@@ -1,12 +1,12 @@
 {
-	"name": "default-ap-mode",
-	"instructions": [
-		{
-			"name": "wifi-station-connect",
-			"params": {
-				"ssid": "esp{{DEVICE_SERIAL_NUMBER}}"
-			}
-		},
+    "name": "default-ap-mode",
+    "instructions": [
+        {
+            "name": "wifi-station-connect",
+            "params": {
+                "ssid": "esp{{DEVICE_SERIAL_NUMBER}}"
+            }
+        },
         {
             "name": "json-http-client",
             "params": {
@@ -69,18 +69,18 @@
                 }
             }
         },
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/device",
-				"body": {
-				    "network_wifi": "${TEST_SSID}:${TEST_PSK}"
-				},
-				"expected_status": 204,
-				"expected_body": null
-			}
-		}
-	]
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "body": {
+                    "network_wifi": "${TEST_SSID}:${TEST_PSK}"
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        }
+    ]
 }
 

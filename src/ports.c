@@ -40,22 +40,32 @@ ICACHE_FLASH_ATTR static void       port_save(port_t *port, uint8 *data, uint32 
 ICACHE_FLASH_ATTR static int        compare_numbers(const void *a, const void *b);
 
 
-port_t **all_ports = NULL;
-static int all_ports_count = 0;
-static uint8 next_extra_slot = PORT_SLOT_EXTRA0;
+port_t                           ** all_ports = NULL;
+char                              * all_gpio_choices[] = {"0:GPIO0", "1:GPIO1", "2:GPIO2", "3:GPIO3", "4:GPIO4",
+                                                          "5:GPIO5", "6:GPIO6", "7:GPIO7", "8:GPIO8", "9:GPIO9",
+                                                          "10:GPIO10", "11:GPIO11", "12:GPIO12", "13:GPIO13",
+                                                          "14:GPIO14", "15:GPIO15", "16:GPIO16", NULL};
+
+char                              * all_gpio_none_choices[] = {"0:GPIO0", "1:GPIO1", "2:GPIO2", "3:GPIO3", "4:GPIO4",
+                                                              "5:GPIO5", "6:GPIO6", "7:GPIO7", "8:GPIO8", "9:GPIO9",
+                                                              "10:GPIO10", "11:GPIO11", "12:GPIO12", "13:GPIO13",
+                                                              "14:GPIO14", "15:GPIO15", "16:GPIO16", "-1:none", NULL};
+
+static int                          all_ports_count = 0;
+static uint8                        next_extra_slot = PORT_SLOT_EXTRA0;
 
 
 void port_load(port_t *port, uint8 *data) {
     uint8 *base_ptr = data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * port->slot;
     char *strings_ptr = (char *) data + CONFIG_OFFS_STR_BASE;
 
-    /* description */
-    port->description = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_DESC);
-    DEBUG_PORT(port, "description = \"%s\"", port->description);
+    /* display name */
+    port->display_name = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_DISP_NAME);
+    DEBUG_PORT(port, "display_name = \"%s\"", port->display_name ? port->display_name : "");
 
     /* unit */
     port->unit = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_UNIT);
-    DEBUG_PORT(port, "unit = \"%s\"", port->unit);
+    DEBUG_PORT(port, "unit = \"%s\"", port->unit ? port->unit : "");
 
     /* flags */
     bool initially_output = port->flags & PORT_FLAG_OUTPUT;
@@ -196,9 +206,9 @@ void port_save(port_t *port, uint8 *data, uint32 *strings_offs) {
         }
     }
 
-    /* description */
-    if (!string_pool_write(strings_ptr, strings_offs, port->description, base_ptr + CONFIG_OFFS_PORT_DESC)) {
-        DEBUG_PORT(port, "no more string space to save description");
+    /* display name */
+    if (!string_pool_write(strings_ptr, strings_offs, port->display_name, base_ptr + CONFIG_OFFS_PORT_DISP_NAME)) {
+        DEBUG_PORT(port, "no more string space to save display name");
     }
 
     /* unit */
@@ -344,6 +354,16 @@ void port_register(port_t *port) {
     all_ports = realloc(all_ports, (all_ports_count + 2) * sizeof(port_t *));
     all_ports[all_ports_count++] = port;
     all_ports[all_ports_count] = NULL;
+
+    /* set min/max to UNDEFINED for all attrdefs */
+    if (port->attrdefs) {
+        attrdef_t *a, **attrdefs = port->attrdefs;
+        while ((a = *attrdefs++)) {
+            if (a->min == 0 && a->max == 0) {
+                a->min = a->max = UNDEFINED;
+            }
+        }
+    }
 
     DEBUG_PORT(port, "registered");
 }
@@ -522,7 +542,7 @@ void port_configure(port_t *port) {
         attrdef_t *a, **attrdefs = port->attrdefs;
         while ((a = *attrdefs++)) {
             if (a->get) {
-                ((int_getter_t) a->get)(port);
+                ((int_getter_t) a->get)(port, a);
             }
         }
     }

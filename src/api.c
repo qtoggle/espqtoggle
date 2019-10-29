@@ -165,9 +165,12 @@ ICACHE_FLASH_ATTR static json_t       * get_wifi(json_t *query_json, int *code);
 ICACHE_FLASH_ATTR static json_t       * port_attrdefs_to_json(port_t *port);
 ICACHE_FLASH_ATTR static json_t       * device_attrdefs_to_json(void);
 
-ICACHE_FLASH_ATTR static json_t       * attrdef_to_json(char *description, char *unit, char type, bool modifiable,
-                                                        double min, double max, bool integer, double step, char **choices,
-                                                        bool reconnect);
+ICACHE_FLASH_ATTR static json_t       * attrdef_to_json(char *display_name, char *description, char *unit, char type,
+                                                        bool modifiable, double min, double max, bool integer,
+                                                        double step, char **choices, bool reconnect);
+
+ICACHE_FLASH_ATTR static json_t       * choice_to_json(char *choice, char type);
+ICACHE_FLASH_ATTR static void           free_choices(char **choices);
 
 ICACHE_FLASH_ATTR static bool           validate_num(double value, double min, double max, bool integer,
                                                      double step, char **choices);
@@ -387,13 +390,44 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
     return response_json;
 }
 
+void api_conn_set(struct espconn *conn, int access_level) {
+    if (api_conn) {
+        DEBUG_API("overwriting existing API connection");
+    }
+
+    api_conn = conn;
+    api_access_level = access_level;
+}
+
+bool api_conn_busy(void) {
+    return !!api_conn;
+}
+
+bool api_conn_equal(struct espconn *conn) {
+    if (!api_conn) {
+        return FALSE;
+    }
+
+    return CONN_EQUAL(conn, api_conn);
+}
+
+uint8 api_conn_access_level_get(void) {
+    return api_access_level;
+}
+
+void api_conn_reset(void) {
+    api_conn = NULL;
+    api_access_level = API_ACCESS_LEVEL_NONE;
+}
+
+
 json_t *port_to_json(port_t *port) {
     json_t *json = json_obj_new();
 
     /* common to all ports */
 
     json_obj_append(json, "id", json_str_new(port->id));
-    json_obj_append(json, "description", json_str_new(port->description ? port->description : ""));
+    json_obj_append(json, "display_name", json_str_new(port->display_name ? port->display_name : ""));
     json_obj_append(json, "unit", json_str_new(port->unit ? port->unit : ""));
     json_obj_append(json, "writable", json_bool_new(IS_OUTPUT(port)));
     json_obj_append(json, "enabled", json_bool_new(IS_ENABLED(port)));
@@ -431,13 +465,15 @@ json_t *port_to_json(port_t *port) {
         if (!IS_UNDEFINED(port->step)) {
             json_obj_append(json, "step", json_double_new(port->step));
         }
-        json_obj_append(json, "integer", json_bool_new(port->integer));
+        if (port->integer) {
+            json_obj_append(json, "integer", json_bool_new(TRUE));
+        }
 
         if (port->choices) {
             json_t *list = json_list_new();
             char *c, **choices = port->choices;
             while ((c = *choices++)) {
-                json_list_append(list, json_double_new(strtod(c, NULL)));
+                json_list_append(list, choice_to_json(c, PORT_TYPE_NUMBER));
             }
 
             json_obj_append(json, "choices", list);
@@ -480,23 +516,25 @@ json_t *port_to_json(port_t *port) {
     /* extra attributes */
     if (port->attrdefs) {
         attrdef_t *a, **attrdefs = port->attrdefs;
+        int index;
         while ((a = *attrdefs++)) {
             switch (a->type) {
                 case ATTR_TYPE_BOOLEAN:
-                    json_obj_append(json, a->name, json_bool_new(((int_getter_t) a->get)(port)));
+                    json_obj_append(json, a->name, json_bool_new(((int_getter_t) a->get)(port, a)));
                     break;
 
                 case ATTR_TYPE_NUMBER:
                     if (a->choices) {
                         /* when dealing with choices, the getter returns the index inside the choices array */
-                        json_obj_append(json, a->name, json_str_new(a->choices[((int_getter_t) a->get)(port)]));
+                        index = ((int_getter_t) a->get)(port, a);
+                        json_obj_append(json, a->name, json_double_new(get_choice_value_num(a->choices[index])));
                     }
                     else {
                         if (a->integer) {
-                            json_obj_append(json, a->name, json_int_new(((int_getter_t) a->get)(port)));
+                            json_obj_append(json, a->name, json_int_new(((int_getter_t) a->get)(port, a)));
                         }
                         else { /* float */
-                            json_obj_append(json, a->name, json_int_new(((float_getter_t) a->get)(port)));
+                            json_obj_append(json, a->name, json_int_new(((float_getter_t) a->get)(port, a)));
                         }
                     }
                     break;
@@ -504,10 +542,11 @@ json_t *port_to_json(port_t *port) {
                 case ATTR_TYPE_STRING:
                     if (a->choices) {
                         /* when dealing with choices, the getter returns the index inside the choices array */
-                        json_obj_append(json, a->name, json_str_new(a->choices[((int_getter_t) a->get)(port)]));
+                        index = ((int_getter_t) a->get)(port, a);
+                        json_obj_append(json, a->name, json_str_new(get_choice_value_str(a->choices[index])));
                     }
                     else {
-                        json_obj_append(json, a->name, json_str_new(((str_getter_t) a->get)(port)));
+                        json_obj_append(json, a->name, json_str_new(((str_getter_t) a->get)(port, a)));
                     }
                     break;
             }
@@ -531,9 +570,10 @@ json_t *device_to_json(void) {
 
     /* common attributes */
     json_obj_append(json, "name", json_str_new(device_hostname));
-    json_obj_append(json, "description", json_str_new(device_description));
+    json_obj_append(json, "display_name", json_str_new(device_display_name));
     json_obj_append(json, "version", json_str_new(FW_VERSION));
     json_obj_append(json, "api_version", json_str_new(API_VERSION));
+    json_obj_append(json, "vendor", json_str_new(VENDOR));
 
     /* passwords - never reveal them */
     json_obj_append(json, "admin_password", json_str_new(""));
@@ -683,34 +723,44 @@ json_t *device_to_json(void) {
     return json;
 }
 
-void api_conn_set(struct espconn *conn, int access_level) {
-    if (api_conn) {
-        DEBUG_API("overwriting existing API connection");
+double get_choice_value_num(char *choice) {
+    return strtod(get_choice_value_str(choice), NULL);
+}
+
+char *get_choice_value_str(char *choice) {
+    static char *value = NULL;  /* acts as a reentrant buffer */
+    if (value) {
+        free(value);
+        value = NULL;
     }
 
-    api_conn = conn;
-    api_access_level = access_level;
-}
-
-bool api_conn_busy(void) {
-    return !!api_conn;
-}
-
-bool api_conn_equal(struct espconn *conn) {
-    if (!api_conn) {
-        return FALSE;
+    char *p = strchr(choice, ':');
+    if (p) {
+        value = strndup(choice, p - choice);
+    }
+    else {
+        return choice;
     }
 
-    return CONN_EQUAL(conn, api_conn);
+    return value;
 }
 
-uint8 api_conn_access_level_get(void) {
-    return api_access_level;
-}
+char *get_choice_display_name(char *choice) {
+    static char *display_name = NULL;  /* acts as a reentrant buffer */
+    if (display_name) {
+        free(display_name);
+        display_name = NULL;
+    }
 
-void api_conn_reset(void) {
-    api_conn = NULL;
-    api_access_level = API_ACCESS_LEVEL_NONE;
+    char *p = strchr(choice, ':');
+    if (p) {
+        display_name = strdup(p + 1);
+    }
+    else {
+        return NULL;
+    }
+
+    return display_name;
 }
 
 
@@ -769,15 +819,15 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
 
             httpserver_set_name(device_hostname);
         }
-        else if (!strcmp(key, "description")) {
+        else if (!strcmp(key, "display_name")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
                 return INVALID_FIELD_VALUE(key);
             }
 
-            strncpy(device_description, json_str_get(child), API_MAX_DEVICE_DESC_LEN);
-            device_description[API_MAX_DEVICE_DESC_LEN - 1] = 0;
+            strncpy(device_display_name, json_str_get(child), API_MAX_DEVICE_DISP_NAME_LEN);
+            device_display_name[API_MAX_DEVICE_DISP_NAME_LEN - 1] = 0;
             
-            DEBUG_DEVICE("description set to %s", device_description);
+            DEBUG_DEVICE("display name set to \"%s\"", device_display_name);
         }
         else if (!strcmp(key, "admin_password")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
@@ -897,11 +947,13 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
                     return INVALID_FIELD_VALUE(key);
                 }
 
-                if (!validate_num(scan_interval, WIFI_SCAN_INTERVAL_MIN, WIFI_SCAN_INTERVAL_MAX, TRUE, 0, NULL /* choices */)) {
+                if (!validate_num(scan_interval, WIFI_SCAN_INTERVAL_MIN, WIFI_SCAN_INTERVAL_MAX, /* integer = */ TRUE,
+                                  /* step = */ 0, /* choices = */ NULL)) {
                     return INVALID_FIELD_VALUE(key);
                 }
 
-                if (!validate_num(scan_threshold, WIFI_SCAN_THRESH_MIN, WIFI_SCAN_THRESH_MAX, TRUE, 0, NULL /* choices */)) {
+                if (!validate_num(scan_threshold, WIFI_SCAN_THRESH_MIN, WIFI_SCAN_THRESH_MAX, /* integer = */ TRUE,
+                                  /* step = */ 0, /* choices = */ NULL)) {
                     return INVALID_FIELD_VALUE(key);
                 }
 
@@ -915,7 +967,8 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
             }
 
             int interval = json_int_get(child);
-            if (!validate_num(interval, UNDEFINED, UNDEFINED, TRUE, 0, ping_watchdog_interval_choices)) {
+            if (!validate_num(interval, /* min = */ UNDEFINED, /* max = */ UNDEFINED, /* integer = */ TRUE,
+                              /* step = */ 0, ping_watchdog_interval_choices)) {
                 return INVALID_FIELD_VALUE(key);
             }
 
@@ -985,6 +1038,7 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
         else if (!strcmp(key, "version") ||
                  !strcmp(key, "api_version") ||
+                 !strcmp(key, "vendor") ||
 #ifdef _OTA
                  !strcmp(key, "firmware") ||
 #endif
@@ -1193,8 +1247,9 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
     }
 
     int i;
-    json_t *child, *c;
+    json_t *child, *c, *c2;
     port_t *new_port = zalloc(sizeof(port_t));
+    char *choice;
 
     /* will automatically allocate slot */
     new_port->slot = -1;
@@ -1339,18 +1394,50 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
             return INVALID_FIELD_VALUE("choices");
         }
 
-        new_port->choices = malloc((json_list_get_len(child) + 1) * sizeof(char *));
+        new_port->choices = zalloc((json_list_get_len(child) + 1) * sizeof(char *));
         for (i = 0; i < len; i++) {
             c = json_list_value_at(child, i);
-            if (json_get_type(c) == JSON_TYPE_INT) {
-                new_port->choices[i] = strdup(dtostr(json_int_get(c), /* decimals = */ 0));
-            }
-            else if (json_get_type(c) == JSON_TYPE_DOUBLE) {
-                new_port->choices[i] = strdup(dtostr(json_double_get(c), /* decimals = */ -1));
-            }
-            else {
+            if (json_get_type(c) != JSON_TYPE_OBJ) {
+                free_choices(new_port->choices);
                 free(new_port);
                 return INVALID_FIELD_VALUE("choices");
+            }
+
+            /* value */
+            c2 = json_obj_lookup_key(c, "value");
+            if (!c2) {
+                free_choices(new_port->choices);
+                free(new_port);
+                return INVALID_FIELD_VALUE("choices");
+            }
+
+            if (json_get_type(c2) == JSON_TYPE_INT) {
+                new_port->choices[i] = strdup(dtostr(json_int_get(c2), /* decimals = */ 0));
+            }
+            else if (json_get_type(c2) == JSON_TYPE_DOUBLE) {
+                new_port->choices[i] = strdup(dtostr(json_double_get(c2), /* decimals = */ -1));
+            }
+            else {
+                free_choices(new_port->choices);
+                free(new_port);
+                return INVALID_FIELD_VALUE("choices");
+            }
+
+            /* display name */
+            c2 = json_obj_lookup_key(c, "display_name");
+            if (c2) {
+                if (json_get_type(c2) != JSON_TYPE_STR) {
+                    free_choices(new_port->choices);
+                    free(new_port);
+                    return INVALID_FIELD_VALUE("choices");
+                }
+
+                choice = new_port->choices[i];
+                choice = realloc(choice, strlen(choice) + 2 + strlen(json_str_get(c2)));
+                strcat(choice, ":");
+                strcat(choice, json_str_get(c2));
+
+                new_port->choices[i] = choice;
             }
         }
 
@@ -1387,22 +1474,134 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
     int i;
     char *key;
     json_t *child;
+
+    /* handle enabled attribute first */
+    key = "enabled";
+    child = json_obj_pop_key(request_json, key);
+    if (child) {
+        if (json_get_type(child) != JSON_TYPE_BOOL) {
+            json_free(child);
+            return INVALID_FIELD_VALUE(key);
+        }
+
+        if (json_bool_get(child) && !IS_ENABLED(port)) {
+            port_enable(port);
+        }
+        else if (!json_bool_get(child) && IS_ENABLED(port)) {
+            port_disable(port);
+        }
+
+        json_free(child);
+    }
+
+    /* then handle port-specific attributes */
+    if (port->attrdefs) {
+        attrdef_t *a, **attrdefs = port->attrdefs;
+        while ((a = *attrdefs++)) {
+            key = a->name;
+            child = json_obj_pop_key(request_json, key);
+            if (child) {
+                if (!a->modifiable) {
+                    json_free(child);
+                    return ATTR_NOT_MODIFIABLE(key);
+                }
+
+                switch (a->type) {
+                    case ATTR_TYPE_BOOLEAN: {
+                        if (json_get_type(child) != JSON_TYPE_BOOL) {
+                            json_free(child);
+                            return INVALID_FIELD_VALUE(key);
+                        }
+
+                        bool value = json_bool_get(child);
+
+                        ((int_setter_t) a->set)(port, a, value);
+
+                        DEBUG_PORT(port, "%s set to %d", a->name, value);
+
+                        break;
+                    }
+
+                    case ATTR_TYPE_NUMBER: {
+                        if (json_get_type(child) != JSON_TYPE_INT &&
+                            (json_get_type(child) != JSON_TYPE_DOUBLE || a->integer)) {
+                            json_free(child);
+                            return INVALID_FIELD_VALUE(key);
+                        }
+
+                        double value = json_get_type(child) == JSON_TYPE_INT ?
+                                       json_int_get(child) : json_double_get(child);
+                        int idx = validate_num(value, a->min, a->max, a->integer, a->step, a->choices);
+                        if (!idx) {
+                            json_free(child);
+                            return INVALID_FIELD_VALUE(key);
+                        }
+
+                        if (a->choices) {
+                            ((int_setter_t) a->set)(port, a, idx - 1);
+                        }
+                        else {
+                            if (a->integer) {
+                                ((int_setter_t) a->set)(port, a, (int) value);
+                            }
+                            else { /* float */
+                                ((float_setter_t) a->set)(port, a, value);
+                            }
+                        }
+
+                        DEBUG_PORT(port, "%s set to %d", a->name, !!value);
+
+                        break;
+                    }
+
+                    case ATTR_TYPE_STRING: {
+                        if (json_get_type(child) != JSON_TYPE_STR) {
+                            json_free(child);
+                            return INVALID_FIELD_VALUE(key);
+                        }
+
+                        char *value = json_str_get(child);
+                        int idx = validate_str(value, a->choices);
+                        if (!idx) {
+                            json_free(child);
+                            return INVALID_FIELD_VALUE(key);
+                        }
+
+                        if (a->choices) {
+                            ((int_setter_t) a->set)(port, a, idx - 1);
+                        }
+                        else {
+                            ((str_setter_t) a->set)(port, a, value);
+                        }
+
+                        DEBUG_PORT(port, "%s set to %s", a->name, value);
+
+                        break;
+                    }
+                }
+
+                json_free(child);
+            }
+        }
+    }
+
+    /* finally, handle common attributes */
     for (i = 0; i < json_obj_get_len(request_json); i++) {
         key = json_obj_key_at(request_json, i);
         child = json_obj_value_at(request_json, i);
 
-        if (!strcmp(key, "description")) {
+        if (!strcmp(key, "display_name")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
                 return INVALID_FIELD_VALUE(key);
             }
 
-            free(port->description);
-            port->description = NULL;
+            free(port->display_name);
+            port->display_name = NULL;
             if (*json_str_get(child)) {
-                port->description = strndup(json_str_get(child), PORT_MAX_DESC_LEN);
+                port->display_name = strndup(json_str_get(child), PORT_MAX_DISP_NAME_LEN);
             }
 
-            DEBUG_PORT(port, "description set to \"%s\"", port->description);
+            DEBUG_PORT(port, "display_name set to \"%s\"", port->display_name);
         }
         else if (!strcmp(key, "unit")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
@@ -1416,18 +1615,6 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
             }
 
             DEBUG_PORT(port, "unit set to \"%s\"", port->unit);
-        }
-        else if (!strcmp(key, "enabled")) {
-            if (json_get_type(child) != JSON_TYPE_BOOL) {
-                return INVALID_FIELD_VALUE(key);
-            }
-
-            if (json_bool_get(child) && !IS_ENABLED(port)) {
-                port_enable(port);
-            }
-            else if (!json_bool_get(child) && IS_ENABLED(port)) {
-                port_disable(port);
-            }
         }
         else if (IS_OUTPUT(port) && !strcmp(key, "expression")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
@@ -1452,7 +1639,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                     return INVALID_FIELD_VALUE(key);
                 }
 
-                expr_t *expr = expr_parse(sexpr, strlen(sexpr));
+                expr_t *expr = expr_parse(port->id, sexpr, strlen(sexpr));
                 if (!expr) {
                     return INVALID_FIELD_VALUE(key);
                 }
@@ -1496,7 +1683,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                     return INVALID_FIELD_VALUE(key);
                 }
 
-                expr_t *transform_write = expr_parse(stransform_write, strlen(stransform_write));
+                expr_t *transform_write = expr_parse(port->id, stransform_write, strlen(stransform_write));
                 if (!transform_write) {
                     return INVALID_FIELD_VALUE(key);
                 }
@@ -1550,7 +1737,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                     return INVALID_FIELD_VALUE(key);
                 }
 
-                expr_t *transform_read = expr_parse(stransform_read, strlen(stransform_read));
+                expr_t *transform_read = expr_parse(port->id, stransform_read, strlen(stransform_read));
                 if (!transform_read) {
                     return INVALID_FIELD_VALUE(key);
                 }
@@ -1688,92 +1875,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
             return ATTR_NOT_MODIFIABLE(key);
         }
         else {
-            bool found = FALSE;
-            if (port->attrdefs) {
-                attrdef_t *a, **attrdefs = port->attrdefs;
-                while ((a = *attrdefs++)) {
-                    if (!strcmp(key, a->name)) {
-                        if (!a->modifiable) {
-                            return ATTR_NOT_MODIFIABLE(key);
-                        }
-
-                        switch (a->type) {
-                            case ATTR_TYPE_BOOLEAN: {
-                                if (json_get_type(child) != JSON_TYPE_BOOL) {
-                                    return INVALID_FIELD_VALUE(key);
-                                }
-
-                                bool value = json_bool_get(child);
-
-                                ((int_setter_t) a->set)(port, value);
-
-                                DEBUG_PORT(port, "%s set to %d", a->name, value);
-
-                                break;
-                            }
-
-                            case ATTR_TYPE_NUMBER: {
-                                if (json_get_type(child) != JSON_TYPE_INT &&
-                                    (json_get_type(child) != JSON_TYPE_DOUBLE || a->integer)) {
-                                    return INVALID_FIELD_VALUE(key);
-                                }
-
-                                double value = json_get_type(child) == JSON_TYPE_INT ?
-                                               json_int_get(child) : json_double_get(child);
-                                int idx = validate_num(value, a->min, a->max, a->integer, a->step, a->choices);
-                                if (!idx) {
-                                    return INVALID_FIELD_VALUE(key);
-                                }
-
-                                if (a->choices) {
-                                    ((int_setter_t) a->set)(port, idx - 1);
-                                }
-                                else {
-                                    if (a->integer) {
-                                        ((int_setter_t) a->set)(port, (int) value);
-                                    }
-                                    else { /* float */
-                                        ((float_setter_t) a->set)(port, value);
-                                    }
-                                }
-
-                                DEBUG_PORT(port, "%s set to %d", a->name, !!value);
-
-                                break;
-                            }
-
-                            case ATTR_TYPE_STRING: {
-                                if (json_get_type(child) != JSON_TYPE_STR) {
-                                    return INVALID_FIELD_VALUE(key);
-                                }
-
-                                char *value = json_str_get(child);
-                                int idx = validate_str(value, a->choices);
-                                if (!idx) {
-                                    return INVALID_FIELD_VALUE(key);
-                                }
-
-                                if (a->choices) {
-                                    ((int_setter_t) a->set)(port, idx - 1);
-                                }
-                                else {
-                                    ((str_setter_t) a->set)(port,  value);
-                                }
-
-                                DEBUG_PORT(port, "%s set to %s", a->name, value);
-
-                                break;
-                            }
-                        }
-
-                        found = TRUE;
-                        break;
-                    }
-                }
-            }
-            if (!found) {
-                return NO_SUCH_ATTRIBUTE(key);
-            }
+            return NO_SUCH_ATTRIBUTE(key);
         }
     }
     
@@ -1814,12 +1916,7 @@ json_t *delete_port(port_t *port, json_t *query_json, int *code) {
 
     /* free choices */
     if (port->choices) {
-        char *c, **choices = port->choices;
-        while ((c = *choices++)) {
-            free(c);
-        }
-
-        free(port->choices);
+        free_choices(port->choices);
         port->choices = NULL;
     }
 
@@ -2270,145 +2367,170 @@ json_t *get_wifi(json_t *query_json, int *code) {
 
 json_t *port_attrdefs_to_json(port_t *port) {
     json_t *json = json_obj_new();
+    json_t *attrdef_json;
 
     if (!IS_OUTPUT(port)) {
         if (port->type == PORT_TYPE_NUMBER) {
-            json_obj_append(json, "filter", attrdef_to_json(
-                            "Configures a filter for the port value.", NULL, ATTR_TYPE_STRING, TRUE /* modifiable */,
-                            UNDEFINED /* min */, UNDEFINED /* max */, FALSE /* integer */, 0 /* step */,
-                            filter_choices, FALSE /* reconnect */));
+            attrdef_json = attrdef_to_json("Filter Type", "Configures a filter for the port value.", /* unit = */ NULL,
+                                           ATTR_TYPE_STRING, /* modifiable = */ TRUE, /* min = */ UNDEFINED,
+                                           /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0, filter_choices,
+                                           /* reconnect = */FALSE);
+            json_obj_append(json, "filter", attrdef_json);
 
-            json_obj_append(json, "filter_width", attrdef_to_json(
-                            "Sets the filter width.", "samples", ATTR_TYPE_NUMBER, TRUE /* modifiable */,
-                            2 /* min */, PORT_MAX_FILTER_WIDTH /* max */, TRUE /* integer */, 0 /* step */,
-                            NULL /* choices */, FALSE /* reconnect */));
+            attrdef_json = attrdef_to_json("Filter Width", "Sets the filter width.", "samples", ATTR_TYPE_NUMBER,
+                                           /* modifiable = */ TRUE, /* min = */ 2, /* max = */ PORT_MAX_FILTER_WIDTH,
+                                           /* integer = */ TRUE, /* step = */ 0, /* choices = */ NULL,
+                                           /* reconnect */ FALSE);
+            json_obj_append(json, "filter_width", attrdef_json);
         }
         else {  /* assuming PORT_TYPE_BOOLEAN */
-            json_obj_append(json, "debounce", attrdef_to_json(
-                            "Sets the debounce filtering time.", "milliseconds", ATTR_TYPE_NUMBER,
-                            TRUE /* modifiable */, 0 /* min */, PORT_MAX_DEBOUNCE_TIME /* max */,
-                            TRUE /* integer */, 0 /* step */, NULL /* choices */, FALSE /* reconnect */));
-
+            attrdef_json = attrdef_to_json("Debounce Time", "Sets the debounce filtering time.", "milliseconds",
+                                           ATTR_TYPE_NUMBER, /* modifiable = */ TRUE, /* min = */ 0,
+                                           /* max = */ PORT_MAX_DEBOUNCE_TIME, /* integer = */ TRUE, /* step = */ 0,
+                                           /* choices = */ NULL, /* reconnect = */ FALSE);
+            json_obj_append(json, "debounce", attrdef_json);
         }
     }
 
     if (!IS_VIRTUAL(port)) {
-        json_obj_append(json, "sampling_interval", attrdef_to_json(
-                        "Indicates how often to read the port value.", "milliseconds", ATTR_TYPE_NUMBER,
-                        TRUE /* modifiable */, port->min_sampling_interval, port->max_sampling_interval,
-                        TRUE /* integer */, 0 /* step */, NULL /* choices */, FALSE /* reconnect */));
+        attrdef_json = attrdef_to_json("Sampling Interval", "Indicates how often to read the port value.",
+                                       "milliseconds", ATTR_TYPE_NUMBER, /* modifiable = */ TRUE,
+                                       port->min_sampling_interval, port->max_sampling_interval,
+                                       /* integer = */ TRUE , /* step = */ 0, /* choices = */ NULL,
+                                       /* reconnect = */ FALSE);
+        json_obj_append(json, "sampling_interval", attrdef_json);
     }
 
     if (port->attrdefs) {
         attrdef_t *a, **attrdefs = port->attrdefs;
         while ((a = *attrdefs++)) {
-            json_obj_append(json, a->name,
-                            attrdef_to_json(a->description ? a->description : "",
-                                            a->unit ? a->unit : "", a->type, a->modifiable,
-                                            a->min, a->max, a->integer, a->step, a->choices, a->reconnect));
+            json_t *attrdef_json = attrdef_to_json(a->display_name ? a->display_name : "",
+                                                   a->description ? a->description : "",
+                                                   a->unit ? a->unit : "", a->type, a->modifiable,
+                                                   a->min, a->max, a->integer, a->step, a->choices, a->reconnect);
+            json_stringify(attrdef_json);
+            json_obj_append(json, a->name, attrdef_json);
         }
     }
+
+    json_stringify(json);
 
     return json;
 }
 
 json_t *device_attrdefs_to_json(void) {
     json_t *json = json_obj_new();
+    json_t *attrdef_json;
 
-    json_obj_append(json, "frequency", attrdef_to_json(
-            "The CPU frequency.", "MHz", ATTR_TYPE_NUMBER, TRUE /* modifiable */,
-            UNDEFINED /* min */, UNDEFINED /* max */, TRUE /* integer */, 0 /* step */, frequency_choices,
-            FALSE /* reconnect */));
+    attrdef_json = attrdef_to_json("CPU Frequency", "The CPU frequency.", "MHz", ATTR_TYPE_NUMBER,
+                                   /* modifiable = */TRUE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
+                                   /* integer = */ TRUE, /* step = */ 0, frequency_choices, /* reconnect = */ FALSE);
+    json_obj_append(json, "frequency", attrdef_json);
 
-    json_obj_append(json, "network_rssi", attrdef_to_json(
-            "The measured RSSI (signal strength).", "dBm", ATTR_TYPE_NUMBER, FALSE /* modifiable */,
-            -100 /* min */, -30 /* max */, TRUE /* integer */, 0 /* step */, NULL /* choices */,
-            FALSE /* reconnect */));
+    attrdef_json = attrdef_to_json("Network RSSI", "The measured RSSI (signal strength).", "dBm", ATTR_TYPE_NUMBER,
+                                   /* modifiable = */ FALSE, /* min = */ -100, /* max = */ -30, /* integer = */ TRUE,
+                                   /* step = */ 0, /* choices = */ NULL, /* reconnect = */ FALSE);
+    json_obj_append(json, "network_rssi", attrdef_json);
 
-    json_obj_append(json, "network_bssid", attrdef_to_json(
-            "The BSSID of the currently connected AP.", NULL, ATTR_TYPE_STRING, FALSE /* modifiable */,
-            UNDEFINED /* min */, UNDEFINED /* max */, FALSE /* integer */, 0 /* step */, NULL /* choices */,
-            FALSE /* reconnect */));
+    attrdef_json = attrdef_to_json("Network BSSID", "The BSSID of the currently connected AP.", /* unit = */ NULL,
+                                   ATTR_TYPE_STRING, /* modifiable = */ FALSE, /* min = */ UNDEFINED,
+                                   /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
+                                   /* reconnect = */ FALSE);
+    json_obj_append(json, "network_bssid", attrdef_json);
 
-    json_obj_append(json, "network_scan", attrdef_to_json(
-            "Controls the WiFi scanning mode; format is <interval_seconds>:<threshold_dBm>. "
-            "Interval is between 1 and 3600 seconds; threshold is between 1 and 50 dBm. "
-            "Empty string disables scanning mode.", NULL,
-            ATTR_TYPE_STRING, TRUE /* modifiable */, UNDEFINED /* min */, UNDEFINED /* max */, FALSE /* integer */,
-            0 /* step */, NULL /* choices */, FALSE /* reconnect */));
+    attrdef_json = attrdef_to_json("Network Scan",
+                                   "Controls the WiFi scanning mode; format is <interval_seconds>:<threshold_dBm>. "
+                                   "Interval is between 1 and 3600 seconds; threshold is between 1 and 50 dBm. "
+                                   "Empty string disables scanning mode.", /* unit = */ NULL,
+                                   ATTR_TYPE_STRING, /* modifiable = */ TRUE, /* min = */ UNDEFINED,
+                                   /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
+                                   /* reconnect = */ FALSE);
+    json_obj_append(json, "network_scan", attrdef_json);
 
-    json_obj_append(json, "ping_watchdog_interval", attrdef_to_json(
-            "Sends ping requests and resets the system if the gateway is not reachable after 10 requests "
-            "(0 disables pinging).", "seconds",
-            ATTR_TYPE_NUMBER, TRUE /* modifiable */, UNDEFINED /* min */, UNDEFINED /* max */,
-            TRUE /* integer */, 0 /* step */, ping_watchdog_interval_choices, FALSE /* reconnect */));
+    attrdef_json = attrdef_to_json("Ping Watchdog Interval",
+                                   "Sends ping requests and resets the system if the gateway is not reachable after 10 "
+                                   "requests (0 disables pinging).", "seconds", ATTR_TYPE_NUMBER,
+                                   /* modifiable = */ TRUE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
+                                   /* integer = */ TRUE, /* step = */ 0, ping_watchdog_interval_choices,
+                                   /* reconnect = */ FALSE);
+    json_obj_append(json, "ping_watchdog_interval", attrdef_json);
 
 #ifdef _SLEEP
-    json_obj_append(json, "sleep_mode", attrdef_to_json(
-            "Controls the sleep mode; format is <wake_interval_minutes>:<wake_duration_seconds>. "
-            "Interval is between 1 and 10080 minutes; duration is between 10 and 3600 seconds. "
-            "Empty string disables sleep mode.", NULL,
-            ATTR_TYPE_STRING, TRUE /* modifiable */, UNDEFINED /* min */, UNDEFINED /* max */, FALSE /* integer */,
-            0 /* step */, NULL /* choices */, FALSE /* reconnect */));
+    attrdef_json = attrdef_to_json("Sleep Mode",
+                                   "Controls the sleep mode; format is <wake_interval_minutes>:<wake_duration_seconds>."
+                                   " Interval is between 1 and 10080 minutes; duration is between 10 and 3600 seconds. "
+                                   "Empty string disables sleep mode.", /* unit = */ NULL, ATTR_TYPE_STRING,
+                                   /* modifiable = */ TRUE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
+                                   /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
+                                   /* reconnect = */ FALSE);
+    json_obj_append(json, "sleep_mode", attrdef_json);
 #endif
 
 #ifdef _OTA
-    json_obj_append(json, "firmware_auto_update", attrdef_to_json(
-            "Enables automatic firmware update when detecting a newer version.", NULL, ATTR_TYPE_BOOLEAN,
-            TRUE /* modifiable */, UNDEFINED /* min */, UNDEFINED /* max */, FALSE /* integer */, 0 /* step */,
-            NULL /* choices */, FALSE /* reconnect */));
+    attrdef_json = attrdef_to_json("Firmware Auto-update",
+                                   "Enables automatic firmware update when detecting a newer version.",
+                                   /* unit = */ NULL, ATTR_TYPE_BOOLEAN, /* modifiable = */ TRUE, /* min = */ UNDEFINED,
+                                   /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
+                                   /* reconnect = */ FALSE);
+    json_obj_append(json, "firmware_auto_update", attrdef_json);
 #endif
 
 #ifdef _BATTERY
-    json_obj_append(json, "battery_voltage", attrdef_to_json(
-            "The battery voltage.", "mV", ATTR_TYPE_NUMBER,
-            FALSE /* modifiable */, UNDEFINED /* min */, UNDEFINED /* max */, FALSE /* integer */, 0 /* step */,
-            NULL /* choices */, FALSE /* reconnect */));
+    attrdef_json = attrdef_to_json("Battery Voltage", "The battery voltage.", "mV", ATTR_TYPE_NUMBER,
+                                   /* modifiable = */ FALSE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
+                                   /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
+                                   /* reconnect = */ FALSE);
+    json_obj_append(json, "battery_voltage", attrdef_json);
 #endif
 
-    json_obj_append(json, "free_mem", attrdef_to_json(
-            "The current free heap memory.", "kB", ATTR_TYPE_NUMBER, FALSE /* modifiable */,
-            UNDEFINED /* min */, UNDEFINED /* max */, TRUE /* integer */, 0 /* step */, NULL /* choices */,
-            FALSE /* reconnect */));
+    attrdef_json = attrdef_to_json("Free Memory", "The current free heap memory.", "kB", ATTR_TYPE_NUMBER,
+                                   /* modifiable = */ FALSE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
+                                   /* integer = */ TRUE, /* step = */ 0, /* choices = */ NULL, /* reconnect = */ FALSE);
+    json_obj_append(json, "free_mem", attrdef_json);
 
-    json_obj_append(json, "flash_size", attrdef_to_json(
-            "Total flash memory.", "kB", ATTR_TYPE_NUMBER, FALSE /* modifiable */,
-            UNDEFINED /* min */, UNDEFINED /* max */, TRUE /* integer */, 0 /* step */, NULL /* choices */,
-            FALSE /* reconnect */));
+    attrdef_json = attrdef_to_json("Flash Size", "Total flash memory size.", "kB", ATTR_TYPE_NUMBER,
+                                   /* modifiable = */ FALSE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
+                                   /* integer = */ TRUE, /* step = */ 0, /* choices = */ NULL, /* reconnect = */ FALSE);
+    json_obj_append(json, "flash_size", attrdef_json);
 
-    json_obj_append(json, "flash_id", attrdef_to_json(
-            "Device flash model identifier.", NULL, ATTR_TYPE_STRING, FALSE /* modifiable */,
-            UNDEFINED /* min */, UNDEFINED /* max */, FALSE /* integer */, 0 /* step */,  NULL /* choices */,
-            FALSE /* reconnect */));
+    attrdef_json = attrdef_to_json("Flash ID", "Device flash model identifier.", /* unit = */ NULL, ATTR_TYPE_STRING,
+                                   /* modifiable = */ FALSE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
+                                   /* integer = */ FALSE, /* step = */ 0,  /* choices = */ NULL,
+                                   /* reconnect = */ FALSE);
+    json_obj_append(json, "flash_id", attrdef_json);
 
-    json_obj_append(json, "chip_id", attrdef_to_json(
-            "Device chip identifier.", NULL, ATTR_TYPE_STRING, FALSE /* modifiable */,
-            UNDEFINED /* min */, UNDEFINED /* max */, FALSE /* integer */, 0 /* step */, NULL /* choices */,
-            FALSE /* reconnect */));
+    attrdef_json = attrdef_to_json("Chip ID", "Device chip identifier.", /* unit = */ NULL, ATTR_TYPE_STRING,
+                                   /* modifiable = */ FALSE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
+                                   /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
+                                   /* reconnect = */ FALSE);
+    json_obj_append(json, "chip_id", attrdef_json);
 
     if (device_config_model_choices[0]) {
-        json_obj_append(json, "config_model", attrdef_to_json(
-                "Device configuration model.", NULL, ATTR_TYPE_STRING, TRUE /* modifiable */,
-                UNDEFINED /* min */, UNDEFINED /* max */, FALSE /* integer */, 0 /* step */,
-                device_config_model_choices, FALSE /* reconnect */));
+        attrdef_json = attrdef_to_json("Configuration Model", "Device configuration model.", /* unit = */ NULL,
+                                       ATTR_TYPE_STRING, /* modifiable = */ TRUE, /* min = */ UNDEFINED,
+                                       /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0,
+                                       device_config_model_choices, /* reconnect = */ FALSE);
+        json_obj_append(json, "config_model", attrdef_json);
     }
 
 #ifdef _DEBUG
-    json_obj_append(json, "debug", attrdef_to_json(
-            "Indicates that debugging was enabled when the firmware was built.", NULL, ATTR_TYPE_BOOLEAN,
-            FALSE /* modifiable */, UNDEFINED /* min */, UNDEFINED /* max */, FALSE /* integer */, 0 /* step */,
-            NULL /* choices */, FALSE /* reconnect */));
+    attrdef_json = attrdef_to_json("Debug", "Indicates that debugging was enabled when the firmware was built.",
+                                   /* unit = */ NULL, ATTR_TYPE_BOOLEAN, /* modifiable = */ FALSE,
+                                   /* min = */ UNDEFINED, /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0,
+                                   /* choices = */ NULL, /* reconnect = */ FALSE);
+    json_obj_append(json, "debug", attrdef_json);
 #endif
 
     return json;
 }
 
-json_t *attrdef_to_json(char *description, char *unit, char type, bool modifiable,
+json_t *attrdef_to_json(char *display_name, char *description, char *unit, char type, bool modifiable,
                         double min, double max, bool integer, double step, char **choices,
                         bool reconnect) {
 
     json_t *json = json_obj_new();
 
+    json_obj_append(json, "display_name", json_str_new(display_name));
     json_obj_append(json, "description", json_str_new(description));
     if (unit) {
         json_obj_append(json, "unit", json_str_new(unit));
@@ -2438,7 +2560,10 @@ json_t *attrdef_to_json(char *description, char *unit, char type, bool modifiabl
             json_obj_append(json, "max", json_double_new(max));
         }
 
-        json_obj_append(json, "integer", json_bool_new(integer));
+        if (integer) {
+            json_obj_append(json, "integer", json_bool_new(TRUE));
+        }
+
         if (step && !IS_UNDEFINED(step)) {
             json_obj_append(json, "step", json_double_new(step));
         }
@@ -2448,12 +2573,7 @@ json_t *attrdef_to_json(char *description, char *unit, char type, bool modifiabl
         json_t *list = json_list_new();
         char *c;
         while ((c = *choices++)) {
-            if (type == ATTR_TYPE_NUMBER) {
-                json_list_append(list, json_double_new(strtod(c, NULL)));
-            }
-            else { /* assuming ATTR_TYPE_STRING */
-                json_list_append(list, json_str_new(c));
-            }
+            json_list_append(list, choice_to_json(c, type));
         }
 
         json_obj_append(json, "choices", list);
@@ -2466,8 +2586,35 @@ json_t *attrdef_to_json(char *description, char *unit, char type, bool modifiabl
     return json;
 }
 
+json_t *choice_to_json(char *choice, char type) {
+    json_t *choice_json = json_obj_new();
+
+    char *display_name = get_choice_display_name(choice);
+    if (display_name) {
+        json_obj_append(choice_json, "display_name", json_str_new(display_name));
+    }
+
+    if (type == ATTR_TYPE_NUMBER) /* also PORT_TYPE_NUMBER */ {
+        json_obj_append(choice_json, "value", json_double_new(get_choice_value_num(choice)));
+    }
+    else {
+        json_obj_append(choice_json, "value", json_str_new(get_choice_value_str(choice)));
+    }
+
+    return choice_json;
+}
+
+void free_choices(char **choices) {
+    char *c;
+    while ((c = *choices++)) {
+        free(c);
+    }
+
+    free(choices);
+}
+
 bool validate_num(double value, double min, double max, bool integer, double step, char **choices) {
-    if ((!IS_UNDEFINED(min) && value < min) || (!IS_UNDEFINED(max) && value > max)) {
+    if ((min != max) && ((!IS_UNDEFINED(min) && value < min) || (!IS_UNDEFINED(max) && value > max))) {
         return FALSE;
     }
 
@@ -2475,7 +2622,7 @@ bool validate_num(double value, double min, double max, bool integer, double ste
         char *c;
         int i = 0;
         while ((c = *choices++)) {
-            if (strtod(c, NULL) == value) {
+            if (get_choice_value_num(c) == value) {
                 return i + 1;
             }
 
@@ -2506,7 +2653,7 @@ bool validate_str(char *value, char **choices) {
         char *c;
         int i = 0;
         while ((c = *choices++)) {
-            if (!strcmp(c, value)) {
+            if (!strcmp(get_choice_value_str(c), value)) {
                 return i + 1;
             }
 

@@ -1,37 +1,37 @@
 {
     "name": "setup-mode-start-ap",
     "instructions": [
-		{
-		    "name": "device-write-gpio",
-		    "params": {
-		        "gpio": 12,
-		        "value": 0
-		    }
-		},
+        {
+            "name": "device-write-gpio",
+            "params": {
+                "gpio": 12,
+                "value": 0
+            }
+        },
         {
             "name": "sleep",
-		    "params": {
-		        "duration": 15000
-		    }
+            "params": {
+                "duration": 15000
+            }
         },
-		{
-		    "name": "device-write-gpio",
-		    "params": {
-		        "gpio": 12,
-		        "value": 1
-		    }
-		},
-		{
-			"name": "wifi-ap-stop"
-		},
-		{
-			"name": "wifi-station-connect",
-			"params": {
-				"ssid": "esp{{DEVICE_SERIAL_NUMBER}}"
-			}
-		},
-		{
-		    "name": "wifi-station-disconnect"
-		}
-	]
+        {
+            "name": "device-write-gpio",
+            "params": {
+                "gpio": 12,
+                "value": 1
+            }
+        },
+        {
+            "name": "wifi-ap-stop"
+        },
+        {
+            "name": "wifi-station-connect",
+            "params": {
+                "ssid": "esp{{DEVICE_SERIAL_NUMBER}}"
+            }
+        },
+        {
+            "name": "wifi-station-disconnect"
+        }
+    ]
 }

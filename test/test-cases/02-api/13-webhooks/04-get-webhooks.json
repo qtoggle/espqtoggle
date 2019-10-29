@@ -1,16 +1,16 @@
 {
     "name": "get-webhooks",
     "instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/webhooks",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body": {
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/webhooks",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": {
                     "enabled": true,
                     "scheme": "http",
                     "host": "{{HOST_IP_ADDRESS}}",
@@ -20,8 +20,8 @@
                     "timeout": 2,
                     "retries": 0
                 }
-			}
-		}
+            }
+        }
     ]
 }
 

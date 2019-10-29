@@ -29,6 +29,7 @@
 #include "espgoodies/system.h"
 #include "espgoodies/utils.h"
 
+#include "api.h"
 #include "ports.h"
 #include "extra/dallastemp.h"
 
@@ -51,8 +52,6 @@
 #define HEART_BEAT_INTERVAL             2000    /* milliseconds */
 
 #define GPIO_CONFIG_OFFS                0x00    /* 1 byte */
-
-#define GPIO_CHOICES_LEN                17
 
 
 typedef struct {
@@ -78,8 +77,8 @@ ICACHE_FLASH_ATTR static double         read_value(port_t *port);
 ICACHE_FLASH_ATTR static void           configure(port_t *port);
 ICACHE_FLASH_ATTR static void           heart_beat(port_t *port);
 
-ICACHE_FLASH_ATTR static int            attr_get_gpio(port_t *port);
-ICACHE_FLASH_ATTR static void           attr_set_gpio(port_t *port, int index);
+ICACHE_FLASH_ATTR static int            attr_get_gpio(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void           attr_set_gpio(port_t *port, attrdef_t *attrdef, int index);
 
 #if defined(_DEBUG) && defined(_DEBUG_DALLASTEMP)
 ICACHE_FLASH_ATTR static char *         get_model_str(uint8 *addr);
@@ -89,17 +88,13 @@ ICACHE_FLASH_ATTR static bool           valid_address(uint8 *addr);
 ICACHE_FLASH_ATTR static bool           valid_family(uint8 *addr);
 
 
-static uint8                            gpio_mapping[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-static char                           * gpio_choices[] = {"GPIO0", "GPIO1", "GPIO2", "GPIO3", "GPIO4", "GPIO5",
-                                                          "GPIO6", "GPIO7", "GPIO8", "GPIO9", "GPIO10", "GPIO11",
-                                                          "GPIO12", "GPIO13", "GPIO14", "GPIO15", "GPIO16", NULL};
-
 static attrdef_t gpio_attrdef = {
 
     .name = "gpio",
+    .display_name = "GPIO Number",
     .description = "The GPIO where the sensor is attached.",
-    .type = ATTR_TYPE_STRING,
-    .choices = gpio_choices,
+    .type = ATTR_TYPE_NUMBER,
+    .choices = all_gpio_choices,
     .modifiable = TRUE,
     .set = attr_set_gpio,
     .get = attr_get_gpio
@@ -376,31 +371,23 @@ void heart_beat(port_t *port) {
 }
 
 
-int attr_get_gpio(port_t *port) {
-    int i;
+int attr_get_gpio(port_t *port, attrdef_t *attrdef) {
     uint8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + GPIO_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_gpio(port, value);
+    set_gpio(port, get_choice_value_num(attrdef->choices[value]));
 
-    for (i = 0; i < GPIO_CHOICES_LEN; i++) {
-        if (gpio_mapping[i] == value) {
-            /* return choice index */
-            return i;
-        }
-    }
-
-    return 0;
+    return value;
 }
 
-void attr_set_gpio(port_t *port, int index) {
-    uint8 value = gpio_mapping[index];
+void attr_set_gpio(port_t *port, attrdef_t *attrdef, int index) {
+    uint8 value = index;
 
     /* update cached value */
-    set_gpio(port, value);
+    set_gpio(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + GPIO_CONFIG_OFFS, &value, 1);

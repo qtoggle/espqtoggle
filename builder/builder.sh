@@ -49,9 +49,9 @@ function release() {
     cp ${SRC_DIR}/build/user*.bin ${RELEASE_DIR}/${CONFIG_NAME}
     cp ${SRC_DIR}/build/full.bin ${RELEASE_DIR}/${CONFIG_NAME}
     
-    if [[ "${EB_VERSION}" =~ b[0-9]+$ ]]; then  # beta version
+    if [[ "${EB_VERSION}" =~ beta.[0-9]+$ ]]; then  # beta version
         latest_file="latest_beta"
-    elif [[ "${EB_VERSION}" =~ a[0-9]+$ ]]; then  # alpha version
+    elif [[ "${EB_VERSION}" =~ alpha.[0-9]+$ ]]; then  # alpha version
         latest_file="latest_alpha"
     else  # stable version
         latest_file="latest"
@@ -78,6 +78,10 @@ function clean() {
 
 if [ -n "${EB_REPO}" ]; then
     clone
+fi
+
+if [ -d "${SRC_DIR}" ]; then
+    sed -ri "s/(FW_VERSION *)\"unknown\"/\1\"${EB_VERSION}\"/" ${SRC_DIR}/src/ver.h
 fi
 
 for conf in ${EB_CONF_FILES}; do

@@ -22,8 +22,8 @@
         },
         {
             "name": "json-http-client",
-			"fire_and_forget": true,
-			"fire_delay": 1000,
+            "fire_and_forget": true,
+            "fire_delay": 1000,
             "params": {
                 "method": "DELETE",
                 "path": "/ports/test_port",
@@ -50,7 +50,9 @@
                             "additionalProperties": false,
                             "required": ["type", "params"],
                             "properties": {
-                                "type": {"enum": ["port-remove"]},
+                                "type": {
+                                    "enum": ["port-remove"]
+                                },
                                 "params": {
                                     "type": "object",
                                     "additionalProperties": false,
@@ -58,7 +60,9 @@
                                         "id"
                                     ],
                                     "properties": {
-                                        "id": {"enum": ["test_port"]}
+                                        "id": {
+                                            "enum": ["test_port"]
+                                        }
                                     }
                                 }
                             }

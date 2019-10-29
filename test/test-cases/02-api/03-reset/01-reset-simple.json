@@ -1,35 +1,35 @@
 {
-	"name": "reset-simple",
-	"instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-			    "ip_address": "${TEST_NETWORK_DEVICE_IP}",
-				"method": "POST",
-				"path": "/reset",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 204,
-				"expected_body": null
-			}
-		},
-		{
-			"name": "wifi-ap-wait-device-disconnect"
-		},
-		{
-			"name": "wifi-ap-wait-device-connect"
-		},
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "GET",
-				"path": "/device",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"expected_status": 200,
-				"expected_body_schema": {
+    "name": "reset-simple",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "ip_address": "${TEST_NETWORK_DEVICE_IP}",
+                "method": "POST",
+                "path": "/reset",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "wifi-ap-wait-device-disconnect"
+        },
+        {
+            "name": "wifi-ap-wait-device-connect"
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
                     "type": "object",
                     "additionalProperties": true,
                     "required": [
@@ -41,8 +41,8 @@
                         }
                     }
                 }
-			}
-		}
-	]
+            }
+        }
+    ]
 }
 

@@ -144,14 +144,14 @@ workflows:
           context: qtoggle-global
           filters:
             tags:
-              only: /^version-[0-9.]+(b[0-9.]+)?$/
+              only: /^version-.*$/
             branches:
               ignore: /.*/
       - release-approval:
           type: approval
           filters:
             tags:
-              only: /^version-[0-9.]+(b[0-9.]+)?$/
+              only: /^version-.*$/
             branches:
               ignore: /.*/
       - release:
@@ -161,6 +161,6 @@ workflows:
             - release-approval
           filters:
             tags:
-              only: /^version-[0-9.]+(b[0-9.]+)?$/
+              only: /^version-.*$/
             branches:
               ignore: /.*/

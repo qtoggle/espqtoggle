@@ -1,22 +1,22 @@
 {
     "name": "webhooks-port-update",
     "instructions": [
-		{
-			"name": "json-http-client",
-			"fire_and_forget": true,
-			"fire_delay": 1000,
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/gpio0",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "description": "test description {{TEST_CASE_NAME}}"
-				},
-				"expected_status": 204
-			}
-		},
+        {
+            "name": "json-http-client",
+            "fire_and_forget": true,
+            "fire_delay": 1000,
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "display_name": "test display name {{TEST_CASE_NAME}}"
+                },
+                "expected_status": 204
+            }
+        },
         {
             "name": "json-http-server",
             "params": {
@@ -31,12 +31,14 @@
                     "additionalProperties": false,
                     "required": ["type", "params"],
                     "properties": {
-                        "type": {"enum": ["port-update"]},
+                        "type": {
+                            "enum": ["port-update"]
+                        },
                         "params":  {
                             "type": "object",
                             "required": [
                                 "id",
-                                "description",
+                                "display_name",
                                 "unit",
                                 "writable",
                                 "enabled",
@@ -51,8 +53,8 @@
                                 "id": {
                                     "enum": ["gpio0"]
                                 },
-                                "description": {
-                                    "enum": ["test description {{TEST_CASE_NAME}}"]
+                                "display_name": {
+                                    "enum": ["test display name {{TEST_CASE_NAME}}"]
                                 },
                                 "unit": {
                                     "type": "string"

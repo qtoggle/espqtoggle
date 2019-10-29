@@ -25,9 +25,12 @@
 #include "utils.h"
 #include "json.h"
 
+
 #define ctx_get_size(ctx)           ((ctx)->stack_size)
 #define ctx_has_key(ctx)            ((ctx)->stack_size > 0 && (ctx)->stack[(ctx)->stack_size - 1].key != NULL)
 #define ctx_get_key(ctx)            ((ctx)->stack_size > 0 ? (ctx)->stack[(ctx)->stack_size - 1].key : NULL)
+
+#define STRINGIFIED_CHUNK_SIZE      128
 
 
 typedef struct {
@@ -45,7 +48,7 @@ typedef struct {
 } ctx_t;
 
 
-ICACHE_FLASH_ATTR static void       json_dump_rec(json_t *json, char **output, int *len, int *size, bool also_free);
+ICACHE_FLASH_ATTR static void       json_dump_rec(json_t *json, char **output, int *len, int *size, uint8 free_mode);
 
 ICACHE_FLASH_ATTR static ctx_t    * ctx_new(char *input);
 ICACHE_FLASH_ATTR static void       ctx_set_key(ctx_t *ctx, char *key);
@@ -101,7 +104,7 @@ json_t *json_parse(char *input) {
             case '}':
                 json = ctx_get_current(ctx);
                 if (!json || json_get_type(json) != JSON_TYPE_OBJ ||
-                    (waiting_elem && json_obj_get_len(json) > 0)) {
+                    (waiting_elem && json_obj_get_len(json) > 0) || ctx_has_key(ctx)) {
 
                     DEBUG("unexpected character %c at pos %d", c, pos);
                     ctx_free(ctx);
@@ -420,15 +423,27 @@ json_t *json_parse(char *input) {
     return root;
 }
 
-char *json_dump(json_t *json, bool also_free) {
+char *json_dump(json_t *json, uint8 free_mode) {
     char *output = NULL;
     int len = 0, size = 0;
     
-    json_dump_rec(json, &output, &len, &size, also_free);
+    json_dump_rec(json, &output, &len, &size, free_mode);
     size = realloc_chunks(&output, size, len + 1);
     output[len] = 0;
 
     return output;
+}
+
+char *json_dump_r(json_t *json, uint8 free_mode) {
+    int len = 0;
+    static char *dump_buffer = NULL;
+    static int dump_buffer_size = 0;
+
+    json_dump_rec(json, &dump_buffer, &len, &dump_buffer_size, free_mode);
+    dump_buffer_size = realloc_chunks(&dump_buffer, dump_buffer_size, len + 1);
+    dump_buffer[len] = 0;
+
+    return dump_buffer;
 }
 
 void json_stringify(json_t *json) {
@@ -436,57 +451,41 @@ void json_stringify(json_t *json) {
         return; /* already stringified */
     }
 
-    int i;
-    char *stringified = json_dump(json, FALSE /* also_free */);
+    char *stringified = json_dump_r(json, /* free_mode = */ JSON_FREE_MEMBERS);
 
-    /* partial free */
-    switch (json->type) {
-        case JSON_TYPE_NULL:
-        case JSON_TYPE_BOOL:
-        case JSON_TYPE_INT:
-        case JSON_TYPE_DOUBLE:
-            break;
+    uint16 i = 0, chunks = 0, chunk, pos;
+    char c, *s = stringified;
 
-        case JSON_TYPE_STR:
-            free(json->str_value);
-            break;
+    while ((c = *s++)) {
+        chunk = i / STRINGIFIED_CHUNK_SIZE;
+        pos = i % STRINGIFIED_CHUNK_SIZE;
 
-        case JSON_TYPE_LIST:
-            for (i = 0; i < json->list_data.len; i++) {
-                json_free(json->list_data.children[i]);
-            }
-            free(json->list_data.children);
-            break;
+        if (chunk >= chunks) {
+            json->stringified_data.chunks = realloc(json->stringified_data.chunks, sizeof(char *) * ++chunks);
+            json->stringified_data.chunks[chunk] = malloc(STRINGIFIED_CHUNK_SIZE);
+        }
 
-        case JSON_TYPE_OBJ:
-            for (i = 0; i < json->obj_data.len; i++) {
-                free(json->obj_data.keys[i]);
-                json_free(json->obj_data.children[i]);
-            }
-            free(json->obj_data.keys);
-            free(json->obj_data.children);
-            break;
+        json->stringified_data.chunks[chunk][pos] = c;
+        i++;
     }
 
-    json->str_value = stringified;
+    json->stringified_data.len = i;
     json->type = JSON_TYPE_STRINGIFIED;
 }
 
 void json_free(json_t *json) {
-    int i;
+    int i, n, r;
 
     switch (json->type) {
         case JSON_TYPE_NULL:
         case JSON_TYPE_BOOL:
         case JSON_TYPE_INT:
         case JSON_TYPE_DOUBLE:
-            free(json);
+        case JSON_TYPE_MEMBERS_FREED:
             break;
 
         case JSON_TYPE_STR:
-        case JSON_TYPE_STRINGIFIED:
             free(json->str_value);
-            free(json);
             break;
 
         case JSON_TYPE_LIST:
@@ -494,7 +493,6 @@ void json_free(json_t *json) {
                 json_free(json->list_data.children[i]);
             }
             free(json->list_data.children);
-            free(json);
             break;
 
         case JSON_TYPE_OBJ:
@@ -504,20 +502,97 @@ void json_free(json_t *json) {
             }
             free(json->obj_data.keys);
             free(json->obj_data.children);
-            free(json);
+            break;
+
+        case JSON_TYPE_STRINGIFIED:
+            n = json->stringified_data.len / STRINGIFIED_CHUNK_SIZE;
+            r = json->stringified_data.len % STRINGIFIED_CHUNK_SIZE;
+            if (r) {
+                n++;
+            }
+
+            for (i = 0; i < n; i++) {
+                free(json->stringified_data.chunks[i]);
+            }
+            free(json->stringified_data.chunks);
+
+            json->stringified_data.chunks = NULL;
+            json->stringified_data.len = 0;
+
             break;
     }
+
+    free(json);
 }
 
-json_t *json_obj_lookup_key(json_t *json, char *key) {
-    int i;
-    for (i = 0; i < json->obj_data.len; i++) {
-        if (!strcmp(key, json->obj_data.keys[i])) {
-            return json->obj_data.children[i];
-        }
-    }
+json_t *json_dup(json_t *json) {
+    switch (json->type) {
+        case JSON_TYPE_NULL:
+            return json_null_new();
 
-    return NULL;
+        case JSON_TYPE_BOOL:
+            return json_bool_new(json_bool_get(json));
+
+        case JSON_TYPE_INT:
+            return json_int_new(json_int_get(json));
+
+        case JSON_TYPE_DOUBLE:
+            return json_double_new(json_double_get(json));
+
+        case JSON_TYPE_STR:
+            return json_str_new(json_str_get(json));
+
+        case JSON_TYPE_LIST: {
+            json_t *list = json_list_new();
+            int i;
+            for (i = 0; i < json->list_data.len; i++) {
+                json_list_append(list, json_dup(json->list_data.children[i]));
+            }
+
+            return list;
+        }
+
+        case JSON_TYPE_OBJ: {
+            json_t *obj = json_obj_new();
+            int i;
+            for (i = 0; i < json->obj_data.len; i++) {
+                json_obj_append(obj,
+                                json->obj_data.keys[i],
+                                json_dup(json->obj_data.children[i]));
+            }
+
+            return obj;
+        }
+
+        case JSON_TYPE_STRINGIFIED: {
+            int i, n, r;
+
+            json_t *new_json = malloc(sizeof(json_t));
+            new_json->type = JSON_TYPE_STRINGIFIED;
+            new_json->stringified_data.len = json->stringified_data.len;
+
+            n = json->stringified_data.len / STRINGIFIED_CHUNK_SIZE;
+            r = json->stringified_data.len % STRINGIFIED_CHUNK_SIZE;
+            if (r) {
+                n++;
+            }
+
+            new_json->stringified_data.chunks = malloc(sizeof(char *) * n);
+            for (i = 0; i < n; i++) {
+                new_json->stringified_data.chunks[i] = malloc(STRINGIFIED_CHUNK_SIZE);
+                memcpy(new_json->stringified_data.chunks[i], json->stringified_data.chunks[i], STRINGIFIED_CHUNK_SIZE);
+            }
+
+            return new_json;
+        }
+
+        case JSON_TYPE_MEMBERS_FREED:
+            DEBUG("cannot duplicate JSON with freed members");
+            return NULL;
+
+        default:
+            return NULL;
+    }
 }
 
 json_t *json_null_new() {
@@ -570,8 +645,64 @@ json_t *json_list_new() {
 }
 
 void json_list_append(json_t *json, json_t *child) {
+    JSON_ASSERT_TYPE(json, JSON_TYPE_LIST);
+
     json->list_data.children = realloc(json->list_data.children, sizeof(json_t *) * (json->list_data.len + 1));
     json->list_data.children[(int) json->list_data.len++] = child;
+}
+
+json_t *json_list_pop_at(json_t *json, uint32 index) {
+    json_t *child = json->obj_data.children[index];
+
+    int i;
+    for (i = index; i < json->list_data.len - 1; i++) {
+        json->list_data.children[i] = json->list_data.children[i + 1];
+    }
+
+    json->list_data.len--;
+
+    return child;
+}
+
+json_t *json_obj_lookup_key(json_t *json, char *key) {
+    JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ);
+
+    int i;
+    for (i = 0; i < json->obj_data.len; i++) {
+        if (!strcmp(key, json->obj_data.keys[i])) {
+            return json->obj_data.children[i];
+        }
+    }
+
+    return NULL;
+}
+
+json_t *json_obj_pop_key(json_t *json, char *key) {
+    JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ);
+
+    int i, p = -1;
+    for (i = 0; i < json->obj_data.len; i++) {
+        if (!strcmp(key, json->obj_data.keys[i])) {
+            p = i;
+            break;
+        }
+    }
+
+    if (p < 0) {
+        return NULL;
+    }
+
+    json_t *child = json->obj_data.children[p];
+    free(json->obj_data.keys[p]);
+
+    for (i = p; i < json->obj_data.len - 1; i++) {
+        json->obj_data.children[i] = json->obj_data.children[i + 1];
+        json->obj_data.keys[i] = json->obj_data.keys[i + 1];
+    }
+
+    json->obj_data.len--;
+
+    return child;
 }
 
 json_t *json_obj_new() {
@@ -586,67 +717,17 @@ json_t *json_obj_new() {
 }
 
 void json_obj_append(json_t *json, char *key, json_t *child) {
+    JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ);
+
     json->obj_data.children = realloc(json->obj_data.children, sizeof(json_t *) * (json->obj_data.len + 1));
     json->obj_data.keys = realloc(json->obj_data.keys, sizeof(char *) * (json->obj_data.len + 1));
     json->obj_data.keys[(int) json->obj_data.len] = strdup(key);
     json->obj_data.children[(int) json->obj_data.len++] = child;
 }
 
-json_t *json_dup(json_t *json) {
-    switch (json->type) {
-        case JSON_TYPE_NULL:
-            return json_null_new();
 
-        case JSON_TYPE_BOOL:
-            return json_bool_new(json_bool_get(json));
-
-        case JSON_TYPE_INT:
-            return json_int_new(json_int_get(json));
-
-        case JSON_TYPE_DOUBLE:
-            return json_double_new(json_double_get(json));
-
-        case JSON_TYPE_STR:
-            return json_str_new(json_str_get(json));
-
-        case JSON_TYPE_LIST: {
-            json_t *list = json_list_new();
-            int i;
-            for (i = 0; i < json->list_data.len; i++) {
-                json_list_append(list, json_dup(json->list_data.children[i]));
-            }
-
-            return list;
-        }
-
-        case JSON_TYPE_OBJ: {
-            json_t *obj = json_obj_new();
-            int i;
-            for (i = 0; i < json->obj_data.len; i++) {
-                json_obj_append(obj,
-                                json->obj_data.keys[i],
-                                json_dup(json->obj_data.children[i]));
-            }
-
-            return obj;
-        }
-
-        case JSON_TYPE_STRINGIFIED: {
-            json_t *new_json = malloc(sizeof(json_t));
-            new_json->type = JSON_TYPE_STRINGIFIED;
-            new_json->str_value = strdup(json->str_value);
-
-            return new_json;
-        }
-
-        default:
-            return NULL;
-    }
-}
-
-
-void json_dump_rec(json_t *json, char **output, int *len, int *size, bool also_free) {
-    int i, l;
+void json_dump_rec(json_t *json, char **output, int *len, int *size, uint8 free_mode) {
+    int i, l, n, r;
     char s[32], *s2, c;
     
     switch (json->type) {
@@ -764,7 +845,8 @@ void json_dump_rec(json_t *json, char **output, int *len, int *size, bool also_f
             *size = realloc_chunks(output, *size, *len + 1);
             (*output)[(*len)++] = '[';
             for (i = 0; i < json->list_data.len; i++) {
-                json_dump_rec(json->list_data.children[i], output, len, size, also_free);
+                json_dump_rec(json->list_data.children[i], output, len, size,
+                              free_mode >= JSON_FREE_MEMBERS ? JSON_FREE_EVERYTHING : JSON_FREE_NOTHING);
                 if (i < json->list_data.len - 1) {
                     *size = realloc_chunks(output, *size, *len + 1);
                     (*output)[(*len)++] = ',';
@@ -773,7 +855,7 @@ void json_dump_rec(json_t *json, char **output, int *len, int *size, bool also_f
             *size = realloc_chunks(output, *size, *len + 1);
             (*output)[(*len)++] = ']';
 
-            if (also_free) {
+            if (free_mode >= JSON_FREE_MEMBERS) {
                 json->list_data.len = 0;
             }
 
@@ -791,36 +873,89 @@ void json_dump_rec(json_t *json, char **output, int *len, int *size, bool also_f
                 (*output)[*len - 2] = '"';
                 (*output)[*len - 1] = ':';
 
-                json_dump_rec(json->obj_data.children[i], output, len, size, also_free);
+                json_dump_rec(json->obj_data.children[i], output, len, size,
+                              free_mode >= JSON_FREE_MEMBERS ? JSON_FREE_EVERYTHING : JSON_FREE_NOTHING);
                 if (i < json->obj_data.len - 1) {
                     *size = realloc_chunks(output, *size, *len + 1);
                     (*output)[(*len)++] = ',';
                 }
 
-                if (also_free) {
+                if (free_mode >= JSON_FREE_MEMBERS) {
                     free(json->obj_data.keys[i]);
                 }
             }
             *size = realloc_chunks(output, *size, *len + 1);
             (*output)[(*len)++] = '}';
 
-            if (also_free) {
+            if (free_mode >= JSON_FREE_MEMBERS) {
                 json->obj_data.len = 0;
             }
 
             break;
 
         case JSON_TYPE_STRINGIFIED:
-            l = strlen(json_str_get(json));
-            *size = realloc_chunks(output, *size, *len + l);
-            strncpy(*output + *len, json_str_get(json), l);
-            *len += l;
+            n = json->stringified_data.len / STRINGIFIED_CHUNK_SIZE;
+            r = json->stringified_data.len % STRINGIFIED_CHUNK_SIZE;
 
+            for (i = 0; i < n; i++) {
+                *size = realloc_chunks(output, *size, *len + STRINGIFIED_CHUNK_SIZE);
+                memcpy(*output + *len, json->stringified_data.chunks[i], STRINGIFIED_CHUNK_SIZE);
+                *len += STRINGIFIED_CHUNK_SIZE;
+            }
+
+            if (r) {
+                *size = realloc_chunks(output, *size, *len + r);
+                memcpy(*output + *len, json->stringified_data.chunks[i], r);
+                *len += r;
+            }
+
+            break;
+
+        case JSON_TYPE_MEMBERS_FREED:
+            DEBUG("cannot dump JSON with freed members");
             break;
     }
 
-    if (also_free) {
+    if (free_mode >= JSON_FREE_EVERYTHING) {
         json_free(json);
+    }
+    else if (free_mode == JSON_FREE_MEMBERS) {
+        switch (json->type) {
+            case JSON_TYPE_STR:
+                free(json->str_value);
+                json->str_value = NULL;
+                break;
+
+            case JSON_TYPE_LIST:
+                free(json->list_data.children);
+                json->list_data.children = NULL;
+                break;
+
+            case JSON_TYPE_OBJ:
+                free(json->obj_data.keys);
+                json->obj_data.keys = NULL;
+                free(json->obj_data.children);
+                json->obj_data.children = NULL;
+                break;
+
+            case JSON_TYPE_STRINGIFIED:
+                n = json->stringified_data.len / STRINGIFIED_CHUNK_SIZE;
+                r = json->stringified_data.len % STRINGIFIED_CHUNK_SIZE;
+                if (r) {
+                    n++;
+                }
+
+                for (i = 0; i < n; i++) {
+                    free(json->stringified_data.chunks[i]);
+                }
+                free(json->stringified_data.chunks);
+
+                json->stringified_data.chunks = NULL;
+                json->stringified_data.len = 0;
+
+        }
+
+        json->type = JSON_TYPE_MEMBERS_FREED;
     }
 }
 

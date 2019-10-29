@@ -1,23 +1,23 @@
 {
-	"name": "set-port-attributes-attribute-not-modifiable",
-	"instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/gpio0",
-				"headers": {
-					"Authorization": "Bearer ${TEST_JWT_ADMIN}"
-				},
-				"body": {
-				    "id": "dummy"
-				},
-				"expected_status": 400,
-				"expected_body": {
-				    "error": "attribute not modifiable: id"
-				}
-			}
-		}
-	]
+    "name": "set-port-attributes-attribute-not-modifiable",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "id": "dummy"
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "attribute not modifiable: id"
+                }
+            }
+        }
+    ]
 }
 

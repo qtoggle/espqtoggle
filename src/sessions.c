@@ -200,12 +200,8 @@ void session_push(session_t *session, int type, json_t *params, port_t *port) {
     session->queue = n;
     session->queue_len++;
 
-#ifdef _DEBUG
-    char *sparams = json_dump(params, /* also_free = */ FALSE);
-    DEBUG_SESSION(session->id, "pushing event of type \"%s\": %s (size=%d)", EVENT_TYPES_STR[type], sparams,
+    DEBUG_SESSION(session->id, "pushing event of type \"%s\" (queue length=%d)", EVENT_TYPES_STR[type],
                   session->queue_len);
-    free(sparams);
-#endif
 }
 
 void session_free(session_t *session) {

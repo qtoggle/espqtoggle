@@ -21,13 +21,11 @@
 
 
 #define API_VERSION             "1.0"
-#define FW_VERSION              "0.9.1b4"
+#define FW_VERSION              "unknown"
+#define VENDOR                  "qtoggle/espqtoggle"
 
-#define version_is_beta()       ((FW_VERSION[strlen(FW_VERSION) - 2] == 'b') || \
-                                 (FW_VERSION[strlen(FW_VERSION) - 3] == 'b'))
-
-#define version_is_alpha()      ((FW_VERSION[strlen(FW_VERSION) - 2] == 'a') || \
-                                 (FW_VERSION[strlen(FW_VERSION) - 3] == 'a'))
+#define version_is_alpha()      strstr(FW_VERSION, "-alpha")
+#define version_is_beta()       strstr(FW_VERSION, "-beta")
 
 
 #endif /* _VERSION_H */

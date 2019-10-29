@@ -56,9 +56,9 @@ void device_load(uint8 *data) {
     uint16 wake_interval, wake_duration;
 #endif
 
-    /* device name & description */
+    /* device name */
     memcpy(device_hostname, data + CONFIG_OFFS_HOSTNAME, API_MAX_DEVICE_NAME_LEN);
-    memcpy(device_description, data + CONFIG_OFFS_DESCRIPTION, API_MAX_DEVICE_DESC_LEN);
+    memcpy(device_display_name, data + CONFIG_OFFS_DISP_NAME, API_MAX_DEVICE_DISP_NAME_LEN);
 
     /* passwords */
     memcpy(device_admin_password_hash, data + CONFIG_OFFS_ADMIN_PASSWORD, SHA256_LEN);
@@ -210,9 +210,9 @@ void device_save(uint8 *data, uint32 *strings_offs) {
     uint16 wake_duration = sleep_get_wake_duration();
 #endif
 
-    /* device name & description */
+    /* device name */
     memcpy(data + CONFIG_OFFS_HOSTNAME, device_hostname, API_MAX_DEVICE_NAME_LEN);
-    memcpy(data + CONFIG_OFFS_DESCRIPTION, device_description, API_MAX_DEVICE_DESC_LEN);
+    memcpy(data + CONFIG_OFFS_DISP_NAME, device_display_name, API_MAX_DEVICE_DISP_NAME_LEN);
 
     /* passwords - stored as binary digests */
     uint8 *digest = hex2bin(device_admin_password_hash);
@@ -314,7 +314,7 @@ void config_init(void) {
     port_t *p, **port = all_ports;
     while ((p = *port++)) {
         if (p->sexpr) {
-            p->expr = expr_parse(p->sexpr, strlen(p->sexpr));
+            p->expr = expr_parse(p->id, p->sexpr, strlen(p->sexpr));
             if (p->expr) {
                 DEBUG_PORT(p, "value expression successfully parsed");
             }
@@ -326,7 +326,7 @@ void config_init(void) {
         }
 
         if (p->stransform_write) {
-            p->transform_write = expr_parse(p->stransform_write, strlen(p->stransform_write));
+            p->transform_write = expr_parse(p->id, p->stransform_write, strlen(p->stransform_write));
             if (p->transform_write) {
                 DEBUG_PORT(p, "write transform successfully parsed");
             }
@@ -338,7 +338,7 @@ void config_init(void) {
         }
 
         if (p->stransform_read) {
-            p->transform_read = expr_parse(p->stransform_read, strlen(p->stransform_read));
+            p->transform_read = expr_parse(p->id, p->stransform_read, strlen(p->stransform_read));
             if (p->transform_read) {
                 DEBUG_PORT(p, "read transform successfully parsed");
             }

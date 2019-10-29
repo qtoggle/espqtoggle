@@ -28,6 +28,7 @@
 #include "espgoodies/utils.h"
 
 #include "events.h"
+#include "api.h"
 #include "ports.h"
 #include "extra/dht.h"
 
@@ -59,8 +60,6 @@
 #define MODEL_CONFIG_OFFS               0x00    /* 1 byte */
 #define GPIO_CONFIG_OFFS                0x01    /* 1 byte */
 #define RETRIES_CONFIG_OFFS             0x05    /* 1 byte */
-
-#define GPIO_CHOICES_LEN                8
 
 
 typedef struct {
@@ -102,14 +101,14 @@ ICACHE_FLASH_ATTR static double         read_humidity(port_t *port);
 ICACHE_FLASH_ATTR static void           configure_humidity(port_t *port);
 #endif
 
-ICACHE_FLASH_ATTR static int            attr_get_model(port_t *port);
-ICACHE_FLASH_ATTR static void           attr_set_model(port_t *port, int value);
+ICACHE_FLASH_ATTR static int            attr_get_model(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void           attr_set_model(port_t *port, attrdef_t *attrdef, int value);
 
-ICACHE_FLASH_ATTR static int            attr_get_gpio(port_t *port);
-ICACHE_FLASH_ATTR static void           attr_set_gpio(port_t *port, int index);
+ICACHE_FLASH_ATTR static int            attr_get_gpio(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void           attr_set_gpio(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static int            attr_get_retries(port_t *port);
-ICACHE_FLASH_ATTR static void           attr_set_retries(port_t *port, int value);
+ICACHE_FLASH_ATTR static int            attr_get_retries(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void           attr_set_retries(port_t *port, attrdef_t *attrdef, int value);
 
 #if defined(_DEBUG) && defined(_DEBUG_DHT)
 ICACHE_FLASH_ATTR static char *         get_model_str(port_t *port);
@@ -124,14 +123,12 @@ ICACHE_FLASH_ATTR static bool           read_wire(port_t *port);
 ICACHE_FLASH_ATTR static void           write_wire(port_t *port, bool value);
 
 
-static char                           * model_choices[] = {"DHT11", "DHT22", NULL};
-static uint8                            gpio_mapping[] = {0, 2, 4, 5, 12, 13, 14, 15};
-static char                           * gpio_choices[] = {"gpio 0", "gpio 2", "gpio 4", "gpio 5", "gpio 12", "gpio 13",
-                                                          "gpio 14", "gpio 15", NULL};
+static char                           * model_choices[] = {"dht11:DHT11", "dht22:DHT22", NULL};
 
 static attrdef_t model_attrdef = {
 
     .name = "model",
+    .display_name = "Model",
     .description = "The sensor model.",
     .type = ATTR_TYPE_STRING,
     .choices = model_choices,
@@ -144,9 +141,10 @@ static attrdef_t model_attrdef = {
 static attrdef_t gpio_attrdef = {
 
     .name = "gpio",
+    .display_name = "GPIO Number",
     .description = "The GPIO where the sensor is attached.",
-    .type = ATTR_TYPE_STRING,
-    .choices = gpio_choices,
+    .type = ATTR_TYPE_NUMBER,
+    .choices = all_gpio_choices,
     .modifiable = TRUE,
     .set = attr_set_gpio,
     .get = attr_get_gpio
@@ -156,6 +154,7 @@ static attrdef_t gpio_attrdef = {
 static attrdef_t retries_attrdef = {
 
     .name = "retries",
+    .display_name = "Retries",
     .description = "The number of measurement retries, in case of error.",
     .type = ATTR_TYPE_NUMBER,
     .modifiable = TRUE,
@@ -463,69 +462,63 @@ void configure_humidity(port_t *port) {
 
 #endif  /* HAS_DHT0H || HAS_DHT1H || HAS_DHT2H */
 
-int attr_get_model(port_t *port) {
+int attr_get_model(port_t *port, attrdef_t *attrdef) {
     uint8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + MODEL_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_model(port, value);
+    set_model(port, get_choice_value_num(attrdef->choices[value]));
 
     return value;
 }
 
-void attr_set_model(port_t *port, int value) {
+void attr_set_model(port_t *port, attrdef_t *attrdef, int index) {
+    uint8 value = index;
+
     /* update cached value */
-    set_model(port, value);
+    set_model(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + MODEL_CONFIG_OFFS, &value, 1);
 }
 
-int attr_get_gpio(port_t *port) {
-    int i;
+int attr_get_gpio(port_t *port, attrdef_t *attrdef) {
     uint8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + GPIO_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_gpio(port, value);
+    set_gpio(port, get_choice_value_num(attrdef->choices[value]));
 
-    for (i = 0; i < GPIO_CHOICES_LEN; i++) {
-        if (gpio_mapping[i] == value) {
-            /* return choice index */
-            return i;
-        }
-    }
-
-    return 0;
+    return value;
 }
 
-void attr_set_gpio(port_t *port, int index) {
-    uint8 value = gpio_mapping[index];
+void attr_set_gpio(port_t *port, attrdef_t *attrdef, int index) {
+    uint8 value = index;
 
     /* update cached value */
-    set_gpio(port, value);
+    set_gpio(port, get_choice_value_num(attrdef->choices[value]));
 
     /* write to persisted data */
     memcpy(port->extra_data + GPIO_CONFIG_OFFS, &value, 1);
 }
 
-int attr_get_retries(port_t *port) {
+int attr_get_retries(port_t *port, attrdef_t *attrdef) {
     uint8 value;
 
     /* read from persisted data */
     memcpy(&value, port->extra_data + RETRIES_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_retries(port, value);
+    set_retries(port, get_choice_value_num(attrdef->choices[value]));
 
     return value;
 }
 
-void attr_set_retries(port_t *port, int value) {
+void attr_set_retries(port_t *port, attrdef_t *attrdef, int value) {
     /* update cached value */
     set_retries(port, value);
 

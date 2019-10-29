@@ -1,18 +1,18 @@
 {
     "name": "set-port-value-security",
     "instructions": [
-		{
-			"name": "json-http-client",
-			"params": {
-				"method": "PATCH",
-				"path": "/ports/gpio0/value",
-				"headers": {
-					"Authorization": "Bearer inexistent"
-				},
-				"body": true,
-				"expected_status": 401
-			}
-		},
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio0/value",
+                "headers": {
+                    "Authorization": "Bearer inexistent"
+                },
+                "body": true,
+                "expected_status": 401
+            }
+        },
         {
             "name": "json-http-client",
             "params": {

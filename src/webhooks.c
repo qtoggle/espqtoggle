@@ -104,7 +104,7 @@ void webhooks_push_event(int type, json_t *params, port_t *port) {
     queue_len++;
 
 #if defined(_DEBUG) && defined(_DEBUG_WEBHOOKS)
-    char *sparams = json_dump(params, /* also_free = */ FALSE);
+    char *sparams = json_dump(params, /* free_mode = */ JSON_FREE_NOTHING);
     DEBUG_WEBHOOKS("pushing event of type \"%s\": %s (queue size=%d)", EVENT_TYPES_STR[type], sparams, queue_len);
     free(sparams);
 #endif
@@ -202,7 +202,7 @@ void do_webhook_request(event_t *event) {
 
     /* body */
     json_t *event_json = event_to_json(event);
-    char *body = json_dump(event_json, /* also_free = */ TRUE);
+    char *body = json_dump_r(event_json, /* free_mode = */ JSON_FREE_EVERYTHING);
 
     DEBUG_WEBHOOKS("request POST %s: %s", url, body);
     /* actual request */
@@ -210,7 +210,6 @@ void do_webhook_request(event_t *event) {
     httpclient_request("POST", url, (uint8 *) body, strlen(body), header_names, header_values, header_count,
                        on_webhook_response, webhooks_timeout);
 
-    free(body);
     free(auth_header);
 }
 
