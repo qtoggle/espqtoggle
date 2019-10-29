@@ -104,7 +104,7 @@ json_t *json_parse(char *input) {
             case '}':
                 json = ctx_get_current(ctx);
                 if (!json || json_get_type(json) != JSON_TYPE_OBJ ||
-                    (waiting_elem && json_obj_get_len(json) > 0)) {
+                    (waiting_elem && json_obj_get_len(json) > 0) || ctx_has_key(ctx)) {
 
                     DEBUG("unexpected character %c at pos %d", c, pos);
                     ctx_free(ctx);
