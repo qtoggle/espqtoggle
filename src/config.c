@@ -314,7 +314,7 @@ void config_init(void) {
     port_t *p, **port = all_ports;
     while ((p = *port++)) {
         if (p->sexpr) {
-            p->expr = expr_parse(p->sexpr, strlen(p->sexpr));
+            p->expr = expr_parse(p->id, p->sexpr, strlen(p->sexpr));
             if (p->expr) {
                 DEBUG_PORT(p, "value expression successfully parsed");
             }
@@ -326,7 +326,7 @@ void config_init(void) {
         }
 
         if (p->stransform_write) {
-            p->transform_write = expr_parse(p->stransform_write, strlen(p->stransform_write));
+            p->transform_write = expr_parse(p->id, p->stransform_write, strlen(p->stransform_write));
             if (p->transform_write) {
                 DEBUG_PORT(p, "write transform successfully parsed");
             }
@@ -338,7 +338,7 @@ void config_init(void) {
         }
 
         if (p->stransform_read) {
-            p->transform_read = expr_parse(p->stransform_read, strlen(p->stransform_read));
+            p->transform_read = expr_parse(p->id, p->stransform_read, strlen(p->stransform_read));
             if (p->transform_read) {
                 DEBUG_PORT(p, "read transform successfully parsed");
             }
