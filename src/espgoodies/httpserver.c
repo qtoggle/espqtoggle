@@ -30,7 +30,7 @@
 #define RESPONSE_TEMPLATE_NO_BODY                           \
         "HTTP/1.1 %d %s\r\n"                                \
         "Server: %s\r\n"                                    \
-        "Connection: close\r\n\r\n"
+        "Connection: close\r\n"
 
 #define RESPONSE_TEMPLATE                                   \
         "HTTP/1.1 %d %s\r\n"                                \
@@ -495,13 +495,14 @@ uint8 *httpserver_build_response(int status, char *content_type, char *header_na
         response_len += hl;
     }
 
+    int head_len = response_len;
+    response_len += 2 /* \r\n head terminator */;
+    response_len += *len;
+    response = realloc(response, response_len + 1);
+    uint8 *head_end = response + head_len;
+    strcpy((char *) head_end, "\r\n");
+
     if (body && *len) {
-        int head_len = response_len;
-        response_len += 2 /* \r\n head - body separator */;
-        response_len += *len;
-        response = realloc(response, response_len + 1);
-        uint8 *head_end = response + head_len;
-        strcpy((char *) head_end, "\r\n");
         memcpy(head_end + 2, body, *len);
     }
     
