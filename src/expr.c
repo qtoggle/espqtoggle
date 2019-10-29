@@ -78,7 +78,7 @@ ICACHE_FLASH_ATTR static double     _hyst_callback(expr_t *expr, int argc, doubl
 
 ICACHE_FLASH_ATTR static const_t *  find_const_by_name(char *name);
 ICACHE_FLASH_ATTR static func_t *   find_func_by_name(char *name);
-ICACHE_FLASH_ATTR static expr_t *   parse_port_id_expr(char *input);
+ICACHE_FLASH_ATTR static expr_t *   parse_port_id_expr(char *port_id, char *input);
 ICACHE_FLASH_ATTR static expr_t *   parse_const_expr(char *input);
 ICACHE_FLASH_ATTR static int        check_loops_rec(port_t *the_port, int level, expr_t *expr);
 
@@ -470,11 +470,11 @@ func_t *find_func_by_name(char *name) {
 }
 
 
-expr_t *parse_port_id_expr(char *input) {
+expr_t *parse_port_id_expr(char *port_id, char *input) {
     int c;
     char *s = input;
     
-    if (!isalpha((int) input[0]) && input[0] != '_') {
+    if (input[0] && !isalpha((int) input[0]) && input[0] != '_') {
         DEBUG_EXPR("invalid port identifier %s", input);
         return NULL;
     }
@@ -487,10 +487,16 @@ expr_t *parse_port_id_expr(char *input) {
     }
     
     expr_t *expr = zalloc(sizeof(expr_t));
-    expr->port_id = strdup(input);
     expr->value = UNDEFINED;
     expr->prev_value = UNDEFINED;
     
+    if (*input) {
+        expr->port_id = strdup(input);
+    }
+    else { /* reference to port itself */
+        expr->port_id = port_id;
+    }
+
     return expr;
 }
 
@@ -554,7 +560,7 @@ int check_loops_rec(port_t *the_port, int level, expr_t *expr) {
 }
 
 
-expr_t *expr_parse(char *input, int len) {
+expr_t *expr_parse(char *port_id, char *input, int len) {
     if (!len) {
         DEBUG_EXPR("empty expression");
         return NULL;
@@ -634,7 +640,7 @@ expr_t *expr_parse(char *input, int len) {
         expr_t *args[argc];
 
         for (i = 0; i < argc; i++) {
-            if (!(args[i] = expr_parse(argp[i] + 1, argp[i + 1] - argp[i] - 1))) {
+            if (!(args[i] = expr_parse(port_id, argp[i] + 1, argp[i + 1] - argp[i] - 1))) {
                 /* an error occurred, free everything and give up */
                 while (i > 0) expr_free(args[--i]);
                 return NULL;
@@ -670,7 +676,7 @@ expr_t *expr_parse(char *input, int len) {
     }
     else {
         if (name[0] == '$') { /* port id */
-            return parse_port_id_expr(name + 1);
+            return parse_port_id_expr(port_id, name + 1);
         }
         else { /* constant */
             return parse_const_expr(name);

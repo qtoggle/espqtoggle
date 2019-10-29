@@ -1639,7 +1639,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                     return INVALID_FIELD_VALUE(key);
                 }
 
-                expr_t *expr = expr_parse(sexpr, strlen(sexpr));
+                expr_t *expr = expr_parse(port->id, sexpr, strlen(sexpr));
                 if (!expr) {
                     return INVALID_FIELD_VALUE(key);
                 }
@@ -1683,7 +1683,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                     return INVALID_FIELD_VALUE(key);
                 }
 
-                expr_t *transform_write = expr_parse(stransform_write, strlen(stransform_write));
+                expr_t *transform_write = expr_parse(port->id, stransform_write, strlen(stransform_write));
                 if (!transform_write) {
                     return INVALID_FIELD_VALUE(key);
                 }
@@ -1737,7 +1737,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                     return INVALID_FIELD_VALUE(key);
                 }
 
-                expr_t *transform_read = expr_parse(stransform_read, strlen(stransform_read));
+                expr_t *transform_read = expr_parse(port->id, stransform_read, strlen(stransform_read));
                 if (!transform_read) {
                     return INVALID_FIELD_VALUE(key);
                 }
