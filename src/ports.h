@@ -205,6 +205,8 @@ extern char       * filter_choices[];
 extern port_t    ** all_ports;
 extern char       * all_gpio_choices[];
 extern char       * all_gpio_none_choices[];
+extern char       * esp8266_gpio_choices[];
+extern char       * esp8266_gpio_none_choices[];
 
 
 ICACHE_FLASH_ATTR void      ports_init(uint8 *data);

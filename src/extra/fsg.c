@@ -284,7 +284,7 @@ static attrdef_t closed_input_attrdef = {
     .modifiable = TRUE,
     .set = attr_set_closed_input,
     .get = attr_get_closed_input,
-    .choices = all_gpio_none_choices
+    .choices = esp8266_gpio_none_choices
 
 };
 
@@ -297,7 +297,7 @@ static attrdef_t moving_input_attrdef = {
     .modifiable = TRUE,
     .set = attr_set_moving_input,
     .get = attr_get_moving_input,
-    .choices = all_gpio_none_choices
+    .choices = esp8266_gpio_none_choices
 
 };
 
@@ -370,7 +370,7 @@ static attrdef_t open_output_attrdef = {
     .modifiable = TRUE,
     .set = attr_set_open_output,
     .get = attr_get_open_output,
-    .choices = all_gpio_none_choices
+    .choices = esp8266_gpio_none_choices
 
 };
 
@@ -383,7 +383,7 @@ static attrdef_t close_output_attrdef = {
     .modifiable = TRUE,
     .set = attr_set_close_output,
     .get = attr_get_close_output,
-    .choices = all_gpio_none_choices
+    .choices = esp8266_gpio_none_choices
 
 };
 
@@ -396,7 +396,7 @@ static attrdef_t stop_output_attrdef = {
     .modifiable = TRUE,
     .set = attr_set_stop_output,
     .get = attr_get_stop_output,
-    .choices = all_gpio_none_choices
+    .choices = esp8266_gpio_none_choices
 
 };
 
