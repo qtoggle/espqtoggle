@@ -40,6 +40,9 @@ FLASH_FREQ ?= 40
 FW_CONFIG_NAME ?= # configuration-name
 FW_CONFIG_MODELS ?= # model1|model2|model3
 
+FW_BASE_URL  ?= http://provisioning.qtoggle.io
+FW_BASE_PATH ?= /firmware/espqtoggle
+
 # ---- configurable stuff ends here ---- #
 
 SHELL = /bin/bash  # other shells will probably fail
@@ -237,6 +240,8 @@ endif
 
 CFLAGS += -DFW_CONFIG_NAME=\"$(FW_CONFIG_NAME)\"
 CFLAGS += -DFW_CONFIG_MODELS=$(FW_CONFIG_MODELS_PREPARED)
+CFLAGS += -DFW_BASE_URL=\"$(FW_BASE_URL)\"
+CFLAGS += -DFW_BASE_PATH=\"$(FW_BASE_PATH)\"
 
 LDSCRIPT = $(SDK_BASE)/ld/eagle.app.v6.new.$(FLASH_SIZE).app$(1).ld
 
@@ -284,6 +289,8 @@ buildinfo:
 	$(vecho) " *" FLASH_FREQ = $(FLASH_FREQ)
 	$(vecho) " *" CONFIG_NAME = $(FW_CONFIG_NAME)
 	$(vecho) " *" CONFIG_MODELS = "$(FW_CONFIG_MODELS)"
+	$(vecho) " *" FW_BASE_URL = "$(FW_BASE_URL)"
+	$(vecho) " *" FW_BASE_PATH = "$(FW_BASE_PATH)"
 	$(vecho) " *" CFLAGS = $(CFLAGS)
 	$(vecho) "-------------------------------"
 

@@ -53,8 +53,6 @@
 
 #define CONNECT_TIMEOUT             20000   /* milliseconds */
 
-#define FW_BASE_URL                 "http://provisioning.qtoggle.io"
-#define FW_BASE_PATH                "/firmware/espqtoggle"
 #define FW_LATEST_FILE              "/latest"
 #define FW_LATEST_BETA_FILE         "/latest_beta"
 #define FW_AUTO_MIN_INTERVAL        24  /* hours */
