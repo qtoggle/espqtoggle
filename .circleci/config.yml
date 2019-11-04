@@ -131,6 +131,7 @@ jobs:
           for file in ${EB_CONF_FILES}; do
               display_name=$(cat ${file} | grep -E '^#' | head -1 | sed -r 's/^# *//')
               name=$(basename ${file}); name=${name%.conf}
+              test "${name}" == "debug" && continue
               img_url="https://provisioning.qtoggle.io/firmware/espqtoggle/${name}/${EB_VERSION}"
               markdown+="### ${display_name}\n\n* [full.bin](${img_url}/full.bin)\n* [user1.bin](${img_url}/user1.bin)\n* [user2.bin](${img_url}/user2.bin)\n\n"
           done
