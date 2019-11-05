@@ -127,8 +127,8 @@ jobs:
           /opt/builder.sh
           url="https://api.github.com/repos/qtoggle/espqtoggle/releases?access_token=${GITHUB_ACCESS_TOKEN}"
           prerelease=$(if echo "${CIRCLE_TAG}" | grep -E "alpha|beta" &>/dev/null; then echo true; else echo false; fi)
-          markdown="| Device | Full Image | User 1 Image | User 2 Image |\m"
-          markdown+="|:-:|:-:|:-:|:-:|"
+          markdown="| Device | Full Image | User 1 Image | User 2 Image |\n"
+          markdown+="|:-:|:-:|:-:|:-:|\n"
           for file in ${EB_CONF_FILES}; do
               display_name=$(cat ${file} | grep -E '^#' | head -1 | sed -r 's/^# *//')
               name=$(basename ${file}); name=${name%.conf}
