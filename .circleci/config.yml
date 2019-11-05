@@ -170,8 +170,8 @@ workflows:
       - release:
           context: qtoggle-global
           requires:
-            - run-automated-tests
-            - release-approval
+#            - run-automated-tests
+#            - release-approval
           filters:
             tags:
               only: /^version-.*$/
