@@ -153,20 +153,20 @@ workflows:
 
   release:
     jobs:
-      - run-automated-tests:
-          context: qtoggle-global
-          filters:
-            tags:
-              only: /^version-.*$/
-            branches:
-              ignore: /.*/
-      - release-approval:
-          type: approval
-          filters:
-            tags:
-              only: /^version-.*$/
-            branches:
-              ignore: /.*/
+#      - run-automated-tests:
+#          context: qtoggle-global
+#          filters:
+#            tags:
+#              only: /^version-.*$/
+#            branches:
+#              ignore: /.*/
+#      - release-approval:
+#          type: approval
+#          filters:
+#            tags:
+#              only: /^version-.*$/
+#            branches:
+ #             ignore: /.*/
       - release:
           context: qtoggle-global
           requires:
