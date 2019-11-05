@@ -20,8 +20,8 @@
 #include <string.h>
 #include <limits.h>
 #include <mem.h>
-#include <gpio.h>
 #include <user_interface.h>
+#include <gpio.h>
 
 #include "espgoodies/common.h"
 #include "espgoodies/system.h"

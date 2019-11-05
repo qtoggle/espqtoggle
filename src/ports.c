@@ -328,8 +328,12 @@ void ports_init(uint8 *data) {
     virtual_init_ports(data);
 #endif
 
-#ifdef _INIT_EXTRA_DRIVERS
-    _INIT_EXTRA_DRIVERS
+#ifdef _INIT_EXTRA_PORT_DRIVERS
+    _INIT_EXTRA_PORT_DRIVERS
+#endif
+
+#ifdef _INIT_EXTERNAL_PORT_DRIVERS
+    _INIT_EXTERNAL_PORT_DRIVERS
 #endif
 
     /* load port data */
