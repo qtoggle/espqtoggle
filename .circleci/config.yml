@@ -137,7 +137,7 @@ jobs:
               markdown+="| ${display_name} | [full.bin](${img_url}/full.bin) | [user1.bin](${img_url}/user1.bin) | [user2.bin](${img_url}/user2.bin) |\n"
           done
           body="{\"tag_name\": \"${CIRCLE_TAG}\", \"name\": \"${CIRCLE_TAG}\", \"body\": \"${markdown}\", \"prerelease\": ${prerelease}}"
-          curl -Ss "${url}" -X POST -d "${body}"
+          curl -Ss "${url}" -X POST -d "${body}" > /dev/null
  
 workflows:
   version: 2
@@ -153,25 +153,25 @@ workflows:
 
   release:
     jobs:
-#      - run-automated-tests:
-#          context: qtoggle-global
-#          filters:
-#            tags:
-#              only: /^version-.*$/
-#            branches:
-#              ignore: /.*/
-#      - release-approval:
-#          type: approval
-#          filters:
-#            tags:
-#              only: /^version-.*$/
-#            branches:
- #             ignore: /.*/
+      - run-automated-tests:
+          context: qtoggle-global
+          filters:
+            tags:
+              only: /^version-.*$/
+            branches:
+              ignore: /.*/
+      - release-approval:
+          type: approval
+          filters:
+            tags:
+              only: /^version-.*$/
+            branches:
+              ignore: /.*/
       - release:
           context: qtoggle-global
           requires:
-#            - run-automated-tests
-#            - release-approval
+            - run-automated-tests
+            - release-approval
           filters:
             tags:
               only: /^version-.*$/
