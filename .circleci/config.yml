@@ -127,13 +127,14 @@ jobs:
           /opt/builder.sh
           url="https://api.github.com/repos/qtoggle/espqtoggle/releases?access_token=${GITHUB_ACCESS_TOKEN}"
           prerelease=$(if echo "${CIRCLE_TAG}" | grep -E "alpha|beta" &>/dev/null; then echo true; else echo false; fi)
-          markdown=""
+          markdown="| Device | Full Image | User 1 Image | User 2 Image |\m"
+          markdown+="|:-:|:-:|:-:|:-:|"
           for file in ${EB_CONF_FILES}; do
               display_name=$(cat ${file} | grep -E '^#' | head -1 | sed -r 's/^# *//')
               name=$(basename ${file}); name=${name%.conf}
               test "${name}" == "debug" && continue
               img_url="https://provisioning.qtoggle.io/firmware/espqtoggle/${name}/${EB_VERSION}"
-              markdown+="### ${display_name}\n\n* [full.bin](${img_url}/full.bin)\n* [user1.bin](${img_url}/user1.bin)\n* [user2.bin](${img_url}/user2.bin)\n\n"
+              markdown+="| ${display_name} | [full.bin](${img_url}/full.bin) | [user1.bin](${img_url}/user1.bin) | [user2.bin](${img_url}/user2.bin) |\n"
           done
           body="{\"tag_name\": \"${CIRCLE_TAG}\", \"name\": \"${CIRCLE_TAG}\", \"body\": \"${markdown}\", \"prerelease\": ${prerelease}}"
           curl -Ss "${url}" -X POST -d "${body}"
