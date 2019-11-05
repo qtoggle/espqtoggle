@@ -13,7 +13,10 @@ SLEEP   ?= false
 VIRTUAL ?= true
 
 PORTS ?= # gpio0 gpio2 gpio4 gpio5 gpio12 gpio13 gpio14 gpio15 adc0 pwm0
-EXTRA_DRIVERS ?=
+EXTRA_PORT_DRIVERS ?=
+EXTERNAL_PORT_DRIVERS ?=
+EXTERNAL_PORT_DRIVERS_DIR ?=
+EXTERNAL_DRIVERS_DIR ?=
 PORT_ID_MAPPINGS ?= # gpio0:mygpio adc0:myadc
 
 BATTERY ?= false
@@ -99,7 +102,9 @@ SRC_MAIN_DIR = src
 SRC_ESPGOODIES_DIR = src/espgoodies
 SRC_PORTS_DIR = src/ports
 SRC_DRIVERS_DIR = src/drivers
-SRC_EXTRA_DRIVERS_DIR = src/extra
+SRC_EXTRA_PORT_DRIVERS_DIR = src/extra
+SRC_EXTERNAL_PORT_DRIVERS_DIR = $(EXTERNAL_PORT_DRIVERS_DIR)
+SRC_EXTERNAL_DRIVERS_DIR = $(EXTERNAL_DRIVERS_DIR)
 GDB_DIR = gdbstub
 BUILD_DIR = build
 
@@ -172,17 +177,22 @@ endif
 INC := $(addprefix -I,$(INC))
 LIB := $(addprefix -l,$(LIB))
 
-SRC_MAIN_FILES =          $(wildcard $(SRC_MAIN_DIR)/*.c)
-SRC_ESPGOODIES_FILES =    $(wildcard $(SRC_ESPGOODIES_DIR)/*.c)
-SRC_PORT_FILES =          $(wildcard $(SRC_PORTS_DIR)/*.c)
-SRC_DRIVERS_FILES =       $(wildcard $(SRC_DRIVERS_DIR)/*.c)
-SRC_EXTRA_DRIVERS_FILES = $(foreach p,$(EXTRA_DRIVERS),$(SRC_EXTRA_DRIVERS_DIR)/$(p).c)
-SRC_GDB_FILES =           $(wildcard $(GDB_DIR)/*.c)
+SRC_MAIN_FILES =                  $(wildcard $(SRC_MAIN_DIR)/*.c)
+SRC_ESPGOODIES_FILES =            $(wildcard $(SRC_ESPGOODIES_DIR)/*.c)
+SRC_PORT_FILES =                  $(wildcard $(SRC_PORTS_DIR)/*.c)
+SRC_DRIVERS_FILES =               $(wildcard $(SRC_DRIVERS_DIR)/*.c)
+SRC_EXTERNAL_DRIVERS_FILES =      $(wildcard $(SRC_EXTERNAL_DRIVERS_DIR)/*.c)
+SRC_EXTRA_PORT_DRIVERS_FILES =    $(foreach p,$(EXTRA_PORT_DRIVERS),$(SRC_EXTRA_PORT_DRIVERS_DIR)/$(p).c)
+SRC_EXTERNAL_PORT_DRIVERS_FILES = $(foreach p,$(EXTERNAL_PORT_DRIVERS),$(SRC_EXTERNAL_PORT_DRIVERS_DIR)/$(p).c)
+SRC_GDB_FILES =                   $(wildcard $(GDB_DIR)/*.c)
+
 OBJ_FILES = $(SRC_MAIN_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
             $(SRC_ESPGOODIES_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
             $(SRC_PORT_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
             $(SRC_DRIVERS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
-            $(SRC_EXTRA_DRIVERS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o)	
+            $(SRC_EXTERNAL_DRIVERS_FILES:$(SRC_EXTERNAL_DRIVERS_DIR)/%.c=$(BUILD_DIR)/external/drivers/%.o) \
+            $(SRC_EXTRA_PORT_DRIVERS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
+            $(SRC_EXTERNAL_PORT_DRIVERS_FILES:$(SRC_EXTERNAL_PORT_DRIVERS_DIR)/%.c=$(BUILD_DIR)/external/ports/%.o)
 VPATH = $(SRC_MAIN_DIR) $(GDB_DIR)
 
 ifeq ($(GDB),true)
@@ -195,11 +205,19 @@ else
     LDLAGS  += -Os -O2
 endif
 
-ifneq ($(EXTRA_DRIVERS),)
-    INCLUDE_EXTRA_DRIVERS = $(foreach p,$(EXTRA_DRIVERS),-include $(SRC_EXTRA_DRIVERS_DIR)/$(p).h)
-    INIT_EXTRA_DRIVERS = $(foreach p,$(EXTRA_DRIVERS),$(p)_init_ports();)
-    CFLAGS += -D_INIT_EXTRA_DRIVERS="$(INIT_EXTRA_DRIVERS)" $(INCLUDE_EXTRA_DRIVERS)
-    CFLAGS += $(addprefix -DHAS_,$(shell echo $(EXTRA_DRIVERS) | tr a-z A-Z))
+ifneq ($(EXTRA_PORT_DRIVERS),)
+    INCLUDE_EXTRA_PORT_DRIVERS = $(foreach p,$(EXTRA_PORT_DRIVERS),-include $(SRC_EXTRA_PORT_DRIVERS_DIR)/$(p).h)
+    INIT_EXTRA_PORT_DRIVERS = $(foreach p,$(EXTRA_PORT_DRIVERS),$(p)_init_ports();)
+    CFLAGS += -D_INIT_EXTRA_PORT_DRIVERS="$(INIT_EXTRA_PORT_DRIVERS)"
+    CFLAGS += $(addprefix -DHAS_,$(shell echo $(EXTRA_PORT_DRIVERS) | tr a-z A-Z))
+endif
+
+ifneq ($(EXTERNAL_PORT_DRIVERS),)
+    INCLUDE_EXTERNAL_PORT_DRIVERS = $(foreach p,$(EXTERNAL_PORT_DRIVERS),\
+    								  -include $(SRC_EXTERNAL_PORT_DRIVERS_DIR)/$(p).h)
+    INIT_EXTERNAL_PORT_DRIVERS = $(foreach p,$(EXTERNAL_PORT_DRIVERS),$(p)_init_ports();)
+    CFLAGS += -D_INIT_EXTERNAL_PORT_DRIVERS="$(INIT_EXTERNAL_PORT_DRIVERS)"
+    CFLAGS += $(addprefix -DHAS_,$(shell echo $(EXTERNAL_PORT_DRIVERS) | tr a-z A-Z))
 endif
 
 ifeq ($(DEBUG), true)
@@ -278,7 +296,10 @@ buildinfo:
 	$(vecho) " *" BATTERY_VOLT = $(BATTERY_VOLT_0) $(BATTERY_VOLT_20) $(BATTERY_VOLT_40) \
 								 $(BATTERY_VOLT_60) $(BATTERY_VOLT_80) $(BATTERY_VOLT_100)
 	$(vecho) " *" PORTS = $(PORTS)
-	$(vecho) " *" EXTRA_DRIVERS = $(EXTRA_DRIVERS)
+	$(vecho) " *" EXTRA_PORT_DRIVERS = $(EXTRA_PORT_DRIVERS)
+	$(vecho) " *" EXTERNAL_PORT_DRIVERS = $(EXTERNAL_PORT_DRIVERS)
+	$(vecho) " *" EXTERNAL_PORT_DRIVERS_DIR = $(EXTERNAL_PORT_DRIVERS_DIR)
+	$(vecho) " *" EXTERNAL_DRIVERS_DIR = $(EXTERNAL_DRIVERS_DIR)
 	$(vecho) " *" PORT_ID_MAPPINGS = $(PORT_ID_MAPPINGS)
 	$(vecho) " *" SETUP_MODE_PORT = $(SETUP_MODE_PORT)
 	$(vecho) " *" SETUP_MODE_LEVEL = $(SETUP_MODE_LEVEL)
@@ -295,6 +316,21 @@ buildinfo:
 	$(vecho) "-------------------------------"
 
 $(BUILD_DIR)/%.o: %.c
+	$(vecho) "CC $<"
+	@$(MD) -p $(@D)
+	$(Q) $(CC) $(INC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/ports.o: src/ports.c
+	$(vecho) "CC $<"
+	@$(MD) -p $(@D)
+	$(Q) $(CC) $(INC) $(CFLAGS) $(INCLUDE_EXTRA_PORT_DRIVERS) $(INCLUDE_EXTERNAL_PORT_DRIVERS) -c $< -o $@
+
+$(BUILD_DIR)/external/ports/%.o: $(SRC_EXTERNAL_PORT_DRIVERS_DIR)/%.c
+	$(vecho) "CC $<"
+	@$(MD) -p $(@D)
+	$(Q) $(CC) $(INC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/external/drivers/%.o: $(SRC_EXTERNAL_DRIVERS_DIR)/%.c
 	$(vecho) "CC $<"
 	@$(MD) -p $(@D)
 	$(Q) $(CC) $(INC) $(CFLAGS) -c $< -o $@
