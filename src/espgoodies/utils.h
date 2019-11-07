@@ -50,7 +50,13 @@ ICACHE_FLASH_ATTR double        decent_round(double d);
 ICACHE_FLASH_ATTR int           gpio_get_mux(int gpio_no);
 ICACHE_FLASH_ATTR int           gpio_get_func(int gpio_no);
 ICACHE_FLASH_ATTR void          gpio_select_func(int gpio_no);
-ICACHE_FLASH_ATTR void          gpio_set_pullup(int gpio_no, bool enabled);
+ICACHE_FLASH_ATTR void          gpio_set_pull(int gpio_no, bool pull);
+
+ICACHE_FLASH_ATTR void          gpio_configure_input(int gpio_no, bool pull);
+ICACHE_FLASH_ATTR void          gpio_configure_output(int gpio_no, bool initial);
+
+ICACHE_FLASH_ATTR void          gpio_write_value(int gpio_no, bool value);
+ICACHE_FLASH_ATTR bool          gpio_read_value(int gpio_no);
 
 
 #endif /* _ESPGOODIES_UTILS_H */

@@ -32,9 +32,7 @@ ICACHE_FLASH_ATTR static bool       read_bit(one_wire_t *one_wire);
 
 
 void one_wire_setup(one_wire_t *one_wire) {
-    gpio_select_func(one_wire->gpio_no);
-    gpio_set_pullup(one_wire->gpio_no, FALSE);
-    GPIO_DIS_OUTPUT(one_wire->gpio_no);
+    gpio_configure_input(one_wire->gpio_no, FALSE);
 }
 
 bool one_wire_reset(one_wire_t *one_wire) {

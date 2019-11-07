@@ -32,12 +32,6 @@ ICACHE_FLASH_ATTR static double     read_value(port_t *port);
 ICACHE_FLASH_ATTR static bool       write_value(port_t *port, double value);
 ICACHE_FLASH_ATTR static void       configure(port_t *port);
 
-#ifdef HAS_GPIO16
-ICACHE_FLASH_ATTR static double     read_gpio16_value(port_t *port);
-ICACHE_FLASH_ATTR static bool       write_gpio16_value(port_t *port, double value);
-ICACHE_FLASH_ATTR static void       configure_gpio16(port_t *port);
-#endif
-
 ICACHE_FLASH_ATTR static bool       attr_get_pull_up(port_t *port, attrdef_t *attrdef);
 ICACHE_FLASH_ATTR static void       attr_set_pull_up(port_t *port, attrdef_t *attrdef, bool value);
 
@@ -480,9 +474,9 @@ static port_t _gpio16 = {
     .id = GPIO16_ID,
     .type = PORT_TYPE_BOOLEAN,
 
-    .read_value = read_gpio16_value,
-    .write_value = write_gpio16_value,
-    .configure = configure_gpio16,
+    .read_value = read_value,
+    .write_value = write_value,
+    .configure = configure,
 
     .extra_info = &gpio16_extra_info,
     .attrdefs = attrdefs_gpio16
@@ -497,18 +491,13 @@ double read_value(port_t *port) {
         return get_output_value(port);
     }
     else {
-        if (port->slot == 16) {
-            return !!(READ_PERI_REG(RTC_GPIO_IN_DATA) & 1UL);
-        }
-        else {
-            return !!GPIO_INPUT_GET(port->slot);
-        }
+        return gpio_read_value(port->slot);
     }
 }
 
 bool write_value(port_t *port, double value) {
     DEBUG_GPIO(port, "writing %d", !!value);
-    GPIO_OUTPUT_SET(port->slot, (int) value);
+    gpio_write_value(port->slot, (int) value);
 
     set_output_value(port, value);
 
@@ -516,79 +505,40 @@ bool write_value(port_t *port, double value) {
 }
 
 void configure(port_t *port) {
-    /* set GPIO function */
-    gpio_select_func(port->slot);
-
-    if (IS_OUTPUT(port)) {
-        DEBUG_GPIO(port, "output enabled");
-
-        /* set initial value according to pull configuration */
-        write_value(port, !!IS_PULL_UP(port));
-    }
-    else {
-        GPIO_DIS_OUTPUT(port->slot);
-        DEBUG_GPIO(port, "output disabled");
-        if (IS_PULL_UP(port)) {
-            gpio_set_pullup(port->slot, true);
-            DEBUG_GPIO(port, "pull-up enabled");
-        }
-        else {
-            gpio_set_pullup(port->slot, false);
-            DEBUG_GPIO(port, "pull-up disabled");
-        }
-    }
-}
-
-#ifdef HAS_GPIO16
-
-double read_gpio16_value(port_t *port) {
-    if (IS_OUTPUT(port)) {
-        return get_output_value(port);
-    }
-    else {
-        return !!READ_PERI_REG(RTC_GPIO_IN_DATA);
-    }
-}
-
-bool write_gpio16_value(port_t *port, double value) {
-    DEBUG_GPIO(port, "writing %d", !!value);
-
-    uint32 val = READ_PERI_REG(RTC_GPIO_OUT);
-    WRITE_PERI_REG(RTC_GPIO_OUT, value ? (val | 0x1) : (val & ~0x1));
-
-    set_output_value(port, value);
-
-    return TRUE;
-}
-
-void configure_gpio16(port_t *port) {
-    /* set GPIO function */
-    WRITE_PERI_REG(PAD_XPD_DCDC_CONF, (READ_PERI_REG(PAD_XPD_DCDC_CONF) & 0xFFFFFFBC) | 0x1);
-    WRITE_PERI_REG(RTC_GPIO_CONF, READ_PERI_REG(RTC_GPIO_CONF) & 0xFFFFFFFE);
-
-    if (IS_OUTPUT(port)) {
-        DEBUG_GPIO(port, "output enabled");
-        WRITE_PERI_REG(RTC_GPIO_ENABLE, (READ_PERI_REG(RTC_GPIO_ENABLE) & 0xFFFFFFFE) | 0x1);
-
-        /* set initial value according to pull configuration */
-        write_gpio16_value(port, !IS_PULL_DOWN(port));
-    }
-    else {
-        DEBUG_GPIO(port, "output disabled");
-        uint32 val = READ_PERI_REG(RTC_GPIO_ENABLE) & 0xFFFFFFFE;
+    bool value;
+    if (port->slot == 16) {
         if (IS_PULL_DOWN(port)) {
-            val |= 0x8;
             DEBUG_GPIO(port, "pull-down enabled");
+            value = FALSE;
         }
         else {
             DEBUG_GPIO(port, "pull-down disabled");
+            value = TRUE;
         }
+    }
+    else {
+        if (IS_PULL_UP(port)) {
+            DEBUG_GPIO(port, "pull-up enabled");
+            value = TRUE;
+        }
+        else {
+            DEBUG_GPIO(port, "pull-up disabled");
+            value = FALSE;
+        }
+    }
 
-        WRITE_PERI_REG(RTC_GPIO_ENABLE, val);
+    if (IS_OUTPUT(port)) {
+        DEBUG_GPIO(port, "output enabled");
+
+        /* set initial value according to pull configuration */
+        gpio_configure_output(port->slot, value);
+        set_output_value(port, value);
+    }
+    else {
+        DEBUG_GPIO(port, "output disabled");
+        gpio_configure_input(port->slot, value);
     }
 }
-
-#endif
 
 bool attr_get_pull_up(port_t *port, attrdef_t *attrdef) {
     return IS_PULL_UP(port);

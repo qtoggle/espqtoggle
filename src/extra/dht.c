@@ -651,7 +651,7 @@ uint64 read_data(port_t *port) {
 
 void input_wire(port_t *port) {
     GPIO_DIS_OUTPUT(get_gpio(port));
-    gpio_set_pullup(get_gpio(port), true);
+    gpio_set_pull(get_gpio(port), TRUE);
 }
 
 bool read_wire(port_t *port) {
@@ -659,7 +659,7 @@ bool read_wire(port_t *port) {
 }
 
 void write_wire(port_t *port, bool value) {
-    gpio_set_pullup(get_gpio(port), false);
+    gpio_set_pull(get_gpio(port), FALSE);
     GPIO_OUTPUT_SET(get_gpio(port), value);
 }
 
