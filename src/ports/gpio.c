@@ -521,6 +521,9 @@ void configure(port_t *port) {
 
     if (IS_OUTPUT(port)) {
         DEBUG_GPIO(port, "output enabled");
+
+        /* set initial value according to pull configuration */
+        write_value(port, !!IS_PULL_UP(port));
     }
     else {
         GPIO_DIS_OUTPUT(port->slot);
@@ -566,6 +569,9 @@ void configure_gpio16(port_t *port) {
     if (IS_OUTPUT(port)) {
         DEBUG_GPIO(port, "output enabled");
         WRITE_PERI_REG(RTC_GPIO_ENABLE, (READ_PERI_REG(RTC_GPIO_ENABLE) & 0xFFFFFFFE) | 0x1);
+
+        /* set initial value according to pull configuration */
+        write_gpio16_value(port, !IS_PULL_DOWN(port));
     }
     else {
         DEBUG_GPIO(port, "output disabled");
