@@ -27,7 +27,7 @@
 #if defined(HAS_GPIO0)  || defined(HAS_GPIO1)  || defined(HAS_GPIO2)  || defined(HAS_GPIO3)  || \
     defined(HAS_GPIO4)  || defined(HAS_GPIO5)  || defined(HAS_GPIO6)  || defined(HAS_GPIO7)  || \
     defined(HAS_GPIO8)  || defined(HAS_GPIO9)  || defined(HAS_GPIO10) || defined(HAS_GPIO11) || \
-    defined(HAS_GPIO12) || defined(HAS_GPIO13) || defined(HAS_GPIO14) || defined(HAS_GPIO15)
+    defined(HAS_GPIO12) || defined(HAS_GPIO13) || defined(HAS_GPIO14) || defined(HAS_GPIO15) || defined(HAS_GPIO16)
 #define HAS_GPIO
 #endif
 
@@ -86,6 +86,9 @@ extern port_t *                     gpio14;
 #endif
 #ifdef HAS_GPIO15
 extern port_t *                     gpio15;
+#endif
+#ifdef HAS_GPIO16
+extern port_t *                     gpio16;
 #endif
 
 
