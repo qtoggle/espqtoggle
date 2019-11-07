@@ -44,7 +44,7 @@
     (info)[2] = (pin);                      \
 }
 
-#define PWM_FREQ_SLOT               17
+#define PWM_FREQ_SLOT               PORT_SLOT_AUTO
 #define PWM_FREQ_MIN                1       /* Hz */
 #define PWM_FREQ_MAX                50000   /* Hz */
 #define PWM_FREQ_DEF                1000    /* Hz */

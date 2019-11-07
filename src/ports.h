@@ -64,6 +64,7 @@
 #define PORT_FLAG_PULL_UP               0x00000004
 #define PORT_FLAG_PERSISTED             0x00000008
 #define PORT_FLAG_FILTER_MASK           0x00000030
+#define PORT_FLAG_PULL_DOWN             0x00000040
 #define PORT_FLAG_VIRTUAL_INTEGER       0x00002000
 #define PORT_FLAG_VIRTUAL_TYPE          0x00004000  /* 0x00008000 - reserved */
 #define PORT_FLAG_VIRTUAL_ACTIVE        0x00010000
@@ -80,6 +81,7 @@
 #define IS_ENABLED(port)                ((port)->flags & PORT_FLAG_ENABLED)
 #define IS_OUTPUT(port)                 ((port)->flags & PORT_FLAG_OUTPUT)
 #define IS_PULL_UP(port)                ((port)->flags & PORT_FLAG_PULL_UP)
+#define IS_PULL_DOWN(port)              ((port)->flags & PORT_FLAG_PULL_DOWN)
 #define IS_PERSISTED(port)              ((port)->flags & PORT_FLAG_PERSISTED)
 #define IS_VIRTUAL(port)                ((port)->flags & PORT_FLAG_VIRTUAL_ACTIVE)
 
