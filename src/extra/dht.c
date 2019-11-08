@@ -513,7 +513,7 @@ int attr_get_retries(port_t *port, attrdef_t *attrdef) {
     memcpy(&value, port->extra_data + RETRIES_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_retries(port, get_choice_value_num(attrdef->choices[value]));
+    set_retries(port, value);
 
     return value;
 }
