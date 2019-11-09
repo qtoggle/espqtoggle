@@ -52,6 +52,7 @@
 #include "core.h"
 #include "ver.h"
 #include "api.h"
+#include "apiutils.h"
 
 
 #define API_ERROR(c, error) ({                                                          \
@@ -721,46 +722,6 @@ json_t *device_to_json(void) {
     json_stringify(json);
 
     return json;
-}
-
-double get_choice_value_num(char *choice) {
-    return strtod(get_choice_value_str(choice), NULL);
-}
-
-char *get_choice_value_str(char *choice) {
-    static char *value = NULL;  /* acts as a reentrant buffer */
-    if (value) {
-        free(value);
-        value = NULL;
-    }
-
-    char *p = strchr(choice, ':');
-    if (p) {
-        value = strndup(choice, p - choice);
-    }
-    else {
-        return choice;
-    }
-
-    return value;
-}
-
-char *get_choice_display_name(char *choice) {
-    static char *display_name = NULL;  /* acts as a reentrant buffer */
-    if (display_name) {
-        free(display_name);
-        display_name = NULL;
-    }
-
-    char *p = strchr(choice, ':');
-    if (p) {
-        display_name = strdup(p + 1);
-    }
-    else {
-        return NULL;
-    }
-
-    return display_name;
 }
 
 

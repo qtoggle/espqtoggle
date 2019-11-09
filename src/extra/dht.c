@@ -29,6 +29,7 @@
 
 #include "events.h"
 #include "api.h"
+#include "apiutils.h"
 #include "ports.h"
 #include "extra/dht.h"
 

@@ -67,8 +67,6 @@
 #define API_ACCESS_LEVEL_VIEWONLY           10
 #define API_ACCESS_LEVEL_NONE               0
 
-#define EMPTY_SHA256_HEX                    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-
 
 ICACHE_FLASH_ATTR json_t                  * api_call_handle(int method, char* path, json_t *query_json,
                                                             json_t *request_json, int *code);
@@ -81,10 +79,6 @@ ICACHE_FLASH_ATTR void                      api_conn_reset(void);
 
 ICACHE_FLASH_ATTR json_t                  * port_to_json(port_t *port);
 ICACHE_FLASH_ATTR json_t                  * device_to_json(void);
-
-ICACHE_FLASH_ATTR double                    get_choice_value_num(char *choice);
-ICACHE_FLASH_ATTR char                    * get_choice_value_str(char *choice);
-ICACHE_FLASH_ATTR char                    * get_choice_display_name(char *choice);
 
 
 #endif /* _API_H */
