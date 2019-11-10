@@ -38,6 +38,10 @@ ICACHE_FLASH_ATTR char                    * get_choice_display_name(char *choice
 ICACHE_FLASH_ATTR json_t                  * choice_to_json(char *choice, char type);
 ICACHE_FLASH_ATTR void                      free_choices(char **choices);
 ICACHE_FLASH_ATTR bool                      choices_equal(char **choices1, char **choices2);
+ICACHE_FLASH_ATTR void                      lookup_port_attrdef_choices(char **choices, port_t *port,
+                                                                        attrdef_t *attrdef, int8 *found_port_index,
+                                                                        char **found_attrdef_name,
+                                                                        bool cross_port_refs);
 
 ICACHE_FLASH_ATTR bool                      validate_num(double value, double min, double max, bool integer,
                                                          double step, char **choices);

@@ -74,7 +74,7 @@ void event_push_value_change(port_t *port) {
 void event_push_port_update(port_t *port) {
     DEBUG_PORT(port, "generating port-update event");
 
-    json_t *params = port_to_json(port, -1);
+    json_t *params = port_to_json(port, /* cross_port_refs = */ FALSE);
     event_push(EVENT_TYPE_PORT_UPDATE, params, NULL);
     json_free(params);
 }
@@ -82,7 +82,7 @@ void event_push_port_update(port_t *port) {
 void event_push_port_add(port_t *port) {
     DEBUG_PORT(port, "generating port-add event");
 
-    json_t *params = port_to_json(port, -1);
+    json_t *params = port_to_json(port, /* cross_port_refs = */ FALSE);
     event_push(EVENT_TYPE_PORT_ADD, params, NULL);
     json_free(params);
 }

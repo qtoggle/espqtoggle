@@ -163,7 +163,7 @@ ICACHE_FLASH_ATTR static json_t       * patch_webhooks(json_t *query_json, json_
 
 ICACHE_FLASH_ATTR static json_t       * get_wifi(json_t *query_json, int *code);
 
-ICACHE_FLASH_ATTR static json_t       * port_attrdefs_to_json(port_t *port);
+ICACHE_FLASH_ATTR static json_t       * port_attrdefs_to_json(port_t *port, bool cross_port_refs);
 ICACHE_FLASH_ATTR static json_t       * device_attrdefs_to_json(void);
 
 ICACHE_FLASH_ATTR static void           on_sequence_timer(void *arg);
@@ -403,7 +403,7 @@ void api_conn_reset(void) {
 }
 
 
-json_t *port_to_json(port_t *port, int8 index) {
+json_t *port_to_json(port_t *port, bool cross_port_refs) {
     json_t *json = json_obj_new();
 
     /* common to all ports */
@@ -453,22 +453,27 @@ json_t *port_to_json(port_t *port, int8 index) {
 
         if (port->choices) {
             int8 found_ref_index = -1;
-            if (index > 0) {
+            if (cross_port_refs) {
                 /* look through previous ports for same choices */
                 port_t *p, **ports = all_ports;
-                int8 i = 0;
-                while ((p = *ports++) && (i < index)) {
+                uint8 i = 0;
+                while ((p = *ports++) && (p != port)) {
                     if (choices_equal(port->choices, p->choices)) {
-                        found_ref_index = i;
+                        found_ref_index = i - 1;
                         break;
                     }
-                    i++;
                 }
             }
 
             if (found_ref_index >= 0) {
                 /* found equal choices at found_ref_index */
-                json_obj_append(json, "choices", make_json_ref("#/%d/choices", found_ref_index));
+                json_t *ref = make_json_ref("#/%d/choices", found_ref_index);
+#if defined(_DEBUG) && defined(_DEBUG_API)
+                char *ref_str = json_str_get(json_obj_value_at(ref, 0));
+                DEBUG_API("replacing \"%s.choices\" with $ref \"%s\"", port->id, ref_str);
+#endif
+                json_obj_append(json, "choices", ref);
+
             }
             else {
                 json_t *list = json_list_new();
@@ -559,7 +564,7 @@ json_t *port_to_json(port_t *port, int8 index) {
     json_obj_append(json, "value", port_get_json_value(port));
 
     /* attribute definitions */
-    json_obj_append(json, "definitions", port_attrdefs_to_json(port));
+    json_obj_append(json, "definitions", port_attrdefs_to_json(port, cross_port_refs));
 
     json_stringify(json);
 
@@ -1182,10 +1187,9 @@ json_t *get_ports(json_t *query_json, int *code) {
     }
 
     port_t **port = all_ports, *p;
-    uint8 i = 0;
     while ((p = *port++)) {
         DEBUG_API("returning attributes of port %s", p->id);
-        json_list_append(response_json, port_to_json(p, i++));
+        json_list_append(response_json, port_to_json(p, /* cross_port_refs = */ TRUE));
     }
 
     *code = 200;
@@ -1418,7 +1422,7 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
 
     *code = 201;
 
-    return port_to_json(new_port, -1);
+    return port_to_json(new_port, /* cross_port_refs = */ FALSE);
 }
 
 json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *code) {
@@ -2327,7 +2331,7 @@ json_t *get_wifi(json_t *query_json, int *code) {
     return NULL;
 }
 
-json_t *port_attrdefs_to_json(port_t *port) {
+json_t *port_attrdefs_to_json(port_t *port, bool cross_port_refs) {
     json_t *json = json_obj_new();
     json_t *attrdef_json;
 
@@ -2366,10 +2370,36 @@ json_t *port_attrdefs_to_json(port_t *port) {
     if (port->attrdefs) {
         attrdef_t *a, **attrdefs = port->attrdefs;
         while ((a = *attrdefs++)) {
+            char **choices = a->choices;
+            char *found_attrdef_name = NULL;
+            int8 found_port_index = -1;
+
+            if (choices) {
+                lookup_port_attrdef_choices(choices, port, a, &found_port_index, &found_attrdef_name, cross_port_refs);
+            }
+
             json_t *attrdef_json = attrdef_to_json(a->display_name ? a->display_name : "",
                                                    a->description ? a->description : "",
                                                    a->unit ? a->unit : "", a->type, a->modifiable,
-                                                   a->min, a->max, a->integer, a->step, a->choices, a->reconnect);
+                                                   a->min, a->max, a->integer, a->step, choices, a->reconnect);
+
+            /* if similar choices found, replace with $ref */
+            if (found_attrdef_name) {
+                json_t *ref;
+                if (cross_port_refs) {
+                    ref = make_json_ref("#/%d/definitions/%s/choices", found_port_index, found_attrdef_name);
+                }
+                else {
+                    ref = make_json_ref("#/definitions/%s/choices", found_attrdef_name);
+                }
+#if defined(_DEBUG) && defined(_DEBUG_API)
+                char *ref_str = json_str_get(json_obj_value_at(ref, 0));
+                DEBUG_API("replacing \"%s.definitions.%s.choices\" with $ref \"%s\"",
+                          port->id, found_attrdef_name, ref_str);
+#endif
+                json_obj_append(attrdef_json, "choices", ref);
+            }
+
             json_stringify(attrdef_json);
             json_obj_append(json, a->name, attrdef_json);
         }
