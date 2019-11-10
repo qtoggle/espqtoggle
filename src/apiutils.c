@@ -17,6 +17,7 @@
  */
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <mem.h>
 
 #include "espgoodies/common.h"
@@ -95,6 +96,31 @@ void free_choices(char **choices) {
     }
 
     free(choices);
+}
+
+bool choices_equal(char **choices1, char **choices2) {
+    if (choices1 == choices2) {
+        return TRUE;
+    }
+
+    /* make sure both lists are available */
+    if (!choices1 || !choices2) {
+        return FALSE;
+    }
+
+    char *c1, *c2;
+    while ((c1 = *choices1++)) {
+        c2 = *choices2++;
+        if (!c2) {
+            return FALSE;
+        }
+
+        if (strcmp(c1, c2)) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
 }
 
 bool validate_num(double value, double min, double max, bool integer, double step, char **choices) {
@@ -404,4 +430,19 @@ json_t *attrdef_to_json(char *display_name, char *description, char *unit, char 
     }
 
     return json;
+}
+
+json_t *make_json_ref(const char *target_fmt, ...) {
+    va_list args;
+    char *buf = malloc(256);
+
+    va_start(args, target_fmt);
+    vsnprintf(buf, 256, target_fmt, args);
+    va_end(args);
+
+    json_t *ref = json_obj_new();
+    json_obj_append(ref, "$ref", json_str_new(buf));
+    free(buf);
+
+    return ref;
 }

@@ -403,7 +403,7 @@ void api_conn_reset(void) {
 }
 
 
-json_t *port_to_json(port_t *port) {
+json_t *port_to_json(port_t *port, int8 index) {
     json_t *json = json_obj_new();
 
     /* common to all ports */
@@ -452,13 +452,33 @@ json_t *port_to_json(port_t *port) {
         }
 
         if (port->choices) {
-            json_t *list = json_list_new();
-            char *c, **choices = port->choices;
-            while ((c = *choices++)) {
-                json_list_append(list, choice_to_json(c, PORT_TYPE_NUMBER));
+            int8 found_ref_index = -1;
+            if (index > 0) {
+                /* look through previous ports for same choices */
+                port_t *p, **ports = all_ports;
+                int8 i = 0;
+                while ((p = *ports++) && (i < index)) {
+                    if (choices_equal(port->choices, p->choices)) {
+                        found_ref_index = i;
+                        break;
+                    }
+                    i++;
+                }
             }
 
-            json_obj_append(json, "choices", list);
+            if (found_ref_index >= 0) {
+                /* found equal choices at found_ref_index */
+                json_obj_append(json, "choices", make_json_ref("#/%d/choices", found_ref_index));
+            }
+            else {
+                json_t *list = json_list_new();
+                char *c, **choices = port->choices;
+                while ((c = *choices++)) {
+                    json_list_append(list, choice_to_json(c, PORT_TYPE_NUMBER));
+                }
+
+                json_obj_append(json, "choices", list);
+            }
         }
     }
     /* specific to boolean ports */
@@ -1162,9 +1182,10 @@ json_t *get_ports(json_t *query_json, int *code) {
     }
 
     port_t **port = all_ports, *p;
+    uint8 i = 0;
     while ((p = *port++)) {
         DEBUG_API("returning attributes of port %s", p->id);
-        json_list_append(response_json, port_to_json(p));
+        json_list_append(response_json, port_to_json(p, i++));
     }
 
     *code = 200;
@@ -1397,7 +1418,7 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
 
     *code = 201;
 
-    return port_to_json(new_port);
+    return port_to_json(new_port, -1);
 }
 
 json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *code) {
