@@ -127,6 +127,17 @@
 }
 
 
+typedef struct {
+
+    uint8       port_index;
+    int8        filter_port_index;
+    int8        filter_width_port_index;
+    int8        debounce_port_index;
+    int8        sampling_interval_port_index;
+
+} attrdefs_ctx_t;
+
+
 static uint8            api_access_level = 0;
 static struct espconn * api_conn;
 
@@ -163,7 +174,7 @@ ICACHE_FLASH_ATTR static json_t       * patch_webhooks(json_t *query_json, json_
 
 ICACHE_FLASH_ATTR static json_t       * get_wifi(json_t *query_json, int *code);
 
-ICACHE_FLASH_ATTR static json_t       * port_attrdefs_to_json(port_t *port, bool cross_port_refs);
+ICACHE_FLASH_ATTR static json_t       * port_attrdefs_to_json(port_t *port, attrdefs_ctx_t *attrdefs_ctx);
 ICACHE_FLASH_ATTR static json_t       * device_attrdefs_to_json(void);
 
 ICACHE_FLASH_ATTR static void           on_sequence_timer(void *arg);
@@ -403,8 +414,9 @@ void api_conn_reset(void) {
 }
 
 
-json_t *port_to_json(port_t *port, bool cross_port_refs) {
+json_t *port_to_json(port_t *port, void *ctx) {
     json_t *json = json_obj_new();
+    attrdefs_ctx_t *attrdefs_ctx = ctx;
 
     /* common to all ports */
 
@@ -453,7 +465,7 @@ json_t *port_to_json(port_t *port, bool cross_port_refs) {
 
         if (port->choices) {
             int8 found_ref_index = -1;
-            if (cross_port_refs) {
+            if (attrdefs_ctx) {
                 /* look through previous ports for same choices */
                 port_t *p, **ports = all_ports;
                 uint8 i = 0;
@@ -564,7 +576,7 @@ json_t *port_to_json(port_t *port, bool cross_port_refs) {
     json_obj_append(json, "value", port_get_json_value(port));
 
     /* attribute definitions */
-    json_obj_append(json, "definitions", port_attrdefs_to_json(port, cross_port_refs));
+    json_obj_append(json, "definitions", port_attrdefs_to_json(port, attrdefs_ctx));
 
     json_stringify(json);
 
@@ -1187,9 +1199,18 @@ json_t *get_ports(json_t *query_json, int *code) {
     }
 
     port_t **port = all_ports, *p;
+    attrdefs_ctx_t attrdefs_ctx = {
+        .port_index = -1,
+        .filter_port_index = -1,
+        .filter_width_port_index = -1,
+        .debounce_port_index = -1,
+        .sampling_interval_port_index = -1
+    };
+
     while ((p = *port++)) {
         DEBUG_API("returning attributes of port %s", p->id);
-        json_list_append(response_json, port_to_json(p, /* cross_port_refs = */ TRUE));
+        attrdefs_ctx.port_index++;
+        json_list_append(response_json, port_to_json(p, &attrdefs_ctx));
     }
 
     *code = 200;
@@ -1422,7 +1443,7 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
 
     *code = 201;
 
-    return port_to_json(new_port, /* cross_port_refs = */ FALSE);
+    return port_to_json(new_port, /* ctx = */ NULL);
 }
 
 json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *code) {
@@ -2331,39 +2352,93 @@ json_t *get_wifi(json_t *query_json, int *code) {
     return NULL;
 }
 
-json_t *port_attrdefs_to_json(port_t *port, bool cross_port_refs) {
+json_t *port_attrdefs_to_json(port_t *port, attrdefs_ctx_t *attrdefs_ctx) {
     json_t *json = json_obj_new();
     json_t *attrdef_json;
 
     if (!IS_OUTPUT(port)) {
         if (port->type == PORT_TYPE_NUMBER) {
-            attrdef_json = attrdef_to_json("Filter Type", "Configures a filter for the port value.", /* unit = */ NULL,
-                                           ATTR_TYPE_STRING, /* modifiable = */ TRUE, /* min = */ UNDEFINED,
-                                           /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0, filter_choices,
-                                           /* reconnect = */FALSE);
+            /* filter attrdef */
+            if (attrdefs_ctx && attrdefs_ctx->filter_port_index >= 0) {
+                attrdef_json = make_json_ref("#/%d/definitions/filter", attrdefs_ctx->filter_port_index);
+#if defined(_DEBUG) && defined(_DEBUG_API)
+                char *ref_str = json_str_get(json_obj_value_at(attrdef_json, 0));
+                DEBUG_API("replacing \"%s.definitions.filter\" with $ref \"%s\"", port->id, ref_str);
+#endif
+            }
+            else {
+                attrdef_json = attrdef_to_json("Filter Type", "Configures a filter for the port value.",
+                                               /* unit = */ NULL, ATTR_TYPE_STRING, /* modifiable = */ TRUE,
+                                               /* min = */ UNDEFINED, /* max = */ UNDEFINED, /* integer = */ FALSE,
+                                               /* step = */ 0, filter_choices, /* reconnect = */FALSE);
+                if (attrdefs_ctx) {
+                    attrdefs_ctx->filter_port_index = attrdefs_ctx->port_index;
+                }
+            }
             json_obj_append(json, "filter", attrdef_json);
 
-            attrdef_json = attrdef_to_json("Filter Width", "Sets the filter width.", "samples", ATTR_TYPE_NUMBER,
-                                           /* modifiable = */ TRUE, /* min = */ 2, /* max = */ PORT_MAX_FILTER_WIDTH,
-                                           /* integer = */ TRUE, /* step = */ 0, /* choices = */ NULL,
-                                           /* reconnect */ FALSE);
+            /* filter_width attrdef */
+            if (attrdefs_ctx && attrdefs_ctx->filter_width_port_index >= 0) {
+                attrdef_json = make_json_ref("#/%d/definitions/filter_width", attrdefs_ctx->filter_width_port_index);
+#if defined(_DEBUG) && defined(_DEBUG_API)
+                char *ref_str = json_str_get(json_obj_value_at(attrdef_json, 0));
+                DEBUG_API("replacing \"%s.definitions.filter_width\" with $ref \"%s\"", port->id, ref_str);
+#endif
+            }
+            else {
+                attrdef_json = attrdef_to_json("Filter Width", "Sets the filter width.", "samples", ATTR_TYPE_NUMBER,
+                                               /* modifiable = */ TRUE, /* min = */ 2,
+                                               /* max = */ PORT_MAX_FILTER_WIDTH, /* integer = */ TRUE, /* step = */ 0,
+                                               /* choices = */ NULL, /* reconnect */ FALSE);
+                if (attrdefs_ctx) {
+                    attrdefs_ctx->filter_width_port_index = attrdefs_ctx->port_index;
+                }
+            }
             json_obj_append(json, "filter_width", attrdef_json);
         }
         else {  /* assuming PORT_TYPE_BOOLEAN */
-            attrdef_json = attrdef_to_json("Debounce Time", "Sets the debounce filtering time.", "milliseconds",
-                                           ATTR_TYPE_NUMBER, /* modifiable = */ TRUE, /* min = */ 0,
-                                           /* max = */ PORT_MAX_DEBOUNCE_TIME, /* integer = */ TRUE, /* step = */ 0,
-                                           /* choices = */ NULL, /* reconnect = */ FALSE);
+            /* debounce attrdef */
+            if (attrdefs_ctx && attrdefs_ctx->debounce_port_index >= 0) {
+                attrdef_json = make_json_ref("#/%d/definitions/debounce", attrdefs_ctx->debounce_port_index);
+#if defined(_DEBUG) && defined(_DEBUG_API)
+                char *ref_str = json_str_get(json_obj_value_at(attrdef_json, 0));
+                DEBUG_API("replacing \"%s.definitions.debounce\" with $ref \"%s\"", port->id, ref_str);
+#endif
+            }
+            else {
+                attrdef_json = attrdef_to_json("Debounce Time", "Sets the debounce filtering time.", "milliseconds",
+                                               ATTR_TYPE_NUMBER, /* modifiable = */ TRUE, /* min = */ 0,
+                                               /* max = */ PORT_MAX_DEBOUNCE_TIME, /* integer = */ TRUE, /* step = */ 0,
+                                               /* choices = */ NULL, /* reconnect = */ FALSE);
+                if (attrdefs_ctx) {
+                    attrdefs_ctx->debounce_port_index = attrdefs_ctx->port_index;
+                }
+            }
             json_obj_append(json, "debounce", attrdef_json);
         }
     }
 
     if (!IS_VIRTUAL(port)) {
-        attrdef_json = attrdef_to_json("Sampling Interval", "Indicates how often to read the port value.",
-                                       "milliseconds", ATTR_TYPE_NUMBER, /* modifiable = */ TRUE,
-                                       port->min_sampling_interval, port->max_sampling_interval,
-                                       /* integer = */ TRUE , /* step = */ 0, /* choices = */ NULL,
-                                       /* reconnect = */ FALSE);
+        /* sampling_interval attrdef */
+
+        if (attrdefs_ctx && attrdefs_ctx->sampling_interval_port_index >= 0) {
+            attrdef_json = make_json_ref("#/%d/definitions/sampling_interval",
+                                         attrdefs_ctx->sampling_interval_port_index);
+#if defined(_DEBUG) && defined(_DEBUG_API)
+            char *ref_str = json_str_get(json_obj_value_at(attrdef_json, 0));
+            DEBUG_API("replacing \"%s.definitions.sampling_interval\" with $ref \"%s\"", port->id, ref_str);
+#endif
+        }
+        else {
+            attrdef_json = attrdef_to_json("Sampling Interval", "Indicates how often to read the port value.",
+                                           "milliseconds", ATTR_TYPE_NUMBER, /* modifiable = */ TRUE,
+                                           port->min_sampling_interval, port->max_sampling_interval,
+                                           /* integer = */ TRUE , /* step = */ 0, /* choices = */ NULL,
+                                           /* reconnect = */ FALSE);
+            if (attrdefs_ctx) {
+                attrdefs_ctx->sampling_interval_port_index = attrdefs_ctx->port_index;
+            }
+        }
         json_obj_append(json, "sampling_interval", attrdef_json);
     }
 
@@ -2375,7 +2450,7 @@ json_t *port_attrdefs_to_json(port_t *port, bool cross_port_refs) {
             int8 found_port_index = -1;
 
             if (choices) {
-                lookup_port_attrdef_choices(choices, port, a, &found_port_index, &found_attrdef_name, cross_port_refs);
+                lookup_port_attrdef_choices(choices, port, a, &found_port_index, &found_attrdef_name, !!attrdefs_ctx);
             }
 
             json_t *attrdef_json = attrdef_to_json(a->display_name ? a->display_name : "",
@@ -2386,7 +2461,7 @@ json_t *port_attrdefs_to_json(port_t *port, bool cross_port_refs) {
             /* if similar choices found, replace with $ref */
             if (found_attrdef_name) {
                 json_t *ref;
-                if (cross_port_refs) {
+                if (attrdefs_ctx) {
                     ref = make_json_ref("#/%d/definitions/%s/choices", found_port_index, found_attrdef_name);
                 }
                 else {
