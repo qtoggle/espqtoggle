@@ -166,10 +166,6 @@ ICACHE_FLASH_ATTR static json_t       * get_wifi(json_t *query_json, int *code);
 ICACHE_FLASH_ATTR static json_t       * port_attrdefs_to_json(port_t *port);
 ICACHE_FLASH_ATTR static json_t       * device_attrdefs_to_json(void);
 
-ICACHE_FLASH_ATTR static json_t       * attrdef_to_json(char *display_name, char *description, char *unit, char type,
-                                                        bool modifiable, double min, double max, bool integer,
-                                                        double step, char **choices, bool reconnect);
-
 ICACHE_FLASH_ATTR static void           on_sequence_timer(void *arg);
 
 #ifdef _OTA
@@ -2465,68 +2461,6 @@ json_t *device_attrdefs_to_json(void) {
                                    /* choices = */ NULL, /* reconnect = */ FALSE);
     json_obj_append(json, "debug", attrdef_json);
 #endif
-
-    return json;
-}
-
-json_t *attrdef_to_json(char *display_name, char *description, char *unit, char type, bool modifiable,
-                        double min, double max, bool integer, double step, char **choices,
-                        bool reconnect) {
-
-    json_t *json = json_obj_new();
-
-    json_obj_append(json, "display_name", json_str_new(display_name));
-    json_obj_append(json, "description", json_str_new(description));
-    if (unit) {
-        json_obj_append(json, "unit", json_str_new(unit));
-    }
-    json_obj_append(json, "modifiable", json_bool_new(modifiable));
-
-    switch (type) {
-        case ATTR_TYPE_BOOLEAN:
-            json_obj_append(json, "type", json_str_new(API_ATTR_TYPE_BOOLEAN));
-            break;
-
-        case ATTR_TYPE_NUMBER:
-            json_obj_append(json, "type", json_str_new(API_ATTR_TYPE_NUMBER));
-            break;
-
-        case ATTR_TYPE_STRING:
-            json_obj_append(json, "type", json_str_new(API_ATTR_TYPE_STRING));
-            break;
-    }
-
-    if (type == ATTR_TYPE_NUMBER) {
-        if (!IS_UNDEFINED(min)) {
-            json_obj_append(json, "min", json_double_new(min));
-        }
-
-        if (!IS_UNDEFINED(max)) {
-            json_obj_append(json, "max", json_double_new(max));
-        }
-
-        if (integer) {
-            json_obj_append(json, "integer", json_bool_new(TRUE));
-        }
-
-        if (step && !IS_UNDEFINED(step)) {
-            json_obj_append(json, "step", json_double_new(step));
-        }
-    }
-
-    if (choices) {
-        json_t *list = json_list_new();
-        char *c;
-        while ((c = *choices++)) {
-            json_list_append(list, choice_to_json(c, type));
-        }
-
-        json_obj_append(json, "choices", list);
-    }
-
-    if (reconnect) {
-        json_obj_append(json, "reconnect", json_bool_new(TRUE));
-    }
 
     return json;
 }
