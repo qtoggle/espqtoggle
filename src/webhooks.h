@@ -50,7 +50,7 @@ extern int                                  webhooks_timeout;
 extern int                                  webhooks_retries;
 
 
-ICACHE_FLASH_ATTR void                      webhooks_push_event(int type, json_t *params, port_t *port);
+ICACHE_FLASH_ATTR void                      webhooks_push_event(int type, char *port_id);
 
 
 #endif /* _WEBHOOKS_H */

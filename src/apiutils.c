@@ -124,48 +124,6 @@ bool choices_equal(char **choices1, char **choices2) {
     return TRUE;
 }
 
-void lookup_port_attrdef_choices(char **choices, port_t *port, attrdef_t *attrdef, int8 *found_port_index,
-                                 char **found_attrdef_name, bool cross_port_refs) {
-
-    *found_port_index = -1;
-    *found_attrdef_name = NULL;
-
-    port_t *p, **ports = all_ports;
-    attrdef_t *a, **attrdefs;
-    uint8 pi = 0;
-
-    if (cross_port_refs) {
-        /* look through the attrdefs of all ports for similar choices */
-        while ((p = *ports++)) {
-            if ((attrdefs = p->attrdefs)) {
-                while ((a = *attrdefs++) && (a != attrdef)) {
-                    if (choices_equal(choices, a->choices)) {
-                        *found_port_index = pi;
-                        *found_attrdef_name = a->name;
-                        break;
-                    }
-                }
-            }
-
-            pi++;
-            if (p == port) {
-                break;
-            }
-        }
-    }
-    else {
-        /* look through the attrdefs of this port for similar choices */
-        if ((attrdefs = port->attrdefs)) {
-            while ((a = *attrdefs++) && (a != attrdef)) {
-                if (choices_equal(choices, a->choices)) {
-                    *found_attrdef_name = a->name;
-                    break;
-                }
-            }
-        }
-    }
-}
-
 bool validate_num(double value, double min, double max, bool integer, double step, char **choices) {
     if ((min != max) && ((!IS_UNDEFINED(min) && value < min) || (!IS_UNDEFINED(max) && value > max))) {
         return FALSE;
@@ -473,19 +431,4 @@ json_t *attrdef_to_json(char *display_name, char *description, char *unit, char 
     }
 
     return json;
-}
-
-json_t *make_json_ref(const char *target_fmt, ...) {
-    va_list args;
-    char *buf = malloc(256);
-
-    va_start(args, target_fmt);
-    vsnprintf(buf, 256, target_fmt, args);
-    va_end(args);
-
-    json_t *ref = json_obj_new();
-    json_obj_append(ref, "$ref", json_str_new(buf));
-    free(buf);
-
-    return ref;
 }

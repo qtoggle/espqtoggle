@@ -32,13 +32,13 @@
 #include "espgoodies/json.h"
 
 #include "ports.h"
+#include "jsonrefs.h"
 
 
 typedef struct {
 
     int8                            type;
-    json_t                        * params;
-    port_t                        * port; /* used as port cache */
+    char                          * port_id;
 
 } event_t;
 
@@ -47,13 +47,12 @@ extern char *                       EVENT_TYPES_STR[];
 extern int                          EVENT_ACCESS_LEVELS[];
 
 
-ICACHE_FLASH_ATTR void              event_push(int type, json_t *params, port_t *port);
 ICACHE_FLASH_ATTR void              event_push_value_change(port_t *port);
 ICACHE_FLASH_ATTR void              event_push_port_update(port_t *port);
 ICACHE_FLASH_ATTR void              event_push_port_add(port_t *port);
-ICACHE_FLASH_ATTR void              event_push_port_remove(char *port_id);
+ICACHE_FLASH_ATTR void              event_push_port_remove(port_t *port);
 ICACHE_FLASH_ATTR void              event_push_device_update(void);
-ICACHE_FLASH_ATTR json_t *          event_to_json(event_t *event);
+ICACHE_FLASH_ATTR json_t *          event_to_json(event_t *event, json_refs_ctx_t *json_refs_ctx);
 ICACHE_FLASH_ATTR void              event_free(event_t *event);
 
 

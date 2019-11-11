@@ -81,105 +81,116 @@
                                 ]
                             },
                             "definitions": {
-                                "type": "object",
-                                "required": [
-                                    "sampling_interval"
-                                ],
-                                "properties": {
-                                    "sampling_interval": {
+                                "oneOf": [
+                                    {
+		                                "type": "object",
+		                                "required": [
+		                                    "sampling_interval"
+		                                ],
+		                                "properties": {
+		                                    "sampling_interval": {
+		                                        "type": "object",
+		                                        "required": [
+		                                            "display_name",
+		                                            "description",
+		                                            "unit",
+		                                            "modifiable",
+		                                            "type",
+		                                            "min",
+		                                            "max",
+		                                            "integer"
+		                                        ],
+		                                        "properties": {
+		                                            "display_name": {
+		                                                "type": "string"
+		                                            },
+		                                            "description": {
+		                                                "type": "string"
+		                                            },
+		                                            "unit": {
+		                                                "type": "string"
+		                                            },
+		                                            "modifiable": {
+		                                                "type": "boolean"
+		                                            },
+		                                            "type": {
+		                                                "enum": ["number"]
+		                                            },
+		                                            "min": {
+		                                                "type": "number"
+		                                            },
+		                                            "max": {
+		                                                "type": "number"
+		                                            },
+		                                            "integer": {
+		                                                "enum": [true]
+		                                            }
+		                                        }
+		                                    },
+		                                    "pull_up": {
+		                                        "type": "object",
+		                                        "required": [
+		                                            "display_name",
+		                                            "description",
+		                                            "unit",
+		                                            "modifiable",
+		                                            "type"
+		                                        ],
+		                                        "properties": {
+		                                            "display_name": {
+		                                                "type": "string"
+		                                            },
+		                                            "description": {
+		                                                "type": "string"
+		                                            },
+		                                            "unit": {
+		                                                "type": "string"
+		                                            },
+		                                            "modifiable": {
+		                                                "enum": [true]
+		                                            },
+		                                            "type": {
+		                                                "enum": ["boolean"]
+		                                            }
+		                                        }
+		                                    },
+		                                    "output": {
+		                                        "type": "object",
+		                                        "required": [
+		                                            "display_name",
+		                                            "description",
+		                                            "unit",
+		                                            "modifiable",
+		                                            "type"
+		                                        ],
+		                                        "properties": {
+		                                            "display_name": {
+		                                                "type": "string"
+		                                            },
+		                                            "description": {
+		                                                "type": "string"
+		                                            },
+		                                            "unit": {
+		                                                "type": "string"
+		                                            },
+		                                            "modifiable": {
+		                                                "enum": [true]
+		                                            },
+		                                            "type": {
+		                                                "enum": ["boolean"]
+		                                            }
+		                                        }
+		                                    }
+		                                }
+	                                },
+                                    {
                                         "type": "object",
-                                        "required": [
-                                            "display_name",
-                                            "description",
-                                            "unit",
-                                            "modifiable",
-                                            "type",
-                                            "min",
-                                            "max",
-                                            "integer"
-                                        ],
+                                        "required": ["$ref"],
                                         "properties": {
-                                            "display_name": {
-                                                "type": "string"
-                                            },
-                                            "description": {
-                                                "type": "string"
-                                            },
-                                            "unit": {
-                                                "type": "string"
-                                            },
-                                            "modifiable": {
-                                                "type": "boolean"
-                                            },
-                                            "type": {
-                                                "enum": ["number"]
-                                            },
-                                            "min": {
-                                                "type": "number"
-                                            },
-                                            "max": {
-                                                "type": "number"
-                                            },
-                                            "integer": {
-                                                "enum": [true]
-                                            }
+                                            "$ref": {"type": "string"}
                                         }
-                                    },
-                                    "pull_up": {
-                                        "type": "object",
-                                        "required": [
-                                            "display_name",
-                                            "description",
-                                            "unit",
-                                            "modifiable",
-                                            "type"
-                                        ],
-                                        "properties": {
-                                            "display_name": {
-                                                "type": "string"
-                                            },
-                                            "description": {
-                                                "type": "string"
-                                            },
-                                            "unit": {
-                                                "type": "string"
-                                            },
-                                            "modifiable": {
-                                                "enum": [true]
-                                            },
-                                            "type": {
-                                                "enum": ["boolean"]
-                                            }
-                                        }
-                                    },
-                                    "output": {
-                                        "type": "object",
-                                        "required": [
-                                            "display_name",
-                                            "description",
-                                            "unit",
-                                            "modifiable",
-                                            "type"
-                                        ],
-                                        "properties": {
-                                            "display_name": {
-                                                "type": "string"
-                                            },
-                                            "description": {
-                                                "type": "string"
-                                            },
-                                            "unit": {
-                                                "type": "string"
-                                            },
-                                            "modifiable": {
-                                                "enum": [true]
-                                            },
-                                            "type": {
-                                                "enum": ["boolean"]
-                                            }
-                                        }
-                                    }
-                                }
+                                    }	                                
+                                ]
                             }
                         }
                     }

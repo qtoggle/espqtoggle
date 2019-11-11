@@ -32,6 +32,7 @@
 
 #include "device.h"
 #include "events.h"
+#include "jsonrefs.h"
 #include "webhooks.h"
 
 
@@ -69,11 +70,10 @@ ICACHE_FLASH_ATTR static void   on_webhook_response(char *body, int body_len, in
                                                     char *header_values[], int header_count, uint8 addr[]);
 
 
-void webhooks_push_event(int type, json_t *params, port_t *port) {
+void webhooks_push_event(int type, char *port_id) {
     event_t *event = malloc(sizeof(event_t));
     event->type = type;
-    event->params = json_dup(params);
-    event->port = port;
+    event->port_id = port_id ? strdup(port_id) : NULL;
 
     webhooks_queue_node_t *n, *pn;
 
@@ -103,11 +103,7 @@ void webhooks_push_event(int type, json_t *params, port_t *port) {
     queue = n;
     queue_len++;
 
-#if defined(_DEBUG) && defined(_DEBUG_WEBHOOKS)
-    char *sparams = json_dump(params, /* free_mode = */ JSON_FREE_NOTHING);
-    DEBUG_WEBHOOKS("pushing event of type \"%s\": %s (queue size=%d)", EVENT_TYPES_STR[type], sparams, queue_len);
-    free(sparams);
-#endif
+    DEBUG_WEBHOOKS("pushing event of type \"%s\" (queue size=%d)", EVENT_TYPES_STR[type], queue_len);
 
     /* if this is the only item in queue,
      * we need to start the processing */
@@ -200,15 +196,20 @@ void do_webhook_request(event_t *event) {
     char *header_names[1] = {"Authorization"};
     char *header_values[1] = {auth_header};
 
+    json_refs_ctx_t json_refs_ctx;
+    json_refs_ctx_init(&json_refs_ctx, JSON_REFS_TYPE_WEBHOOKS_EVENT);
+
     /* body */
-    json_t *event_json = event_to_json(event);
-    char *body = json_dump_r(event_json, /* free_mode = */ JSON_FREE_EVERYTHING);
+    json_t *event_json = event_to_json(event, &json_refs_ctx);
+    if (event_json) {
+        char *body = json_dump_r(event_json, /* free_mode = */ JSON_FREE_EVERYTHING);
 
-    DEBUG_WEBHOOKS("request POST %s: %s", url, body);
-    /* actual request */
+        DEBUG_WEBHOOKS("request POST %s: %s", url, body);
 
-    httpclient_request("POST", url, (uint8 *) body, strlen(body), header_names, header_values, header_count,
-                       on_webhook_response, webhooks_timeout);
+        /* actual request */
+        httpclient_request("POST", url, (uint8 *) body, strlen(body), header_names, header_values, header_count,
+                           on_webhook_response, webhooks_timeout);
+    }
 
     free(auth_header);
 }
