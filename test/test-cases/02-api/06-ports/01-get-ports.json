@@ -77,7 +77,7 @@
 				        "pull_up": false,
 				        "value": null,
 				        "definitions": {
-				            "$ref": "#/0/definitions"
+				            "${DOLLAR}ref": "#/0/definitions"
 				        }
 				    },
 				    {
@@ -95,7 +95,7 @@
 				        "pull_up": false,
 				        "value": null,
 				        "definitions": {
-				            "$ref": "#/0/definitions"
+				            "${DOLLAR}ref": "#/0/definitions"
 				        }
 				    },
 				    {
@@ -113,7 +113,7 @@
 				        "pull_up": false,
 				        "value": null,
 				        "definitions": {
-				            "$ref": "#/0/definitions"
+				            "${DOLLAR}ref": "#/0/definitions"
 				        }
 				    },
 				    {
@@ -134,7 +134,7 @@
 				        "value": null,
 				        "definitions": {
 				            "sampling_interval": {
-				                "$ref": "#/0/definitions/sampling_interval"
+				                "${DOLLAR}ref": "#/0/definitions/sampling_interval"
 				            }
 				        }
 				    },
@@ -156,7 +156,7 @@
 				        "value": null,
 				        "definitions": {
 				            "sampling_interval": {
-				                "$ref": "#/0/definitions/sampling_interval"
+				                "${DOLLAR}ref": "#/0/definitions/sampling_interval"
 				            }
 				        }
 				    },
@@ -178,7 +178,7 @@
 				        "value": null,
 				        "definitions": {
 				            "sampling_interval": {
-				                "$ref": "#/0/definitions/sampling_interval"
+				                "${DOLLAR}ref": "#/0/definitions/sampling_interval"
 				            }
 				        }
 				    },
@@ -200,7 +200,7 @@
 				        "value": null,
 				        "definitions": {
 				            "sampling_interval": {
-				                "$ref": "#/0/definitions/sampling_interval"
+				                "${DOLLAR}ref": "#/0/definitions/sampling_interval"
 				            }
 				        }
 				    },
@@ -222,7 +222,7 @@
 				        "value": null,
 				        "definitions": {
 				            "sampling_interval": {
-				                "$ref": "#/0/definitions/sampling_interval"
+				                "${DOLLAR}ref": "#/0/definitions/sampling_interval"
 				            }
 				        }
 				    },
@@ -271,7 +271,7 @@
 				                "integer": true
 				            },
 				            "sampling_interval": {
-				                "$ref": "#/0/definitions/sampling_interval"
+				                "${DOLLAR}ref": "#/0/definitions/sampling_interval"
 				            }
 				        }
 				    }
