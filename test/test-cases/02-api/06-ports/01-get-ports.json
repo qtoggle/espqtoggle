@@ -10,191 +10,272 @@
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "expected_status": 200,
-                "expected_body_schema": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "required": [
-                            "id",
-                            "display_name",
-                            "unit",
-                            "writable",
-                            "enabled",
-                            "persisted",
-                            "sampling_interval",
-                            "transform_read",
-                            "type",
-                            "value",
-                            "definitions"
-                        ],
-                        "properties": {
-                            "id": {
-                                "enum": ["gpio0", "gpio2", "gpio4", "gpio5", "pwm12", "pwm13", "pwm14", "pwm15", "pwm_freq", "adc0"]
-                            },
-                            "display_name": {
-                                "enum": [""]
-                            },
-                            "unit": {
-                                "enum": [""]
-                            },
-                            "writable": {
+                "expected_body": [
+                    {
+                        "id": "gpio0",
+                        "display_name": "",
+                        "unit": "",
+                        "writable": false,
+                        "enabled": true,
+                        "persisted": false,
+                        "sampling_interval": 0,
+                        "transform_read": "",
+                        "type": "boolean",
+                        "debounce": 0,
+                        "output": false,
+                        "pull_up": false,
+                        "value": true,
+                        "definitions": {
+                            "output": {
+                                "display_name": "Output Mode",
+                                "description": "Makes this GPIO an output pin.",
+                                "unit": "",
+                                "modifiable": true,
                                 "type": "boolean"
-                            },
-                            "enabled": {
-                                "type": "boolean"
-                            },
-                            "persisted": {
-                                "type": "boolean"
-                            },
-                            "sampling_interval": {
-                                "type": "integer"
-                            },
-                            "transform_read": {
-                                "enum": [""]
-                            },
-                            "transform_write": {
-                                "enum": [""]
-                            },
-                            "type": {
-                                "enum": ["boolean", "number"]
-                            },
-                            "expression": {
-                                "enum": [""]
                             },
                             "pull_up": {
+                                "display_name": "Pull-Up",
+                                "description": "Enables the internal pull-up.",
+                                "unit": "",
+                                "modifiable": true,
                                 "type": "boolean"
                             },
-                            "output": {
-                                "type": "boolean"
+                            "debounce": {
+                                "display_name": "Debounce Time",
+                                "description": "Sets the debounce filtering time.",
+                                "unit": "milliseconds",
+                                "modifiable": true,
+                                "type": "number",
+                                "min": 0,
+                                "max": 1000,
+                                "integer": true
                             },
-                            "value": {
-                                "oneOf": [
+                            "sampling_interval": {
+                                "display_name": "Sampling Interval",
+                                "description": "Indicates how often to read the port value.",
+                                "unit": "milliseconds",
+                                "modifiable": true,
+                                "type": "number",
+                                "min": 0,
+                                "max": 86400000,
+                                "integer": true
+                            }
+                        }
+                    },
+                    {
+                        "id": "gpio2",
+                        "display_name": "",
+                        "unit": "",
+                        "writable": false,
+                        "enabled": false,
+                        "persisted": false,
+                        "sampling_interval": 0,
+                        "transform_read": "",
+                        "type": "boolean",
+                        "debounce": 0,
+                        "output": false,
+                        "pull_up": false,
+                        "value": null,
+                        "definitions": {
+                            "$ref": "#/0/definitions"
+                        }
+                    },
+                    {
+                        "id": "gpio4",
+                        "display_name": "",
+                        "unit": "",
+                        "writable": false,
+                        "enabled": false,
+                        "persisted": false,
+                        "sampling_interval": 0,
+                        "transform_read": "",
+                        "type": "boolean",
+                        "debounce": 0,
+                        "output": false,
+                        "pull_up": false,
+                        "value": null,
+                        "definitions": {
+                            "$ref": "#/0/definitions"
+                        }
+                    },
+                    {
+                        "id": "gpio5",
+                        "display_name": "",
+                        "unit": "",
+                        "writable": false,
+                        "enabled": true,
+                        "persisted": false,
+                        "sampling_interval": 0,
+                        "transform_read": "",
+                        "type": "boolean",
+                        "debounce": 0,
+                        "output": false,
+                        "pull_up": false,
+                        "value": true,
+                        "definitions": {
+                            "$ref": "#/0/definitions"
+                        }
+                    },
+                    {
+                        "id": "pwm_freq",
+                        "display_name": "",
+                        "unit": "",
+                        "writable": true,
+                        "enabled": true,
+                        "persisted": false,
+                        "sampling_interval": 0,
+                        "transform_read": "",
+                        "type": "number",
+                        "min": 1,
+                        "max": 50000,
+                        "integer": true,
+                        "expression": "",
+                        "transform_write": "",
+                        "value": 1000,
+                        "definitions": {
+                            "sampling_interval": {
+                                "$ref": "#/0/definitions/sampling_interval"
+                            }
+                        }
+                    },
+                    {
+                        "id": "pwm12",
+                        "display_name": "",
+                        "unit": "",
+                        "writable": true,
+                        "enabled": true,
+                        "persisted": false,
+                        "sampling_interval": 0,
+                        "transform_read": "",
+                        "type": "number",
+                        "min": 0,
+                        "max": 100,
+                        "integer": true,
+                        "expression": "",
+                        "transform_write": "",
+                        "value": 0,
+                        "definitions": {
+                            "sampling_interval": {
+                                "$ref": "#/0/definitions/sampling_interval"
+                            }
+                        }
+                    },
+                    {
+                        "id": "pwm13",
+                        "display_name": "",
+                        "unit": "",
+                        "writable": true,
+                        "enabled": false,
+                        "persisted": false,
+                        "sampling_interval": 0,
+                        "transform_read": "",
+                        "type": "number",
+                        "min": 0,
+                        "max": 100,
+                        "integer": true,
+                        "expression": "",
+                        "transform_write": "",
+                        "value": null,
+                        "definitions": {
+                            "sampling_interval": {
+                                "$ref": "#/0/definitions/sampling_interval"
+                            }
+                        }
+                    },
+                    {
+                        "id": "pwm14",
+                        "display_name": "",
+                        "unit": "",
+                        "writable": true,
+                        "enabled": false,
+                        "persisted": false,
+                        "sampling_interval": 0,
+                        "transform_read": "",
+                        "type": "number",
+                        "min": 0,
+                        "max": 100,
+                        "integer": true,
+                        "expression": "",
+                        "transform_write": "",
+                        "value": null,
+                        "definitions": {
+                            "sampling_interval": {
+                                "$ref": "#/0/definitions/sampling_interval"
+                            }
+                        }
+                    },
+                    {
+                        "id": "pwm15",
+                        "display_name": "",
+                        "unit": "",
+                        "writable": true,
+                        "enabled": false,
+                        "persisted": false,
+                        "sampling_interval": 0,
+                        "transform_read": "",
+                        "type": "number",
+                        "min": 0,
+                        "max": 100,
+                        "integer": true,
+                        "expression": "",
+                        "transform_write": "",
+                        "value": null,
+                        "definitions": {
+                            "sampling_interval": {
+                                "$ref": "#/0/definitions/sampling_interval"
+                            }
+                        }
+                    },
+                    {
+                        "id": "adc0",
+                        "display_name": "",
+                        "unit": "",
+                        "writable": false,
+                        "enabled": false,
+                        "persisted": false,
+                        "sampling_interval": 1000,
+                        "transform_read": "",
+                        "type": "number",
+                        "filter": "disabled",
+                        "filter_width": 2,
+                        "min": 0,
+                        "max": 1000,
+                        "integer": true,
+                        "value": null,
+                        "definitions": {
+                            "filter": {
+                                "display_name": "Filter Type",
+                                "description": "Configures a filter for the port value.",
+                                "modifiable": true,
+                                "type": "string",
+                                "choices": [
                                     {
-                                        "type": "boolean"
+                                        "value": "disabled"
                                     },
                                     {
-                                        "type": "number"
+                                        "value": "median"
                                     },
                                     {
-                                        "type": "null"
+                                        "value": "average"
                                     }
                                 ]
                             },
-                            "definitions": {
-                                "oneOf": [
-                                    {
-		                                "type": "object",
-		                                "required": [
-		                                    "sampling_interval"
-		                                ],
-		                                "properties": {
-		                                    "sampling_interval": {
-		                                        "type": "object",
-		                                        "required": [
-		                                            "display_name",
-		                                            "description",
-		                                            "unit",
-		                                            "modifiable",
-		                                            "type",
-		                                            "min",
-		                                            "max",
-		                                            "integer"
-		                                        ],
-		                                        "properties": {
-		                                            "display_name": {
-		                                                "type": "string"
-		                                            },
-		                                            "description": {
-		                                                "type": "string"
-		                                            },
-		                                            "unit": {
-		                                                "type": "string"
-		                                            },
-		                                            "modifiable": {
-		                                                "type": "boolean"
-		                                            },
-		                                            "type": {
-		                                                "enum": ["number"]
-		                                            },
-		                                            "min": {
-		                                                "type": "number"
-		                                            },
-		                                            "max": {
-		                                                "type": "number"
-		                                            },
-		                                            "integer": {
-		                                                "enum": [true]
-		                                            }
-		                                        }
-		                                    },
-		                                    "pull_up": {
-		                                        "type": "object",
-		                                        "required": [
-		                                            "display_name",
-		                                            "description",
-		                                            "unit",
-		                                            "modifiable",
-		                                            "type"
-		                                        ],
-		                                        "properties": {
-		                                            "display_name": {
-		                                                "type": "string"
-		                                            },
-		                                            "description": {
-		                                                "type": "string"
-		                                            },
-		                                            "unit": {
-		                                                "type": "string"
-		                                            },
-		                                            "modifiable": {
-		                                                "enum": [true]
-		                                            },
-		                                            "type": {
-		                                                "enum": ["boolean"]
-		                                            }
-		                                        }
-		                                    },
-		                                    "output": {
-		                                        "type": "object",
-		                                        "required": [
-		                                            "display_name",
-		                                            "description",
-		                                            "unit",
-		                                            "modifiable",
-		                                            "type"
-		                                        ],
-		                                        "properties": {
-		                                            "display_name": {
-		                                                "type": "string"
-		                                            },
-		                                            "description": {
-		                                                "type": "string"
-		                                            },
-		                                            "unit": {
-		                                                "type": "string"
-		                                            },
-		                                            "modifiable": {
-		                                                "enum": [true]
-		                                            },
-		                                            "type": {
-		                                                "enum": ["boolean"]
-		                                            }
-		                                        }
-		                                    }
-		                                }
-	                                },
-                                    {
-                                        "type": "object",
-                                        "required": ["$ref"],
-                                        "properties": {
-                                            "$ref": {"type": "string"}
-                                        }
-                                    }	                                
-                                ]
+                            "filter_width": {
+                                "display_name": "Filter Width",
+                                "description": "Sets the filter width.",
+                                "unit": "samples",
+                                "modifiable": true,
+                                "type": "number",
+                                "min": 2,
+                                "max": 1000,
+                                "integer": true
+                            },
+                            "sampling_interval": {
+                                "$ref": "#/0/definitions/sampling_interval"
                             }
                         }
                     }
-                }
+                ]                
             }
         }
     ]
