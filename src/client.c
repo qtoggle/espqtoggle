@@ -40,6 +40,7 @@
 #include "device.h"
 #include "sessions.h"
 #include "api.h"
+#include "apiutils.h"
 #include "client.h"
 
 

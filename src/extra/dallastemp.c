@@ -30,6 +30,7 @@
 #include "espgoodies/utils.h"
 
 #include "api.h"
+#include "apiutils.h"
 #include "ports.h"
 #include "extra/dallastemp.h"
 

@@ -29,6 +29,7 @@
 #endif
 
 #include "api.h"
+#include "apiutils.h"
 #include "webhooks.h"
 #include "device.h"
 #include "config.h"

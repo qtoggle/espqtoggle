@@ -44,7 +44,94 @@ int EVENT_ACCESS_LEVELS[] = {
 };
 
 
-void event_push(int type, json_t *params, port_t *port) {
+ICACHE_FLASH_ATTR static void   event_push(int type, char *port_id);
+
+
+void event_push_value_change(port_t *port) {
+    DEBUG_PORT(port, "generating value-change event");
+
+    event_push(EVENT_TYPE_VALUE_CHANGE, port->id);
+}
+
+void event_push_port_update(port_t *port) {
+    DEBUG_PORT(port, "generating port-update event");
+
+    event_push(EVENT_TYPE_PORT_UPDATE, port->id);
+}
+
+void event_push_port_add(port_t *port) {
+    DEBUG_PORT(port, "generating port-add event");
+
+    event_push(EVENT_TYPE_PORT_ADD, port->id);
+}
+
+void event_push_port_remove(port_t *port) {
+    DEBUG("generating port-remove event");
+
+    event_push(EVENT_TYPE_PORT_REMOVE, port->id);
+}
+
+void event_push_device_update(void) {
+    DEBUG_DEVICE("generating device-update event");
+
+    event_push(EVENT_TYPE_DEVICE_UPDATE, NULL);
+}
+
+json_t *event_to_json(event_t *event, json_refs_ctx_t *json_refs_ctx) {
+    json_t *params = NULL;
+    port_t *port;
+
+    switch (event->type) {
+        case EVENT_TYPE_VALUE_CHANGE:
+            port = port_find_by_id(event->port_id);
+            if (!port) {
+                DEBUG("dropping %s event for inexistent port %s", EVENT_TYPES_STR[event->type], event->port_id);
+                return NULL;
+            }
+
+            params = json_obj_new();
+            json_obj_append(params, "id", json_str_new(event->port_id));
+            json_obj_append(params, "value", port_get_json_value(port));
+            break;
+
+        case EVENT_TYPE_PORT_UPDATE:
+        case EVENT_TYPE_PORT_ADD:
+            port = port_find_by_id(event->port_id);
+            if (!port) {
+                DEBUG("dropping %s event for inexistent port %s", EVENT_TYPES_STR[event->type], event->port_id);
+                return NULL;
+            }
+
+            params = port_to_json(port, json_refs_ctx);
+            break;
+
+        case EVENT_TYPE_PORT_REMOVE:
+            params = json_obj_new();
+            json_obj_append(params, "id", json_str_new(event->port_id));
+            break;
+
+        case EVENT_TYPE_DEVICE_UPDATE:
+            params = device_to_json();
+            break;
+
+    }
+
+    json_t *json = json_obj_new();
+    json_obj_append(json, "type", json_str_new(EVENT_TYPES_STR[event->type]));
+    json_obj_append(json, "params", params);
+
+    return json;
+}
+
+void event_free(event_t *event) {
+    if (event->port_id) {
+        free(event->port_id);
+    }
+
+    free(event);
+}
+
+void event_push(int type, char *port_id) {
     /* don't push any event while performing OTA */
 #ifdef _OTA
     if (ota_busy()) {
@@ -52,80 +139,10 @@ void event_push(int type, json_t *params, port_t *port) {
     }
 #endif
 
-    sessions_push_event(type, params, port);
+    sessions_push_event(type, port_id);
 
     if ((device_flags & DEVICE_FLAG_WEBHOOKS_ENABLED) && ((1 << type) & webhooks_events_mask)) {
-        webhooks_push_event(type, params, port);
+        webhooks_push_event(type, port_id);
     }
 }
 
-void event_push_value_change(port_t *port) {
-    DEBUG_PORT(port, "generating value-change event");
-
-    json_t *params = json_obj_new();
-    json_obj_append(params, "id", json_str_new(port->id));
-
-    /* we'll add the actual value later as it may change again during this iteration */
-
-    event_push(EVENT_TYPE_VALUE_CHANGE, params, port);
-    json_free(params);
-}
-
-void event_push_port_update(port_t *port) {
-    DEBUG_PORT(port, "generating port-update event");
-
-    json_t *params = port_to_json(port);
-    event_push(EVENT_TYPE_PORT_UPDATE, params, NULL);
-    json_free(params);
-}
-
-void event_push_port_add(port_t *port) {
-    DEBUG_PORT(port, "generating port-add event");
-
-    json_t *params = port_to_json(port);
-    event_push(EVENT_TYPE_PORT_ADD, params, NULL);
-    json_free(params);
-}
-
-void event_push_port_remove(char *port_id) {
-    DEBUG("generating port-remove event");
-
-    json_t *params = json_obj_new();
-    json_obj_append(params, "id", json_str_new(port_id));
-    event_push(EVENT_TYPE_PORT_REMOVE, params, NULL);
-    json_free(params);
-}
-
-void event_push_device_update(void) {
-    DEBUG_DEVICE("generating device-update event");
-
-    json_t *params = device_to_json();
-    event_push(EVENT_TYPE_DEVICE_UPDATE, params, NULL);
-    json_free(params);
-}
-
-json_t *event_to_json(event_t *event) {
-    json_t *json = json_obj_new();
-
-    json_obj_append(json, "type", json_str_new(EVENT_TYPES_STR[event->type]));
-
-    json_t *params = json_dup(event->params);
-
-    if (event->type == EVENT_TYPE_VALUE_CHANGE) {
-        /* the actual value is captured as late as possible */
-
-        json_obj_append(params, "value", port_get_json_value(event->port));
-    }
-
-    json_obj_append(json, "params", params);
-
-    return json;
-}
-
-void event_free(event_t *event) {
-    if (event->params) {
-        json_free(event->params);
-    }
-
-    free(event);
-}

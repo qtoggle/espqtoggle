@@ -52,6 +52,8 @@
 #include "core.h"
 #include "ver.h"
 #include "api.h"
+#include "apiutils.h"
+#include "jsonrefs.h"
 
 
 #define API_ERROR(c, error) ({                                                          \
@@ -162,27 +164,8 @@ ICACHE_FLASH_ATTR static json_t       * patch_webhooks(json_t *query_json, json_
 
 ICACHE_FLASH_ATTR static json_t       * get_wifi(json_t *query_json, int *code);
 
-ICACHE_FLASH_ATTR static json_t       * port_attrdefs_to_json(port_t *port);
+ICACHE_FLASH_ATTR static json_t       * port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx);
 ICACHE_FLASH_ATTR static json_t       * device_attrdefs_to_json(void);
-
-ICACHE_FLASH_ATTR static json_t       * attrdef_to_json(char *display_name, char *description, char *unit, char type,
-                                                        bool modifiable, double min, double max, bool integer,
-                                                        double step, char **choices, bool reconnect);
-
-ICACHE_FLASH_ATTR static json_t       * choice_to_json(char *choice, char type);
-ICACHE_FLASH_ATTR static void           free_choices(char **choices);
-
-ICACHE_FLASH_ATTR static bool           validate_num(double value, double min, double max, bool integer,
-                                                     double step, char **choices);
-ICACHE_FLASH_ATTR static bool           validate_str(char *value, char **choices);
-ICACHE_FLASH_ATTR static bool           validate_id(char *id);
-ICACHE_FLASH_ATTR static bool           validate_str_ip(char *ip, uint8 *a, int len);
-ICACHE_FLASH_ATTR static bool           validate_str_wifi(char *wifi, char *ssid, char *psk, uint8 *bssid);
-ICACHE_FLASH_ATTR static bool           validate_str_network_scan(char *scan, int *scan_interval, int *scan_threshold);
-#ifdef _SLEEP
-ICACHE_FLASH_ATTR static bool           validate_str_sleep_mode(char *sleep_mode, int *wake_interval,
-                                                                int *wake_duration);
-#endif
 
 ICACHE_FLASH_ATTR static void           on_sequence_timer(void *arg);
 
@@ -421,7 +404,7 @@ void api_conn_reset(void) {
 }
 
 
-json_t *port_to_json(port_t *port) {
+json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
     json_t *json = json_obj_new();
 
     /* common to all ports */
@@ -470,13 +453,40 @@ json_t *port_to_json(port_t *port) {
         }
 
         if (port->choices) {
-            json_t *list = json_list_new();
-            char *c, **choices = port->choices;
-            while ((c = *choices++)) {
-                json_list_append(list, choice_to_json(c, PORT_TYPE_NUMBER));
+            int8 found_ref_index = -1;
+            if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST) {
+                /* look through previous ports for same choices */
+                port_t *p, **ports = all_ports;
+                uint8 i = 0;
+                while ((p = *ports++) && (p != port)) {
+                    if (choices_equal(port->choices, p->choices)) {
+                        found_ref_index = i;
+                        break;
+                    }
+
+                    i++;
+                }
             }
 
-            json_obj_append(json, "choices", list);
+            if (found_ref_index >= 0) {
+                /* found equal choices at found_ref_index */
+                json_t *ref = make_json_ref("#/%d/choices", found_ref_index);
+#if defined(_DEBUG) && defined(_DEBUG_API)
+                char *ref_str = json_str_get(json_obj_value_at(ref, 0));
+                DEBUG_API("replacing \"%s.choices\" with $ref \"%s\"", port->id, ref_str);
+#endif
+                json_obj_append(json, "choices", ref);
+
+            }
+            else {
+                json_t *list = json_list_new();
+                char *c, **choices = port->choices;
+                while ((c = *choices++)) {
+                    json_list_append(list, choice_to_json(c, PORT_TYPE_NUMBER));
+                }
+
+                json_obj_append(json, "choices", list);
+            }
         }
     }
     /* specific to boolean ports */
@@ -557,7 +567,7 @@ json_t *port_to_json(port_t *port) {
     json_obj_append(json, "value", port_get_json_value(port));
 
     /* attribute definitions */
-    json_obj_append(json, "definitions", port_attrdefs_to_json(port));
+    json_obj_append(json, "definitions", port_attrdefs_to_json(port, json_refs_ctx));
 
     json_stringify(json);
 
@@ -721,46 +731,6 @@ json_t *device_to_json(void) {
     json_stringify(json);
 
     return json;
-}
-
-double get_choice_value_num(char *choice) {
-    return strtod(get_choice_value_str(choice), NULL);
-}
-
-char *get_choice_value_str(char *choice) {
-    static char *value = NULL;  /* acts as a reentrant buffer */
-    if (value) {
-        free(value);
-        value = NULL;
-    }
-
-    char *p = strchr(choice, ':');
-    if (p) {
-        value = strndup(choice, p - choice);
-    }
-    else {
-        return choice;
-    }
-
-    return value;
-}
-
-char *get_choice_display_name(char *choice) {
-    static char *display_name = NULL;  /* acts as a reentrant buffer */
-    if (display_name) {
-        free(display_name);
-        display_name = NULL;
-    }
-
-    char *p = strchr(choice, ':');
-    if (p) {
-        display_name = strdup(p + 1);
-    }
-    else {
-        return NULL;
-    }
-
-    return display_name;
 }
 
 
@@ -1220,9 +1190,12 @@ json_t *get_ports(json_t *query_json, int *code) {
     }
 
     port_t **port = all_ports, *p;
+    json_refs_ctx_t json_refs_ctx;
+    json_refs_ctx_init(&json_refs_ctx, JSON_REFS_TYPE_PORTS_LIST);
     while ((p = *port++)) {
         DEBUG_API("returning attributes of port %s", p->id);
-        json_list_append(response_json, port_to_json(p));
+        json_list_append(response_json, port_to_json(p, &json_refs_ctx));
+        json_refs_ctx.index++;
     }
 
     *code = 200;
@@ -1455,7 +1428,10 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
 
     *code = 201;
 
-    return port_to_json(new_port);
+    json_refs_ctx_t json_refs_ctx;
+    json_refs_ctx_init(&json_refs_ctx, JSON_REFS_TYPE_PORT);
+
+    return port_to_json(new_port, &json_refs_ctx);
 }
 
 json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *code) {
@@ -1911,7 +1887,7 @@ json_t *delete_port(port_t *port, json_t *query_json, int *code) {
         return API_ERROR(400, "port not removable");  /* can't unregister a non-virtual port */
     }
 
-    event_push_port_remove(port->id);
+    event_push_port_remove(port);
 
     /* free choices */
     if (port->choices) {
@@ -2364,52 +2340,179 @@ json_t *get_wifi(json_t *query_json, int *code) {
     return NULL;
 }
 
-json_t *port_attrdefs_to_json(port_t *port) {
+json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
     json_t *json = json_obj_new();
     json_t *attrdef_json;
 
+    if (port->attrdefs) {
+        int8 found_port_index = -1;
+        if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST) {
+            /* look through previous ports for ports having exact same attrdefs */
+            port_t *p, **ports = all_ports;
+            uint8 i = 0;
+            while ((p = *ports++) && (p != port)) {
+                if ((p->attrdefs == port->attrdefs) &&
+                    (IS_OUTPUT(p) == IS_OUTPUT(port)) &&
+                    (IS_VIRTUAL(p) == IS_VIRTUAL(port)) &&
+                    (p->type == port->type)) {
+
+                    found_port_index = i;
+                    break;
+                }
+
+                i++;
+            }
+        }
+
+        if (found_port_index >= 0) {  /* found a port with exact same attrdefs */
+            json_t *ref;
+            ref = make_json_ref("#/%d/definitions", found_port_index);
+#if defined(_DEBUG) && defined(_DEBUG_API)
+            char *ref_str = json_str_get(json_obj_value_at(ref, 0));
+            DEBUG_API("replacing \"%s.definitions\" with $ref \"%s\"", port->id, ref_str);
+#endif
+            json_free(json);
+
+            return ref;
+        }
+
+        attrdef_t *a, **attrdefs = port->attrdefs;
+        while ((a = *attrdefs++)) {
+            char **choices = a->choices;
+            char *found_attrdef_name = NULL;
+            int8 found_port_index = -1;
+
+            if (choices) {
+                /* look through previous ports (and current port as well) for attrdefs with same choices */
+                lookup_port_attrdef_choices(choices, port, a, &found_port_index, &found_attrdef_name, json_refs_ctx);
+                if (found_attrdef_name) {
+                    /* will be replaced by $ref */
+                    choices = NULL;
+                }
+            }
+
+            attrdef_json = attrdef_to_json(a->display_name ? a->display_name : "",
+                                           a->description ? a->description : "",
+                                           a->unit ? a->unit : "", a->type, a->modifiable,
+                                           a->min, a->max, a->integer, a->step, choices, a->reconnect);
+
+            /* if similar choices found, replace with $ref */
+            if (found_attrdef_name) {
+                json_t *ref = NULL;
+                switch (json_refs_ctx->type) {
+                    case JSON_REFS_TYPE_PORTS_LIST:
+                        ref = make_json_ref("#/%d/definitions/%s/choices", found_port_index, found_attrdef_name);
+                        break;
+
+                    case JSON_REFS_TYPE_PORT:
+                        ref = make_json_ref("#/definitions/%s/choices", found_attrdef_name);
+                        break;
+
+                    case JSON_REFS_TYPE_LISTEN_EVENTS_LIST:
+                        ref = make_json_ref("#/%d/params/definitions/%s/choices",
+                                            json_refs_ctx->index, found_attrdef_name);
+                        break;
+
+                    case JSON_REFS_TYPE_WEBHOOKS_EVENT:
+                        ref = make_json_ref("#/params/definitions/%s/choices", found_attrdef_name);
+                        break;
+                }
+#if defined(_DEBUG) && defined(_DEBUG_API)
+                char *ref_str = json_str_get(json_obj_value_at(ref, 0));
+                DEBUG_API("replacing \"%s.definitions.%s.choices\" with $ref \"%s\"",
+                          port->id, found_attrdef_name, ref_str);
+#endif
+                json_obj_append(attrdef_json, "choices", ref);
+            }
+
+            json_stringify(attrdef_json);
+            json_obj_append(json, a->name, attrdef_json);
+        }
+    }
+
     if (!IS_OUTPUT(port)) {
         if (port->type == PORT_TYPE_NUMBER) {
-            attrdef_json = attrdef_to_json("Filter Type", "Configures a filter for the port value.", /* unit = */ NULL,
-                                           ATTR_TYPE_STRING, /* modifiable = */ TRUE, /* min = */ UNDEFINED,
-                                           /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0, filter_choices,
-                                           /* reconnect = */FALSE);
+            /* filter attrdef */
+            if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST && json_refs_ctx->filter_port_index >= 0) {
+                attrdef_json = make_json_ref("#/%d/definitions/filter", json_refs_ctx->filter_port_index);
+#if defined(_DEBUG) && defined(_DEBUG_API)
+                char *ref_str = json_str_get(json_obj_value_at(attrdef_json, 0));
+                DEBUG_API("replacing \"%s.definitions.filter\" with $ref \"%s\"", port->id, ref_str);
+#endif
+            }
+            else {
+                attrdef_json = attrdef_to_json("Filter Type", "Configures a filter for the port value.",
+                                               /* unit = */ NULL, ATTR_TYPE_STRING, /* modifiable = */ TRUE,
+                                               /* min = */ UNDEFINED, /* max = */ UNDEFINED, /* integer = */ FALSE,
+                                               /* step = */ 0, filter_choices, /* reconnect = */FALSE);
+                if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST) {
+                    json_refs_ctx->filter_port_index = json_refs_ctx->index;
+                }
+            }
             json_obj_append(json, "filter", attrdef_json);
 
-            attrdef_json = attrdef_to_json("Filter Width", "Sets the filter width.", "samples", ATTR_TYPE_NUMBER,
-                                           /* modifiable = */ TRUE, /* min = */ 2, /* max = */ PORT_MAX_FILTER_WIDTH,
-                                           /* integer = */ TRUE, /* step = */ 0, /* choices = */ NULL,
-                                           /* reconnect */ FALSE);
+            /* filter_width attrdef */
+            if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST && json_refs_ctx->filter_width_port_index >= 0) {
+                attrdef_json = make_json_ref("#/%d/definitions/filter_width", json_refs_ctx->filter_width_port_index);
+#if defined(_DEBUG) && defined(_DEBUG_API)
+                char *ref_str = json_str_get(json_obj_value_at(attrdef_json, 0));
+                DEBUG_API("replacing \"%s.definitions.filter_width\" with $ref \"%s\"", port->id, ref_str);
+#endif
+            }
+            else {
+                attrdef_json = attrdef_to_json("Filter Width", "Sets the filter width.", "samples", ATTR_TYPE_NUMBER,
+                                               /* modifiable = */ TRUE, /* min = */ 2,
+                                               /* max = */ PORT_MAX_FILTER_WIDTH, /* integer = */ TRUE, /* step = */ 0,
+                                               /* choices = */ NULL, /* reconnect */ FALSE);
+                if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST) {
+                    json_refs_ctx->filter_width_port_index = json_refs_ctx->index;
+                }
+            }
             json_obj_append(json, "filter_width", attrdef_json);
         }
         else {  /* assuming PORT_TYPE_BOOLEAN */
-            attrdef_json = attrdef_to_json("Debounce Time", "Sets the debounce filtering time.", "milliseconds",
-                                           ATTR_TYPE_NUMBER, /* modifiable = */ TRUE, /* min = */ 0,
-                                           /* max = */ PORT_MAX_DEBOUNCE_TIME, /* integer = */ TRUE, /* step = */ 0,
-                                           /* choices = */ NULL, /* reconnect = */ FALSE);
+            /* debounce attrdef */
+            if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST && json_refs_ctx->debounce_port_index >= 0) {
+                attrdef_json = make_json_ref("#/%d/definitions/debounce", json_refs_ctx->debounce_port_index);
+#if defined(_DEBUG) && defined(_DEBUG_API)
+                char *ref_str = json_str_get(json_obj_value_at(attrdef_json, 0));
+                DEBUG_API("replacing \"%s.definitions.debounce\" with $ref \"%s\"", port->id, ref_str);
+#endif
+            }
+            else {
+                attrdef_json = attrdef_to_json("Debounce Time", "Sets the debounce filtering time.", "milliseconds",
+                                               ATTR_TYPE_NUMBER, /* modifiable = */ TRUE, /* min = */ 0,
+                                               /* max = */ PORT_MAX_DEBOUNCE_TIME, /* integer = */ TRUE, /* step = */ 0,
+                                               /* choices = */ NULL, /* reconnect = */ FALSE);
+                if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST) {
+                    json_refs_ctx->debounce_port_index = json_refs_ctx->index;
+                }
+            }
             json_obj_append(json, "debounce", attrdef_json);
         }
     }
 
     if (!IS_VIRTUAL(port)) {
-        attrdef_json = attrdef_to_json("Sampling Interval", "Indicates how often to read the port value.",
-                                       "milliseconds", ATTR_TYPE_NUMBER, /* modifiable = */ TRUE,
-                                       port->min_sampling_interval, port->max_sampling_interval,
-                                       /* integer = */ TRUE , /* step = */ 0, /* choices = */ NULL,
-                                       /* reconnect = */ FALSE);
-        json_obj_append(json, "sampling_interval", attrdef_json);
-    }
-
-    if (port->attrdefs) {
-        attrdef_t *a, **attrdefs = port->attrdefs;
-        while ((a = *attrdefs++)) {
-            json_t *attrdef_json = attrdef_to_json(a->display_name ? a->display_name : "",
-                                                   a->description ? a->description : "",
-                                                   a->unit ? a->unit : "", a->type, a->modifiable,
-                                                   a->min, a->max, a->integer, a->step, a->choices, a->reconnect);
-            json_stringify(attrdef_json);
-            json_obj_append(json, a->name, attrdef_json);
+        /* sampling_interval attrdef */
+        if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST && json_refs_ctx->sampling_interval_port_index >= 0) {
+            attrdef_json = make_json_ref("#/%d/definitions/sampling_interval",
+                                         json_refs_ctx->sampling_interval_port_index);
+#if defined(_DEBUG) && defined(_DEBUG_API)
+            char *ref_str = json_str_get(json_obj_value_at(attrdef_json, 0));
+            DEBUG_API("replacing \"%s.definitions.sampling_interval\" with $ref \"%s\"", port->id, ref_str);
+#endif
         }
+        else {
+            attrdef_json = attrdef_to_json("Sampling Interval", "Indicates how often to read the port value.",
+                                           "milliseconds", ATTR_TYPE_NUMBER, /* modifiable = */ TRUE,
+                                           port->min_sampling_interval, port->max_sampling_interval,
+                                           /* integer = */ TRUE , /* step = */ 0, /* choices = */ NULL,
+                                           /* reconnect = */ FALSE);
+            if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST) {
+                json_refs_ctx->sampling_interval_port_index = json_refs_ctx->index;
+            }
+        }
+        json_obj_append(json, "sampling_interval", attrdef_json);
     }
 
     json_stringify(json);
@@ -2522,342 +2625,6 @@ json_t *device_attrdefs_to_json(void) {
 
     return json;
 }
-
-json_t *attrdef_to_json(char *display_name, char *description, char *unit, char type, bool modifiable,
-                        double min, double max, bool integer, double step, char **choices,
-                        bool reconnect) {
-
-    json_t *json = json_obj_new();
-
-    json_obj_append(json, "display_name", json_str_new(display_name));
-    json_obj_append(json, "description", json_str_new(description));
-    if (unit) {
-        json_obj_append(json, "unit", json_str_new(unit));
-    }
-    json_obj_append(json, "modifiable", json_bool_new(modifiable));
-
-    switch (type) {
-        case ATTR_TYPE_BOOLEAN:
-            json_obj_append(json, "type", json_str_new(API_ATTR_TYPE_BOOLEAN));
-            break;
-
-        case ATTR_TYPE_NUMBER:
-            json_obj_append(json, "type", json_str_new(API_ATTR_TYPE_NUMBER));
-            break;
-
-        case ATTR_TYPE_STRING:
-            json_obj_append(json, "type", json_str_new(API_ATTR_TYPE_STRING));
-            break;
-    }
-
-    if (type == ATTR_TYPE_NUMBER) {
-        if (!IS_UNDEFINED(min)) {
-            json_obj_append(json, "min", json_double_new(min));
-        }
-
-        if (!IS_UNDEFINED(max)) {
-            json_obj_append(json, "max", json_double_new(max));
-        }
-
-        if (integer) {
-            json_obj_append(json, "integer", json_bool_new(TRUE));
-        }
-
-        if (step && !IS_UNDEFINED(step)) {
-            json_obj_append(json, "step", json_double_new(step));
-        }
-    }
-
-    if (choices) {
-        json_t *list = json_list_new();
-        char *c;
-        while ((c = *choices++)) {
-            json_list_append(list, choice_to_json(c, type));
-        }
-
-        json_obj_append(json, "choices", list);
-    }
-
-    if (reconnect) {
-        json_obj_append(json, "reconnect", json_bool_new(TRUE));
-    }
-
-    return json;
-}
-
-json_t *choice_to_json(char *choice, char type) {
-    json_t *choice_json = json_obj_new();
-
-    char *display_name = get_choice_display_name(choice);
-    if (display_name) {
-        json_obj_append(choice_json, "display_name", json_str_new(display_name));
-    }
-
-    if (type == ATTR_TYPE_NUMBER) /* also PORT_TYPE_NUMBER */ {
-        json_obj_append(choice_json, "value", json_double_new(get_choice_value_num(choice)));
-    }
-    else {
-        json_obj_append(choice_json, "value", json_str_new(get_choice_value_str(choice)));
-    }
-
-    return choice_json;
-}
-
-void free_choices(char **choices) {
-    char *c;
-    while ((c = *choices++)) {
-        free(c);
-    }
-
-    free(choices);
-}
-
-bool validate_num(double value, double min, double max, bool integer, double step, char **choices) {
-    if ((min != max) && ((!IS_UNDEFINED(min) && value < min) || (!IS_UNDEFINED(max) && value > max))) {
-        return FALSE;
-    }
-
-    if (choices) {
-        char *c;
-        int i = 0;
-        while ((c = *choices++)) {
-            if (get_choice_value_num(c) == value) {
-                return i + 1;
-            }
-
-            i++;
-        }
-
-        return FALSE;
-    }
-
-    if (integer) {
-        if (ceil(value) != value) {
-            return FALSE;
-        }
-
-        if (step && !IS_UNDEFINED(step)) {
-            double r = (value - min) / step;
-            if (ceil(r) != r) {
-                return FALSE;
-            }
-        }
-    }
-
-    return TRUE;
-}
-
-bool validate_str(char *value, char **choices) {
-    if (choices) {
-        char *c;
-        int i = 0;
-        while ((c = *choices++)) {
-            if (!strcmp(get_choice_value_str(c), value)) {
-                return i + 1;
-            }
-
-            i++;
-        }
-
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-bool validate_id(char *id) {
-    if (!isalpha((int) id[0]) && id[0] != '_') {
-        return FALSE;
-    }
-    
-    int c;
-    while ((c = *id++)) {
-        if (!isalnum(c) && c != '_') {
-            return FALSE;
-        }
-    }
-    
-    return TRUE;
-}
-
-bool validate_str_ip(char *ip, uint8 *a, int len) {
-    a[0] = 0;
-    char *s = ip;
-    int c, i = 0;
-    while ((c = *s++)) {
-        if (isdigit(c)) {
-            a[i] = a[i] * 10 + (c - '0');
-        }
-        else if ((c == '.' || c == '/' || c == ':') && (i < len - 1)) {
-            i++;
-            a[i] = 0;
-        }
-        else {
-            return FALSE;
-        }
-    }
-
-    if (i < len - 1) {
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-bool validate_str_wifi(char *wifi, char *ssid, char *psk, uint8 *bssid) {
-    // TODO special treatment for escaped colons \:, which should not be considered separators
-    char *s = wifi;
-    int c, len;
-    char t[3] = {0, 0, 0};
-
-    memset(ssid, 0, WIFI_SSID_MAX_LEN);
-    memset(psk, 0, WIFI_PSK_MAX_LEN);
-    memset(bssid, 0, WIFI_BSSID_LEN);
-
-    /* SSID */
-    len = 0;
-    while ((c = *s++)) {
-        if (c == ':') {
-            break;
-        }
-        else {
-            if (len > WIFI_SSID_MAX_LEN) {
-                return FALSE;
-            }
-
-            ssid[len++] = c;
-        }
-    }
-
-    if (!c) {
-        return TRUE;
-    }
-
-    /* PSK */
-    len = 0;
-    while ((c = *s++)) {
-        if (c == ':') {
-            break;
-        }
-        else {
-            if (len > WIFI_PSK_MAX_LEN) {
-                return FALSE;
-            }
-
-            psk[len++] = c;
-        }
-    }
-
-    if (!c) {
-        return TRUE;
-    }
-
-    /* BSSID */
-    len = 0;
-    while (TRUE) {
-        if (len > WIFI_BSSID_LEN) {
-            return FALSE;
-        }
-
-        if (!s[0]) {
-            break;
-        }
-
-        if (!s[1]) {
-            return FALSE;
-        }
-
-        t[0] = s[0]; t[1] = s[1];
-        bssid[len++] = strtol(t, NULL, 16);
-
-        s += 2;
-    }
-
-    if (len != 6 && len != 0) {
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-bool validate_str_network_scan(char *scan, int *scan_interval, int *scan_threshold) {
-    char c, *s = scan;
-    int pos = 0;
-    int no = 0;
-    while ((c = *s++)) {
-        if (c == ':') {
-            if (pos >= 1) {
-                return FALSE;
-            }
-
-            pos++;
-            *scan_interval = no;
-            no = 0;
-        }
-        else if (isdigit((int) c)) {
-            no = no * 10 + c - '0';
-        }
-        else {
-            return FALSE;
-        }
-    }
-
-    if (pos == 1) {
-        *scan_threshold = no;
-    }
-    else {
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-#ifdef _SLEEP
-
-bool validate_str_sleep_mode(char *sleep_mode, int *wake_interval, int *wake_duration) {
-    char *s = sleep_mode;
-    int c, wi = 0, wd = 0;
-
-    while ((c = *s++)) {
-        if (c == ':') {
-            break;
-        }
-        else if (isdigit(c)) {
-            wi = wi * 10 + (c - '0');
-        }
-        else {
-            return FALSE;
-        }
-    }
-
-    if (!c) {
-        return FALSE;
-    }
-
-    while ((c = *s++)) {
-        if (isdigit(c)) {
-            wd = wd * 10 + (c - '0');
-        }
-        else {
-            return FALSE;
-        }
-    }
-
-    if (wi < SLEEP_WAKE_INTERVAL_MIN || wi > SLEEP_WAKE_INTERVAL_MAX) {
-        return FALSE;
-    }
-
-    if (wd < SLEEP_WAKE_DURATION_MIN || wd > SLEEP_WAKE_DURATION_MAX) {
-        return FALSE;
-    }
-
-    *wake_interval = wi;
-    *wake_duration = wd;
-
-    return TRUE;
-}
-
-#endif  /* _SLEEP */
 
 void on_sequence_timer(void *arg) {
     port_t *port = arg;
