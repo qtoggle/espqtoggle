@@ -1,5 +1,5 @@
 {
-    "name": "gpio-write",
+    "name": "gpio-input-pull",
     "instructions": [
         {
             "name": "device-float-gpio",
