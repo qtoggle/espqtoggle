@@ -340,6 +340,8 @@ void gpio_configure_input(int gpio_no, bool pull) {
     }
 
     gpio_set_pull(gpio_no, pull);
+
+    DEBUG_GPIO_UTILS("configuring GPIO%d as input with pull %d", gpio_no, pull);
 }
 
 void gpio_configure_output(int gpio_no, bool initial) {
@@ -354,6 +356,8 @@ void gpio_configure_output(int gpio_no, bool initial) {
     else {
         GPIO_OUTPUT_SET(gpio_no, initial);
     }
+
+    DEBUG_GPIO_UTILS("configuring GPIO%d as output with initial %d", gpio_no, initial);
 }
 
 void gpio_write_value(int gpio_no, bool value) {

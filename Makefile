@@ -1,7 +1,7 @@
 
 DEBUG ?= true
 DEBUG_FLAGS ?= flashcfg httpclient httpserver ota pingwdt sleep rtc tcpserver device wifi battery system html \
-               dnsserver api expr ports sessions webhooks espqtclient virtual \
+               gpio_utils dnsserver api expr ports sessions webhooks espqtclient virtual \
                adc gpio pwm dht pwdetect rgb fsg dallastemp
 DEBUG_IP ?= # 192.168.0.1
 DEBUG_PORT ?= 48879
