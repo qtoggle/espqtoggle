@@ -1423,6 +1423,12 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
         return API_ERROR(500, "port registration failed");
     }
 
+    /* rebuild deps mask for all ports, as the new port might be among their deps */
+    port_t *p, **ports = all_ports;
+    while ((p = *ports++)) {
+        port_rebuild_change_dep_mask(p);
+    }
+
     port_mark_for_saving(new_port);
     event_push_port_add(new_port);
 
@@ -1902,6 +1908,12 @@ json_t *delete_port(port_t *port, json_t *query_json, int *code) {
     }
 
     free(port);
+
+    /* rebuild deps mask for all ports, as the former port might have been among their deps */
+    port_t *p, **ports = all_ports;
+    while ((p = *ports++)) {
+        port_rebuild_change_dep_mask(p);
+    }
 
     *code = 204;
 
