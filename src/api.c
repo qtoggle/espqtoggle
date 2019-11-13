@@ -1857,11 +1857,6 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
     
     if (IS_ENABLED(port)) {
         port_configure(port);
-
-        /* set the actual port output value, as the port might have just become an output port */
-        if (IS_OUTPUT(port) && !IS_UNDEFINED(port->value)) {
-            port_set_value(port, port->value);
-        }
     }
 
     /* persist configuration */
