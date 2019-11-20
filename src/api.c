@@ -164,6 +164,9 @@ ICACHE_FLASH_ATTR static json_t       * patch_webhooks(json_t *query_json, json_
 
 ICACHE_FLASH_ATTR static json_t       * get_wifi(json_t *query_json, int *code);
 
+ICACHE_FLASH_ATTR static json_t       * get_raw_io(char *io, json_t *query_json, int *code);
+ICACHE_FLASH_ATTR static json_t       * patch_raw_io(char *io, json_t *query_json, json_t *request_json, int *code);
+
 ICACHE_FLASH_ATTR static json_t       * port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx);
 ICACHE_FLASH_ATTR static json_t       * device_attrdefs_to_json(void);
 
@@ -349,6 +352,26 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
 
         if (method == HTTP_METHOD_GET) {
             response_json = get_wifi(query_json, code);
+        }
+        else {
+            RESPOND_NO_SUCH_FUNCTION();
+        }
+    }
+    else if (!strcmp(part1, "rawio")) {
+        if (part2) {
+            if (part3) {
+                RESPOND_NO_SUCH_FUNCTION();
+            }
+
+            if (method == HTTP_METHOD_GET) {
+                response_json = get_raw_io(part2, query_json, code);
+            }
+            else if (method == HTTP_METHOD_PATCH) {
+                response_json = patch_raw_io(part2, query_json, request_json, code);
+            }
+            else {
+                RESPOND_NO_SUCH_FUNCTION();
+            }
         }
         else {
             RESPOND_NO_SUCH_FUNCTION();
@@ -2345,6 +2368,124 @@ json_t *get_wifi(json_t *query_json, int *code) {
     }
 
     return NULL;
+}
+
+json_t *get_raw_io(char *io, json_t *query_json, int *code) {
+    json_t *response_json = json_obj_new();
+
+    if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
+        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+    }
+
+    DEBUG_API("returning raw value for %s", io);
+
+    if (!strncmp(io, "gpio", 4)) {
+        int gpio_no = strtol(io + 4, NULL, 10);
+        if (gpio_no < 0 || gpio_no > 16) {
+            return API_ERROR(404, "no such io");
+        }
+
+        json_obj_append(response_json, "value", json_bool_new(gpio_read_value(gpio_no)));
+        json_obj_append(response_json, "configured", json_bool_new(gpio_is_configured(gpio_no)));
+        json_obj_append(response_json, "output", json_bool_new(gpio_is_output(gpio_no)));
+        if (gpio_no == 16) {
+            json_obj_append(response_json, "pull_down", json_bool_new(!gpio_get_pull(gpio_no)));
+        }
+        else {
+            json_obj_append(response_json, "pull_up", json_bool_new(gpio_get_pull(gpio_no)));
+        }
+    }
+    else if (!strcmp(io, "adc0")) {
+        json_obj_append(response_json, "value", json_int_new(system_adc_read()));
+    }
+    else {
+        return API_ERROR(404, "no such io");
+    }
+
+    *code = 200;
+
+    return response_json;
+}
+
+json_t *patch_raw_io(char *io, json_t *query_json, json_t *request_json, int *code) {
+    json_t *response_json = json_obj_new();
+
+    if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
+        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+    }
+
+    if (json_get_type(request_json) != JSON_TYPE_OBJ) {
+        return API_ERROR(400, "invalid request");
+    }
+
+    if (!strncmp(io, "gpio", 4)) {
+        int gpio_no = strtol(io + 4, NULL, 10);
+        if (gpio_no < 0 || gpio_no > 16) {
+            return API_ERROR(404, "no such io");
+        }
+
+        json_t *value_json = json_obj_lookup_key(request_json, "value");
+        bool value = gpio_read_value(gpio_no);
+        if (value_json) {
+            if (json_get_type(value_json) != JSON_TYPE_BOOL) {
+                return INVALID_FIELD_VALUE("value");
+            }
+
+            value = json_bool_get(value_json);
+        }
+
+        json_t *output_json = json_obj_lookup_key(request_json, "output");
+        bool output = gpio_is_output(gpio_no);
+        if (output_json) {
+            if (json_get_type(output_json) != JSON_TYPE_BOOL) {
+                return INVALID_FIELD_VALUE("output");
+            }
+
+            output = json_bool_get(output_json);
+        }
+
+        json_t *pull_up_json = json_obj_lookup_key(request_json, "pull_up");
+        bool pull_up = gpio_get_pull(gpio_no);
+        if (pull_up_json) {
+            if (json_get_type(pull_up_json) != JSON_TYPE_BOOL) {
+                return INVALID_FIELD_VALUE("pull_up");
+            }
+
+            pull_up = json_bool_get(pull_up_json);
+        }
+
+        json_t *pull_down_json = json_obj_lookup_key(request_json, "pull_down");
+        bool pull_down = !gpio_get_pull(gpio_no);
+        if (pull_down_json) {
+            if (json_get_type(pull_down_json) != JSON_TYPE_BOOL) {
+                return INVALID_FIELD_VALUE("pull_down");
+            }
+
+            pull_down = json_bool_get(pull_down_json);
+        }
+
+        if (output) {
+            gpio_configure_output(gpio_no, value);
+        }
+        else {
+            if (gpio_no == 16) {
+                gpio_configure_input(gpio_no, !pull_down);
+            }
+            else {
+                gpio_configure_input(gpio_no, pull_up);
+            }
+        }
+    }
+    else if (!strcmp(io, "adc0")) {
+        return API_ERROR(400, "cannot set adc value");
+    }
+    else {
+        return API_ERROR(404, "no such io");
+    }
+
+    *code = 204;
+
+    return response_json;
 }
 
 json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {

@@ -37,6 +37,11 @@ ICACHE_FLASH_ATTR static void   debug_udp_send(char *buf, int len);
 #endif
 
 
+static uint32                   gpio_configured_state;
+static uint32                   gpio_output_state;
+static uint32                   gpio_pull_state;
+
+
 void append_max_len(char *s, char c, int max_len) {
     // TODO improve this by supplying the current length
     int len = strlen(s);
@@ -341,6 +346,15 @@ void gpio_configure_input(int gpio_no, bool pull) {
 
     gpio_set_pull(gpio_no, pull);
 
+    gpio_configured_state |= 1 << gpio_no;
+    gpio_output_state &= ~(1 << gpio_no);
+    if (pull) {
+        gpio_pull_state |= 1 << gpio_no;
+    }
+    else {
+        gpio_pull_state &= ~(1 << gpio_no);
+    }
+
     DEBUG_GPIO_UTILS("configuring GPIO%d as input with pull %d", gpio_no, pull);
 }
 
@@ -357,7 +371,22 @@ void gpio_configure_output(int gpio_no, bool initial) {
         GPIO_OUTPUT_SET(gpio_no, initial);
     }
 
+    gpio_configured_state |= 1 << gpio_no;
+    gpio_output_state |= 1 << gpio_no;
+
     DEBUG_GPIO_UTILS("configuring GPIO%d as output with initial %d", gpio_no, initial);
+}
+
+bool gpio_is_configured(int gpio_no) {
+    return !!(gpio_configured_state & (1 << gpio_no));
+}
+
+bool gpio_is_output(int gpio_no) {
+    return !!(gpio_output_state & (1 << gpio_no));
+}
+
+bool gpio_get_pull(int gpio_no) {
+    return !!(gpio_pull_state & (1 << gpio_no));
 }
 
 void gpio_write_value(int gpio_no, bool value) {
