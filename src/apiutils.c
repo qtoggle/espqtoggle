@@ -184,7 +184,7 @@ bool validate_id(char *id) {
 
     int c;
     while ((c = *id++)) {
-        if (!isalnum(c) && c != '_') {
+        if (!isalnum(c) && c != '_' && c != '-') {
             return FALSE;
         }
     }
