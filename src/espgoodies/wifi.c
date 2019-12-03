@@ -452,7 +452,7 @@ void on_wifi_event(System_Event_t *evt) {
 
              if (reconnect) {
                  /* do a quick scan and try to reconnect asap */
-                 DEBUG_WIFI("attempting to reconnect in %s seconds", WIFI_SCAN_INTERVAL_QUICK);
+                 DEBUG_WIFI("attempting to reconnect in %d seconds", WIFI_SCAN_INTERVAL_QUICK);
                  os_timer_disarm(&wifi_auto_scan_timer);
                  os_timer_arm(&wifi_auto_scan_timer, WIFI_SCAN_INTERVAL_QUICK * 1000, /* repeat = */ FALSE);
              }
