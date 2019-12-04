@@ -26,6 +26,7 @@
 #include "espgoodies/system.h"
 #include "espgoodies/utils.h"
 
+#include "common.h"
 #include "ports.h"
 #include "expr.h"
 

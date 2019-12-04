@@ -25,10 +25,11 @@
 #include "espgoodies/ota.h"
 #endif
 
+#include "api.h"
+#include "common.h"
 #include "device.h"
 #include "sessions.h"
 #include "webhooks.h"
-#include "api.h"
 #include "events.h"
 
 

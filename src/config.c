@@ -30,10 +30,11 @@
 
 #include "api.h"
 #include "apiutils.h"
-#include "webhooks.h"
+#include "common.h"
 #include "device.h"
-#include "config.h"
 #include "stringpool.h"
+#include "webhooks.h"
+#include "config.h"
 
 
 #define NULL_HASH                       "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"

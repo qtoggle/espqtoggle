@@ -6,7 +6,6 @@ DEBUG_FLAGS ?= flashcfg httpclient httpserver ota pingwdt sleep rtc tcpserver de
 DEBUG_IP ?= # 192.168.0.1
 DEBUG_PORT ?= 48879
 
-GDB     ?= false
 OTA     ?= true
 SSL     ?= false
 SLEEP   ?= false
@@ -105,21 +104,16 @@ SRC_DRIVERS_DIR = src/drivers
 SRC_EXTRA_PORT_DRIVERS_DIR = src/extra
 SRC_EXTERNAL_PORT_DRIVERS_DIR = $(EXTERNAL_PORT_DRIVERS_DIR)
 SRC_EXTERNAL_DRIVERS_DIR = $(EXTERNAL_DRIVERS_DIR)
-GDB_DIR = gdbstub
 BUILD_DIR = build
 
-INC = $(SRC_MAIN_DIR) $(SDK_BASE)/include $(GDB_DIR)
+INC = $(SRC_MAIN_DIR) $(SDK_BASE)/include
 LIB = c gcc hal pp phy net80211 lwip wpa crypto upgrade m main
 CFLAGS = -Wpointer-arith -Wall -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals \
          -ffunction-sections -fdata-sections -mforce-l32 -Wmissing-prototypes -fno-builtin-printf \
          -fno-guess-branch-probability -freorder-blocks-and-partition -fno-cse-follow-jumps \
-         -D__ets__ -DICACHE_FLASH -DUSE_OPTIMIZE_PRINTF \
-         -DFLASH_CONFIG_ADDR=$(FLASH_CONFIG_ADDR)
-LDFLAGS	= -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static -L$(SDK_BASE)/lib -Wl,--gc-sections
-
-ifeq ($(GDB),true)
-    DEBUG = true
-endif
+         -D__ets__ -DICACHE_FLASH -DUSE_OPTIMIZE_PRINTF -DFLASH_CONFIG_ADDR=$(FLASH_CONFIG_ADDR) \
+         -Os -O2
+LDFLAGS	= -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static -L$(SDK_BASE)/lib -Wl,--gc-sections -Os -O2
 
 ifneq ($(DEBUG),true)
     CFLAGS += -Werror
@@ -188,7 +182,6 @@ SRC_DRIVERS_FILES =               $(wildcard $(SRC_DRIVERS_DIR)/*.c)
 SRC_EXTERNAL_DRIVERS_FILES =      $(wildcard $(SRC_EXTERNAL_DRIVERS_DIR)/*.c)
 SRC_EXTRA_PORT_DRIVERS_FILES =    $(foreach p,$(EXTRA_PORT_DRIVERS),$(SRC_EXTRA_PORT_DRIVERS_DIR)/$(p).c)
 SRC_EXTERNAL_PORT_DRIVERS_FILES = $(foreach p,$(EXTERNAL_PORT_DRIVERS),$(SRC_EXTERNAL_PORT_DRIVERS_DIR)/$(p).c)
-SRC_GDB_FILES =                   $(wildcard $(GDB_DIR)/*.c)
 
 OBJ_FILES = $(SRC_MAIN_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
             $(SRC_ESPGOODIES_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
@@ -197,17 +190,7 @@ OBJ_FILES = $(SRC_MAIN_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
             $(SRC_EXTERNAL_DRIVERS_FILES:$(SRC_EXTERNAL_DRIVERS_DIR)/%.c=$(BUILD_DIR)/external/drivers/%.o) \
             $(SRC_EXTRA_PORT_DRIVERS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
             $(SRC_EXTERNAL_PORT_DRIVERS_FILES:$(SRC_EXTERNAL_PORT_DRIVERS_DIR)/%.c=$(BUILD_DIR)/external/ports/%.o)
-VPATH = $(SRC_MAIN_DIR) $(GDB_DIR)
-
-ifeq ($(GDB),true)
-    CFLAGS  += -g -ggdb -Og -D_GDB -fPIE -fPIC
-    LDFLAGS += -g -ggdb -Og -fPIE -fPIC
-    ASFLAGS += -g -ggdb -Og -fPIE -fPIC -mlongcalls
-    OBJ_FILES += $(BUILD_DIR)/gdbstub.o $(BUILD_DIR)/gdbstub-entry.o
-else
-    CFLAGS  += -Os -O2
-    LDLAGS  += -Os -O2
-endif
+VPATH = $(SRC_MAIN_DIR)
 
 ifneq ($(EXTRA_PORT_DRIVERS),)
     INCLUDE_EXTRA_PORT_DRIVERS = $(foreach p,$(EXTRA_PORT_DRIVERS),-include $(SRC_EXTRA_PORT_DRIVERS_DIR)/$(p).h)
@@ -338,10 +321,6 @@ $(BUILD_DIR)/external/drivers/%.o: $(SRC_EXTERNAL_DRIVERS_DIR)/%.c
 	$(vecho) "CC $<"
 	@$(MD) -p $(@D)
 	$(Q) $(CC) $(INC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/gdbstub-entry.o: $(GDB_DIR)/gdbstub-entry.S
-	$(vecho) "AS $<"
-	$(Q) $(CC) $(ASFLAGS) -c -o $@ $<
 
 $(BUILD_DIR)/$(APP).a: $(OBJ_FILES)
 	$(vecho) "AR $@"

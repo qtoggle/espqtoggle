@@ -30,6 +30,7 @@
 #include "events.h"
 #include "api.h"
 #include "apiutils.h"
+#include "common.h"
 #include "ports.h"
 #include "extra/dht.h"
 

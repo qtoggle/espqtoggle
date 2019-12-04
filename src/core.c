@@ -30,6 +30,7 @@
 #include "espgoodies/ota.h"
 #endif
 
+#include "common.h"
 #include "config.h"
 #include "device.h"
 #include "core.h"

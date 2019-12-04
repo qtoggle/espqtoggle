@@ -23,10 +23,6 @@
 #include <user_interface.h>
 #include <version.h>
 
-#ifdef _GDB
-#include <gdbstub.h>
-#endif
-
 #include "espgoodies/common.h"
 #include "espgoodies/wifi.h"
 #include "espgoodies/crypto.h"
@@ -44,10 +40,11 @@
 #include "espgoodies/ota.h"
 #endif
 
-#include "config.h"
 #include "client.h"
-#include "device.h"
+#include "common.h"
+#include "config.h"
 #include "core.h"
+#include "device.h"
 #include "ver.h"
 
 
@@ -212,15 +209,11 @@ void user_init(void) {
     uart_div_modify(0, UART_CLK_FREQ / 115200);
     os_delay_us(10000);
 
-#ifdef _GDB
-    gdbstub_init();
-#else
-    printf("\n\n");
-    DEBUG("espQToggle  " FW_VERSION);
-    DEBUG("Config      " FW_CONFIG_NAME);
-    DEBUG("API Version " API_VERSION);
-    DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
-#endif /* _GDB */
+printf("\n\n");
+DEBUG("espQToggle  " FW_VERSION);
+DEBUG("Config      " FW_CONFIG_NAME);
+DEBUG("API Version " API_VERSION);
+DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
 
 #else /* !_DEBUG */
     system_set_os_print(0);

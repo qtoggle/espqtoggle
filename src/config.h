@@ -20,6 +20,9 @@
 #define _CONFIG_H
 
 
+#include <c_types.h>
+
+
 #define CONFIG_PORT_SIZE                0x0080 /*  128 bytes for each port */
 
 #define CONFIG_OFFS_HOSTNAME            0x0000 /*  32 bytes */
