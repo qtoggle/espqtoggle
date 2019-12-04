@@ -95,7 +95,7 @@ GZ = gzip -c
 DD = dd status=none
 
 ESPTOOL ?= esptool
-APPGEN ?= $(PWD)/gen_appbin.py
+APPGEN ?= $(PWD)/sdk/gen_appbin.py
 
 APP = espqtoggle
 SRC_MAIN_DIR = src
