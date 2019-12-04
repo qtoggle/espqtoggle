@@ -232,7 +232,7 @@ DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
 #endif
     wifi_set_station_mode(on_wifi_connect, device_hostname);
     client_init();
-//    ping_wdt_init();
+    ping_wdt_init();
     core_init();
     system_init();
     main_init();
