@@ -47,6 +47,9 @@
 
 #include "espgoodies/espmissingincludes.h"
 
+#include "common.h"
+
+
 /* from SDK hw_timer.c */
 #define TIMER1_DIVIDE_BY_16             0x0004
 #define TIMER1_ENABLE_TIMER             0x0080

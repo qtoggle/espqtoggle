@@ -30,6 +30,7 @@
 #include "espgoodies/ota.h"
 #endif
 
+#include "common.h"
 #include "device.h"
 #include "events.h"
 #include "jsonrefs.h"

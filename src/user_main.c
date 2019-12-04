@@ -44,10 +44,11 @@
 #include "espgoodies/ota.h"
 #endif
 
-#include "config.h"
 #include "client.h"
-#include "device.h"
+#include "common.h"
+#include "config.h"
 #include "core.h"
+#include "device.h"
 #include "ver.h"
 
 
@@ -239,7 +240,7 @@ void user_init(void) {
 #endif
     wifi_set_station_mode(on_wifi_connect, device_hostname);
     client_init();
-    ping_wdt_init();
+//    ping_wdt_init();
     core_init();
     system_init();
     main_init();

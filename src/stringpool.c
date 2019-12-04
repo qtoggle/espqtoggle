@@ -16,8 +16,9 @@
  *
  */
 
-#include "stringpool.h"
+#include "common.h"
 #include "config.h"
+#include "stringpool.h"
 
 
 char *string_pool_read(char *pool, void *offs_save) {

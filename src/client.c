@@ -36,11 +36,12 @@
 #include "espgoodies/ota.h"
 #endif
 
-#include "ver.h"
-#include "device.h"
-#include "sessions.h"
 #include "api.h"
 #include "apiutils.h"
+#include "common.h"
+#include "device.h"
+#include "sessions.h"
+#include "ver.h"
 #include "client.h"
 
 

@@ -56,9 +56,6 @@
 #define DEBUG(...)              {}
 #endif
 
-#define UNDEFINED               NAN
-#define IS_UNDEFINED(x)         isnan(x)
-
 
 ICACHE_FLASH_ATTR char        * my_strtok(char *s, char *d);
 ICACHE_FLASH_ATTR char        * my_strdup(const char *s);

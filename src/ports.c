@@ -312,6 +312,8 @@ void ports_init(uint8 *data) {
     all_ports = malloc(sizeof(port_t *));
     all_ports[0] = NULL;
 
+    return;
+
 #ifdef HAS_GPIO
     gpio_init_ports();
 #endif
