@@ -24,8 +24,6 @@
 #include <osapi.h>
 #include <os_type.h>
 
-#include "espmissingincludes.h"
-
 
 /* we need to alter the ICACHE_RODATA_ATTR definition to add 4-byte alignment specifier */
 #ifdef ICACHE_RODATA_ATTR
@@ -50,7 +48,7 @@
 #define os_printf               udp_printf
 #endif
 
-#if defined(_DEBUG) && !defined(_GDB)
+#ifdef _DEBUG
 #define DEBUG(fmt, ...)         os_printf("DEBUG: " fmt "\n", ##__VA_ARGS__)
 #else
 #define DEBUG(...)              {}
