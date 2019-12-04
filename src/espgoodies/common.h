@@ -33,7 +33,7 @@
 #endif
 #define ICACHE_RODATA_ATTR      __attribute__((aligned(4))) __attribute__((section(".irom.text")))
 
-/* we need to redefine these string functions here because the built-in ones fail at at linkage */
+/* we need to redefine these string functions here because the built-in ones fail at linkage */
 #define strtok                  my_strtok
 #define strdup                  my_strdup
 #define strndup                 my_strndup
