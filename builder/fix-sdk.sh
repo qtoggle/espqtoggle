@@ -51,12 +51,12 @@ fi
 
 if ! [[ -f ${SDK_BASE}/bin/boot.bin ]]; then
     echo "Symlinking bin/boot.bin to bin/boot_v1.7.bin"
-    ln -s ${SDK_BASE}/bin/boot_v1.7.bin ${SDK_BASE}/bin/boot.bin
+    ln -s boot_v1.7.bin ${SDK_BASE}/bin/boot.bin
 fi
 
 if ! [[ -f ${SDK_BASE}/bin/esp_init_data_default.bin ]]; then
     echo "Symlinking bin/esp_init_data_default.bin to bin/esp_init_data_default_v08.bin"
-    ln -s ${SDK_BASE}/bin/esp_init_data_default_v08.bin ${SDK_BASE}/bin/esp_init_data_default.bin
+    ln -s esp_init_data_default_v08.bin ${SDK_BASE}/bin/esp_init_data_default.bin
 fi
 
 if grep '0x020200' ${SDK_BASE}/include/version.h &>/dev/null; then
