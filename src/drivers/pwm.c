@@ -25,6 +25,8 @@
 #define PWM_DEBUG 0
 #define PWM_USE_NMI 0
 
+#define DEBUG_PWM(fmt, ...)         DEBUG("[pwm           ] " fmt, ##__VA_ARGS__)
+
 /* no user serviceable parts beyond this point */
 
 #define PWM_MAX_TICKS 0x7fffff
@@ -44,6 +46,8 @@
 #include <pwm.h>
 #include <eagle_soc.h>
 #include <ets_sys.h>
+
+#include "espgoodies/common.h"
 
 #include "common.h"
 
@@ -260,7 +264,7 @@ _pwm_phases_prep(struct pwm_phase* pwm)
 #if PWM_DEBUG
         int t = 0;
 	for (t = 0; t <= phases; t++) {
-		ets_printf("%d @%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
+		DEBUG_PWM("%d @%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
 	}
 #endif
 
@@ -286,7 +290,7 @@ _pwm_phases_prep(struct pwm_phase* pwm)
 
 #if PWM_DEBUG
 	for (t = 0; t <= phases; t++) {
-		ets_printf("%d @%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
+	    DEBUG_PWM("%d @%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
 	}
 #endif
 
@@ -326,7 +330,7 @@ _pwm_phases_prep(struct pwm_phase* pwm)
 
 #if PWM_DEBUG
 	for (t = 0; t <= phases; t++) {
-		ets_printf("%d @%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
+	    DEBUG_PWM("%d @%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
 	}
 #endif
 
@@ -350,9 +354,9 @@ _pwm_phases_prep(struct pwm_phase* pwm)
 
 #if PWM_DEBUG
 	for (t = 0; t <= phases; t++) {
-		ets_printf("%d +%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
+	    DEBUG_PWM("%d +%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
 	}
-	ets_printf("\n");
+	DEBUG_PWM("\n");
 #endif
 
 	return phases;
@@ -376,7 +380,7 @@ pwm_start(void)
 	if (phases == 1) {
 		if (pwm_state.next_set) {
 #if PWM_DEBUG
-			ets_printf("PWM stop\n");
+		    DEBUG_PWM("PWM stop\n");
 #endif
 			timer->frc1_ctrl = 0;
 			ETS_FRC1_INTR_DISABLE();
@@ -392,7 +396,7 @@ pwm_start(void)
 	// start if not running
 	if (!pwm_state.next_set) {
 #if PWM_DEBUG
-		ets_printf("PWM start\n");
+	    DEBUG_PWM("PWM start\n");
 #endif
 		pwm_state.current_set = pwm_state.next_set = *pwm;
 		pwm_state.current_phase = phases - 1;

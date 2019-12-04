@@ -144,10 +144,10 @@ static void ICACHE_FLASH_ATTR connect_callback(void *arg) {
 
     int len = strlen(req->method) + strlen(req->path) + strlen(req->headers) + 64;
     char buf[len];
-    len = os_snprintf(buf, len,
-                      "%s %s HTTP/1.1\r\n"
-                      "%s\r\n",
-                      req->method, req->path, req->headers);
+    len = snprintf(buf, len,
+                   "%s %s HTTP/1.1\r\n"
+                   "%s\r\n",
+                   req->method, req->path, req->headers);
 
     if (!req->body) {
         DEBUG_HTTPCLIENT("request (%d bytes):\n----------------\n%s----------------", len, buf);

@@ -26,6 +26,7 @@
 #include "espgoodies/common.h"
 #include "espgoodies/utils.h"
 
+#include "common.h"
 #include "config.h"
 #include "events.h"
 #include "ports.h"

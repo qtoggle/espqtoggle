@@ -54,6 +54,11 @@
 #define DEBUG(...)              {}
 #endif
 
+#define printf                  os_printf
+#define sprintf                 os_sprintf
+#define snprintf                os_snprintf
+#define vsnprintf               os_vsnprintf
+
 
 ICACHE_FLASH_ATTR char        * my_strtok(char *s, char *d);
 ICACHE_FLASH_ATTR char        * my_strdup(const char *s);
