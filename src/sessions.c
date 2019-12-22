@@ -190,7 +190,7 @@ void session_push(session_t *session, int type, char *port_id) {
 
         /* find the oldest (first pushed, last in queue) event */
         while (n) {
-            if ((n->event->type == type) && !strcmp(port_id, n->event->port_id)) {
+            if ((n->event->type == type) && (!port_id || !strcmp(port_id, n->event->port_id))) {
                 DEBUG_SESSION(session->id, "dropping similar %s event", EVENT_TYPES_STR[type]);
 
                 /* drop the event */
