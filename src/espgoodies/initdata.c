@@ -18,19 +18,13 @@
 
 #include <c_types.h>
 #include <spi_flash.h>
+#include <osapi.h>
 
 #include "common.h"
 #include "initdata.h"
 
 
-const uint32 esp_init_data_default[] = {
-    0x02040005,0x02050505,0x05040005,0x05050405,0xFFFDFE04,0xE0F0F0F0,
-    0x0AE1E0E0,0x00F8FFFF,0x4E52F8F8,0x3840444A,0x01010000,0x03030302,
-    0x00000001,0x00020000,0x00000000,0x00000000,0x000A0AE1,0x00000000,
-    0x93010000,0x00000043,0x00000000,0x00000000,0x00000000,0x00000000,
-    0x00000000,0x00000000,0x00000000,0x00000000,0x00010000,0x00000000,
-    0x00000000,0x00000000
-};
+const uint32 esp_init_data_default[] = _ESP_INIT_DATA_DEFAULT_HEX;
 
 
 void init_data_ensure(void) {
@@ -38,13 +32,16 @@ void init_data_ensure(void) {
     uint32 addr = (rf_cal_sec * SPI_FLASH_SEC_SIZE) + 0x1000;
     uint32 rf_cal_data;
 
-    spi_flash_read(addr, &rf_cal_data, 4);
-    if (rf_cal_data != esp_init_data_default[0]) {
-        DEBUG("flashing ESP init data");
-        spi_flash_erase_sector(rf_cal_sec);
-        spi_flash_write(addr, (uint32 *) esp_init_data_default, sizeof(esp_init_data_default));
-    }
-    else {
-        DEBUG("ESP init data is up-to-date");
+    if (sizeof(esp_init_data_default) > 0) {
+        spi_flash_read(addr, &rf_cal_data, 4);
+        if (rf_cal_data != esp_init_data_default[0]) {
+            DEBUG("flashing esp_init_data_default");
+            spi_flash_erase_sector(rf_cal_sec);
+            spi_flash_write(addr, (uint32 *) esp_init_data_default, sizeof(esp_init_data_default));
+        }
+        else {
+            DEBUG("esp_init_data_default is up-to-date");
+        }
+        os_delay_us(10000); /* Helps printing debug message */
     }
 }

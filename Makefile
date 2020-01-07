@@ -105,6 +105,7 @@ SRC_EXTRA_PORT_DRIVERS_DIR = src/extra
 SRC_EXTERNAL_PORT_DRIVERS_DIR = $(EXTERNAL_PORT_DRIVERS_DIR)
 SRC_EXTERNAL_DRIVERS_DIR = $(EXTERNAL_DRIVERS_DIR)
 BUILD_DIR = build
+INIT_DATA_FILES = esp_init_data_default.bin
 
 INC = $(SRC_MAIN_DIR) $(SDK_BASE)/include
 LIB = c gcc hal pp phy net80211 lwip wpa crypto upgrade m main
@@ -190,6 +191,9 @@ OBJ_FILES = $(SRC_MAIN_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
             $(SRC_EXTERNAL_DRIVERS_FILES:$(SRC_EXTERNAL_DRIVERS_DIR)/%.c=$(BUILD_DIR)/external/drivers/%.o) \
             $(SRC_EXTRA_PORT_DRIVERS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
             $(SRC_EXTERNAL_PORT_DRIVERS_FILES:$(SRC_EXTERNAL_PORT_DRIVERS_DIR)/%.c=$(BUILD_DIR)/external/ports/%.o)
+
+INIT_DATA_FILES := $(foreach f,$(INIT_DATA_FILES),$(SDK_BASE)/bin/$(f))
+
 VPATH = $(SRC_MAIN_DIR)
 
 ifneq ($(EXTRA_PORT_DRIVERS),)
@@ -233,6 +237,12 @@ CFLAGS += $(foreach p,$(PORTS),$(shell \
     if ! [[ "$(PORT_ID_MAPPINGS)" =~ $(p): ]]; then \
         echo -D$$(echo $(p) | tr a-z A-Z)_ID=\\\"$(p)\\\"; \
     fi \
+))
+
+# define init data hex content
+INIT_DATA_HEX_DEF = $(foreach f,$(INIT_DATA_FILES),$(shell \
+    def_name=_$$(basename $(f) | sed 's/.bin/_hex/' | tr a-z A-Z); \
+    echo -D$${def_name}="\{$$(hexdump -ve '"0x%08X,"' $(f))\}"; \
 ))
 
 _COMMA := ,
@@ -307,20 +317,18 @@ $(BUILD_DIR)/%.o: %.c
 	@$(MD) -p $(@D)
 	$(Q) $(CC) $(INC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/ports.o: src/ports.c
+$(BUILD_DIR)/ports.o: ports.c
 	$(vecho) "CC $<"
 	@$(MD) -p $(@D)
 	$(Q) $(CC) $(INC) $(CFLAGS) $(INCLUDE_EXTRA_PORT_DRIVERS) $(INCLUDE_EXTERNAL_PORT_DRIVERS) -c $< -o $@
 
 $(BUILD_DIR)/external/ports/%.o: $(SRC_EXTERNAL_PORT_DRIVERS_DIR)/%.c
-	$(vecho) "CC $<"
-	@$(MD) -p $(@D)
-	$(Q) $(CC) $(INC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/external/drivers/%.o: $(SRC_EXTERNAL_DRIVERS_DIR)/%.c
+
+$(BUILD_DIR)/espgoodies/initdata.o: espgoodies/initdata.c
 	$(vecho) "CC $<"
-	@$(MD) -p $(@D)
-	$(Q) $(CC) $(INC) $(CFLAGS) -c $< -o $@
+	$(Q) $(CC) $(INC) $(CFLAGS) $(INIT_DATA_HEX_DEF) -c $< -o $@
 
 $(BUILD_DIR)/$(APP).a: $(OBJ_FILES)
 	$(vecho) "AR $@"
