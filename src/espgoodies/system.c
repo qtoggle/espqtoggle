@@ -66,7 +66,7 @@ void system_init(void) {
 #ifdef SETUP_MODE_PORT
     /* skip "gpio" and convert the rest to number */
     system_setup_mode_gpio_no = strtol(_STRING(SETUP_MODE_PORT) + 4, NULL, 10);
-    gpio_configure_input(system_setup_mode_gpio_no, SETUP_MODE_LEVEL);
+    gpio_configure_input(system_setup_mode_gpio_no, !SETUP_MODE_LEVEL);
     DEBUG_SYSTEM("setup mode GPIO set to %d", system_setup_mode_gpio_no);
     DEBUG_SYSTEM("setup mode level set to %d", SETUP_MODE_LEVEL);
 
