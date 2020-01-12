@@ -28,7 +28,7 @@
 
 
 #define SESSION_MAX_QUEUE_LEN                   16
-#define SESSION_COUNT                           4
+#define SESSION_COUNT                           3
 
 #ifdef _DEBUG_SESSIONS
 #define DEBUG_SESSION(s, fmt, ...)              DEBUG("[sessions      ] [%s] " fmt, s, ##__VA_ARGS__)
