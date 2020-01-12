@@ -68,27 +68,35 @@ session_t *session_find_by_conn(struct espconn *conn) {
 }
 
 session_t *session_create(char *id, struct espconn *conn, int timeout, int access_level) {
-    int i;
+    int i, free_pos = -1;
     for (i = 0; i < SESSION_COUNT; i++) {
         if (!sessions[i].id[0]) {
-            /* initialize the session */
-            strncpy(sessions[i].id, id, API_MAX_LISTEN_SESSION_ID_LEN);
-            sessions[i].id[API_MAX_LISTEN_SESSION_ID_LEN] = 0;
-            sessions[i].queue = NULL;
-            sessions[i].queue_len = 0;
-            sessions[i].timeout = timeout;
-            sessions[i].access_level = access_level;
-            sessions[i].conn = conn;
-
-            DEBUG_SESSIONS("found unused session at slot %d and assigned id %s", i, id);
-
-            return sessions + i;
+            free_pos = i;
+            DEBUG_SESSIONS("found unused session at slot %d", i);
+            break;
         }
     }
 
-    DEBUG_SESSIONS("all available listen sessions are in use");
+    if  (free_pos == -1) {
+        DEBUG_SESSIONS("all available listen sessions are in use, freeing up first slot");
+        session_respond(sessions + 0);
+        session_free(sessions + 0);
+        free_pos = 0;
+    }
 
-    return NULL;
+    /* initialize the session */
+    session_t *session = sessions + free_pos;
+    strncpy(session->id, id, API_MAX_LISTEN_SESSION_ID_LEN);
+    session->id[API_MAX_LISTEN_SESSION_ID_LEN] = 0;
+    session->queue = NULL;
+    session->queue_len = 0;
+    session->timeout = timeout;
+    session->access_level = access_level;
+    session->conn = conn;
+
+    DEBUG_SESSIONS("assigned id %s to slot %d", id, i);
+
+    return session;
 }
 
 void session_respond(session_t *session) {
