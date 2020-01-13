@@ -17,7 +17,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -yq \
     wget \
     jq \
     gettext-base \
-    curl
+    curl \
+    bsdmainutils
 
 RUN apt-get clean
 
