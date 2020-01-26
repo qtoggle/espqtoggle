@@ -23,18 +23,15 @@
 #include <user_interface.h>
 #include <version.h>
 
-#ifdef _GDB
-#include <gdbstub.h>
-#endif
-
 #include "espgoodies/common.h"
 #include "espgoodies/wifi.h"
 #include "espgoodies/crypto.h"
+#include "espgoodies/initdata.h"
+#include "espgoodies/pingwdt.h"
+#include "espgoodies/rtc.h"
 #include "espgoodies/system.h"
 #include "espgoodies/tcpserver.h"
 #include "espgoodies/utils.h"
-#include "espgoodies/pingwdt.h"
-#include "espgoodies/rtc.h"
 
 #ifdef _SLEEP
 #include "espgoodies/sleep.h"
@@ -44,17 +41,16 @@
 #include "espgoodies/ota.h"
 #endif
 
-#include "config.h"
 #include "client.h"
-#include "device.h"
+#include "common.h"
+#include "config.h"
 #include "core.h"
+#include "device.h"
 #include "ver.h"
 
 
 #define CONNECT_TIMEOUT             20000   /* milliseconds */
 
-#define FW_BASE_URL                 "http://provisioning.qtoggle.io"
-#define FW_BASE_PATH                "/firmware/espqtoggle"
 #define FW_LATEST_FILE              "/latest"
 #define FW_LATEST_BETA_FILE         "/latest_beta"
 #define FW_AUTO_MIN_INTERVAL        24  /* hours */
@@ -191,6 +187,8 @@ void on_connect_timeout(void *arg) {
     /* main functions */
 
 void user_rf_pre_init(void) {
+    init_data_ensure();
+
     system_deep_sleep_set_option(2);    /* no RF calibration after waking from deep sleep */
     system_phy_set_rfoption(2);         /* no RF calibration after waking from deep sleep */
     system_phy_set_powerup_option(2);   /* calibration only for VDD33 and Tx power */
@@ -214,15 +212,11 @@ void user_init(void) {
     uart_div_modify(0, UART_CLK_FREQ / 115200);
     os_delay_us(10000);
 
-#ifdef _GDB
-    gdbstub_init();
-#else
-    printf("\n\n");
-    DEBUG("espQToggle  " FW_VERSION);
-    DEBUG("Config      " FW_CONFIG_NAME);
-    DEBUG("API Version " API_VERSION);
-    DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
-#endif /* _GDB */
+printf("\n\n");
+DEBUG("espQToggle  " FW_VERSION);
+DEBUG("Config      " FW_CONFIG_NAME);
+DEBUG("API Version " API_VERSION);
+DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
 
 #else /* !_DEBUG */
     system_set_os_print(0);

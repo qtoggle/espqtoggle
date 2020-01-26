@@ -16,20 +16,15 @@
  *
  */
 
-#ifndef _EXTRA_FSG_H
-#define _EXTRA_FSG_H
-
-#include <ets_sys.h>
+#ifndef _COMMON_H
+#define _COMMON_H
 
 
-#ifdef _DEBUG_FSG
-#define DEBUG_FSG(port, f, ...)     DEBUG("[%-14s] " f, (port)->id, ##__VA_ARGS__)
-#else
-#define DEBUG_FSG(...)              {}
-#endif
+#include <math.h>
 
 
-ICACHE_FLASH_ATTR void              fsg_init_ports(void);
+#define UNDEFINED               NAN
+#define IS_UNDEFINED(x)         isnan(x)
 
 
-#endif /* _EXTRA_FSG_H */
+#endif /* _COMMON_H */

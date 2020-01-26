@@ -19,6 +19,7 @@
 #include "espgoodies/crypto.h"
 
 #include "api.h"
+#include "common.h"
 #include "device.h"
 
 

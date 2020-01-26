@@ -1,6 +1,0 @@
-file build/espqtoggle.out
-set remote hardware-breakpoint-limit 1
-set remote hardware-watchpoint-limit 1
-set debug xtensa 4
-set serial baud 115200
-target remote /dev/ttyUSB0

@@ -22,14 +22,16 @@
 #include <string.h>
 #include <limits.h>
 #include <mem.h>
-#include <gpio.h>
 #include <user_interface.h>
+#include <gpio.h>
 
 #include "espgoodies/common.h"
 #include "espgoodies/system.h"
 #include "espgoodies/utils.h"
 
 #include "api.h"
+#include "apiutils.h"
+#include "common.h"
 #include "ports.h"
 #include "extra/dallastemp.h"
 

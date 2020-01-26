@@ -1,29 +1,31 @@
-
 /*
- * Copyright 2019 The qToggle Team
+ * Copyright (C) 2016 Stefan Brüns <stefan.bruens@rwth-aachen.de>
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
 #ifndef SDK_PWM_PERIOD_COMPAT_MODE
-  #define SDK_PWM_PERIOD_COMPAT_MODE 0
+#define SDK_PWM_PERIOD_COMPAT_MODE 0
 #endif
 #ifndef PWM_MAX_CHANNELS
-  #define PWM_MAX_CHANNELS 10
+#define PWM_MAX_CHANNELS 10
 #endif
 #define PWM_DEBUG 0
 #define PWM_USE_NMI 0
+
+#define DEBUG_PWM(fmt, ...)         DEBUG("[pwm           ] " fmt, ##__VA_ARGS__)
 
 /* no user serviceable parts beyond this point */
 
@@ -45,9 +47,12 @@
 #include <eagle_soc.h>
 #include <ets_sys.h>
 
-#include "espgoodies/espmissingincludes.h"
+#include "espgoodies/common.h"
 
-// from SDK hw_timer.c
+#include "common.h"
+
+
+/* from SDK hw_timer.c */
 #define TIMER1_DIVIDE_BY_16             0x0004
 #define TIMER1_ENABLE_TIMER             0x0080
 
@@ -259,7 +264,7 @@ _pwm_phases_prep(struct pwm_phase* pwm)
 #if PWM_DEBUG
         int t = 0;
 	for (t = 0; t <= phases; t++) {
-		ets_printf("%d @%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
+		DEBUG_PWM("%d @%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
 	}
 #endif
 
@@ -285,7 +290,7 @@ _pwm_phases_prep(struct pwm_phase* pwm)
 
 #if PWM_DEBUG
 	for (t = 0; t <= phases; t++) {
-		ets_printf("%d @%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
+	    DEBUG_PWM("%d @%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
 	}
 #endif
 
@@ -325,7 +330,7 @@ _pwm_phases_prep(struct pwm_phase* pwm)
 
 #if PWM_DEBUG
 	for (t = 0; t <= phases; t++) {
-		ets_printf("%d @%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
+	    DEBUG_PWM("%d @%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
 	}
 #endif
 
@@ -349,9 +354,9 @@ _pwm_phases_prep(struct pwm_phase* pwm)
 
 #if PWM_DEBUG
 	for (t = 0; t <= phases; t++) {
-		ets_printf("%d +%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
+	    DEBUG_PWM("%d +%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
 	}
-	ets_printf("\n");
+	DEBUG_PWM("\n");
 #endif
 
 	return phases;
@@ -375,7 +380,7 @@ pwm_start(void)
 	if (phases == 1) {
 		if (pwm_state.next_set) {
 #if PWM_DEBUG
-			ets_printf("PWM stop\n");
+		    DEBUG_PWM("PWM stop\n");
 #endif
 			timer->frc1_ctrl = 0;
 			ETS_FRC1_INTR_DISABLE();
@@ -391,7 +396,7 @@ pwm_start(void)
 	// start if not running
 	if (!pwm_state.next_set) {
 #if PWM_DEBUG
-		ets_printf("PWM start\n");
+	    DEBUG_PWM("PWM start\n");
 #endif
 		pwm_state.current_set = pwm_state.next_set = *pwm;
 		pwm_state.current_phase = phases - 1;

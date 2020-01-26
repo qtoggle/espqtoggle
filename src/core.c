@@ -31,7 +31,7 @@
 #endif
 
 #include "drivers/uart.h" // TODO
-
+#include "common.h"
 #include "config.h"
 #include "device.h"
 #include "core.h"

@@ -35,7 +35,7 @@
 session_t                               sessions[SESSION_COUNT];
 
 
-ICACHE_FLASH_ATTR static void           session_push(session_t *session, int type, json_t *params, port_t *port);
+ICACHE_FLASH_ATTR static void           session_push(session_t *session, int type, char *port_id);
 ICACHE_FLASH_ATTR static void           session_free(session_t *session);
 ICACHE_FLASH_ATTR static event_t **     pop_all_events(session_t *session);
 ICACHE_FLASH_ATTR static void           on_session_timeout(void *arg);
@@ -68,27 +68,35 @@ session_t *session_find_by_conn(struct espconn *conn) {
 }
 
 session_t *session_create(char *id, struct espconn *conn, int timeout, int access_level) {
-    int i;
+    int i, free_slot = -1;
     for (i = 0; i < SESSION_COUNT; i++) {
         if (!sessions[i].id[0]) {
-            /* initialize the session */
-            strncpy(sessions[i].id, id, API_MAX_LISTEN_SESSION_ID_LEN);
-            sessions[i].id[API_MAX_LISTEN_SESSION_ID_LEN] = 0;
-            sessions[i].queue = NULL;
-            sessions[i].queue_len = 0;
-            sessions[i].timeout = timeout;
-            sessions[i].access_level = access_level;
-            sessions[i].conn = conn;
-
-            DEBUG_SESSIONS("found unused session at slot %d and assigned id %s", i, id);
-
-            return sessions + i;
+            free_slot = i;
+            DEBUG_SESSIONS("found unused session at slot %d", i);
+            break;
         }
     }
 
-    DEBUG_SESSIONS("all available listen sessions are in use");
+    if  (free_slot == -1) {
+        DEBUG_SESSIONS("all available listen sessions are in use, freeing up first slot");
+        session_respond(sessions + 0);
+        session_free(sessions + 0);
+        free_slot = 0;
+    }
 
-    return NULL;
+    /* initialize the session */
+    session_t *session = sessions + free_slot;
+    strncpy(session->id, id, API_MAX_LISTEN_SESSION_ID_LEN);
+    session->id[API_MAX_LISTEN_SESSION_ID_LEN] = 0;
+    session->queue = NULL;
+    session->queue_len = 0;
+    session->timeout = timeout;
+    session->access_level = access_level;
+    session->conn = conn;
+
+    DEBUG_SESSIONS("assigned id %s to slot %d", id, free_slot);
+
+    return session;
 }
 
 void session_respond(session_t *session) {
@@ -100,12 +108,21 @@ void session_respond(session_t *session) {
     DEBUG_SESSIONS_CONN(session->conn, "responding to %s with %d events", session->id, session->queue_len);
 
     json_t *response_json = json_list_new();
+    json_t *event_json;
+
+    json_refs_ctx_t json_refs_ctx;
+    json_refs_ctx_init(&json_refs_ctx, JSON_REFS_TYPE_LISTEN_EVENTS_LIST);
 
     event_t *e, **event, **events = pop_all_events(session);
     event = events;
     while ((e = *event++)) {
-        json_list_append(response_json, event_to_json(e));
+        event_json = event_to_json(e, &json_refs_ctx);
+        if (event_json) {
+            json_list_append(response_json, event_json);
+        }
         event_free(e);
+
+        json_refs_ctx.index++;
     }
 
     free(events);
@@ -120,7 +137,7 @@ void session_reset(session_t *session) {
     os_timer_arm(&session->timer, session->timeout * 1000, /* repeat = */ FALSE);
 }
 
-void sessions_push_event(int type, json_t *params, port_t *port) {
+void sessions_push_event(int type, char *port_id) {
     /* push the event to each active session */
     int i;
     session_t *session;
@@ -134,7 +151,7 @@ void sessions_push_event(int type, json_t *params, port_t *port) {
             continue; /* not permitted for this access level */
         }
 
-        session_push(session, type, json_dup(params), port);
+        session_push(session, type, port_id);
         if (session->conn) {
             core_listen_respond(session);
         }
@@ -167,13 +184,39 @@ void sessions_respond_all(void) {
     }
 }
 
-void session_push(session_t *session, int type, json_t *params, port_t *port) {
+void session_push(session_t *session, int type, char *port_id) {
     event_t *event = malloc(sizeof(event_t));
     event->type = type;
-    event->params = params;
-    event->port = port;
+    event->port_id = port_id ? strdup(port_id) : NULL;
     
     session_queue_node_t *n, *pn;
+
+    /* deduplicate change & update events */
+    if (type == EVENT_TYPE_PORT_UPDATE || type == EVENT_TYPE_DEVICE_UPDATE || type == EVENT_TYPE_VALUE_CHANGE) {
+        n = session->queue;
+        pn = NULL;
+
+        /* find the oldest (first pushed, last in queue) event */
+        while (n) {
+            if ((n->event->type == type) && (!port_id || !strcmp(port_id, n->event->port_id))) {
+                DEBUG_SESSION(session->id, "dropping similar %s event", EVENT_TYPES_STR[type]);
+
+                /* drop the event */
+                if (pn) {
+                    pn->next = n->next;
+                }
+                else {
+                    session->queue = n->next;
+                }
+                event_free(n->event);
+                free(n);
+                session->queue_len--;
+            }
+
+            pn = n;
+            n = n->next;
+        }
+    }
 
     while (session->queue_len >= SESSION_MAX_QUEUE_LEN) {
         DEBUG_SESSION(session->id, "dropping oldest event");

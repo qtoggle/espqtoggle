@@ -24,8 +24,6 @@
 #include <osapi.h>
 #include <os_type.h>
 
-#include "espmissingincludes.h"
-
 
 /* we need to alter the ICACHE_RODATA_ATTR definition to add 4-byte alignment specifier */
 #ifdef ICACHE_RODATA_ATTR
@@ -33,7 +31,7 @@
 #endif
 #define ICACHE_RODATA_ATTR      __attribute__((aligned(4))) __attribute__((section(".irom.text")))
 
-/* we need to redefine these string functions here because the built-in ones fail at at linkage */
+/* we need to redefine these string functions here because the built-in ones fail at linkage */
 #define strtok                  my_strtok
 #define strdup                  my_strdup
 #define strndup                 my_strndup
@@ -50,14 +48,16 @@
 #define os_printf               udp_printf
 #endif
 
-#if defined(_DEBUG) && !defined(_GDB)
+#ifdef _DEBUG
 #define DEBUG(fmt, ...)         os_printf("DEBUG: " fmt "\n", ##__VA_ARGS__)
 #else
 #define DEBUG(...)              {}
 #endif
 
-#define UNDEFINED               NAN
-#define IS_UNDEFINED(x)         isnan(x)
+#define printf                  os_printf
+#define sprintf                 os_sprintf
+#define snprintf                os_snprintf
+#define vsnprintf               os_vsnprintf
 
 
 ICACHE_FLASH_ATTR char        * my_strtok(char *s, char *d);

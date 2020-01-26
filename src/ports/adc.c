@@ -26,13 +26,14 @@
 #include "espgoodies/common.h"
 #include "espgoodies/utils.h"
 
+#include "common.h"
 #include "ports/adc.h"
 
 
 #ifdef HAS_ADC
 
 
-#define ADC0_SLOT                   16
+#define ADC0_SLOT                   17
 
 #define ADC_MIN                     0       /* mV */
 #define ADC_MAX                     1000    /* mV */

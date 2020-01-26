@@ -1,0 +1,39 @@
+{
+    "name": "gpio-input-pull",
+    "instructions": [
+        {
+            "name": "device-float-gpio",
+            "params": {
+                "gpio": 4
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio4",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "output": false,
+                    "pull_up": true
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/gpio4/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": true,
+                "expected_status": 200
+            }
+        }
+    ]
+}
+

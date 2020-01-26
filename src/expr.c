@@ -26,6 +26,7 @@
 #include "espgoodies/system.h"
 #include "espgoodies/utils.h"
 
+#include "common.h"
 #include "ports.h"
 #include "expr.h"
 
@@ -72,6 +73,7 @@ ICACHE_FLASH_ATTR static double     _floor_callback(expr_t *expr, int argc, doub
 ICACHE_FLASH_ATTR static double     _ceil_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _round_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _time_callback(expr_t *expr, int argc, double *args);
+ICACHE_FLASH_ATTR static double     _timems_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _held_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _delay_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _hyst_callback(expr_t *expr, int argc, double *args);
@@ -268,6 +270,10 @@ double _time_callback(expr_t *expr, int argc, double *args) {
     return system_uptime();
 }
 
+double _timems_callback(expr_t *expr, int argc, double *args) {
+    return system_uptime_us() / 1000;
+}
+
 double _held_callback(expr_t *expr, int argc, double *args) {
     int time_ms = (int) (system_uptime_us() / 1000);
     double value = args[0];
@@ -406,6 +412,7 @@ func_t _floor =  {.name = "FLOOR",  .argc = 1,  .callback = _floor_callback};
 func_t _ceil =   {.name = "CEIL",   .argc = 1,  .callback = _ceil_callback};
 func_t _round =  {.name = "ROUND",  .argc = -1, .callback = _round_callback};
 func_t _time =   {.name = "TIME",   .argc = 0,  .callback = _time_callback};
+func_t _timems = {.name = "TIMEMS", .argc = 0,  .callback = _timems_callback};
 func_t _held =   {.name = "HELD",   .argc = 3,  .callback = _held_callback};
 func_t _delay =  {.name = "DELAY",  .argc = 2,  .callback = _delay_callback};
 func_t _hyst =   {.name = "HYST",   .argc = 3,  .callback = _hyst_callback};
@@ -440,6 +447,7 @@ func_t *funcs[] = {
     &_ceil,
     &_round,
     &_time,
+    &_timems,
     &_held,
     &_delay,
     &_hyst,
@@ -480,7 +488,7 @@ expr_t *parse_port_id_expr(char *port_id, char *input) {
     }
 
     while ((c = *s++)) {
-        if (!isalnum((int) c) && c != '_') {
+        if (!isalnum((int) c) && c != '_' && c != '-') {
             DEBUG_EXPR("invalid port identifier %s", input);
             return NULL;
         }
@@ -787,7 +795,7 @@ bool expr_is_time_dep(expr_t *expr) {
 
 bool expr_is_time_ms_dep(expr_t *expr) {
     if (expr->func) {
-        if (expr->func == &_held || expr->func == &_delay) {
+        if (expr->func == &_timems || expr->func == &_held || expr->func == &_delay) {
             return TRUE;
         }
 

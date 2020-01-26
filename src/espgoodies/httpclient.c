@@ -142,12 +142,12 @@ static void ICACHE_FLASH_ATTR connect_callback(void *arg) {
     espconn_regist_recvcb(conn, receive_callback);
     espconn_regist_sentcb(conn, sent_callback);
 
-    char buf[strlen(req->method) + strlen(req->path) + strlen(req->headers) + 64];
-    int len = os_sprintf(buf,
-                         "%s %s HTTP/1.1\r\n"
-                         "%s"
-                         "\r\n",
-                         req->method, req->path, req->headers);
+    int len = strlen(req->method) + strlen(req->path) + strlen(req->headers) + 64;
+    char buf[len];
+    len = snprintf(buf, len,
+                   "%s %s HTTP/1.1\r\n"
+                   "%s\r\n",
+                   req->method, req->path, req->headers);
 
     if (!req->body) {
         DEBUG_HTTPCLIENT("request (%d bytes):\n----------------\n%s----------------", len, buf);
@@ -427,7 +427,7 @@ void ICACHE_FLASH_ATTR httpclient_request(char *method, char *url, uint8 *body, 
     char *h, *headers = NULL;
     int i, hl, headers_len = 0;
     uint16 port = 80;
-    bool secure = false;
+    bool secure = FALSE;
 
     bool is_http  = os_strncmp(url, "http://",  strlen("http://"))  == 0;
     bool is_https = os_strncmp(url, "https://", strlen("https://")) == 0;
@@ -436,7 +436,7 @@ void ICACHE_FLASH_ATTR httpclient_request(char *method, char *url, uint8 *body, 
         url += strlen("http://"); // Get rid of the protocol.
     else if (is_https) {
         port = 443;
-        secure = true;
+        secure = TRUE;
         url += strlen("https://"); // Get rid of the protocol.
     } else {
         DEBUG_HTTPCLIENT("URL is not HTTP or HTTPS %s", url);

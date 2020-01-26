@@ -26,6 +26,7 @@
 #include "espgoodies/common.h"
 #include "espgoodies/utils.h"
 
+#include "common.h"
 #include "config.h"
 #include "events.h"
 #include "ports.h"
@@ -50,6 +51,15 @@ char                              * all_gpio_none_choices[] = {"0:GPIO0", "1:GPI
                                                               "5:GPIO5", "6:GPIO6", "7:GPIO7", "8:GPIO8", "9:GPIO9",
                                                               "10:GPIO10", "11:GPIO11", "12:GPIO12", "13:GPIO13",
                                                               "14:GPIO14", "15:GPIO15", "16:GPIO16", "-1:none", NULL};
+
+char                              * esp8266_gpio_choices[] = {"0:GPIO0", "1:GPIO1", "2:GPIO2", "3:GPIO3", "4:GPIO4",
+                                                              "5:GPIO5", "12:GPIO12", "13:GPIO13", "14:GPIO14",
+                                                              "15:GPIO15", "16:GPIO16", NULL};
+
+char                              * esp8266_gpio_none_choices[] = {"0:GPIO0", "1:GPIO1", "2:GPIO2", "3:GPIO3",
+                                                                  "4:GPIO4", "5:GPIO5", "12:GPIO12", "13:GPIO13",
+                                                                  "14:GPIO14", "15:GPIO15", "16:GPIO16", "-1:none",
+                                                                  NULL};
 
 static int                          all_ports_count = 0;
 static uint8                        next_extra_slot = PORT_SLOT_EXTRA0;
@@ -319,8 +329,12 @@ void ports_init(uint8 *data) {
     virtual_init_ports(data);
 #endif
 
-#ifdef _INIT_EXTRA_DRIVERS
-    _INIT_EXTRA_DRIVERS
+#ifdef _INIT_EXTRA_PORT_DRIVERS
+    _INIT_EXTRA_PORT_DRIVERS
+#endif
+
+#ifdef _INIT_EXTERNAL_PORT_DRIVERS
+    _INIT_EXTERNAL_PORT_DRIVERS
 #endif
 
     /* load port data */

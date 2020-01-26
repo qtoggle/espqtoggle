@@ -22,6 +22,7 @@
 #include "espgoodies/common.h"
 #include "espgoodies/utils.h"
 
+#include "common.h"
 #include "ports/gpio.h"
 
 
@@ -33,10 +34,15 @@ ICACHE_FLASH_ATTR static bool       write_value(port_t *port, double value);
 ICACHE_FLASH_ATTR static void       configure(port_t *port);
 
 ICACHE_FLASH_ATTR static bool       attr_get_pull_up(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_pull_up(port_t *port, attrdef_t *attrdef, bool pull_up);
+ICACHE_FLASH_ATTR static void       attr_set_pull_up(port_t *port, attrdef_t *attrdef, bool value);
+
+#ifdef HAS_GPIO16
+ICACHE_FLASH_ATTR static bool       attr_get_pull_down(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_pull_down(port_t *port, attrdef_t *attrdef, bool value);
+#endif
 
 ICACHE_FLASH_ATTR static bool       attr_get_output(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_output(port_t *port, attrdef_t *attrdef, bool output);
+ICACHE_FLASH_ATTR static void       attr_set_output(port_t *port, attrdef_t *attrdef, bool value);
 
 
 typedef struct {
@@ -54,13 +60,27 @@ static attrdef_t pull_up_attrdef = {
 
     .name = "pull_up",
     .display_name = "Pull-Up",
-    .description = "Enables the internal weak pull-up.",
+    .description = "Enables the internal pull-up.",
     .type = ATTR_TYPE_BOOLEAN,
     .modifiable = TRUE,
     .set = attr_set_pull_up,
     .get = attr_get_pull_up
 
 };
+
+#ifdef HAS_GPIO16
+static attrdef_t pull_down_attrdef = {
+
+    .name = "pull_down",
+    .display_name = "Pull-Down",
+    .description = "Enables the internal pull-down.",
+    .type = ATTR_TYPE_BOOLEAN,
+    .modifiable = TRUE,
+    .set = attr_set_pull_down,
+    .get = attr_get_pull_down
+
+};
+#endif
 
 static attrdef_t output_attrdef = {
 
@@ -81,6 +101,16 @@ static attrdef_t *attrdefs[] = {
     NULL
 
 };
+
+#ifdef HAS_GPIO16
+static attrdef_t *attrdefs_gpio16[] = {
+
+    &output_attrdef,
+    &pull_down_attrdef,
+    NULL
+
+};
+#endif
 
 
 #ifdef HAS_GPIO0
@@ -435,19 +465,40 @@ static port_t _gpio15 = {
 port_t *gpio15 = &_gpio15;
 #endif
 
+#ifdef HAS_GPIO16
+static extra_info_t gpio16_extra_info;
+
+static port_t _gpio16 = {
+
+    .slot = 16,
+
+    .id = GPIO16_ID,
+    .type = PORT_TYPE_BOOLEAN,
+
+    .read_value = read_value,
+    .write_value = write_value,
+    .configure = configure,
+
+    .extra_info = &gpio16_extra_info,
+    .attrdefs = attrdefs_gpio16
+
+};
+
+port_t *gpio16 = &_gpio16;
+#endif
 
 double read_value(port_t *port) {
     if (IS_OUTPUT(port)) {
         return get_output_value(port);
     }
     else {
-        return !!GPIO_INPUT_GET(port->slot);
+        return gpio_read_value(port->slot);
     }
 }
 
 bool write_value(port_t *port, double value) {
     DEBUG_GPIO(port, "writing %d", !!value);
-    GPIO_OUTPUT_SET(port->slot, (int) value);
+    gpio_write_value(port->slot, (int) value);
 
     set_output_value(port, value);
 
@@ -455,23 +506,38 @@ bool write_value(port_t *port, double value) {
 }
 
 void configure(port_t *port) {
-    /* set GPIO function */
-    gpio_select_func(port->slot);
-    
-    if (IS_OUTPUT(port)) {
-        DEBUG_GPIO(port, "output enabled");
-        if (IS_PULL_UP(port)) {
-            gpio_set_pullup(port->slot, true);
-            DEBUG_GPIO(port, "pull-up enabled");
+    bool value;
+    if (port->slot == 16) {
+        if (IS_PULL_DOWN(port)) {
+            DEBUG_GPIO(port, "pull-down enabled");
+            value = FALSE;
         }
         else {
-            gpio_set_pullup(port->slot, false);
-            DEBUG_GPIO(port, "pull-up disabled");
+            DEBUG_GPIO(port, "pull-down disabled");
+            value = TRUE;
         }
     }
     else {
-        GPIO_DIS_OUTPUT(port->slot);
+        if (IS_PULL_UP(port)) {
+            DEBUG_GPIO(port, "pull-up enabled");
+            value = TRUE;
+        }
+        else {
+            DEBUG_GPIO(port, "pull-up disabled");
+            value = FALSE;
+        }
+    }
+
+    if (IS_OUTPUT(port)) {
+        DEBUG_GPIO(port, "output enabled");
+
+        /* set initial value according to pull configuration */
+        gpio_configure_output(port->slot, value);
+        set_output_value(port, value);
+    }
+    else {
         DEBUG_GPIO(port, "output disabled");
+        gpio_configure_input(port->slot, value);
     }
 }
 
@@ -487,6 +553,23 @@ void attr_set_pull_up(port_t *port, attrdef_t *attrdef, bool value) {
         port->flags &= ~PORT_FLAG_PULL_UP;
     }
 }
+
+#ifdef HAS_GPIO16
+
+bool attr_get_pull_down(port_t *port, attrdef_t *attrdef) {
+    return IS_PULL_DOWN(port);
+}
+
+void attr_set_pull_down(port_t *port, attrdef_t *attrdef, bool value) {
+    if (value) {
+        port->flags |= PORT_FLAG_PULL_DOWN;
+    }
+    else {
+        port->flags &= ~PORT_FLAG_PULL_DOWN;
+    }
+}
+
+#endif /* HAS_GPIO16 */
 
 bool attr_get_output(port_t *port, attrdef_t *attrdef) {
     return IS_OUTPUT(port);
@@ -566,6 +649,10 @@ void gpio_init_ports(void) {
 
 #ifdef HAS_GPIO15
     port_register(gpio15);
+#endif
+
+#ifdef HAS_GPIO16
+    port_register(gpio16);
 #endif
 
 }

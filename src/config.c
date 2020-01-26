@@ -29,10 +29,12 @@
 #endif
 
 #include "api.h"
-#include "webhooks.h"
+#include "apiutils.h"
+#include "common.h"
 #include "device.h"
-#include "config.h"
 #include "stringpool.h"
+#include "webhooks.h"
+#include "config.h"
 
 
 #define NULL_HASH                       "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"

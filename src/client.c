@@ -36,10 +36,12 @@
 #include "espgoodies/ota.h"
 #endif
 
-#include "ver.h"
+#include "api.h"
+#include "apiutils.h"
+#include "common.h"
 #include "device.h"
 #include "sessions.h"
-#include "api.h"
+#include "ver.h"
 #include "client.h"
 
 
@@ -444,11 +446,6 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         }
         else { /* new session */
             session = session_create(session_id, conn, timeout, access_level);
-            if (!session) { /* too many sessions */
-                DEBUG_ESPQTCLIENT_CONN(conn, "too many sessions");
-                respond_error(conn, 503, "busy");
-                goto done;
-            }
         }
 
         session_reset(session);

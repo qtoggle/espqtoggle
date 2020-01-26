@@ -20,8 +20,8 @@
 #include <string.h>
 #include <limits.h>
 #include <mem.h>
-#include <gpio.h>
 #include <user_interface.h>
+#include <gpio.h>
 
 #include "espgoodies/common.h"
 #include "espgoodies/system.h"
@@ -29,6 +29,8 @@
 
 #include "events.h"
 #include "api.h"
+#include "apiutils.h"
+#include "common.h"
 #include "ports.h"
 #include "extra/dht.h"
 
@@ -513,7 +515,7 @@ int attr_get_retries(port_t *port, attrdef_t *attrdef) {
     memcpy(&value, port->extra_data + RETRIES_CONFIG_OFFS, 1);
 
     /* update cached value */
-    set_retries(port, get_choice_value_num(attrdef->choices[value]));
+    set_retries(port, value);
 
     return value;
 }
@@ -651,7 +653,7 @@ uint64 read_data(port_t *port) {
 
 void input_wire(port_t *port) {
     GPIO_DIS_OUTPUT(get_gpio(port));
-    gpio_set_pullup(get_gpio(port), true);
+    gpio_set_pull(get_gpio(port), TRUE);
 }
 
 bool read_wire(port_t *port) {
@@ -659,7 +661,7 @@ bool read_wire(port_t *port) {
 }
 
 void write_wire(port_t *port, bool value) {
-    gpio_set_pullup(get_gpio(port), false);
+    gpio_set_pull(get_gpio(port), FALSE);
     GPIO_OUTPUT_SET(get_gpio(port), value);
 }
 

@@ -16,20 +16,14 @@
  *
  */
 
-#ifndef _EXTRA_PWDETECT_H
-#define _EXTRA_PWDETECT_H
-
-#include <ets_sys.h>
+#ifndef _ESPGOODIES_INITDATA_H
+#define _ESPGOODIES_INITDATA_H
 
 
-#ifdef _DEBUG_PWDETECT
-#define DEBUG_PWDETECT(port, f, ...)        DEBUG("[%-14s] " f, (port)->id, ##__VA_ARGS__)
-#else
-#define DEBUG_PWDETECT(...)     {}
-#endif
+#include <c_types.h>
 
 
-ICACHE_FLASH_ATTR void          pwdetect_init_ports(void);
+void ICACHE_FLASH_ATTR      init_data_ensure(void);
 
 
-#endif /* _EXTRA_PWDETECT_H */
+#endif /* _ESPGOODIES_INITDATA_H */
