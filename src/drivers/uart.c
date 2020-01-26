@@ -25,14 +25,20 @@
 
 #include "uart.h"
 
-#define REG_UART_BASE(i)            (0x60000000 + (i) * 0xf00)
+#define REG_UART_BASE(i)            (0x60000000 + (i) * 0xF00)
 
-#define UART_FIFO(i)                (REG_UART_BASE(i) + 0x0)
+#define UART_FIFO(i)                (REG_UART_BASE(i) + 0x00)
+#define UART_INT_ENA(i)             (REG_UART_BASE(i) + 0x0C)
+#define UART_INT_CLR(i)             (REG_UART_BASE(i) + 0x10)
 #define UART_STATUS(i)              (REG_UART_BASE(i) + 0x1C)
 #define UART_CONF0(i)               (REG_UART_BASE(i) + 0x20)
 
 #define UART_RXFIFO_CNT             0x000000FF
 #define UART_RXFIFO_CNT_S           0
+#define UART_RXFIFO_FULL_INT_CLR    0x00000001
+#define UART_RXFIFO_TOUT_INT_CLR    0x00000100
+#define UART_RXFIFO_FULL_INT_ENA    0x00000001
+#define UART_RXFIFO_TOUT_INT_ENA    0x00000100
 
 #define UART_TXFIFO_CNT             0x000000FF
 #define UART_TXFIFO_CNT_S           16
@@ -69,10 +75,12 @@ void uart_setup(uint8 uart, uint32 baud, uint8 parity, uint8 stop_bits) {
 }
 
 uint16 uart_read(uint8 uart, uint8 *buff, uint16 max_len, uint32 timeout_us) {
-    ETS_UART_INTR_DISABLE();
     uint16 got = 0;
     uint32 start = system_get_time();
     bool done = FALSE;
+
+    CLEAR_PERI_REG_MASK(UART_INT_ENA(uart), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_TOUT_INT_ENA);
+
     while ((system_get_time() - start < timeout_us) && !done) {
         while (READ_PERI_REG(UART_STATUS(uart)) & (UART_RXFIFO_CNT << UART_RXFIFO_CNT_S)) {
             buff[got++] = READ_PERI_REG(UART_FIFO(uart)) & 0xFF;
@@ -81,9 +89,10 @@ uint16 uart_read(uint8 uart, uint8 *buff, uint16 max_len, uint32 timeout_us) {
                 break;
             }
         }
+        WRITE_PERI_REG(UART_INT_CLR(uart), UART_RXFIFO_FULL_INT_CLR | UART_RXFIFO_TOUT_INT_CLR);
     }
 
-    ETS_UART_INTR_ENABLE();
+    SET_PERI_REG_MASK(UART_INT_ENA(uart), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_TOUT_INT_ENA);
 
     return got;
 }
