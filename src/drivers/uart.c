@@ -20,6 +20,7 @@
 #include <ets_sys.h>
 #include <user_interface.h>
 
+#include "espgoodies/common.h"
 #include "espgoodies/utils.h"
 
 #include "uart.h"
@@ -36,11 +37,11 @@
 #define UART_TXFIFO_CNT             0x000000FF
 #define UART_TXFIFO_CNT_S           16
 
-#define UART_PARITY_EN              0x00000001
-#define UART_PARITY                 0x00000000
+#define UART_PARITY_EN              0x00000002
+#define UART_PARITY                 0x00000001
 
-#define UART_STOP_BIT_NUM           0x00000003
-#define UART_STOP_BIT_NUM_S         0x00000004
+#define UART_STOP_BIT_NUM           3
+#define UART_STOP_BIT_NUM_S         4
 
 
 void uart_setup(uint8 uart, uint32 baud, uint8 parity, uint8 stop_bits) {
