@@ -70,4 +70,11 @@ if grep -q '0x020200' ${SDK_BASE}/include/version.h; then
     fi
 fi
 
+if ! grep -qE "DHCP_DOES_ARP_CHECK\s+0" ${SDK_BASE}/third_party/include/lwipopts.h; then
+    echo "Disabling DHCP ARP check in third_party/include/lwipopts.h"
+    sed -ri 's/define DHCP_DOES_ARP_CHECK.*/define DHCP_DOES_ARP_CHECK 0/' ${SDK_BASE}/third_party/include/lwipopts.h
+    make -C ${SDK_BASE}/third_party/lwip COMPILE=gcc >/dev/null
+    cp ${SDK_BASE}/third_party/lwip/.output/eagle/debug/lib/liblwip.a lib
+fi
+
 echo "Done"

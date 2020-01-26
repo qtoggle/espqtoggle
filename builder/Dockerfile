@@ -5,10 +5,14 @@ FROM ubuntu:19.04
 
 MAINTAINER Calin Crisan ccrisan@gmail.com
 
+ENV PATH="/opt/xtensa-lx106-elf/bin:${PATH}"
+ENV SDK_BASE="/opt/esp-nonos-sdk"
+
 # apt stuff
 RUN DEBIAN_FRONTEND=noninteractive apt-get update -qq
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -yq \
     make \
+    gcc \
     git \
     xz-utils \
     python \
@@ -33,9 +37,6 @@ RUN git clone https://github.com/espressif/ESP8266_NONOS_SDK.git /opt/esp-nonos-
     git checkout a0b1311 && \
     /opt/fix-sdk.sh . && \
     rm -rf .git
-
-ENV PATH="/opt/xtensa-lx106-elf/bin:${PATH}"
-ENV SDK_BASE="/opt/esp-nonos-sdk"
 
 ADD ./builder.sh /opt
 
