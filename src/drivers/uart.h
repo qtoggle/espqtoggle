@@ -25,8 +25,18 @@
 #define UART0                       0
 #define UART1                       1
 
+#define UART_PARITY_NONE            2
+#define UART_PARITY_ODD             1
+#define UART_PARITY_EVEN            0
 
+#define UART_STOP_BITS_1            1
+#define UART_STOP_BITS_15           2
+#define UART_STOP_BITS_2            3
+
+
+ICACHE_FLASH_ATTR void              uart_setup(uint8 uart, uint32 baud, uint8 parity, uint8 stop_bits);
 ICACHE_FLASH_ATTR uint16            uart_read(uint8 uart, uint8 *buff, uint16 max_len, uint32 timeout_us);
+ICACHE_FLASH_ATTR uint16            uart_write(uint8 uart, uint8 *buff, uint16 len, uint32 timeout_us);
 
 
 #endif /* _UART_H */
