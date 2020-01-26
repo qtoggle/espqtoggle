@@ -30,6 +30,8 @@
 #define MIN(a, b)                   (a) > (b) ? (b) : (a)
 #define MAX(a, b)                   (a) > (b) ? (a) : (b)
 
+#define FUNC_U0RXD                  0 /* missing from official SDK */
+
 #define htons(x)                    (((x)<< 8 & 0xFF00) | ((x)>> 8 & 0x00FF))
 #define ntohs(x)                    htons(x)
 

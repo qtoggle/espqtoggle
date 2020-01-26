@@ -20,6 +20,8 @@
 #include <ets_sys.h>
 #include <user_interface.h>
 
+#include "espgoodies/utils.h"
+
 #include "uart.h"
 
 #define REG_UART_BASE(i)            (0x60000000 + (i) * 0xf00)
@@ -43,7 +45,7 @@
 
 void uart_setup(uint8 uart, uint32 baud, uint8 parity, uint8 stop_bits) {
     /* baud rate */
-    uart_div_modify(uart, UART_CLK_FREQ /baud);
+    uart_div_modify(uart, UART_CLK_FREQ / baud);
 
     /* parity */
     CLEAR_PERI_REG_MASK(UART_CONF0(uart), UART_PARITY | UART_PARITY_EN);
@@ -53,6 +55,16 @@ void uart_setup(uint8 uart, uint32 baud, uint8 parity, uint8 stop_bits) {
 
     /* stop bits */
     SET_PERI_REG_BITS(UART_CONF0(uart), UART_STOP_BIT_NUM, stop_bits, UART_STOP_BIT_NUM_S);
+
+    /* set GPIO rx/tx functions */
+    if (uart == 0) {
+        PIN_FUNC_SELECT(gpio_get_mux(1), FUNC_U0TXD);
+        PIN_FUNC_SELECT(gpio_get_mux(3), FUNC_U0RXD);
+    }
+    else { /* assuming uart == 1 */
+        PIN_FUNC_SELECT(gpio_get_mux(2), FUNC_U1TXD_BK);
+        /* UART1 has no rx pin */
+    }
 }
 
 uint16 uart_read(uint8 uart, uint8 *buff, uint16 max_len, uint32 timeout_us) {
@@ -95,4 +107,17 @@ uint16 uart_write(uint8 uart, uint8 *buff, uint16 len, uint32 timeout_us) {
     }
 
     return write_len;
+}
+
+void uart_write_char(uint8 uart, char c) {
+    uint32 fifo_count;
+
+    while (TRUE) {
+        fifo_count = READ_PERI_REG(UART_STATUS(uart)) & (UART_TXFIFO_CNT << UART_TXFIFO_CNT_S);
+        if (fifo_count < 126) {
+            break; /* enough room for another byte */
+        }
+    }
+
+    WRITE_PERI_REG(UART_FIFO(uart), c);
 }

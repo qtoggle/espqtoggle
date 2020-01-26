@@ -46,10 +46,12 @@
 #include "config.h"
 #include "core.h"
 #include "device.h"
+#include "drivers/uart.h"
 #include "ver.h"
 
 
 #define CONNECT_TIMEOUT             20000   /* milliseconds */
+#define DEBUG_BAUD                  115200
 
 #define FW_LATEST_FILE              "/latest"
 #define FW_LATEST_BETA_FILE         "/latest_beta"
@@ -61,6 +63,7 @@ static os_timer_t                   connect_timeout_timer;
 
 
 ICACHE_FLASH_ATTR static void       main_init(void);
+ICACHE_FLASH_ATTR static void       debug_putc_func(char c);
 ICACHE_FLASH_ATTR void              user_init(void);
 ICACHE_FLASH_ATTR void              user_rf_pre_init(void);
 ICACHE_FLASH_ATTR int               user_rf_cal_sector_set(void);
@@ -207,9 +210,14 @@ int user_rf_cal_sector_set(void) {
     }
 }
 
+void debug_putc_func(char c) {
+    uart_write_char(_DEBUG_UART, c);
+}
+
 void user_init(void) {
 #ifdef _DEBUG
-    uart_div_modify(0, UART_CLK_FREQ / 115200);
+    uart_setup(_DEBUG_UART, DEBUG_BAUD, UART_PARITY_NONE, UART_STOP_BITS_1);
+    os_install_putc1(debug_putc_func);
     os_delay_us(10000);
 
 printf("\n\n");
