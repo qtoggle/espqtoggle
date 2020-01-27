@@ -45,9 +45,8 @@
 #define DEF_SAMP_INT                    5000    /* milliseconds */
 #define MAX_SAMP_INT                    3600000 /* milliseconds */
 
-#define V9821_WRITE_TIMEOUT             10000   /* microseconds */
-#define V9821_READ_TIMEOUT              40000   /* microseconds */
-#define V9821_READ_BUFF_SIZE            64
+#define V9821_WRITE_TIMEOUT             100000   /* microseconds */
+#define V9821_READ_TIMEOUT              100000   /* microseconds */
 #define V9821_RESPONSE_LEN              36
 #define V9821_REQUEST                   {0xFE, 0x01, 0x0F, 0x08, 0x00, 0x00, 0x00, 0x1C}
 #define V9821_RESPONSE_HEADER           {0xFE, 0x01, 0x08}
@@ -69,9 +68,40 @@ typedef struct {
 
 
 ICACHE_FLASH_ATTR static void           configure(port_t *port);
-ICACHE_FLASH_ATTR static bool           read_status_if_needed(port_t *port);
-ICACHE_FLASH_ATTR static double         read_energy(port_t *port);
 
+#ifdef HAS_V9821_ENERGY
+ICACHE_FLASH_ATTR static double         read_energy(port_t *port);
+#endif
+
+#ifdef HAS_V9821_VOLTAGE
+ICACHE_FLASH_ATTR static double         read_voltage(port_t *port);
+#endif
+
+#ifdef HAS_V9821_CURRENT
+ICACHE_FLASH_ATTR static double         read_current(port_t *port);
+#endif
+
+#ifdef HAS_V9821_FREQ
+ICACHE_FLASH_ATTR static double         read_freq(port_t *port);
+#endif
+
+#ifdef HAS_V9821_ACT_POW
+ICACHE_FLASH_ATTR static double         read_act_pow(port_t *port);
+#endif
+
+#ifdef HAS_V9821_REA_POW
+ICACHE_FLASH_ATTR static double         read_rea_pow(port_t *port);
+#endif
+
+#ifdef HAS_V9821_APP_POW
+ICACHE_FLASH_ATTR static double         read_app_pow(port_t *port);
+#endif
+
+#ifdef HAS_V9821_POW_FACT
+ICACHE_FLASH_ATTR static double         read_pow_fact(port_t *port);
+#endif
+
+ICACHE_FLASH_ATTR static bool           read_status_if_needed(port_t *port);
 ICACHE_FLASH_ATTR static bool           read_status(port_t *port);
 
 
@@ -104,9 +134,292 @@ port_t *v9821_energy = &_v9821_energy;
 #endif
 
 
+#ifdef HAS_V9821_VOLTAGE
+
+static port_t _v9821_voltage = {
+
+    .slot = PORT_SLOT_AUTO,
+
+    .id = V9821_VOLTAGE_ID,
+    .type = PORT_TYPE_NUMBER,
+    .step = UNDEFINED,
+
+    .extra_info = &v9821_extra_info,
+
+    .min_sampling_interval = MIN_SAMP_INT,
+    .def_sampling_interval = DEF_SAMP_INT,
+    .max_sampling_interval = MAX_SAMP_INT,
+
+    .read_value = read_voltage,
+    .configure = configure
+
+};
+
+port_t *v9821_voltage = &_v9821_voltage;
+
+#endif
+
+
+#ifdef HAS_V9821_CURRENT
+
+static port_t _v9821_current = {
+
+    .slot = PORT_SLOT_AUTO,
+
+    .id = V9821_CURRENT_ID,
+    .type = PORT_TYPE_NUMBER,
+    .step = UNDEFINED,
+
+    .extra_info = &v9821_extra_info,
+
+    .min_sampling_interval = MIN_SAMP_INT,
+    .def_sampling_interval = DEF_SAMP_INT,
+    .max_sampling_interval = MAX_SAMP_INT,
+
+    .read_value = read_current,
+    .configure = configure
+
+};
+
+port_t *v9821_current = &_v9821_current;
+
+#endif
+
+
+#ifdef HAS_V9821_FREQ
+
+static port_t _v9821_freq = {
+
+    .slot = PORT_SLOT_AUTO,
+
+    .id = V9821_FREQ_ID,
+    .type = PORT_TYPE_NUMBER,
+    .step = UNDEFINED,
+
+    .extra_info = &v9821_extra_info,
+
+    .min_sampling_interval = MIN_SAMP_INT,
+    .def_sampling_interval = DEF_SAMP_INT,
+    .max_sampling_interval = MAX_SAMP_INT,
+
+    .read_value = read_freq,
+    .configure = configure
+
+};
+
+port_t *v9821_freq = &_v9821_freq;
+
+#endif
+
+
+#ifdef HAS_V9821_ACT_POW
+
+static port_t _v9821_act_pow = {
+
+    .slot = PORT_SLOT_AUTO,
+
+    .id = V9821_ACT_POW_ID,
+    .type = PORT_TYPE_NUMBER,
+    .step = UNDEFINED,
+
+    .extra_info = &v9821_extra_info,
+
+    .min_sampling_interval = MIN_SAMP_INT,
+    .def_sampling_interval = DEF_SAMP_INT,
+    .max_sampling_interval = MAX_SAMP_INT,
+
+    .read_value = read_act_pow,
+    .configure = configure
+
+};
+
+port_t *v9821_act_pow = &_v9821_act_pow;
+
+#endif
+
+
+#ifdef HAS_V9821_REA_POW
+
+static port_t _v9821_rea_pow = {
+
+    .slot = PORT_SLOT_AUTO,
+
+    .id = V9821_REA_POW_ID,
+    .type = PORT_TYPE_NUMBER,
+    .step = UNDEFINED,
+
+    .extra_info = &v9821_extra_info,
+
+    .min_sampling_interval = MIN_SAMP_INT,
+    .def_sampling_interval = DEF_SAMP_INT,
+    .max_sampling_interval = MAX_SAMP_INT,
+
+    .read_value = read_rea_pow,
+    .configure = configure
+
+};
+
+port_t *v9821_rea_pow = &_v9821_rea_pow;
+
+#endif
+
+
+#ifdef HAS_V9821_APP_POW
+
+static port_t _v9821_app_pow = {
+
+    .slot = PORT_SLOT_AUTO,
+
+    .id = V9821_APP_POW_ID,
+    .type = PORT_TYPE_NUMBER,
+    .step = UNDEFINED,
+
+    .extra_info = &v9821_extra_info,
+
+    .min_sampling_interval = MIN_SAMP_INT,
+    .def_sampling_interval = DEF_SAMP_INT,
+    .max_sampling_interval = MAX_SAMP_INT,
+
+    .read_value = read_app_pow,
+    .configure = configure
+
+};
+
+port_t *v9821_app_pow = &_v9821_app_pow;
+
+#endif
+
+
+#ifdef HAS_V9821_POW_FACT
+
+static port_t _v9821_pow_fact = {
+
+    .slot = PORT_SLOT_AUTO,
+
+    .id = V9821_POW_FACT_ID,
+    .type = PORT_TYPE_NUMBER,
+    .step = UNDEFINED,
+
+    .extra_info = &v9821_extra_info,
+
+    .min_sampling_interval = MIN_SAMP_INT,
+    .def_sampling_interval = DEF_SAMP_INT,
+    .max_sampling_interval = MAX_SAMP_INT,
+
+    .read_value = read_pow_fact,
+    .configure = configure
+
+};
+
+port_t *v9821_pow_fact = &_v9821_pow_fact;
+
+#endif
+
+
+void configure(port_t *port) {
+    DEBUG_V9821(port, "configuring serial port");
+    uart_setup(UART, UART_BAUD, UART_PARITY, UART_STOP_BITS);
+}
+
+#ifdef HAS_V9821_ENERGY
+double read_energy(port_t *port) {
+    extra_info_t *extra_info = port->extra_info;
+
+    if (!read_status_if_needed(port)) {
+        return UNDEFINED;
+    }
+
+    return extra_info->last_energy;
+}
+#endif
+
+#ifdef HAS_V9821_VOLTAGE
+double read_voltage(port_t *port) {
+    extra_info_t *extra_info = port->extra_info;
+
+    if (!read_status_if_needed(port)) {
+        return UNDEFINED;
+    }
+
+    return extra_info->last_voltage;
+}
+#endif
+
+#ifdef HAS_V9821_CURRENT
+double read_current(port_t *port) {
+    extra_info_t *extra_info = port->extra_info;
+
+    if (!read_status_if_needed(port)) {
+        return UNDEFINED;
+    }
+
+    return extra_info->last_current;
+}
+#endif
+
+#ifdef HAS_V9821_FREQ
+double read_freq(port_t *port) {
+    extra_info_t *extra_info = port->extra_info;
+
+    if (!read_status_if_needed(port)) {
+        return UNDEFINED;
+    }
+
+    return extra_info->last_freq;
+}
+#endif
+
+#ifdef HAS_V9821_ACT_POW
+double read_act_pow(port_t *port) {
+    extra_info_t *extra_info = port->extra_info;
+
+    if (!read_status_if_needed(port)) {
+        return UNDEFINED;
+    }
+
+    return extra_info->last_active_power;
+}
+#endif
+
+#ifdef HAS_V9821_REA_POW
+double read_rea_pow(port_t *port) {
+    extra_info_t *extra_info = port->extra_info;
+
+    if (!read_status_if_needed(port)) {
+        return UNDEFINED;
+    }
+
+    return extra_info->last_reactive_power;
+}
+#endif
+
+#ifdef HAS_V9821_APP_POW
+double read_app_pow(port_t *port) {
+    extra_info_t *extra_info = port->extra_info;
+
+    if (!read_status_if_needed(port)) {
+        return UNDEFINED;
+    }
+
+    return extra_info->last_apparent_power;
+}
+#endif
+
+#ifdef HAS_V9821_POW_FACT
+double read_pow_fact(port_t *port) {
+    extra_info_t *extra_info = port->extra_info;
+
+    if (!read_status_if_needed(port)) {
+        return UNDEFINED;
+    }
+
+    return extra_info->last_power_factor;
+}
+#endif
+
 bool read_status_if_needed(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
-    uint64 now = system_uptime_us();
+    uint64 now = system_uptime_us() / 1000;
     uint64 delta = now - extra_info->last_read_time;
     if (delta > port->sampling_interval) {
         DEBUG_V9821(port, "status needs new reading");
@@ -117,21 +430,6 @@ bool read_status_if_needed(port_t *port) {
     }
 
     return TRUE;
-}
-
-double read_energy(port_t *port) {
-    extra_info_t *extra_info = port->extra_info;
-
-    if (!read_status_if_needed(port)) {
-        return UNDEFINED;
-    }
-
-    return extra_info->last_read_time;
-}
-
-void configure(port_t *port) {
-    DEBUG_V9821(port, "configuring serial port");
-    uart_setup(UART, UART_BAUD, UART_PARITY, UART_STOP_BITS);
 }
 
 bool read_status(port_t *port) {
@@ -147,10 +445,10 @@ bool read_status(port_t *port) {
     DEBUG_V9821(port, "request sent");
 
     /* read response */
-    static uint8 read_buff[V9821_READ_BUFF_SIZE];
+    static uint8 read_buff[V9821_RESPONSE_LEN];
     uint16 i;
 
-    size = uart_read(UART, read_buff, V9821_READ_BUFF_SIZE, V9821_READ_TIMEOUT);
+    size = uart_read(UART, read_buff, V9821_RESPONSE_LEN, V9821_READ_TIMEOUT);
     if (size != V9821_RESPONSE_LEN) {
         DEBUG_V9821(port, "failed to read response: %d/%d bytes read", size, V9821_RESPONSE_LEN);
         return FALSE;
@@ -248,6 +546,27 @@ bool read_status(port_t *port) {
 void v9821_init_ports(void) {
 #ifdef HAS_V9821_ENERGY
     port_register(v9821_energy);
+#endif
+#ifdef HAS_V9821_VOLTAGE
+    port_register(v9821_voltage);
+#endif
+#ifdef HAS_V9821_CURRENT
+    port_register(v9821_current);
+#endif
+#ifdef HAS_V9821_FREQ
+    port_register(v9821_freq);
+#endif
+#ifdef HAS_V9821_ACT_POW
+    port_register(v9821_act_pow);
+#endif
+#ifdef HAS_V9821_REA_POW
+    port_register(v9821_rea_pow);
+#endif
+#ifdef HAS_V9821_APP_POW
+    port_register(v9821_app_pow);
+#endif
+#ifdef HAS_V9821_POW_FACT
+    port_register(v9821_pow_fact);
 #endif
 }
 
