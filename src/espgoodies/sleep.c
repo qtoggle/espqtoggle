@@ -46,14 +46,15 @@ void sleep_init(void) {
     /* we might still have a few rounds to sleep,
      * as part of the long sleep mechanism */
 
-    int sleep_count = rtc_get_value(RTC_SLEEP_COUNT_ADDR);
-    int sleep_rem = rtc_get_value(RTC_SLEEP_REM_ADDR);
+    uint32 sleep_count = rtc_get_value(RTC_SLEEP_COUNT_ADDR);
+    uint32 sleep_rem = rtc_get_value(RTC_SLEEP_REM_ADDR);
 
     DEBUG_SLEEP("sleep_count = %d, sleep_rem = %d", sleep_count, sleep_rem);
 
     if (sleep_count > 0) {
         DEBUG_SLEEP("sleeping for another %d seconds", MAX_SLEEP_DURATION);
         rtc_set_value(RTC_SLEEP_COUNT_ADDR, sleep_count - 1);
+        os_delay_us(100000); /* allow 100ms of delay to ensure RTC value is written */
         system_deep_sleep_instant(MAX_SLEEP_DURATION * 1000 * 1000);
         return;
     }
@@ -61,6 +62,7 @@ void sleep_init(void) {
     if (sleep_rem > 0) {
         DEBUG_SLEEP("sleeping for another %d seconds", sleep_rem);
         rtc_set_value(RTC_SLEEP_REM_ADDR, 0);
+        os_delay_us(100000); /* allow 100ms of delay to ensure RTC value is written */
         system_deep_sleep_instant(sleep_rem * 1000 * 1000);
         return;
     }
@@ -115,9 +117,9 @@ void on_sleep(void *arg) {
      }
 #endif
 
-    int wake_interval_seconds = wake_interval * 60;
-    int sleep_count = wake_interval_seconds / MAX_SLEEP_DURATION;
-    int sleep_rem = wake_interval_seconds % MAX_SLEEP_DURATION;
+    uint32 wake_interval_seconds = wake_interval * 60;
+    uint32 sleep_count = wake_interval_seconds / MAX_SLEEP_DURATION;
+    uint32 sleep_rem = wake_interval_seconds % MAX_SLEEP_DURATION;
 
     DEBUG_SLEEP("about to sleep for a total of %d seconds (count = %d, rem = %d)",
                 wake_interval_seconds, sleep_count, sleep_rem);
@@ -127,12 +129,14 @@ void on_sleep(void *arg) {
         rtc_set_value(RTC_SLEEP_COUNT_ADDR, sleep_count - 1);
         rtc_set_value(RTC_SLEEP_REM_ADDR, sleep_rem);
         DEBUG_SLEEP("sleeping for %d seconds", MAX_SLEEP_DURATION);
+        /* allow 100ms of delay to ensure RTC value is written */
         system_deep_sleep(MAX_SLEEP_DURATION * 1000 * 1000);
     }
     else {
         rtc_set_value(RTC_SLEEP_COUNT_ADDR, 0);
         rtc_set_value(RTC_SLEEP_REM_ADDR, 0);
         DEBUG_SLEEP("sleeping for %d seconds", sleep_rem);
+        /* allow 100ms of delay to ensure RTC value is written */
         system_deep_sleep(sleep_rem * 1000 * 1000);
     }
 }
