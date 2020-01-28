@@ -2,10 +2,10 @@
 DEBUG ?= true
 DEBUG_FLAGS ?= flashcfg httpclient httpserver ota pingwdt sleep rtc tcpserver device wifi battery system html \
                gpio_utils dnsserver api expr ports sessions webhooks espqtclient virtual \
-               adc gpio pwm dht pwdetect rgb fsg dallastemp v9821
+               uart adc gpio pwm dht pwdetect rgb fsg dallastemp v9821
 DEBUG_IP ?= # 192.168.0.1
 DEBUG_PORT ?= 48879
-DEBUG_UART ?= 0
+DEBUG_UART_NO ?= 0
 
 OTA     ?= true
 SSL     ?= false
@@ -214,7 +214,7 @@ endif
 
 ifeq ($(DEBUG), true)
     CFLAGS += -D_DEBUG
-    CFLAGS += -D_DEBUG_UART=$(DEBUG_UART)
+    CFLAGS += -D_DEBUG_UART_NO=$(DEBUG_UART_NO)
 ifneq ($(DEBUG_IP),)
     CFLAGS += -D_DEBUG_IP=\"$(DEBUG_IP)\"
     CFLAGS += -D_DEBUG_PORT=$(DEBUG_PORT)
@@ -285,7 +285,7 @@ buildinfo:
 	$(vecho) " *" SDK_BASE = $(SDK_BASE)
 	$(vecho) " *" VERSION = $(VERSION)
 	$(vecho) " *" DEBUG = $(DEBUG)
-	$(vecho) " *" DEBUG_UART = $(DEBUG_UART)
+	$(vecho) " *" DEBUG_UART_NO = $(DEBUG_UART_NO)
 	$(vecho) " *" DEBUG_IP = $(DEBUG_IP):$(DEBUG_PORT)
 	$(vecho) " *" DEBUG_FLAGS = $(DEBUG_FLAGS)
 	$(vecho) " *" OTA = $(OTA)

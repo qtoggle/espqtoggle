@@ -34,10 +34,17 @@
 #define UART_STOP_BITS_2            3
 
 
-ICACHE_FLASH_ATTR void              uart_setup(uint8 uart, uint32 baud, uint8 parity, uint8 stop_bits);
-ICACHE_FLASH_ATTR uint16            uart_read(uint8 uart, uint8 *buff, uint16 max_len, uint32 timeout_us);
-ICACHE_FLASH_ATTR uint16            uart_write(uint8 uart, uint8 *buff, uint16 len, uint32 timeout_us);
-ICACHE_FLASH_ATTR void              uart_write_char(uint8 uart, char c);
+#ifdef _DEBUG_UART
+#define DEBUG_UART(uart, fmt, ...)  DEBUG("[uart%-10d] " fmt, uart, ##__VA_ARGS__)
+#else
+#define DEBUG_UART(...)             {}
+#endif
+
+
+ICACHE_FLASH_ATTR void              uart_setup(uint8 uart_no, uint32 baud, uint8 parity, uint8 stop_bits);
+ICACHE_FLASH_ATTR uint16            uart_read(uint8 uart_no, uint8 *buff, uint16 max_len, uint32 timeout_us);
+ICACHE_FLASH_ATTR uint16            uart_write(uint8 uart_no, uint8 *buff, uint16 len, uint32 timeout_us);
+ICACHE_FLASH_ATTR void              uart_write_char(uint8 uart_no, char c);
 
 
 #endif /* _UART_H */
