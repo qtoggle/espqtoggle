@@ -211,12 +211,12 @@ int user_rf_cal_sector_set(void) {
 }
 
 void debug_putc_func(char c) {
-    uart_write_char(_DEBUG_UART, c);
+    uart_write_char(_DEBUG_UART_NO, c);
 }
 
 void user_init(void) {
 #ifdef _DEBUG
-    uart_setup(_DEBUG_UART, DEBUG_BAUD, UART_PARITY_NONE, UART_STOP_BITS_1);
+    uart_setup(_DEBUG_UART_NO, DEBUG_BAUD, UART_PARITY_NONE, UART_STOP_BITS_1);
     os_install_putc1(debug_putc_func);
     os_delay_us(10000);
 
