@@ -51,21 +51,21 @@
 #define UART_STOP_BIT_NUM_S         4
 
 
-void uart_setup(uint8 uart, uint32 baud, uint8 parity, uint8 stop_bits) {
+void uart_setup(uint8 uart_no, uint32 baud, uint8 parity, uint8 stop_bits) {
     /* baud rate */
-    uart_div_modify(uart, UART_CLK_FREQ / baud);
+    uart_div_modify(uart_no, UART_CLK_FREQ / baud);
 
     /* parity */
-    CLEAR_PERI_REG_MASK(UART_CONF0(uart), UART_PARITY | UART_PARITY_EN);
+    CLEAR_PERI_REG_MASK(UART_CONF0(uart_no), UART_PARITY | UART_PARITY_EN);
     if (parity != UART_PARITY_NONE) {
-        SET_PERI_REG_MASK(UART_CONF0(uart), parity | UART_PARITY_EN);
+        SET_PERI_REG_MASK(UART_CONF0(uart_no), parity | UART_PARITY_EN);
     }
 
     /* stop bits */
-    SET_PERI_REG_BITS(UART_CONF0(uart), UART_STOP_BIT_NUM, stop_bits, UART_STOP_BIT_NUM_S);
+    SET_PERI_REG_BITS(UART_CONF0(uart_no), UART_STOP_BIT_NUM, stop_bits, UART_STOP_BIT_NUM_S);
 
     /* set GPIO rx/tx functions */
-    if (uart == 0) {
+    if (uart_no == 0) {
         PIN_FUNC_SELECT(gpio_get_mux(1), FUNC_U0TXD);
         PIN_FUNC_SELECT(gpio_get_mux(3), FUNC_U0RXD);
     }
@@ -74,7 +74,7 @@ void uart_setup(uint8 uart, uint32 baud, uint8 parity, uint8 stop_bits) {
         /* UART1 has no rx pin */
     }
 
-    DEBUG_UART(uart, "baud=%d, parity=%c, stop_bits=%s", baud,
+    DEBUG_UART(uart_no, "baud=%d, parity=%c, stop_bits=%s", baud,
                parity == UART_PARITY_NONE ? 'N' : parity == UART_PARITY_EVEN ? 'E' : 'O',
                stop_bits == UART_STOP_BITS_1 ? "1" : stop_bits == UART_STOP_BITS_15 ? "1.5" : "2");
 }
@@ -114,14 +114,14 @@ uint16 uart_read(uint8 uart, uint8 *buff, uint16 max_len, uint32 timeout_us) {
     return got;
 }
 
-uint16 uart_write(uint8 uart, uint8 *buff, uint16 len, uint32 timeout_us) {
+uint16 uart_write(uint8 uart_no, uint8 *buff, uint16 len, uint32 timeout_us) {
     uint32 fifo_count, start = system_get_time();
     uint16 i, written = 0;
     bool timeout = FALSE;
 
     for (i = 0; i < len && !timeout; i++) {
         while (TRUE) {
-            fifo_count = READ_PERI_REG(UART_STATUS(uart)) & (UART_TXFIFO_CNT << UART_TXFIFO_CNT_S);
+            fifo_count = READ_PERI_REG(UART_STATUS(uart_no)) & (UART_TXFIFO_CNT << UART_TXFIFO_CNT_S);
             if (fifo_count < 126) {
                 break; /* enough room for another byte */
             }
@@ -131,7 +131,7 @@ uint16 uart_write(uint8 uart, uint8 *buff, uint16 len, uint32 timeout_us) {
             }
         }
 
-        WRITE_PERI_REG(UART_FIFO(uart), buff[i]);
+        WRITE_PERI_REG(UART_FIFO(uart_no), buff[i]);
         written++;
     }
 
@@ -144,22 +144,22 @@ uint16 uart_write(uint8 uart, uint8 *buff, uint16 len, uint32 timeout_us) {
         snprintf(p, 3, "%02X ", buff[i]);
         p += 3;
     }
-    DEBUG_UART(uart, "wrote %d/%d bytes in %d/%d us: %s", written, len, duration, timeout_us, buff_hex_str);
+    DEBUG_UART(uart_no, "wrote %d/%d bytes in %d/%d us: %s", written, len, duration, timeout_us, buff_hex_str);
     free(buff_hex_str);
 #endif
 
     return written;
 }
 
-void uart_write_char(uint8 uart, char c) {
+void uart_write_char(uint8 uart_no, char c) {
     uint32 fifo_count;
 
     while (TRUE) {
-        fifo_count = READ_PERI_REG(UART_STATUS(uart)) & (UART_TXFIFO_CNT << UART_TXFIFO_CNT_S);
+        fifo_count = READ_PERI_REG(UART_STATUS(uart_no)) & (UART_TXFIFO_CNT << UART_TXFIFO_CNT_S);
         if (fifo_count < 126) {
             break; /* enough room for another byte */
         }
     }
 
-    WRITE_PERI_REG(UART_FIFO(uart), c);
+    WRITE_PERI_REG(UART_FIFO(uart_no), c);
 }
