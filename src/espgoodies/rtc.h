@@ -36,7 +36,7 @@ ICACHE_FLASH_ATTR bool                  rtc_is_full_boot(void);
 ICACHE_FLASH_ATTR int                   rtc_get_boot_count(void);
 
 ICACHE_FLASH_ATTR int                   rtc_get_value(uint8 addr);
-ICACHE_FLASH_ATTR void                  rtc_set_value(uint8 addr, int value);
+ICACHE_FLASH_ATTR bool                  rtc_set_value(uint8 addr, int value);
 
 
 #endif /* _ESPGOODIES_RTC_H */

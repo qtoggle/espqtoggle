@@ -75,13 +75,21 @@ int rtc_get_value(uint8 addr) {
     }
 
     uint32 value;
-    system_rtc_mem_read(addr, &value, 4);
+    if (!system_rtc_mem_read(addr, &value, 4)) {
+        DEBUG_RTC("failed to read value at %d * 4", addr);
+        return 0;
+    }
 
     return value;
 }
 
-void rtc_set_value(uint8 addr, int value) {
-    DEBUG_RTC("setting value at %d * 4 = %d", addr, value);
+bool rtc_set_value(uint8 addr, int value) {
+    DEBUG_RTC("setting value at %d * 4 to %d", addr, value);
 
-    system_rtc_mem_write(addr, &value, 4);
+    if (!system_rtc_mem_write(addr, &value, 4)) {
+        DEBUG_RTC("failed to set value at %d * 4 to %d", addr, value);
+        return FALSE;
+    }
+
+    return TRUE;
 }
