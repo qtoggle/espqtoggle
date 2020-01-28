@@ -111,7 +111,7 @@ uint16 uart_read(uint8 uart, uint8 *buff, uint16 max_len, uint32 timeout_us) {
     char *p = buff_hex_str;
     uint16 i;
     for (i = 0; i < got; i++) {
-        snprintf(p, 3, "%02X ", buff[i]);
+        snprintf(p, 4, "%02X ", buff[i]);
         p += 3;
     }
     DEBUG_UART(uart, "read %d/%d/%d bytes in %d/%d us: %s",
@@ -148,7 +148,7 @@ uint16 uart_write(uint8 uart_no, uint8 *buff, uint16 len, uint32 timeout_us) {
     char *buff_hex_str = malloc(written * 3 + 1); /* two digits + one space for each byte, plus one NULL terminator */
     char *p = buff_hex_str;
     for (i = 0; i < written; i++) {
-        snprintf(p, 3, "%02X ", buff[i]);
+        snprintf(p, 4, "%02X ", buff[i]);
         p += 3;
     }
     DEBUG_UART(uart_no, "wrote %d/%d bytes in %d/%d us: %s", written, len, duration, timeout_us, buff_hex_str);
