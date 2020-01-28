@@ -80,18 +80,24 @@ void uart_setup(uint8 uart_no, uint32 baud, uint8 parity, uint8 stop_bits) {
 }
 
 uint16 uart_read(uint8 uart, uint8 *buff, uint16 max_len, uint32 timeout_us) {
-    uint16 got = 0;
+    uint16 got = 0, discarded = 0;
     uint32 start = system_get_time();
     bool done = FALSE;
+    uint8 c;
 
     CLEAR_PERI_REG_MASK(UART_INT_ENA(uart), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_TOUT_INT_ENA);
 
     while ((system_get_time() - start < timeout_us) && !done) {
         while (READ_PERI_REG(UART_STATUS(uart)) & (UART_RXFIFO_CNT << UART_RXFIFO_CNT_S)) {
-            buff[got++] = READ_PERI_REG(UART_FIFO(uart)) & 0xFF;
-            if (got == max_len) {
-                done = TRUE;
-                break;
+            c = READ_PERI_REG(UART_FIFO(uart)) & 0xFF;
+            if (got <= max_len) {
+                buff[got++] = c;
+                if (got == max_len) {
+                    done = TRUE;
+                }
+            }
+            else { /* continue reading all available bytes, but discard them */
+                discarded++;
             }
         }
         WRITE_PERI_REG(UART_INT_CLR(uart), UART_RXFIFO_FULL_INT_CLR | UART_RXFIFO_TOUT_INT_CLR);
@@ -100,6 +106,7 @@ uint16 uart_read(uint8 uart, uint8 *buff, uint16 max_len, uint32 timeout_us) {
     SET_PERI_REG_MASK(UART_INT_ENA(uart), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_TOUT_INT_ENA);
 
 #ifdef _DEBUG_UART
+    uint32 duration = system_get_time() - start;
     char *buff_hex_str = malloc(got * 3 + 1); /* two digits + one space for each byte, plus one NULL terminator */
     char *p = buff_hex_str;
     uint16 i;
@@ -107,7 +114,8 @@ uint16 uart_read(uint8 uart, uint8 *buff, uint16 max_len, uint32 timeout_us) {
         snprintf(p, 3, "%02X ", buff[i]);
         p += 3;
     }
-    DEBUG_UART(uart, "read %d/%d bytes in %d us: %s", got, max_len, timeout_us, buff_hex_str);
+    DEBUG_UART(uart, "read %d/%d/%d bytes in %d/%d us: %s",
+               discarded + got, got, max_len, duration, timeout_us, buff_hex_str);
     free(buff_hex_str);
 #endif
 
@@ -135,9 +143,8 @@ uint16 uart_write(uint8 uart_no, uint8 *buff, uint16 len, uint32 timeout_us) {
         written++;
     }
 
-    uint32 duration = system_get_time() - start;
-
 #ifdef _DEBUG_UART
+    uint32 duration = system_get_time() - start;
     char *buff_hex_str = malloc(written * 3 + 1); /* two digits + one space for each byte, plus one NULL terminator */
     char *p = buff_hex_str;
     for (i = 0; i < written; i++) {
