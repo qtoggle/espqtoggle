@@ -36,7 +36,7 @@
 
 #ifdef HAS_V9821
 
-#define UART                            0
+#define UART_NO                         UART0
 #define UART_BAUD                       9600
 #define UART_PARITY                     UART_PARITY_EVEN
 #define UART_STOP_BITS                  UART_STOP_BITS_1
@@ -318,7 +318,7 @@ port_t *v9821_pow_fact = &_v9821_pow_fact;
 
 void configure(port_t *port) {
     DEBUG_V9821(port, "configuring serial port");
-    uart_setup(UART, UART_BAUD, UART_PARITY, UART_STOP_BITS);
+    uart_setup(UART_NO, UART_BAUD, UART_PARITY, UART_STOP_BITS);
 }
 
 #ifdef HAS_V9821_ENERGY
@@ -437,7 +437,7 @@ bool read_status(port_t *port) {
 
     /* write request */
     static uint8 request[] = V9821_REQUEST;
-    uint16 size = uart_write(UART, request, sizeof(request), V9821_WRITE_TIMEOUT);
+    uint16 size = uart_write(UART_NO, request, sizeof(request), V9821_WRITE_TIMEOUT);
     if (size!= sizeof(request)) {
         DEBUG_V9821(port, "failed to write request: %d/%d bytes written", size, sizeof(request));
         return FALSE;
@@ -448,7 +448,7 @@ bool read_status(port_t *port) {
     static uint8 read_buff[V9821_RESPONSE_LEN];
     uint16 i;
 
-    size = uart_read(UART, read_buff, V9821_RESPONSE_LEN, V9821_READ_TIMEOUT);
+    size = uart_read(UART_NO, read_buff, V9821_RESPONSE_LEN, V9821_READ_TIMEOUT);
     if (size != V9821_RESPONSE_LEN) {
         DEBUG_V9821(port, "failed to read response: %d/%d bytes read", size, V9821_RESPONSE_LEN);
         return FALSE;
