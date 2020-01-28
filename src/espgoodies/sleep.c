@@ -46,8 +46,8 @@ void sleep_init(void) {
     /* we might still have a few rounds to sleep,
      * as part of the long sleep mechanism */
 
-    int sleep_count = rtc_get_value(RTC_SLEEP_COUNT_ADDR);
-    int sleep_rem = rtc_get_value(RTC_SLEEP_REM_ADDR);
+    uint32 sleep_count = rtc_get_value(RTC_SLEEP_COUNT_ADDR);
+    uint32 sleep_rem = rtc_get_value(RTC_SLEEP_REM_ADDR);
 
     DEBUG_SLEEP("sleep_count = %d, sleep_rem = %d", sleep_count, sleep_rem);
 
@@ -115,9 +115,9 @@ void on_sleep(void *arg) {
      }
 #endif
 
-    int wake_interval_seconds = wake_interval * 60;
-    int sleep_count = wake_interval_seconds / MAX_SLEEP_DURATION;
-    int sleep_rem = wake_interval_seconds % MAX_SLEEP_DURATION;
+    uint32 wake_interval_seconds = wake_interval * 60;
+    uint32 sleep_count = wake_interval_seconds / MAX_SLEEP_DURATION;
+    uint32 sleep_rem = wake_interval_seconds % MAX_SLEEP_DURATION;
 
     DEBUG_SLEEP("about to sleep for a total of %d seconds (count = %d, rem = %d)",
                 wake_interval_seconds, sleep_count, sleep_rem);
