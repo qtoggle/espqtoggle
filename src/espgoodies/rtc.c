@@ -28,7 +28,7 @@
 
 
 static bool                     full_boot = TRUE;
-static int                      boot_count = 0;
+static uint32                   boot_count = 0;
 
 
 void rtc_init(void) {
@@ -63,11 +63,11 @@ bool rtc_is_full_boot(void) {
     return full_boot;
 }
 
-int rtc_get_boot_count(void) {
+uint32 rtc_get_boot_count(void) {
     return boot_count;
 }
 
-int rtc_get_value(uint8 addr) {
+uint32 rtc_get_value(uint8 addr) {
     if (full_boot) {
         /* in case of full boot, RTC memory contents are random uninitialized crap,
          * so the best we can do here is to return 0 */
@@ -75,13 +75,21 @@ int rtc_get_value(uint8 addr) {
     }
 
     uint32 value;
-    system_rtc_mem_read(addr, &value, 4);
+    if (!system_rtc_mem_read(addr, &value, 4)) {
+        DEBUG_RTC("failed to read value at %d * 4", addr);
+        return 0;
+    }
 
     return value;
 }
 
-void rtc_set_value(uint8 addr, int value) {
-    DEBUG_RTC("setting value at %d * 4 = %d", addr, value);
+bool rtc_set_value(uint8 addr, uint32 value) {
+    DEBUG_RTC("setting value at %d * 4 to %d", addr, value);
 
-    system_rtc_mem_write(addr, &value, 4);
+    if (!system_rtc_mem_write(addr, &value, 4)) {
+        DEBUG_RTC("failed to set value at %d * 4 to %d", addr, value);
+        return FALSE;
+    }
+
+    return TRUE;
 }

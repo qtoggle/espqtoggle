@@ -22,6 +22,7 @@
 #include <user_interface.h>
 
 #include "espgoodies/common.h"
+#include "espgoodies/system.h"
 #include "espgoodies/utils.h"
 
 #include "uart.h"
@@ -81,13 +82,13 @@ void uart_setup(uint8 uart_no, uint32 baud, uint8 parity, uint8 stop_bits) {
 
 uint16 uart_read(uint8 uart, uint8 *buff, uint16 max_len, uint32 timeout_us) {
     uint16 got = 0, discarded = 0;
-    uint32 start = system_get_time();
+    uint64 start = system_uptime_us();
     bool done = FALSE;
     uint8 c;
 
     CLEAR_PERI_REG_MASK(UART_INT_ENA(uart), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_TOUT_INT_ENA);
 
-    while ((system_get_time() - start < timeout_us) && !done) {
+    while ((system_uptime_us() - start < timeout_us) && !done) {
         while (READ_PERI_REG(UART_STATUS(uart)) & (UART_RXFIFO_CNT << UART_RXFIFO_CNT_S)) {
             c = READ_PERI_REG(UART_FIFO(uart)) & 0xFF;
             if (got <= max_len) {
@@ -106,7 +107,7 @@ uint16 uart_read(uint8 uart, uint8 *buff, uint16 max_len, uint32 timeout_us) {
     SET_PERI_REG_MASK(UART_INT_ENA(uart), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_TOUT_INT_ENA);
 
 #ifdef _DEBUG_UART
-    uint32 duration = system_get_time() - start;
+    uint32 duration = system_uptime_us() - start;
     char *buff_hex_str = malloc(got * 3 + 1); /* two digits + one space for each byte, plus one NULL terminator */
     char *p = buff_hex_str;
     uint16 i;
@@ -123,7 +124,8 @@ uint16 uart_read(uint8 uart, uint8 *buff, uint16 max_len, uint32 timeout_us) {
 }
 
 uint16 uart_write(uint8 uart_no, uint8 *buff, uint16 len, uint32 timeout_us) {
-    uint32 fifo_count, start = system_get_time();
+    uint32 fifo_count;
+    uint64 start = system_uptime_us();
     uint16 i, written = 0;
     bool timeout = FALSE;
 
@@ -133,7 +135,7 @@ uint16 uart_write(uint8 uart_no, uint8 *buff, uint16 len, uint32 timeout_us) {
             if (fifo_count < 126) {
                 break; /* enough room for another byte */
             }
-            if (system_get_time() - start > timeout_us) { /* timeout */
+            if (system_uptime_us() - start > timeout_us) { /* timeout */
                 timeout = TRUE;
                 break;
             }
@@ -144,7 +146,7 @@ uint16 uart_write(uint8 uart_no, uint8 *buff, uint16 len, uint32 timeout_us) {
     }
 
 #ifdef _DEBUG_UART
-    uint32 duration = system_get_time() - start;
+    uint32 duration = system_uptime_us() - start;
     char *buff_hex_str = malloc(written * 3 + 1); /* two digits + one space for each byte, plus one NULL terminator */
     char *p = buff_hex_str;
     for (i = 0; i < written; i++) {
