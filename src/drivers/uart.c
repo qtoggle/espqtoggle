@@ -80,17 +80,17 @@ void uart_setup(uint8 uart_no, uint32 baud, uint8 parity, uint8 stop_bits) {
                stop_bits == UART_STOP_BITS_1 ? "1" : stop_bits == UART_STOP_BITS_15 ? "1.5" : "2");
 }
 
-uint16 uart_read(uint8 uart, uint8 *buff, uint16 max_len, uint32 timeout_us) {
+uint16 uart_read(uint8 uart_no, uint8 *buff, uint16 max_len, uint32 timeout_us) {
     uint16 got = 0, discarded = 0;
     uint64 start = system_uptime_us();
     bool done = FALSE;
     uint8 c;
 
-    CLEAR_PERI_REG_MASK(UART_INT_ENA(uart), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_TOUT_INT_ENA);
+    CLEAR_PERI_REG_MASK(UART_INT_ENA(uart_no), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_TOUT_INT_ENA);
 
     while ((system_uptime_us() - start < timeout_us) && !done) {
-        while (READ_PERI_REG(UART_STATUS(uart)) & (UART_RXFIFO_CNT << UART_RXFIFO_CNT_S)) {
-            c = READ_PERI_REG(UART_FIFO(uart)) & 0xFF;
+        while (READ_PERI_REG(UART_STATUS(uart_no)) & (UART_RXFIFO_CNT << UART_RXFIFO_CNT_S)) {
+            c = READ_PERI_REG(UART_FIFO(uart_no)) & 0xFF;
             if (got <= max_len) {
                 buff[got++] = c;
                 if (got == max_len) {
@@ -101,10 +101,10 @@ uint16 uart_read(uint8 uart, uint8 *buff, uint16 max_len, uint32 timeout_us) {
                 discarded++;
             }
         }
-        WRITE_PERI_REG(UART_INT_CLR(uart), UART_RXFIFO_FULL_INT_CLR | UART_RXFIFO_TOUT_INT_CLR);
+        WRITE_PERI_REG(UART_INT_CLR(uart_no), UART_RXFIFO_FULL_INT_CLR | UART_RXFIFO_TOUT_INT_CLR);
     }
 
-    SET_PERI_REG_MASK(UART_INT_ENA(uart), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_TOUT_INT_ENA);
+    SET_PERI_REG_MASK(UART_INT_ENA(uart_no), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_TOUT_INT_ENA);
 
 #ifdef _DEBUG_UART
     uint32 duration = system_uptime_us() - start;
@@ -115,7 +115,7 @@ uint16 uart_read(uint8 uart, uint8 *buff, uint16 max_len, uint32 timeout_us) {
         snprintf(p, 4, "%02X ", buff[i]);
         p += 3;
     }
-    DEBUG_UART(uart, "read %d/%d/%d bytes in %d/%d us: %s",
+    DEBUG_UART(uart_no, "read %d/%d/%d bytes in %d/%d us: %s",
                discarded + got, got, max_len, duration, timeout_us, buff_hex_str);
     free(buff_hex_str);
 #endif
