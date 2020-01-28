@@ -107,6 +107,9 @@ uint32 system_uptime(void) {
 }
 
 uint64 system_uptime_us(void) {
+    /* call system_uptime() to update the internal uptime value */
+    system_uptime();
+
     return uptime;
 }
 
@@ -194,7 +197,7 @@ void system_setup_mode_update(void) {
         int ota_state = ota_current_state();
         if (setup_mode || ota_state == OTA_STATE_DOWNLOADING || ota_state == OTA_STATE_RESTARTING) {
             bool old_blink_value = gpio_read_value(system_setup_mode_led_gpio_no);
-            bool new_blink_value = (system_get_time() * 6 / 1000000) % 2;
+            bool new_blink_value = (system_uptime_us() * 6 / 1000000) % 2;
             if (old_blink_value != new_blink_value) {
                 gpio_write_value(system_setup_mode_led_gpio_no, new_blink_value);
             }
@@ -214,7 +217,7 @@ void system_connected_led_update(void) {
     if (system_connected_led_gpio_no != -1) {
         /* blink the connected status led if not connected */
         if (!wifi_is_connected()) {
-            bool new_led_level = (system_get_time() * 2 / 1000000) % 2;
+            bool new_led_level = (system_uptime_us() * 2 / 1000000) % 2;
             if (old_led_level != new_led_level) {
                 gpio_write_value(system_connected_led_gpio_no, new_led_level);
                 old_led_level = new_led_level;
