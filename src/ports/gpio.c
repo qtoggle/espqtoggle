@@ -531,7 +531,9 @@ void configure(port_t *port) {
     if (IS_OUTPUT(port)) {
         DEBUG_GPIO(port, "output enabled");
 
-        /* set initial value according to pull configuration */
+        /* set initial value to current GPIO value */
+        value = gpio_read_value(port->slot);
+
         gpio_configure_output(port->slot, value);
         set_output_value(port, value);
     }
