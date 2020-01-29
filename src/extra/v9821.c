@@ -45,11 +45,12 @@
 #define DEF_SAMP_INT                    5000    /* milliseconds */
 #define MAX_SAMP_INT                    3600000 /* milliseconds */
 
-#define V9821_WRITE_TIMEOUT             100000   /* microseconds */
-#define V9821_READ_TIMEOUT              100000   /* microseconds */
-#define V9821_RESPONSE_LEN              36
-#define V9821_REQUEST                   {0xFE, 0x01, 0x0F, 0x08, 0x00, 0x00, 0x00, 0x1C}
-#define V9821_RESPONSE_HEADER           {0xFE, 0x01, 0x08}
+#define WRITE_REQ_TIMEOUT               20000   /* microseconds */
+#define WAIT_RESP_TIMEOUT               70000   /* microseconds */
+#define READ_RESP_TIMEOUT               50000   /* microseconds */
+#define REQUEST                         {0xFE, 0x01, 0x0F, 0x08, 0x00, 0x00, 0x00, 0x1C}
+#define RESPONSE_HEADER                 {0xFE, 0x01, 0x08}
+#define RESPONSE_LEN                    36
 
 
 typedef struct {
@@ -441,8 +442,8 @@ bool read_status(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
     /* write request */
-    static uint8 request[] = V9821_REQUEST;
-    uint16 size = uart_write(UART_NO, request, sizeof(request), V9821_WRITE_TIMEOUT);
+    static uint8 request[] = REQUEST;
+    uint16 size = uart_write(UART_NO, request, sizeof(request), WRITE_REQ_TIMEOUT);
     if (size!= sizeof(request)) {
         DEBUG_V9821(port, "failed to write request: %d/%d bytes written", size, sizeof(request));
         return FALSE;
@@ -450,17 +451,17 @@ bool read_status(port_t *port) {
     DEBUG_V9821(port, "request sent");
 
     /* read response */
-    static uint8 read_buff[V9821_RESPONSE_LEN];
+    static uint8 read_buff[RESPONSE_LEN];
     uint16 i;
 
-    size = uart_read(UART_NO, read_buff, V9821_RESPONSE_LEN, V9821_READ_TIMEOUT);
-    if (size != V9821_RESPONSE_LEN) {
-        DEBUG_V9821(port, "failed to read response: %d/%d bytes read", size, V9821_RESPONSE_LEN);
+    size = uart_read(UART_NO, read_buff, RESPONSE_LEN, WAIT_RESP_TIMEOUT + READ_RESP_TIMEOUT);
+    if (size != RESPONSE_LEN) {
+        DEBUG_V9821(port, "failed to read response: %d/%d bytes read", size, RESPONSE_LEN);
         return FALSE;
     }
 
     /* validate header */
-    static uint8 response_header[] = V9821_RESPONSE_HEADER;
+    static uint8 response_header[] = RESPONSE_HEADER;
     if (memcmp(read_buff, response_header, sizeof(response_header))) {
         DEBUG_V9821(port, "failed to read response: unexpected response header");
         return FALSE;
