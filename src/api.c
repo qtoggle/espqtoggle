@@ -1312,7 +1312,7 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
             return INVALID_FIELD_VALUE("min");
         }
 
-        DEBUG_API("adding virtual port: min = %d", (int) new_port->min);
+        DEBUG_API("adding virtual port: min = %s", dtostr(new_port->min, -1));
     }
     else {
         new_port->min = UNDEFINED;
@@ -1338,7 +1338,7 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
             return INVALID_FIELD_VALUE("max");
         }
 
-        DEBUG_API("adding virtual port: max = %d", (int) new_port->max);
+        DEBUG_API("adding virtual port: max = %s", dtostr(new_port->max, -1));
     }
     else {
         new_port->max = UNDEFINED;
@@ -1371,7 +1371,7 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
             return INVALID_FIELD_VALUE("step");
         }
 
-        DEBUG_API("adding virtual port: step = %d", (int) new_port->step);
+        DEBUG_API("adding virtual port: step = %s", dtostr(new_port->step, -1));
     }
     else {
         new_port->step = UNDEFINED;
