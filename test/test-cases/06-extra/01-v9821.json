@@ -1,5 +1,8 @@
 {
     "name": "v9821",
+    "serial_baud": 9600,
+    "serial_parity": "E",
+    "serial_stop_bits": 1,
     "instructions": [
         {
             "name": "json-http-client",
