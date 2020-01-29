@@ -310,8 +310,8 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
 
     value_hist_t *hist = (void *) expr->aux;
 
-    /* expr->aux flag is used as a pointer to a value history queue */
-    /* expr->value is used as current value */
+    /* expr->aux flag is used as a pointer to a value history queue
+     * expr->value is used as current value */
 
     if (IS_UNDEFINED(expr->value)) { /* very first expression eval call */
         expr->value = value;
