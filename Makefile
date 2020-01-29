@@ -192,7 +192,7 @@ OBJ_FILES = $(SRC_MAIN_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
             $(SRC_EXTERNAL_DRIVERS_FILES:$(SRC_EXTERNAL_DRIVERS_DIR)/%.c=$(BUILD_DIR)/external/drivers/%.o) \
             $(SRC_EXTRA_PORT_DRIVERS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
             $(SRC_EXTERNAL_PORT_DRIVERS_FILES:$(SRC_EXTERNAL_PORT_DRIVERS_DIR)/%.c=$(BUILD_DIR)/external/ports/%.o)
-
+            
 INIT_DATA_FILES := $(foreach f,$(INIT_DATA_FILES),$(SDK_BASE)/bin/$(f))
 
 VPATH = $(SRC_MAIN_DIR)
@@ -327,8 +327,14 @@ $(BUILD_DIR)/ports.o: ports.c
 	$(Q) $(CC) $(INC) $(CFLAGS) $(INCLUDE_EXTRA_PORT_DRIVERS) $(INCLUDE_EXTERNAL_PORT_DRIVERS) -c $< -o $@
 
 $(BUILD_DIR)/external/ports/%.o: $(SRC_EXTERNAL_PORT_DRIVERS_DIR)/%.c
+	$(vecho) "CC $<"
+	@$(MD) -p $(@D)
+	$(Q) $(CC) $(INC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/external/drivers/%.o: $(SRC_EXTERNAL_DRIVERS_DIR)/%.c
+	$(vecho) "CC $<"
+	@$(MD) -p $(@D)
+	$(Q) $(CC) $(INC) $(CFLAGS) $(INCLUDE_EXTRA_PORT_DRIVERS) $(INCLUDE_EXTERNAL_PORT_DRIVERS) -c $< -o $@
 
 $(BUILD_DIR)/espgoodies/initdata.o: espgoodies/initdata.c
 	$(vecho) "CC $<"

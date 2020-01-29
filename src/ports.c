@@ -100,7 +100,7 @@ void port_load(port_t *port, uint8 *data) {
             DEBUG_PORT(port, "value = (undefined)");
         }
         else {
-            DEBUG_PORT(port, "value = %d", (int) value);
+            DEBUG_PORT(port, "value = %s", dtostr(value, -1));
         }
     }
 
@@ -184,7 +184,7 @@ void port_load(port_t *port, uint8 *data) {
         if (IS_PERSISTED(port)) {
             /* initial value is given by the persisted value */
             port->value = value;
-            DEBUG_PORT(port, "setting persisted value %d", (int) port->value);
+            DEBUG_PORT(port, "setting persisted value %s", dtostr(port->value, -1));
         }
         else {
             /* initial value is given by the read value */
@@ -194,7 +194,7 @@ void port_load(port_t *port, uint8 *data) {
                     port->value = expr_eval(port->transform_read);
                 }
 
-                DEBUG_PORT(port, "setting read value %d", (int) port->value);
+                DEBUG_PORT(port, "setting read value %s", dtostr(port->value, -1));
             }
         }
 
