@@ -141,7 +141,7 @@ char *dtostr(double d, int8 decimals) {
 
         n = round(d);
         if (n) {
-            for (i = 0; n > 0 && len < DTOSTR_BUF_LEN - 1; i++) {
+            for (i = 0; (n > 0 || i < decimals) && len < DTOSTR_BUF_LEN - 1; i++) {
                 if (i == decimals && decimals) {
                     dtostr_buf[len++] = '.';
                 }
@@ -165,7 +165,7 @@ char *dtostr(double d, int8 decimals) {
     }
 
     /* add sign */
-    if (sign) {
+    if (sign && (len > 1 || dtostr_buf[0] != '0')) {
         dtostr_buf[len++] = '-';
     }
 
