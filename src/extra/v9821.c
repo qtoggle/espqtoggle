@@ -41,7 +41,7 @@
 #define UART_PARITY                     UART_PARITY_EVEN
 #define UART_STOP_BITS                  UART_STOP_BITS_1
 
-#define MIN_SAMP_INT                    2000    /* milliseconds */
+#define MIN_SAMP_INT                    1000    /* milliseconds */
 #define DEF_SAMP_INT                    5000    /* milliseconds */
 #define MAX_SAMP_INT                    3600000 /* milliseconds */
 

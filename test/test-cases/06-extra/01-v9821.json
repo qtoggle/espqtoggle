@@ -1,0 +1,256 @@
+{
+    "name": "v9821",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/v9821_energy",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "enabled": true
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/v9821_voltage",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "enabled": true,
+                    "sampling_interval": 1000
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/v9821_current",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "enabled": true,
+                    "sampling_interval": 1000
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/v9821_freq",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "enabled": true,
+                    "sampling_interval": 1000
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/v9821_act_pow",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "enabled": true,
+                    "sampling_interval": 1000
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/v9821_rea_pow",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "enabled": true,
+                    "sampling_interval": 1000
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/v9821_app_pow",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "enabled": true,
+                    "sampling_interval": 1000
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/v9821_pow_fact",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "enabled": true,
+                    "sampling_interval": 1000
+                },
+                "expected_status": 204
+            }
+        },
+        
+        {
+            "name": "reset-serial-log"
+        },
+        {
+            "name": "check-serial",
+            "params": {
+                "wait_duration": 1500,
+                "expected_content_hex": "FE 01 0F 08 00 00 00 1C"
+            }
+        },
+        {
+            "name": "write-serial",
+            "params": {
+                "content_hex": "FE 01 08 00 00 56 78 45 23 00 00 00 34 12 00 00 50 00 00 40 23 01 00 50 34 02 00 60 45 03 00 87 09 00 00 3D"
+            }
+        },
+        {
+            "name": "sleep",
+            "params": {
+                "duration": 1500
+            }
+        },
+        
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/v9821_energy/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "expected_status": 200,
+                "expected_body": 56.78
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/v9821_voltage/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "expected_status": 200,
+                "expected_body": 234.5
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/v9821_current/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "expected_status": 200,
+                "expected_body": 12.34
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/v9821_freq/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "expected_status": 200,
+                "expected_body": 50
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/v9821_act_pow/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "expected_status": 200,
+                "expected_body": 123.4
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/v9821_act_pow/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "expected_status": 200,
+                "expected_body": 123.4
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/v9821_rea_pow/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "expected_status": 200,
+                "expected_body": 234.5
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/v9821_app_pow/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "expected_status": 200,
+                "expected_body": 345.6
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/v9821_pow_fact/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "expected_status": 200,
+                "expected_body": 98.7
+            }
+        }
+    ]
+}
