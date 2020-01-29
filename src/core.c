@@ -21,6 +21,7 @@
 #include "espgoodies/common.h"
 #include "espgoodies/wifi.h"
 #include "espgoodies/system.h"
+#include "espgoodies/utils.h"
 
 #ifdef _SLEEP
 #include "espgoodies/sleep.h"
@@ -217,10 +218,10 @@ void poll_ports(void) {
         if (p->value != value) {
             p->changed = TRUE;
             if (IS_UNDEFINED(p->value)) {
-                DEBUG_PORT(p, "detected value change: (undefined) -> %d", (int) value);
+                DEBUG_PORT(p, "detected value change: (undefined) -> %s", dtostr(value, -1));
             }
             else {
-                DEBUG_PORT(p, "detected value change: %d -> %d", (int) p->value, (int) value);
+                DEBUG_PORT(p, "detected value change: %s -> %s", dtostr(p->value, -1), dtostr(value, -1));
             }
             p->value = value;
             change_mask |= 1 << p->slot;
@@ -274,7 +275,7 @@ void on_value_change(void) {
             }
 
             if (value != p->value) {
-                DEBUG_PORT(p, "expression \"%s\" evaluated to %d", p->sexpr, (int) value);
+                DEBUG_PORT(p, "expression \"%s\" evaluated to %s", p->sexpr, dtostr(value, -1));
                 if (p->type == PORT_TYPE_BOOLEAN) {
                     value = !!value;
                 }

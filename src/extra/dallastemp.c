@@ -362,7 +362,7 @@ void heart_beat(port_t *port) {
     double temperature = temp * 0.0625; // TODO this resolution does not apply to all sensor models
     temperature = ((int) (temperature * 10)) / 10.0;
 
-    DEBUG_DT(port, "got temperature: %d.%d", (int) temperature, (int) ((temperature - (int) temperature) * 10));
+    DEBUG_DT(port, "got temperature: %s", dtostr(temperature, 1));
 
     if (temperature == ERROR_VALUE) {
         DEBUG_DT(port, "temperature read error");
