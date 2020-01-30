@@ -147,7 +147,7 @@
         {
             "name": "sleep",
             "params": {
-                "duration": 1500
+                "duration": 2500
             }
         },
         
