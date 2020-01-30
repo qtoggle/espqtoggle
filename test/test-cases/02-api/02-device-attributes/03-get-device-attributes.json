@@ -34,7 +34,6 @@
                         "flash_size",
                         "network_scan",
                         "firmware_auto_update",
-                        "ping_watchdog_interval",
                         "flash_id",
                         "chip_id",
                         "config_name",
@@ -111,9 +110,6 @@
                         "firmware_auto_update": {
                             "enum": [false]
                         },
-                        "ping_watchdog_interval": {
-                            "enum": [0]
-                        },
                         "flash_id": {
                             "type": "string",
                             "pattern": "^[a-f0-9]{8}$"
@@ -136,7 +132,6 @@
                                 "network_rssi",
                                 "network_bssid",
                                 "network_scan",
-                                "ping_watchdog_interval",
                                 "firmware_auto_update",
                                 "free_mem",
                                 "flash_size",
@@ -282,57 +277,6 @@
                                         },
                                         "type": {
                                             "enum": ["string"]
-                                        }
-                                    }
-                                },
-                                "ping_watchdog_interval": {
-                                    "type": "object",
-                                    "additionalProperties": false,
-                                    "required": [
-                                        "display_name",
-                                        "description",
-                                        "unit",
-                                        "modifiable",
-                                        "type",
-                                        "integer",
-                                        "choices"
-                                    ],
-                                    "properties": {
-                                        "display_name": {
-                                            "type": "string"
-                                        },
-                                        "description": {
-                                            "type": "string"
-                                        },
-                                        "unit": {
-                                            "enum": ["seconds"]
-                                        },
-                                        "modifiable": {
-                                            "enum": [true]
-                                        },
-                                        "type": {
-                                            "enum": ["number"]
-                                        },
-                                        "integer": {
-                                            "enum": [true]
-                                        },
-                                        "choices": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "additionalProperties": false,
-                                                "required": [
-                                                    "value"
-                                                ],
-                                                "properties": {
-                                                    "value": {
-                                                        "enum": [0, 1, 5, 10, 30, 60, 120]
-                                                    },
-                                                    "display_name": {
-                                                        "type": "string"
-                                                    }
-                                                }
-                                            }
                                         }
                                     }
                                 },
