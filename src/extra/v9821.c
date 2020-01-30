@@ -64,6 +64,7 @@ typedef struct {
     double                              last_apparent_power;
     double                              last_power_factor;
     uint64                              last_read_time; /* milliseconds */
+    bool                                configured;
 
 } extra_info_t;
 
@@ -318,8 +319,14 @@ port_t *v9821_pow_fact = &_v9821_pow_fact;
 
 
 void configure(port_t *port) {
-    DEBUG_V9821(port, "configuring serial port");
-    uart_setup(UART_NO, UART_BAUD, UART_PARITY, UART_STOP_BITS);
+    extra_info_t *extra_info = port->extra_info;
+
+    /* prevent multiple serial port setups */
+    if (!extra_info->configured) {
+        DEBUG_V9821(port, "configuring serial port");
+        uart_setup(UART_NO, UART_BAUD, UART_PARITY, UART_STOP_BITS);
+        extra_info->configured = TRUE;
+    }
 }
 
 #ifdef HAS_V9821_ENERGY
@@ -431,6 +438,10 @@ bool read_status_if_needed(port_t *port) {
 
         if (!read_status(port)) {
             DEBUG_V9821(port, "status reading failed");
+        }
+
+        /* within up to twice the sampling interval, cached status can be used */
+        if (delta > port->sampling_interval * 2) {
             return FALSE;
         }
     }
