@@ -26,7 +26,6 @@
 #include "espgoodies/httpserver.h"
 #include "espgoodies/wifi.h"
 #include "espgoodies/crypto.h"
-#include "espgoodies/pingwdt.h"
 #include "espgoodies/system.h"
 #include "espgoodies/flashcfg.h"
 #include "espgoodies/utils.h"
@@ -133,7 +132,6 @@ static uint8            api_access_level = 0;
 static struct espconn * api_conn;
 
 static char           * frequency_choices[] = {"80", "160", NULL};
-static char           * ping_watchdog_interval_choices[] = {"0", "1", "5", "10", "30", "60", "120", NULL};
 
 #ifdef _OTA
 static char           * ota_states_str[] = {"idle", "checking", "downloading", "restarting"};
@@ -705,9 +703,6 @@ json_t *device_to_json(void) {
     json_obj_append(json, "firmware_auto_update", json_bool_new(device_flags & DEVICE_FLAG_OTA_AUTO_UPDATE));
 #endif
 
-    /* ping watchdog */
-    json_obj_append(json, "ping_watchdog_interval", json_int_new(ping_wdt_get_interval()));
-
     /* flash id */
     char id[10];
     snprintf(id, 10, "%08x", spi_flash_get_id());
@@ -953,26 +948,6 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
 
                 wifi_set_scan_interval(scan_interval);
                 wifi_set_scan_threshold(scan_threshold);
-            }
-        }
-        else if (!strcmp(key, "ping_watchdog_interval")) {
-            if (json_get_type(child) != JSON_TYPE_INT) {
-                return INVALID_FIELD_VALUE(key);
-            }
-
-            int interval = json_int_get(child);
-            if (!validate_num(interval, /* min = */ UNDEFINED, /* max = */ UNDEFINED, /* integer = */ TRUE,
-                              /* step = */ 0, ping_watchdog_interval_choices)) {
-                return INVALID_FIELD_VALUE(key);
-            }
-
-            if (interval != ping_wdt_get_interval()) {
-                if (interval) {
-                    ping_wdt_start(interval);
-                }
-                else {
-                    ping_wdt_stop();
-                }
             }
         }
 #ifdef _SLEEP
@@ -2697,14 +2672,6 @@ json_t *device_attrdefs_to_json(void) {
                                    /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
                                    /* reconnect = */ FALSE);
     json_obj_append(json, "network_scan", attrdef_json);
-
-    attrdef_json = attrdef_to_json("Ping Watchdog Interval",
-                                   "Sends ping requests and resets the system if the gateway is not reachable after 10 "
-                                   "requests (0 disables pinging).", "seconds", ATTR_TYPE_NUMBER,
-                                   /* modifiable = */ TRUE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
-                                   /* integer = */ TRUE, /* step = */ 0, ping_watchdog_interval_choices,
-                                   /* reconnect = */ FALSE);
-    json_obj_append(json, "ping_watchdog_interval", attrdef_json);
 
 #ifdef _SLEEP
     attrdef_json = attrdef_to_json("Sleep Mode",

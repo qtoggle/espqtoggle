@@ -61,7 +61,6 @@
                                         "flash_size",
                                         "network_scan",
                                         "firmware_auto_update",
-                                        "ping_watchdog_interval",
                                         "flash_id",
                                         "chip_id",
                                         "config_name",
@@ -127,9 +126,6 @@
                                         },
                                         "firmware_auto_update": {
                                             "type": "boolean"
-                                        },
-                                        "ping_watchdog_interval": {
-                                            "type": "integer"
                                         },
                                         "flash_id": {
                                             "type": "string"

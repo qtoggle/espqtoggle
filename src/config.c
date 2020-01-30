@@ -21,7 +21,6 @@
 #include "espgoodies/common.h"
 #include "espgoodies/flashcfg.h"
 #include "espgoodies/wifi.h"
-#include "espgoodies/pingwdt.h"
 #include "espgoodies/crypto.h"
 
 #ifdef _SLEEP
@@ -52,7 +51,6 @@ void device_load(uint8 *data) {
     char wifi_psk[WIFI_PSK_MAX_LEN];
     ip_addr_t wifi_ip, wifi_gw, wifi_dns;
     int wifi_netmask;
-    uint16 ping_wdt_interval;
 
 #ifdef _SLEEP
     uint16 wake_interval, wake_duration;
@@ -127,7 +125,6 @@ void device_load(uint8 *data) {
 
     /* flags & others */
     memcpy(&device_tcp_port, data + CONFIG_OFFS_TCP_PORT, 2);
-    memcpy(&ping_wdt_interval, data + CONFIG_OFFS_PING_INTERVAL, 2);
     memcpy(&device_flags, data + CONFIG_OFFS_DEVICE_FLAGS, 4);
     memcpy(&frequency, data + CONFIG_OFFS_CPU_FREQ, 4);
     if (frequency) {
@@ -182,11 +179,6 @@ void device_load(uint8 *data) {
     }
     DEBUG_WEBHOOKS("webhooks timeout = %d", webhooks_timeout);
 
-    /* ping watchdog */
-    if (ping_wdt_interval) {
-        ping_wdt_start(ping_wdt_interval);
-    }
-
 #ifdef _SLEEP
     /* sleep mode */
     memcpy(&wake_interval, data + CONFIG_OFFS_WAKE_INTERVAL, 2);
@@ -205,7 +197,6 @@ void device_save(uint8 *data, uint32 *strings_offs) {
     ip_addr_t *wifi_ip, *wifi_gw, *wifi_dns;
     int wifi_netmask;
     uint32 zero = 0;
-    uint16 ping_wdt_interval = ping_wdt_get_interval();
 
 #ifdef _SLEEP
     uint16 wake_interval = sleep_get_wake_interval();
@@ -247,7 +238,6 @@ void device_save(uint8 *data, uint32 *strings_offs) {
 
     /* flags & others */
     memcpy(data + CONFIG_OFFS_TCP_PORT, &device_tcp_port, 2);
-    memcpy(data + CONFIG_OFFS_PING_INTERVAL, &ping_wdt_interval, 2);
     memcpy(data + CONFIG_OFFS_DEVICE_FLAGS, &device_flags, 4);
     memcpy(data + CONFIG_OFFS_CPU_FREQ, &frequency, 4);
 
