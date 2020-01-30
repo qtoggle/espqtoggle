@@ -78,7 +78,7 @@ ICACHE_FLASH_ATTR static void       on_ota_auto_perform(int code);
 #endif
 
 ICACHE_FLASH_ATTR static void       on_wifi_connect(bool connected);
-ICACHE_FLASH_ATTR static void       on_connect_timeout(void *arg);
+ICACHE_FLASH_ATTR static void       on_wifi_connect_timeout(void *arg);
 
 
 /* main/system */
@@ -87,7 +87,7 @@ void main_init(void) {
     system_init_done_cb(on_system_ready);
 
     os_timer_disarm(&connect_timeout_timer);
-    os_timer_setfn(&connect_timeout_timer, on_connect_timeout, NULL);
+    os_timer_setfn(&connect_timeout_timer, on_wifi_connect_timeout, NULL);
     os_timer_arm(&connect_timeout_timer, CONNECT_TIMEOUT, /* repeat = */ FALSE);
 
     system_set_reset_callback(on_system_reset);
@@ -137,11 +137,11 @@ void on_wifi_connect(bool connected) {
         return;  /* we don't care about disconnections */
     }
 
-    wifi_first_time_connected = TRUE;
-
     DEBUG_SYSTEM("we're connected!");
 
+    wifi_first_time_connected = TRUE;
     os_timer_disarm(&connect_timeout_timer);
+    core_enable_ports_polling();
 
 #ifdef _SLEEP
     /* start sleep timer now that we're connected */
@@ -181,8 +181,9 @@ void on_wifi_connect(bool connected) {
 #endif  /* _OTA */
 }
 
-void on_connect_timeout(void *arg) {
+void on_wifi_connect_timeout(void *arg) {
     DEBUG_SYSTEM("timeout waiting for initial WiFi connection");
+    core_enable_ports_polling();
 #ifdef _SLEEP
     sleep_reset();
 #endif
