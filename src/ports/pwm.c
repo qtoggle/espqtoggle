@@ -24,7 +24,7 @@
 #include <pwm.h>
 
 #include "espgoodies/common.h"
-#include "espgoodies/utils.h"
+#include "espgoodies/gpio.h"
 
 #include "common.h"
 #include "ports/pwm.h"

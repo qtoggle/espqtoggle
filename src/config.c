@@ -19,9 +19,10 @@
 #include <mem.h>
 
 #include "espgoodies/common.h"
-#include "espgoodies/flashcfg.h"
-#include "espgoodies/wifi.h"
 #include "espgoodies/crypto.h"
+#include "espgoodies/flashcfg.h"
+#include "espgoodies/system.h"
+#include "espgoodies/wifi.h"
 
 #ifdef _SLEEP
 #include "espgoodies/sleep.h"

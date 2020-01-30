@@ -22,14 +22,14 @@
 #include <gpio.h>
 
 #include "common.h"
-#include "utils.h"
+#include "dnsserver.h"
+#include "flashcfg.h"
+#include "gpio.h"
+#include "ota.h"
 #include "rtc.h"
 #include "tcpserver.h"
+//#include "utils.h" TODO
 #include "wifi.h"
-#include "device.h"
-#include "flashcfg.h"
-#include "dnsserver.h"
-#include "ota.h"
 #include "system.h"
 
 

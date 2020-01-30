@@ -22,8 +22,8 @@
 #include <user_interface.h>
 
 #include "espgoodies/common.h"
+#include "espgoodies/gpio.h"
 #include "espgoodies/system.h"
-#include "espgoodies/utils.h"
 
 #include "uart.h"
 

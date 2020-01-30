@@ -23,12 +23,13 @@
 #include <user_interface.h>
 
 #include "espgoodies/common.h"
-#include "espgoodies/httpserver.h"
-#include "espgoodies/wifi.h"
 #include "espgoodies/crypto.h"
-#include "espgoodies/system.h"
 #include "espgoodies/flashcfg.h"
+#include "espgoodies/gpio.h"
+#include "espgoodies/httpserver.h"
+#include "espgoodies/system.h"
 #include "espgoodies/utils.h"
+#include "espgoodies/wifi.h"
 
 #ifdef _BATTERY
 #include "espgoodies/battery.h"

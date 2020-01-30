@@ -32,10 +32,10 @@
 #endif
 
 
-#ifdef _DEBUG_GPIO
-#define DEBUG_GPIO(port, f, ...)    DEBUG("[%-14s] " f, (port)->id, ##__VA_ARGS__)
+#ifdef _DEBUG_GPIOP
+#define DEBUG_GPIOP(port, f, ...)    DEBUG("[%-14s] " f, (port)->id, ##__VA_ARGS__)
 #else
-#define DEBUG_GPIO(...)             {}
+#define DEBUG_GPIOP(...)             {}
 #endif
 
 

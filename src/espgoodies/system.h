@@ -29,6 +29,8 @@
 #define DEBUG_SYSTEM(...)       {}
 #endif
 
+#define DEFAULT_HOSTNAME                "esp%08x"
+
 
 typedef void (*system_reset_callback_t)(void);
 

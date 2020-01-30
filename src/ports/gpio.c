@@ -20,7 +20,7 @@
 #include <gpio.h>
 
 #include "espgoodies/common.h"
-#include "espgoodies/utils.h"
+#include "espgoodies/gpio.h"
 
 #include "common.h"
 #include "ports/gpio.h"
@@ -497,7 +497,7 @@ double read_value(port_t *port) {
 }
 
 bool write_value(port_t *port, double value) {
-    DEBUG_GPIO(port, "writing %d", !!value);
+    DEBUG_GPIOP(port, "writing %d", !!value);
     gpio_write_value(port->slot, (int) value);
 
     set_output_value(port, value);
@@ -509,27 +509,27 @@ void configure(port_t *port) {
     bool value;
     if (port->slot == 16) {
         if (IS_PULL_DOWN(port)) {
-            DEBUG_GPIO(port, "pull-down enabled");
+            DEBUG_GPIOP(port, "pull-down enabled");
             value = FALSE;
         }
         else {
-            DEBUG_GPIO(port, "pull-down disabled");
+            DEBUG_GPIOP(port, "pull-down disabled");
             value = TRUE;
         }
     }
     else {
         if (IS_PULL_UP(port)) {
-            DEBUG_GPIO(port, "pull-up enabled");
+            DEBUG_GPIOP(port, "pull-up enabled");
             value = TRUE;
         }
         else {
-            DEBUG_GPIO(port, "pull-up disabled");
+            DEBUG_GPIOP(port, "pull-up disabled");
             value = FALSE;
         }
     }
 
     if (IS_OUTPUT(port)) {
-        DEBUG_GPIO(port, "output enabled");
+        DEBUG_GPIOP(port, "output enabled");
 
         /* set initial value to current GPIO value */
         value = gpio_read_value(port->slot);
@@ -538,7 +538,7 @@ void configure(port_t *port) {
         set_output_value(port, value);
     }
     else {
-        DEBUG_GPIO(port, "output disabled");
+        DEBUG_GPIOP(port, "output disabled");
         gpio_configure_input(port->slot, value);
     }
 }
