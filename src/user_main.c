@@ -63,7 +63,9 @@ static os_timer_t                   connect_timeout_timer;
 
 
 ICACHE_FLASH_ATTR static void       main_init(void);
+#ifdef _DEBUG
 ICACHE_FLASH_ATTR static void       debug_putc_func(char c);
+#endif
 ICACHE_FLASH_ATTR void              user_init(void);
 ICACHE_FLASH_ATTR void              user_rf_pre_init(void);
 ICACHE_FLASH_ATTR int               user_rf_cal_sector_set(void);
@@ -210,9 +212,11 @@ int user_rf_cal_sector_set(void) {
     }
 }
 
+#ifdef _DEBUG
 void debug_putc_func(char c) {
     uart_write_char(_DEBUG_UART_NO, c);
 }
+#endif
 
 void user_init(void) {
 #ifdef _DEBUG

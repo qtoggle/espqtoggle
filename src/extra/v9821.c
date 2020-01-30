@@ -41,15 +41,16 @@
 #define UART_PARITY                     UART_PARITY_EVEN
 #define UART_STOP_BITS                  UART_STOP_BITS_1
 
-#define MIN_SAMP_INT                    2000    /* milliseconds */
+#define MIN_SAMP_INT                    1000    /* milliseconds */
 #define DEF_SAMP_INT                    5000    /* milliseconds */
 #define MAX_SAMP_INT                    3600000 /* milliseconds */
 
-#define V9821_WRITE_TIMEOUT             100000   /* microseconds */
-#define V9821_READ_TIMEOUT              100000   /* microseconds */
-#define V9821_RESPONSE_LEN              36
-#define V9821_REQUEST                   {0xFE, 0x01, 0x0F, 0x08, 0x00, 0x00, 0x00, 0x1C}
-#define V9821_RESPONSE_HEADER           {0xFE, 0x01, 0x08}
+#define WRITE_REQ_TIMEOUT               20000   /* microseconds */
+#define WAIT_RESP_TIMEOUT               70000   /* microseconds */
+#define READ_RESP_TIMEOUT               50000   /* microseconds */
+#define REQUEST                         {0xFE, 0x01, 0x0F, 0x08, 0x00, 0x00, 0x00, 0x1C}
+#define RESPONSE_HEADER                 {0xFE, 0x01, 0x08}
+#define RESPONSE_LEN                    36
 
 
 typedef struct {
@@ -63,6 +64,7 @@ typedef struct {
     double                              last_apparent_power;
     double                              last_power_factor;
     uint64                              last_read_time; /* milliseconds */
+    bool                                configured;
 
 } extra_info_t;
 
@@ -317,8 +319,14 @@ port_t *v9821_pow_fact = &_v9821_pow_fact;
 
 
 void configure(port_t *port) {
-    DEBUG_V9821(port, "configuring serial port");
-    uart_setup(UART_NO, UART_BAUD, UART_PARITY, UART_STOP_BITS);
+    extra_info_t *extra_info = port->extra_info;
+
+    /* prevent multiple serial port setups */
+    if (!extra_info->configured) {
+        DEBUG_V9821(port, "configuring serial port");
+        uart_setup(UART_NO, UART_BAUD, UART_PARITY, UART_STOP_BITS);
+        extra_info->configured = TRUE;
+    }
 }
 
 #ifdef HAS_V9821_ENERGY
@@ -419,12 +427,21 @@ double read_pow_fact(port_t *port) {
 
 bool read_status_if_needed(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
+
     uint64 now = system_uptime_us() / 1000;
     uint64 delta = now - extra_info->last_read_time;
     if (delta > port->sampling_interval) {
         DEBUG_V9821(port, "status needs new reading");
+
+        /* update last read time */
+        extra_info->last_read_time = system_uptime_us() / 1000;
+
         if (!read_status(port)) {
             DEBUG_V9821(port, "status reading failed");
+        }
+
+        /* within up to twice the sampling interval, cached status can be used */
+        if (delta > port->sampling_interval * 2) {
             return FALSE;
         }
     }
@@ -436,8 +453,8 @@ bool read_status(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
     /* write request */
-    static uint8 request[] = V9821_REQUEST;
-    uint16 size = uart_write(UART_NO, request, sizeof(request), V9821_WRITE_TIMEOUT);
+    static uint8 request[] = REQUEST;
+    uint16 size = uart_write(UART_NO, request, sizeof(request), WRITE_REQ_TIMEOUT);
     if (size!= sizeof(request)) {
         DEBUG_V9821(port, "failed to write request: %d/%d bytes written", size, sizeof(request));
         return FALSE;
@@ -445,17 +462,17 @@ bool read_status(port_t *port) {
     DEBUG_V9821(port, "request sent");
 
     /* read response */
-    static uint8 read_buff[V9821_RESPONSE_LEN];
+    static uint8 read_buff[RESPONSE_LEN];
     uint16 i;
 
-    size = uart_read(UART_NO, read_buff, V9821_RESPONSE_LEN, V9821_READ_TIMEOUT);
-    if (size != V9821_RESPONSE_LEN) {
-        DEBUG_V9821(port, "failed to read response: %d/%d bytes read", size, V9821_RESPONSE_LEN);
+    size = uart_read(UART_NO, read_buff, RESPONSE_LEN, WAIT_RESP_TIMEOUT + READ_RESP_TIMEOUT);
+    if (size != RESPONSE_LEN) {
+        DEBUG_V9821(port, "failed to read response: %d/%d bytes read", size, RESPONSE_LEN);
         return FALSE;
     }
 
     /* validate header */
-    static uint8 response_header[] = V9821_RESPONSE_HEADER;
+    static uint8 response_header[] = RESPONSE_HEADER;
     if (memcmp(read_buff, response_header, sizeof(response_header))) {
         DEBUG_V9821(port, "failed to read response: unexpected response header");
         return FALSE;
@@ -535,9 +552,6 @@ bool read_status(port_t *port) {
     int_value = strtol(hex_value, NULL, 10);
     DEBUG_V9821(port, "read power factor: %d/10 %%", int_value);
     extra_info->last_power_factor = int_value / 10.0;
-
-    /* update last read time */
-    extra_info->last_read_time = system_uptime_us() / 1000;
 
     return TRUE;
 }
