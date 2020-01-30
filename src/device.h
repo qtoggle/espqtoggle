@@ -26,7 +26,6 @@
 #define DEBUG_DEVICE(...)               {}
 #endif
 
-
 #define DEFAULT_HOSTNAME                "esp%08x"
 #define DEFAULT_TCP_PORT                80
 

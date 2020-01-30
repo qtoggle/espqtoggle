@@ -82,7 +82,7 @@ void core_enable_ports_polling(void) {
         return;
     }
 
-    DEBUG("enabling ports polling");
+    DEBUG_CORE("enabling ports polling");
     ports_polling_enabled = TRUE;
     system_os_post(USER_TASK_PRIO_0, TASK_POLL_PORTS, (os_param_t) NULL);
 }
@@ -92,12 +92,12 @@ void core_disable_ports_polling(void) {
         return;
     }
 
-    DEBUG("disabling ports polling");
+    DEBUG_CORE("disabling ports polling");
     ports_polling_enabled = FALSE;
 }
 
 void update_expressions(void) {
-    DEBUG("updating all expressions");
+    DEBUG_CORE("updating all expressions");
 
     change_mask = -1;
     poll_ports();
@@ -110,13 +110,13 @@ void port_mark_for_saving(port_t *port) {
 
 void ensure_ports_saved(void) {
     if (port_save_mask) {
-        DEBUG("ports need saving");
+        DEBUG_CORE("ports need saving");
         last_port_save_time = system_uptime();
         config_save();
         port_save_mask = 0;
     }
     else {
-        DEBUG("ports are all saved");
+        DEBUG_CORE("ports are all saved");
     }
 }
 
