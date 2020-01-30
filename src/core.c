@@ -53,6 +53,7 @@ static int                          last_port_save_time = 0;
 static int                          change_mask = -1;
 static int                          change_reasons = 0; /* bit mask of 1 - expression eval, 0 - other reasons */
 static int                          port_save_mask = 0;
+static bool                         ports_polling_enabled = FALSE;
 
 #ifdef _SLEEP
 /* used to prevent more than one value-change per port when using sleep mode with short wakes */
@@ -62,19 +63,37 @@ static int                          value_change_trigger_mask = 0;
 static os_event_t                   task_queue[TASK_QUEUE_SIZE];
 
 
-ICACHE_FLASH_ATTR static void       system_task(os_event_t *e);
+ICACHE_FLASH_ATTR static void       core_task(os_event_t *e);
 ICACHE_FLASH_ATTR static void       poll_ports(void);
 ICACHE_FLASH_ATTR static void       on_value_change(void);
 
 
 void core_init(void) {
-    system_os_task(system_task, USER_TASK_PRIO_0, task_queue, TASK_QUEUE_SIZE);
-    system_os_post(USER_TASK_PRIO_0, TASK_POLL_PORTS, (os_param_t) NULL);
+    system_os_task(core_task, USER_TASK_PRIO_0, task_queue, TASK_QUEUE_SIZE);
     system_os_post(USER_TASK_PRIO_0, TASK_UPDATE_SYSTEM, (os_param_t) NULL);
 }
 
 void core_listen_respond(session_t *session) {
     system_os_post(USER_TASK_PRIO_0, TASK_LISTEN_RESPOND, (os_param_t) session);
+}
+
+void core_enable_ports_polling(void) {
+    if (ports_polling_enabled) {
+        return;
+    }
+
+    DEBUG("enabling ports polling");
+    ports_polling_enabled = TRUE;
+    system_os_post(USER_TASK_PRIO_0, TASK_POLL_PORTS, (os_param_t) NULL);
+}
+
+void core_disable_ports_polling(void) {
+    if (!ports_polling_enabled) {
+        return;
+    }
+
+    DEBUG("disabling ports polling");
+    ports_polling_enabled = FALSE;
 }
 
 void update_expressions(void) {
@@ -102,12 +121,14 @@ void ensure_ports_saved(void) {
 }
 
 
-void system_task(os_event_t *e) {
+void core_task(os_event_t *e) {
     switch (e->sig) {
         case TASK_POLL_PORTS: {
-            /* schedule next ports polling */
-            system_os_post(USER_TASK_PRIO_0, TASK_POLL_PORTS, (os_param_t) NULL);
-            poll_ports();
+            if (ports_polling_enabled) {
+                /* schedule next ports polling */
+                system_os_post(USER_TASK_PRIO_0, TASK_POLL_PORTS, (os_param_t) NULL);
+                poll_ports();
+            }
 
             break;
         }
