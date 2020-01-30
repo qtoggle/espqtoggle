@@ -77,4 +77,9 @@ if ! grep -qE "DHCP_DOES_ARP_CHECK\s+0" ${SDK_BASE}/third_party/include/lwipopts
     cp ${SDK_BASE}/third_party/lwip/.output/eagle/debug/lib/liblwip.a lib
 fi
 
+if ! grep -qE "FUNC_U0RXD" ${SDK_BASE}/include/eagle_soc.h; then
+    echo "Adding FUNC_U0RXD to include/eagle_soc.h"
+    sed -ri 's/(#define FUNC_U0TXD\s+0)/\1\n#define FUNC_U0RXD 0/' ${SDK_BASE}/include/eagle_soc.h
+fi
+
 echo "Done"
