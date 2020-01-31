@@ -24,13 +24,13 @@
 #include <gpio.h>
 
 #include "espgoodies/common.h"
+#include "espgoodies/gpio.h"
 #include "espgoodies/system.h"
-#include "espgoodies/utils.h"
 
-#include "events.h"
 #include "api.h"
 #include "apiutils.h"
 #include "common.h"
+#include "events.h"
 #include "ports.h"
 #include "extra/dht.h"
 
