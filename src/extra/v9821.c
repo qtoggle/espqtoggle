@@ -314,8 +314,8 @@ static port_t _v9821_pow_fact = {
 
     .id = V9821_POW_FACT_ID,
     .type = PORT_TYPE_NUMBER,
-    .min = UNDEFINED,
-    .max = UNDEFINED,
+    .min = 0,
+    .max = 100,
     .step = UNDEFINED,
 
     .extra_info = &v9821_extra_info,
