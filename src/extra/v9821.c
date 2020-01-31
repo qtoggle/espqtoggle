@@ -118,6 +118,8 @@ static port_t _v9821_energy = {
 
     .id = V9821_ENERGY_ID,
     .type = PORT_TYPE_NUMBER,
+    .min = UNDEFINED,
+    .max = UNDEFINED,
     .step = UNDEFINED,
 
     .extra_info = &v9821_extra_info,
@@ -144,6 +146,8 @@ static port_t _v9821_voltage = {
 
     .id = V9821_VOLTAGE_ID,
     .type = PORT_TYPE_NUMBER,
+    .min = UNDEFINED,
+    .max = UNDEFINED,
     .step = UNDEFINED,
 
     .extra_info = &v9821_extra_info,
@@ -170,6 +174,8 @@ static port_t _v9821_current = {
 
     .id = V9821_CURRENT_ID,
     .type = PORT_TYPE_NUMBER,
+    .min = UNDEFINED,
+    .max = UNDEFINED,
     .step = UNDEFINED,
 
     .extra_info = &v9821_extra_info,
@@ -196,6 +202,8 @@ static port_t _v9821_freq = {
 
     .id = V9821_FREQ_ID,
     .type = PORT_TYPE_NUMBER,
+    .min = UNDEFINED,
+    .max = UNDEFINED,
     .step = UNDEFINED,
 
     .extra_info = &v9821_extra_info,
@@ -222,6 +230,8 @@ static port_t _v9821_act_pow = {
 
     .id = V9821_ACT_POW_ID,
     .type = PORT_TYPE_NUMBER,
+    .min = UNDEFINED,
+    .max = UNDEFINED,
     .step = UNDEFINED,
 
     .extra_info = &v9821_extra_info,
@@ -248,6 +258,8 @@ static port_t _v9821_rea_pow = {
 
     .id = V9821_REA_POW_ID,
     .type = PORT_TYPE_NUMBER,
+    .min = UNDEFINED,
+    .max = UNDEFINED,
     .step = UNDEFINED,
 
     .extra_info = &v9821_extra_info,
@@ -274,6 +286,8 @@ static port_t _v9821_app_pow = {
 
     .id = V9821_APP_POW_ID,
     .type = PORT_TYPE_NUMBER,
+    .min = UNDEFINED,
+    .max = UNDEFINED,
     .step = UNDEFINED,
 
     .extra_info = &v9821_extra_info,
@@ -300,6 +314,8 @@ static port_t _v9821_pow_fact = {
 
     .id = V9821_POW_FACT_ID,
     .type = PORT_TYPE_NUMBER,
+    .min = UNDEFINED,
+    .max = UNDEFINED,
     .step = UNDEFINED,
 
     .extra_info = &v9821_extra_info,
