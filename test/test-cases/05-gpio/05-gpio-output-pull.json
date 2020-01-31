@@ -56,9 +56,8 @@
             "name": "device-check-gpio",
             "params": {
                 "gpio": 4,
-                "value": false
+                "value": true
             }
         }
     ]
 }
-
