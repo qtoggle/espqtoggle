@@ -64,7 +64,6 @@ static os_event_t                   task_queue[TASK_QUEUE_SIZE];
 
 
 ICACHE_FLASH_ATTR static void       core_task(os_event_t *e);
-ICACHE_FLASH_ATTR static void       poll_ports(void);
 ICACHE_FLASH_ATTR static void       on_value_change(void);
 
 
@@ -96,68 +95,7 @@ void core_disable_ports_polling(void) {
     ports_polling_enabled = FALSE;
 }
 
-void update_expressions(void) {
-    DEBUG_CORE("updating all expressions");
-
-    change_mask = -1;
-    poll_ports();
-}
-
-void port_mark_for_saving(port_t *port) {
-    DEBUG_PORT(port, "marking for saving");
-    port_save_mask |= 1 << port->slot;
-}
-
-void ensure_ports_saved(void) {
-    if (port_save_mask) {
-        DEBUG_CORE("ports need saving");
-        last_port_save_time = system_uptime();
-        config_save();
-        port_save_mask = 0;
-    }
-    else {
-        DEBUG_CORE("ports are all saved");
-    }
-}
-
-
-void core_task(os_event_t *e) {
-    switch (e->sig) {
-        case TASK_POLL_PORTS: {
-            if (ports_polling_enabled) {
-                /* schedule next ports polling */
-                system_os_post(USER_TASK_PRIO_0, TASK_POLL_PORTS, (os_param_t) NULL);
-                poll_ports();
-            }
-
-            break;
-        }
-
-        case TASK_UPDATE_SYSTEM: {
-            /* schedule next system update */
-            system_os_post(USER_TASK_PRIO_0, TASK_UPDATE_SYSTEM, (os_param_t) NULL);
-            system_setup_mode_update();
-            system_connected_led_update();
-
-            break;
-        }
-
-        case TASK_LISTEN_RESPOND: {
-            session_t *session = (session_t *) e->par;
-
-            /* between event_push and this task,
-             * another listen request might have been received for this session,
-             * which would have eaten up our queued events */
-            if (session->queue_len) {
-                session_respond(session);
-            }
-
-            break;
-        }
-    }
-}
-
-void poll_ports(void) {
+void core_poll_ports(void) {
 #ifdef _OTA
     /* prevent port polling and related logic during OTA */
     if (ota_current_state() == OTA_STATE_DOWNLOADING) {
@@ -265,6 +203,67 @@ void poll_ports(void) {
         /* reset changed ports and reasons */
         change_mask = 0;
         change_reasons = 0;
+    }
+}
+
+void update_expressions(void) {
+    DEBUG_CORE("updating all expressions");
+
+    change_mask = -1;
+    core_poll_ports();
+}
+
+void port_mark_for_saving(port_t *port) {
+    DEBUG_PORT(port, "marking for saving");
+    port_save_mask |= 1 << port->slot;
+}
+
+void ensure_ports_saved(void) {
+    if (port_save_mask) {
+        DEBUG_CORE("ports need saving");
+        last_port_save_time = system_uptime();
+        config_save();
+        port_save_mask = 0;
+    }
+    else {
+        DEBUG_CORE("ports are all saved");
+    }
+}
+
+
+void core_task(os_event_t *e) {
+    switch (e->sig) {
+        case TASK_POLL_PORTS: {
+            if (ports_polling_enabled) {
+                /* schedule next ports polling */
+                system_os_post(USER_TASK_PRIO_0, TASK_POLL_PORTS, (os_param_t) NULL);
+                core_poll_ports();
+            }
+
+            break;
+        }
+
+        case TASK_UPDATE_SYSTEM: {
+            /* schedule next system update */
+            system_os_post(USER_TASK_PRIO_0, TASK_UPDATE_SYSTEM, (os_param_t) NULL);
+            system_setup_mode_update();
+            system_connected_led_update();
+
+            break;
+        }
+
+        case TASK_LISTEN_RESPOND: {
+            session_t *session = (session_t *) e->par;
+
+            /* between event_push and this task,
+             * another listen request might have been received for this session,
+             * which would have eaten up our queued events */
+            if (session->queue_len) {
+                session_respond(session);
+            }
+
+            break;
+        }
     }
 }
 

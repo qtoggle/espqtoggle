@@ -1927,6 +1927,9 @@ json_t *get_port_value(port_t *port, json_t *query_json, int *code) {
         return FORBIDDEN(API_ACCESS_LEVEL_VIEWONLY);
     }
 
+    /* poll ports before retrieving current port value, ensuring value is as up-to-date as possible */
+    core_poll_ports();
+
     response_json = port_get_json_value(port);
 
     *code = 200;
