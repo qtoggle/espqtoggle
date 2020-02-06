@@ -83,19 +83,15 @@ void uart_setup(uint8 uart_no, uint32 baud, uint8 parity, uint8 stop_bits) {
 uint16 uart_read(uint8 uart_no, uint8 *buff, uint16 max_len, uint32 timeout_us) {
     uint16 got = 0, discarded = 0;
     uint64 start = system_uptime_us();
-    bool done = FALSE;
     uint8 c;
 
-    CLEAR_PERI_REG_MASK(UART_INT_ENA(uart_no), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_TOUT_INT_ENA);
+    CLEAR_PERI_REG_MASK(UART_INT_ENA(uart_no), UART_RXFIFO_FULL_INT_ENA | UART_RXFIFO_TOUT_INT_ENA);
 
-    while ((system_uptime_us() - start < timeout_us) && !done) {
+    while ((system_uptime_us() - start < timeout_us)) {
         while (READ_PERI_REG(UART_STATUS(uart_no)) & (UART_RXFIFO_CNT << UART_RXFIFO_CNT_S)) {
             c = READ_PERI_REG(UART_FIFO(uart_no)) & 0xFF;
-            if (got <= max_len) {
+            if (got < max_len) {
                 buff[got++] = c;
-                if (got == max_len) {
-                    done = TRUE;
-                }
             }
             else { /* continue reading all available bytes, but discard them */
                 discarded++;
@@ -104,7 +100,7 @@ uint16 uart_read(uint8 uart_no, uint8 *buff, uint16 max_len, uint32 timeout_us) 
         WRITE_PERI_REG(UART_INT_CLR(uart_no), UART_RXFIFO_FULL_INT_CLR | UART_RXFIFO_TOUT_INT_CLR);
     }
 
-    SET_PERI_REG_MASK(UART_INT_ENA(uart_no), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_TOUT_INT_ENA);
+    SET_PERI_REG_MASK(UART_INT_ENA(uart_no), UART_RXFIFO_FULL_INT_ENA | UART_RXFIFO_TOUT_INT_ENA);
 
 #if defined(_DEBUG_UART) && defined(_DEBUG)
     uint32 duration = system_uptime_us() - start;
