@@ -252,12 +252,11 @@ void wifi_connect(uint8 *bssid) {
     }
     conf.threshold.rssi = -127;
 
-
     memcpy(conf.ssid, wifi_ssid, WIFI_SSID_MAX_LEN);
     memcpy(conf.bssid, bssid, WIFI_BSSID_LEN);
     strncpy((char *) conf.password, wifi_psk, WIFI_PSK_MAX_LEN);
 
-    DEBUG_WIFI("connecting to bssid " BSSID_FMT, BSSID2STR(bssid));
+    DEBUG_WIFI("connecting to ssid/bssid %s/" BSSID_FMT, wifi_ssid, BSSID2STR(bssid));
 
     /* set IP configuration */
     if (wifi_static_ip.addr) {  /* static IP */
@@ -405,18 +404,21 @@ void wifi_auto_scan() {
     }
 #endif
 
-    DEBUG_WIFI("starting ap auto scan for \"%s\"", wifi_ssid);
-
     wifi_scanning = TRUE;
 
     struct scan_config conf;
     memset(&conf, 0, sizeof(struct scan_config));
-    conf.ssid = (uint8 *) wifi_ssid;
     conf.scan_type = WIFI_SCAN_TYPE_ACTIVE;
 
-    if (wifi_bssid[0]) {
-        memcpy(conf.bssid, wifi_bssid, WIFI_BSSID_LEN);
+    if (wifi_ssid[0]) {
+        conf.ssid = (uint8 *) wifi_ssid;
     }
+    if (wifi_bssid[0]) {
+        conf.bssid = wifi_bssid;
+    }
+
+    DEBUG_WIFI("starting ap auto scan for %s/" BSSID_FMT,
+               wifi_ssid[0] ? wifi_ssid : "<hidden>", BSSID2STR(wifi_bssid));
 
     /* start scanning for AP */
     wifi_station_scan(&conf, on_wifi_auto_scan_done);

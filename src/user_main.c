@@ -98,7 +98,7 @@ void on_system_ready(void) {
     if (wifi_get_bssid()[0]) {  /* specific BSSID set */
         wifi_connect(wifi_get_bssid());
     }
-    else if (wifi_get_ssid()[0]) {  /* specific SSID set */
+    else if (wifi_get_ssid()[0]) {  /* SSID set */
         wifi_auto_scan();
     }
     else {  /* no (B)SSID set */
