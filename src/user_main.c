@@ -95,13 +95,15 @@ void main_init(void) {
 void on_system_ready(void) {
     DEBUG_SYSTEM("system initialization done");
 
-    if (wifi_get_bssid()[0]) {  /* specific BSSID set */
-        wifi_connect(wifi_get_bssid());
+    if (wifi_get_ssid()[0]) {
+        if (wifi_get_bssid()[0]) { /* specific BSSID set, connect without scan */
+            wifi_connect(wifi_get_bssid());
+        }
+        else {
+            wifi_auto_scan();
+        }
     }
-    else if (wifi_get_ssid()[0]) {  /* SSID set */
-        wifi_auto_scan();
-    }
-    else {  /* no (B)SSID set */
+    else { /* no SSID set, no WiFi network configured */
         DEBUG_SYSTEM("no SSID configured, switching to setup mode");
         if (!system_setup_mode_active()) {
             system_setup_mode_toggle();

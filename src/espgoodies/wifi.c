@@ -410,9 +410,9 @@ void wifi_auto_scan() {
     memset(&conf, 0, sizeof(struct scan_config));
     conf.scan_type = WIFI_SCAN_TYPE_ACTIVE;
 
-    if (wifi_ssid[0]) {
-        conf.ssid = (uint8 *) wifi_ssid;
-    }
+    conf.ssid = (uint8 *) wifi_ssid;
+    conf.show_hidden = 1;
+
     if (wifi_bssid[0]) {
         conf.bssid = wifi_bssid;
     }
