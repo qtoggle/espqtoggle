@@ -1,0 +1,19 @@
+{
+    "name": "clear-webhooks",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/webhooks",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "enabled": false
+                },
+                "expected_status": 204
+            }
+        }
+    ]
+}
