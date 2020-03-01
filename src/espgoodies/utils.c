@@ -114,7 +114,13 @@ char *dtostr(double d, int8 decimals) {
     bool sign = FALSE;
     char c;
     uint64 n;
-    static char dtostr_buf[DTOSTR_BUF_LEN];
+
+    /* define two reentrant buffers and use them in a round-robin manner, so that two dtostr() calls can be used in the
+     * same expression or function call */
+    static char dtostr_buf1[DTOSTR_BUF_LEN];
+    static char dtostr_buf2[DTOSTR_BUF_LEN];
+    static uint8 buf_sel = 0;
+    char *dtostr_buf = buf_sel++ % 2 ? dtostr_buf1 : dtostr_buf2;
 
     /* process the sign */
     if (d < 0) {
