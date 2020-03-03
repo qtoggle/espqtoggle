@@ -276,7 +276,7 @@ endif
 .NOTPARALLEL: buildinfo
 .PRECIOUS: $(BUILD_DIR)/%.html.gz build/$(APP)%.out
 
-all: buildinfo dirs $(BUILD_DIR)/full.bin
+all: buildinfo dirs $(BUILD_DIR)/firmware.bin
 
 dirs:
 	$(Q) mkdir -p $(BUILD_DIR)
@@ -365,7 +365,7 @@ $(BUILD_DIR)/user%.bin: $(BUILD_DIR)/$(APP)%.out $(BUILD_DIR)/index.html.gz
 	     $(APPGEN) $(APP)$*.out 2 $(FLASH_MODE_INT) $(FLASH_CLK_DIV) $(FLASH_SIZE_MAP) $* index.html.gz
 	$(Q) mv $(BUILD_DIR)/eagle.app.flash.bin $@
 
-$(BUILD_DIR)/full.bin: $(BUILD_DIR)/user1.bin $(BUILD_DIR)/user2.bin
+$(BUILD_DIR)/firmware.bin: $(BUILD_DIR)/user1.bin $(BUILD_DIR)/user2.bin
 	$(vecho) "FW $@"
 	$(Q) $(DD) if=/dev/zero of=$@ bs=1k count=$(FLASH_SIZE)
 	$(Q) $(DD) if=$(SDK_BASE)/bin/boot.bin of=$@ bs=1k \
