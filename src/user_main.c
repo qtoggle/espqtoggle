@@ -202,16 +202,8 @@ void user_rf_pre_init(void) {
 }
 
 int user_rf_cal_sector_set(void) {
-    switch (system_get_flash_size_map()) {
-        case FLASH_SIZE_4M_MAP_256_256:
-            return 128 - 5;
-
-        case FLASH_SIZE_8M_MAP_512_512:
-            return 256 - 5;
-
-        default:
-            return 512 - 5;
-    }
+    /* always consider a 1MB flash size; set RF_CAL to the 5th last sector */
+    return 256 - 5;
 }
 
 #ifdef _DEBUG
