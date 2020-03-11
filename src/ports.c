@@ -158,18 +158,40 @@ void port_load(port_t *port, uint8 *data) {
         /* value expression */
         port->sexpr = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_EXPR);
         DEBUG_PORT(port, "expression = \"%s\"", port->sexpr ? port->sexpr : "");
-        /* the expression will be parsed later, after all ports will have been loaded */
+        /* the expression will be parsed later, in config_init() */
 
         /* write transform */
         port->stransform_write = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_TRANS_W);
         DEBUG_PORT(port, "transform_write = \"%s\"", port->stransform_write ? port->stransform_write : "");
-        /* the expression will be parsed later, after all ports will have been loaded */
+
+        if (port->stransform_write) {
+            port->transform_write = expr_parse(port->id, port->stransform_write, strlen(port->stransform_write));
+            if (port->transform_write) {
+                DEBUG_PORT(port, "write transform successfully parsed");
+            }
+            else {
+                DEBUG_PORT(port, "write transform parse failed");
+                free(port->stransform_write);
+                port->stransform_write = NULL;
+            }
+        }
     }
 
     /* read transform */
     port->stransform_read = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_TRANS_R);
     DEBUG_PORT(port, "transform_read = \"%s\"", port->stransform_read ? port->stransform_read : "");
-    /* the expression will be parsed later, after all ports will have been loaded */
+
+    if (port->stransform_read) {
+        port->transform_read = expr_parse(port->id, port->stransform_read, strlen(port->stransform_read));
+        if (port->transform_read) {
+            DEBUG_PORT(port, "read transform successfully parsed");
+        }
+        else {
+            DEBUG_PORT(port, "read transform parse failed");
+            free(port->stransform_read);
+            port->stransform_read = NULL;
+        }
+    }
 
     /* sequence */
     port->sequence_pos = -1;
