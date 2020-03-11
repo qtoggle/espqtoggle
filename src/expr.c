@@ -74,6 +74,7 @@ ICACHE_FLASH_ATTR static double     _ceil_callback(expr_t *expr, int argc, doubl
 ICACHE_FLASH_ATTR static double     _round_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _time_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _timems_callback(expr_t *expr, int argc, double *args);
+ICACHE_FLASH_ATTR static double     _sequence_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _held_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _delay_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _hyst_callback(expr_t *expr, int argc, double *args);
@@ -274,6 +275,41 @@ double _timems_callback(expr_t *expr, int argc, double *args) {
     return system_uptime_us() / 1000;
 }
 
+double _sequence_callback(expr_t *expr, int argc, double *args) {
+    int time_ms = (int) (system_uptime_us() / 1000);
+    double result = args[0];
+    int delta = time_ms - expr->aux;
+
+    if (!expr->aux || delta < 0) { /* very first expression eval call or system time overflow */
+        /* aux flag is used to store the initial reference time, in milliseconds */
+        expr->aux = time_ms;
+    }
+    else {
+        int num_values = argc / 2; /* we have pairs of values and delays */
+        int i, delay_so_far = 0, total_delay = 0;
+
+        /* compute the total delay */
+        for (i = 0; i < num_values; i++) {
+            if (2 * i + 1 < argc) {
+                total_delay += args[2 * i + 1];
+            }
+        }
+
+        /* always work modulo total_delay, to create repeat effect */
+        delta = delta % (int) total_delay;
+
+        for (i = 0; i < num_values; i++) {
+            delay_so_far += (2 * i + 1) < argc ? args[2 * i + 1] : 0;
+            if (delay_so_far >= delta) {
+                result = args[2 * i];
+                break;
+            }
+        }
+    }
+
+    return result;
+}
+
 double _held_callback(expr_t *expr, int argc, double *args) {
     int time_ms = (int) (system_uptime_us() / 1000);
     double value = args[0];
@@ -383,39 +419,40 @@ double _hyst_callback(expr_t *expr, int argc, double *args) {
 }
 
 
-func_t _add =    {.name = "ADD",    .argc = -2, .callback = _add_callback};
-func_t _sub =    {.name = "SUB",    .argc = 2,  .callback = _sub_callback};
-func_t _mul =    {.name = "MUL",    .argc = -2, .callback = _mul_callback};
-func_t _div =    {.name = "DIV",    .argc = 2,  .callback = _div_callback};
-func_t _mod =    {.name = "MOD",    .argc = 2,  .callback = _mod_callback};
-func_t _and =    {.name = "AND",    .argc = -2, .callback = _and_callback};
-func_t _or =     {.name = "OR",     .argc = -2, .callback = _or_callback};
-func_t _not =    {.name = "NOT",    .argc = 1,  .callback = _not_callback};
-func_t _xor =    {.name = "XOR",    .argc = 2,  .callback = _xor_callback};
-func_t _bitand = {.name = "BITAND", .argc = 2,  .callback = _bitand_callback};
-func_t _bitor =  {.name = "BITOR",  .argc = 2,  .callback = _bitor_callback};
-func_t _bitnot = {.name = "BITNOT", .argc = 1,  .callback = _bitnot_callback};
-func_t _bitxor = {.name = "BITXOR", .argc = 2,  .callback = _bitxor_callback};
-func_t _shl =    {.name = "SHL",    .argc = 2,  .callback = _shl_callback};
-func_t _shr =    {.name = "SHR",    .argc = 2,  .callback = _shr_callback};
-func_t _if =     {.name = "IF",     .argc = 3,  .callback = _if_callback};
-func_t _eq =     {.name = "EQ",     .argc = 2,  .callback = _eq_callback};
-func_t _gt =     {.name = "GT",     .argc = 2,  .callback = _gt_callback};
-func_t _gte =    {.name = "GTE",    .argc = 2,  .callback = _gte_callback};
-func_t _lt =     {.name = "LT",     .argc = 2,  .callback = _lt_callback};
-func_t _lte =    {.name = "LTE",    .argc = 2,  .callback = _lte_callback};
-func_t _abs =    {.name = "ABS",    .argc = 1,  .callback = _abs_callback};
-func_t _sgn =    {.name = "SGN",    .argc = 1,  .callback = _sgn_callback};
-func_t _min =    {.name = "MIN",    .argc = -2, .callback = _min_callback};
-func_t _max =    {.name = "MAX",    .argc = -2, .callback = _max_callback};
-func_t _floor =  {.name = "FLOOR",  .argc = 1,  .callback = _floor_callback};
-func_t _ceil =   {.name = "CEIL",   .argc = 1,  .callback = _ceil_callback};
-func_t _round =  {.name = "ROUND",  .argc = -1, .callback = _round_callback};
-func_t _time =   {.name = "TIME",   .argc = 0,  .callback = _time_callback};
-func_t _timems = {.name = "TIMEMS", .argc = 0,  .callback = _timems_callback};
-func_t _held =   {.name = "HELD",   .argc = 3,  .callback = _held_callback};
-func_t _delay =  {.name = "DELAY",  .argc = 2,  .callback = _delay_callback};
-func_t _hyst =   {.name = "HYST",   .argc = 3,  .callback = _hyst_callback};
+func_t _add =      {.name = "ADD",      .argc = -2, .callback = _add_callback};
+func_t _sub =      {.name = "SUB",      .argc = 2,  .callback = _sub_callback};
+func_t _mul =      {.name = "MUL",      .argc = -2, .callback = _mul_callback};
+func_t _div =      {.name = "DIV",      .argc = 2,  .callback = _div_callback};
+func_t _mod =      {.name = "MOD",      .argc = 2,  .callback = _mod_callback};
+func_t _and =      {.name = "AND",      .argc = -2, .callback = _and_callback};
+func_t _or =       {.name = "OR",       .argc = -2, .callback = _or_callback};
+func_t _not =      {.name = "NOT",      .argc = 1,  .callback = _not_callback};
+func_t _xor =      {.name = "XOR",      .argc = 2,  .callback = _xor_callback};
+func_t _bitand =   {.name = "BITAND",   .argc = 2,  .callback = _bitand_callback};
+func_t _bitor =    {.name = "BITOR",    .argc = 2,  .callback = _bitor_callback};
+func_t _bitnot =   {.name = "BITNOT",   .argc = 1,  .callback = _bitnot_callback};
+func_t _bitxor =   {.name = "BITXOR",   .argc = 2,  .callback = _bitxor_callback};
+func_t _shl =      {.name = "SHL",      .argc = 2,  .callback = _shl_callback};
+func_t _shr =      {.name = "SHR",      .argc = 2,  .callback = _shr_callback};
+func_t _if =       {.name = "IF",       .argc = 3,  .callback = _if_callback};
+func_t _eq =       {.name = "EQ",       .argc = 2,  .callback = _eq_callback};
+func_t _gt =       {.name = "GT",       .argc = 2,  .callback = _gt_callback};
+func_t _gte =      {.name = "GTE",      .argc = 2,  .callback = _gte_callback};
+func_t _lt =       {.name = "LT",       .argc = 2,  .callback = _lt_callback};
+func_t _lte =      {.name = "LTE",      .argc = 2,  .callback = _lte_callback};
+func_t _abs =      {.name = "ABS",      .argc = 1,  .callback = _abs_callback};
+func_t _sgn =      {.name = "SGN",      .argc = 1,  .callback = _sgn_callback};
+func_t _min =      {.name = "MIN",      .argc = -2, .callback = _min_callback};
+func_t _max =      {.name = "MAX",      .argc = -2, .callback = _max_callback};
+func_t _floor =    {.name = "FLOOR",    .argc = 1,  .callback = _floor_callback};
+func_t _ceil =     {.name = "CEIL",     .argc = 1,  .callback = _ceil_callback};
+func_t _round =    {.name = "ROUND",    .argc = -1, .callback = _round_callback};
+func_t _time =     {.name = "TIME",     .argc = 0,  .callback = _time_callback};
+func_t _timems =   {.name = "TIMEMS",   .argc = 0,  .callback = _timems_callback};
+func_t _sequence = {.name = "SEQUENCE", .argc = -2, .callback = _sequence_callback};
+func_t _held =     {.name = "HELD",     .argc = 3,  .callback = _held_callback};
+func_t _delay =    {.name = "DELAY",    .argc = 2,  .callback = _delay_callback};
+func_t _hyst =     {.name = "HYST",     .argc = 3,  .callback = _hyst_callback};
 
 func_t *funcs[] = {
     &_add,
@@ -448,6 +485,7 @@ func_t *funcs[] = {
     &_round,
     &_time,
     &_timems,
+    &_sequence,
     &_held,
     &_delay,
     &_hyst,
@@ -795,7 +833,11 @@ bool expr_is_time_dep(expr_t *expr) {
 
 bool expr_is_time_ms_dep(expr_t *expr) {
     if (expr->func) {
-        if (expr->func == &_timems || expr->func == &_held || expr->func == &_delay) {
+        if (expr->func == &_timems ||
+            expr->func == &_held ||
+            expr->func == &_delay ||
+            expr->func == &_sequence) {
+
             return TRUE;
         }
 
