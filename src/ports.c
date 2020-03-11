@@ -202,7 +202,7 @@ void port_load(port_t *port, uint8 *data) {
 
     /* initial port value */
     port->value = UNDEFINED;
-    if (IS_OUTPUT(port)) {
+    if (IS_OUTPUT(port) && IS_ENABLED(port)) {
         if (IS_PERSISTED(port)) {
             /* initial value is given by the persisted value */
             port->value = value;
@@ -544,22 +544,35 @@ void port_enable(port_t *port) {
             }
         }
     }
+
+    /* rebuild expression */
+    if (port->expr) {
+        expr_free(port->expr);
+        port->expr = NULL;
+    }
+    if (port->sexpr) {
+        port->expr = expr_parse(port->id, port->sexpr, strlen(port->sexpr));
+        if (port->expr) {
+            DEBUG_PORT(port, "value expression successfully parsed");
+        }
+        else {
+            DEBUG_PORT(p, "value expression parse failed");
+            free(port->sexpr);
+            port->sexpr = NULL;
+        }
+    }
+
+    port_rebuild_change_dep_mask(port);
 }
 
 void port_disable(port_t *port) {
     DEBUG_PORT(port, "disabling");
     port->flags &= ~PORT_FLAG_ENABLED;
 
-    /* remove the expressions of all dependent ports */
-    port_t **ports = all_ports, *p;
-    while ((p = *ports++)) {
-        if (!p->expr) {
-            continue;
-        }
-
-        if (p == port) { /* skip the port itself */
-            continue;
-        }
+    /* destroy value expression */
+    if (port->expr) {
+        expr_free(port->expr);
+        port->expr = NULL;
     }
 
     /* cancel sequence */

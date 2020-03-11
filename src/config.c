@@ -306,6 +306,10 @@ void config_init(void) {
     /* parse port value expressions */
     port_t *p, **port = all_ports;
     while ((p = *port++)) {
+        if (!IS_ENABLED(p)) {
+            continue;
+        }
+
         if (p->sexpr) {
             p->expr = expr_parse(p->id, p->sexpr, strlen(p->sexpr));
             if (p->expr) {
