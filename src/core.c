@@ -142,7 +142,7 @@ void core_poll_ports(void) {
         }
 
         /* don't read value more often than indicated by sampling interval */
-        if (now_ms - p->last_sample_time < p->sampling_interval) {
+        if ((now_ms - p->last_sample_time < p->sampling_interval) && change_mask != -1) {
             continue;
         }
 
@@ -206,10 +206,11 @@ void core_poll_ports(void) {
     }
 }
 
-void update_expressions(void) {
-    DEBUG_CORE("updating all expressions");
+void update_port_expression(port_t *port) {
+    DEBUG_PORT(port, "updating expression");
 
-    change_mask = -1;
+    change_mask |= 1 << port->slot;
+    change_reasons &= ~(1 << port->slot);
     core_poll_ports();
 }
 

@@ -28,6 +28,7 @@
 
 #include "common.h"
 #include "config.h"
+#include "core.h"
 #include "events.h"
 #include "ports.h"
 #include "stringpool.h"
@@ -556,10 +557,12 @@ void port_enable(port_t *port) {
             DEBUG_PORT(port, "value expression successfully parsed");
         }
         else {
-            DEBUG_PORT(p, "value expression parse failed");
+            DEBUG_PORT(port, "value expression parse failed");
             free(port->sexpr);
             port->sexpr = NULL;
         }
+
+        update_port_expression(port);
     }
 
     port_rebuild_change_dep_mask(port);

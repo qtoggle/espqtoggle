@@ -1640,7 +1640,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                 DEBUG_PORT(port, "expression set to \"%s\"", port->sexpr);
             }
 
-            update_expressions();
+            update_port_expression(port);
         }
         else if (IS_OUTPUT(port) && !strcmp(key, "transform_write")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
