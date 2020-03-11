@@ -194,6 +194,20 @@
             "name": "json-http-client",
             "params": {
                 "method": "PATCH",
+                "path": "/ports/num_port2",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": ""
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
                 "path": "/ports/num_port/value",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"

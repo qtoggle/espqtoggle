@@ -187,23 +187,21 @@ void core_poll_ports(void) {
         }
     }
 
-    if (change_mask) {
-        /* call on_value_change() multiple times to cover
-         * multiple levels of port expression dependencies */
-        for (i = 0; (i < MAX_EXPRESSION_DEPS_DEPTH) && change_mask; i++) {
-            on_value_change();
-        }
-
-        /* reset all changed flags, as some of them might have not been covered */
-        port = all_ports;
-        while ((p = *port++)) {
-            p->changed = FALSE;
-        }
-
-        /* reset changed ports and reasons */
-        change_mask = 0;
-        change_reasons = 0;
+    /* call on_value_change() multiple times to cover
+     * multiple levels of port expression dependencies */
+    for (i = 0; (i < MAX_EXPRESSION_DEPS_DEPTH) && change_mask; i++) {
+        on_value_change();
     }
+
+    /* reset all changed flags, as some of them might have not been covered by on_value_change() calls */
+    port = all_ports;
+    while ((p = *port++)) {
+        p->changed = FALSE;
+    }
+
+    /* reset changed ports and reasons */
+    change_mask = 0;
+    change_reasons = 0;
 }
 
 void update_port_expression(port_t *port) {
