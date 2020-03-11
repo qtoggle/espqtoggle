@@ -303,9 +303,13 @@ void config_init(void) {
     /* at this point we no longer need the config data */
     free(config_data);
 
-    /* parse port expressions */
+    /* parse port value expressions */
     port_t *p, **port = all_ports;
     while ((p = *port++)) {
+        if (!IS_ENABLED(p)) {
+            continue;
+        }
+
         if (p->sexpr) {
             p->expr = expr_parse(p->id, p->sexpr, strlen(p->sexpr));
             if (p->expr) {
@@ -315,30 +319,6 @@ void config_init(void) {
                 DEBUG_PORT(p, "value expression parse failed");
                 free(p->sexpr);
                 p->sexpr = NULL;
-            }
-        }
-
-        if (p->stransform_write) {
-            p->transform_write = expr_parse(p->id, p->stransform_write, strlen(p->stransform_write));
-            if (p->transform_write) {
-                DEBUG_PORT(p, "write transform successfully parsed");
-            }
-            else {
-                DEBUG_PORT(p, "write transform parse failed");
-                free(p->stransform_write);
-                p->stransform_write = NULL;
-            }
-        }
-
-        if (p->stransform_read) {
-            p->transform_read = expr_parse(p->id, p->stransform_read, strlen(p->stransform_read));
-            if (p->transform_read) {
-                DEBUG_PORT(p, "read transform successfully parsed");
-            }
-            else {
-                DEBUG_PORT(p, "read transform parse failed");
-                free(p->stransform_read);
-                p->stransform_read = NULL;
             }
         }
 

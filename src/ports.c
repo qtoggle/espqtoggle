@@ -28,6 +28,7 @@
 
 #include "common.h"
 #include "config.h"
+#include "core.h"
 #include "events.h"
 #include "ports.h"
 #include "stringpool.h"
@@ -158,18 +159,40 @@ void port_load(port_t *port, uint8 *data) {
         /* value expression */
         port->sexpr = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_EXPR);
         DEBUG_PORT(port, "expression = \"%s\"", port->sexpr ? port->sexpr : "");
-        /* the expression will be parsed later, after all ports will have been loaded */
+        /* the expression will be parsed later, in config_init() */
 
         /* write transform */
         port->stransform_write = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_TRANS_W);
         DEBUG_PORT(port, "transform_write = \"%s\"", port->stransform_write ? port->stransform_write : "");
-        /* the expression will be parsed later, after all ports will have been loaded */
+
+        if (port->stransform_write) {
+            port->transform_write = expr_parse(port->id, port->stransform_write, strlen(port->stransform_write));
+            if (port->transform_write) {
+                DEBUG_PORT(port, "write transform successfully parsed");
+            }
+            else {
+                DEBUG_PORT(port, "write transform parse failed");
+                free(port->stransform_write);
+                port->stransform_write = NULL;
+            }
+        }
     }
 
     /* read transform */
     port->stransform_read = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_TRANS_R);
     DEBUG_PORT(port, "transform_read = \"%s\"", port->stransform_read ? port->stransform_read : "");
-    /* the expression will be parsed later, after all ports will have been loaded */
+
+    if (port->stransform_read) {
+        port->transform_read = expr_parse(port->id, port->stransform_read, strlen(port->stransform_read));
+        if (port->transform_read) {
+            DEBUG_PORT(port, "read transform successfully parsed");
+        }
+        else {
+            DEBUG_PORT(port, "read transform parse failed");
+            free(port->stransform_read);
+            port->stransform_read = NULL;
+        }
+    }
 
     /* sequence */
     port->sequence_pos = -1;
@@ -180,7 +203,7 @@ void port_load(port_t *port, uint8 *data) {
 
     /* initial port value */
     port->value = UNDEFINED;
-    if (IS_OUTPUT(port)) {
+    if (IS_OUTPUT(port) && IS_ENABLED(port)) {
         if (IS_PERSISTED(port)) {
             /* initial value is given by the persisted value */
             port->value = value;
@@ -458,10 +481,16 @@ void port_sequence_cancel(port_t *port) {
 
 void port_expr_remove(port_t *port) {
     DEBUG_PORT(port, "removing expression");
-    expr_free(port->expr);
-    free(port->sexpr);
-    port->expr = NULL;
-    port->sexpr = NULL;
+
+    if (port->expr) {
+        expr_free(port->expr);
+        port->expr = NULL;
+    }
+
+    if (port->sexpr) {
+        free(port->sexpr);
+        port->sexpr = NULL;
+    }
 }
 
 bool port_set_value(port_t *port, double value) {
@@ -522,22 +551,37 @@ void port_enable(port_t *port) {
             }
         }
     }
+
+    /* rebuild expression */
+    if (port->expr) {
+        expr_free(port->expr);
+        port->expr = NULL;
+    }
+    if (port->sexpr) {
+        port->expr = expr_parse(port->id, port->sexpr, strlen(port->sexpr));
+        if (port->expr) {
+            DEBUG_PORT(port, "value expression successfully parsed");
+        }
+        else {
+            DEBUG_PORT(port, "value expression parse failed");
+            free(port->sexpr);
+            port->sexpr = NULL;
+        }
+
+        update_port_expression(port);
+    }
+
+    port_rebuild_change_dep_mask(port);
 }
 
 void port_disable(port_t *port) {
     DEBUG_PORT(port, "disabling");
     port->flags &= ~PORT_FLAG_ENABLED;
 
-    /* remove the expressions of all dependent ports */
-    port_t **ports = all_ports, *p;
-    while ((p = *ports++)) {
-        if (!p->expr) {
-            continue;
-        }
-
-        if (p == port) { /* skip the port itself */
-            continue;
-        }
+    /* destroy value expression */
+    if (port->expr) {
+        expr_free(port->expr);
+        port->expr = NULL;
     }
 
     /* cancel sequence */

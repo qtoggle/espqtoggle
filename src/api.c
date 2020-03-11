@@ -1603,7 +1603,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                 return INVALID_FIELD_VALUE(key);
             }
 
-            if (port->expr) {
+            if (port->sexpr) {
                 port_expr_remove(port);
             }
 
@@ -1633,14 +1633,19 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                 }
 
                 port->sexpr = strdup(sexpr);
-                port->expr = expr;
 
-                port_rebuild_change_dep_mask(port);
+                if (IS_ENABLED(port)) {
+                    port->expr = expr;
+                    port_rebuild_change_dep_mask(port);
+                }
+                else {
+                    expr_free(expr);
+                }
 
                 DEBUG_PORT(port, "expression set to \"%s\"", port->sexpr);
             }
 
-            update_expressions();
+            update_port_expression(port);
         }
         else if (IS_OUTPUT(port) && !strcmp(key, "transform_write")) {
             if (json_get_type(child) != JSON_TYPE_STR) {

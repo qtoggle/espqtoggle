@@ -1,5 +1,5 @@
 {
-    "name": "expressions-held",
+    "name": "expressions-aggregation",
     "instructions": [
         {
             "name": "json-http-client",
@@ -10,21 +10,33 @@
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "body": {
-                    "expression": "123"
+                    "expression": "MIN(10, 20, 30)"
                 },
                 "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/num_port/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": 10
             }
         },
         {
             "name": "json-http-client",
             "params": {
                 "method": "PATCH",
-                "path": "/ports/bool_port",
+                "path": "/ports/num_port",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "body": {
-                    "expression": "HELD(${DOLLAR}num_port, 123, 2000)"
+                    "expression": "MAX(10, 20, 30)"
                 },
                 "expected_status": 204
             }
@@ -33,30 +45,12 @@
             "name": "json-http-client",
             "params": {
                 "method": "GET",
-                "path": "/ports/bool_port/value",
+                "path": "/ports/num_port/value",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "expected_status": 200,
-                "expected_body": false
-            }
-        },
-        {
-            "name": "sleep",
-            "params": {
-                "duration": 2500
-            }
-        },
-        {
-            "name": "json-http-client",
-            "params": {
-                "method": "GET",
-                "path": "/ports/bool_port/value",
-                "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
-                },
-                "expected_status": 200,
-                "expected_body": true
+                "expected_body": 30
             }
         }
     ]

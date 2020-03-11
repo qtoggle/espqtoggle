@@ -1,5 +1,5 @@
 {
-    "name": "expressions-sequence",
+    "name": "expressions-rounding",
     "instructions": [
         {
             "name": "json-http-client",
@@ -10,7 +10,7 @@
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "body": {
-                    "expression": "SEQUENCE(1, 2000, 2, 2000, 3, 2000)"
+                    "expression": "FLOOR(12.4)"
                 },
                 "expected_status": 204
             }
@@ -24,13 +24,21 @@
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "expected_status": 200,
-                "expected_body": 1
+                "expected_body": 12
             }
         },
         {
-            "name": "sleep",
+            "name": "json-http-client",
             "params": {
-                "duration": 200
+                "method": "PATCH",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "CEIL(12.4)"
+                },
+                "expected_status": 204
             }
         },
         {
@@ -42,13 +50,21 @@
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "expected_status": 200,
-                "expected_body": 1
+                "expected_body": 13
             }
         },
         {
-            "name": "sleep",
+            "name": "json-http-client",
             "params": {
-                "duration": 2000
+                "method": "PATCH",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "ROUND(12.4)"
+                },
+                "expected_status": 204
             }
         },
         {
@@ -60,44 +76,9 @@
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "expected_status": 200,
-                "expected_body": 2
-            }
-        },
-        {
-            "name": "sleep",
-            "params": {
-                "duration": 2000
-            }
-        },
-        {
-            "name": "json-http-client",
-            "params": {
-                "method": "GET",
-                "path": "/ports/num_port/value",
-                "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
-                },
-                "expected_status": 200,
-                "expected_body": 3
-            }
-        },
-        {
-            "name": "sleep",
-            "params": {
-                "duration": 2000
-            }
-        },
-        {
-            "name": "json-http-client",
-            "params": {
-                "method": "GET",
-                "path": "/ports/num_port/value",
-                "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
-                },
-                "expected_status": 200,
-                "expected_body": 1
+                "expected_body": 12
             }
         }
     ]
 }
+
