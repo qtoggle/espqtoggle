@@ -481,10 +481,15 @@ void port_sequence_cancel(port_t *port) {
 
 void port_expr_remove(port_t *port) {
     DEBUG_PORT(port, "removing expression");
-    expr_free(port->expr);
-    free(port->sexpr);
-    port->expr = NULL;
-    port->sexpr = NULL;
+    if (port->expr) {
+        expr_free(port->expr);
+        port->expr = NULL;
+    }
+
+    if (port->sexpr) {
+        free(port->sexpr);
+        port->sexpr = NULL;
+    }
 }
 
 bool port_set_value(port_t *port, double value) {
