@@ -585,7 +585,7 @@ expr_t *parse_port_id_expr(char *port_id, char *input) {
         expr->port_id = strdup(input);
     }
     else { /* reference to port itself */
-        expr->port_id = port_id;
+        expr->port_id = strdup(port_id);
     }
 
     return expr;
