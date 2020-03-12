@@ -47,17 +47,17 @@
 #define PORT_SAVE_INTERVAL          5
 
 
-static int                          last_expr_time = 0;
-static int                          last_port_save_time = 0;
+static uint32                       last_expr_time = 0;
+static uint32                       last_port_save_time = 0;
 
-static int                          change_mask = -1;
-static int                          change_reasons = 0; /* bit mask of 1 - expression eval, 0 - other reasons */
-static int                          port_save_mask = 0;
+static uint64                       change_mask = -1;
+static uint32                       change_reasons = 0; /* bit mask of 1 - expression eval, 0 - other reasons */
+static uint32                       port_save_mask = 0;
 static bool                         ports_polling_enabled = FALSE;
 
 #ifdef _SLEEP
 /* used to prevent more than one value-change per port when using sleep mode with short wakes */
-static int                          value_change_trigger_mask = 0;
+static uint32                       value_change_trigger_mask = 0;
 #endif
 
 static os_event_t                   task_queue[TASK_QUEUE_SIZE];
@@ -104,16 +104,16 @@ void core_poll_ports(void) {
 #endif
 
     double value;
-    int i, now = system_uptime();
-    long long now_ms = system_uptime_us() / 1000;
+    uint32 i, now = system_uptime();
+    uint64 now_ms = system_uptime_us() / 1000;
 
     /* evaluate time-dependent expressions */
     if (now != last_expr_time) {
         last_expr_time = now;
-        change_mask |= (1 << EXPR_TIME_DEP_BIT);
+        change_mask |= (1ULL << TIME_EXPR_DEP_BIT);
     }
 
-    change_mask |= (1 << EXPR_TIME_MS_DEP_BIT);
+    change_mask |= (1ULL << TIME_MS_EXPR_DEP_BIT);
 
     /* port saving routine */
     if (port_save_mask && (now - last_port_save_time > PORT_SAVE_INTERVAL)) {
@@ -183,7 +183,7 @@ void core_poll_ports(void) {
                 DEBUG_PORT(p, "detected value change: %s -> %s", dtostr(p->value, -1), dtostr(value, -1));
             }
             p->value = value;
-            change_mask |= 1 << p->slot;
+            change_mask |= 1ULL << p->slot;
         }
     }
 
@@ -207,14 +207,14 @@ void core_poll_ports(void) {
 void update_port_expression(port_t *port) {
     DEBUG_PORT(port, "updating expression");
 
-    change_mask |= 1 << port->slot;
-    change_reasons &= ~(1 << port->slot);
+    change_mask |= 1ULL << port->slot;
+    change_reasons &= ~(1UL << port->slot);
     core_poll_ports();
 }
 
 void port_mark_for_saving(port_t *port) {
     DEBUG_PORT(port, "marking for saving");
-    port_save_mask |= 1 << port->slot;
+    port_save_mask |= 1UL << port->slot;
 }
 
 void ensure_ports_saved(void) {
@@ -267,7 +267,7 @@ void core_task(os_event_t *e) {
 }
 
 void on_value_change(void) {
-    int new_change_mask = 0;
+    uint64 new_change_mask = 0;
 
     port_t **port = all_ports, *p;
     while ((p = *port++)) {
@@ -276,10 +276,10 @@ void on_value_change(void) {
         }
 
         bool port_needs_eval = (change_mask & p->change_dep_mask) ||     /* one of port dependencies has changed */
-                               (change_mask & (1 << p->slot)) ||         /* the port itself has changed */
+                               (change_mask & (1ULL << p->slot)) ||      /* the port itself has changed */
                                (change_mask == -1);                      /* forced expression reevaluation */
 
-        if (port_needs_eval && (change_reasons & (1 << p->slot)) && (p->change_dep_mask & (1 << p->slot))) {
+        if (port_needs_eval && (change_reasons & (1UL << p->slot)) && (p->change_dep_mask & (1ULL << p->slot))) {
             /* if port expression depends on port itself and it just changed because of expression eval,
              * prevent reevaluating its expression to avoid evaluation loops */
             port_needs_eval = FALSE;
@@ -288,13 +288,9 @@ void on_value_change(void) {
         if (p->expr && IS_OUTPUT(p) && port_needs_eval) {
             double value = expr_eval(p->expr);
 
-            /* ignore invalid values yielded by expressions */
-            if (IS_UNDEFINED(value)) {
-                continue;
-            }
-
-            if (value != p->value) {
+            if (!IS_UNDEFINED(value) && value != p->value) {
                 DEBUG_PORT(p, "expression \"%s\" evaluated to %s", p->sexpr, dtostr(value, -1));
+
                 if (p->type == PORT_TYPE_BOOLEAN) {
                     value = !!value;
                 }
@@ -302,10 +298,13 @@ void on_value_change(void) {
                 if (port_set_value(p, value)) {
                     p->value = value;
                     p->changed = TRUE;
-                    change_reasons |= 1 << p->slot;
-                    new_change_mask |= 1 << p->slot;
+                    change_reasons |= 1UL << p->slot;
+                    new_change_mask |= 1ULL << p->slot;
+                    DEBUG_PORT(p, "mark value changed");
                 }
 
+                /* we can't be sure that we're done with port changes right now; following on_value_change() calls will
+                 * do the rest for this port, as soon as expression value does not change anymore */
                 continue;
             }
         }
@@ -323,8 +322,8 @@ void on_value_change(void) {
         /* add a value change event */
 #ifdef _SLEEP
         if (sleep_is_short_wake()) {
-            if (!(value_change_trigger_mask & (1 << p->slot))) {
-                value_change_trigger_mask |= 1 << p->slot;
+            if (!(value_change_trigger_mask & (1UL << p->slot))) {
+                value_change_trigger_mask |= 1UL << p->slot;
             }
             else {
                 DEBUG_PORT(p, "skipping value-change event due to short wake");

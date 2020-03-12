@@ -20,21 +20,25 @@
 #define _EXPR_H
 
 
+#include <c_types.h>
+
+
 #ifdef _DEBUG_EXPR
 #define DEBUG_EXPR(fmt, ...)    DEBUG("[expressions   ] " fmt, ##__VA_ARGS__)
 #else
 #define DEBUG_EXPR(...)         {}
 #endif
 
-#define EXPR_TIME_DEP_BIT       30  /* used in port->change_dep_mask */
-#define EXPR_TIME_MS_DEP_BIT    29  /* used in port->change_dep_mask */
-
 
 typedef struct expr {
 
     double          value;          /* used for constant expressions and other caching purposes */
     double          prev_value;     /* used to determine value changes */
-    int             aux;            /* auxiliary flag */
+
+    union {
+        int64       aux;            /* auxiliary flag */
+        void      * paux;           /* auxiliary pointer */
+    };
 
     union {
         char      * port_id;

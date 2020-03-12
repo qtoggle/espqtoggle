@@ -142,7 +142,7 @@ void event_push(int type, char *port_id) {
 
     sessions_push_event(type, port_id);
 
-    if ((device_flags & DEVICE_FLAG_WEBHOOKS_ENABLED) && ((1 << type) & webhooks_events_mask)) {
+    if ((device_flags & DEVICE_FLAG_WEBHOOKS_ENABLED) && ((1U << type) & webhooks_events_mask)) {
         webhooks_push_event(type, port_id);
     }
 }

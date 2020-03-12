@@ -455,19 +455,19 @@ void port_rebuild_change_dep_mask(port_t *the_port) {
     port = ports = expr_port_deps(the_port->expr);
     if (ports) {
         while ((p = *port++)) {
-            the_port->change_dep_mask |= (1 << p->slot);
+            the_port->change_dep_mask |= (1ULL << p->slot);
         }
         free(ports);
     }
 
     if (expr_is_time_dep(the_port->expr)) {
-        the_port->change_dep_mask |= (1 << EXPR_TIME_DEP_BIT);
+        the_port->change_dep_mask |= (1ULL << TIME_EXPR_DEP_BIT);
     }
     if (expr_is_time_ms_dep(the_port->expr)) {
-        the_port->change_dep_mask |= (1 << EXPR_TIME_MS_DEP_BIT);
+        the_port->change_dep_mask |= (1ULL << TIME_MS_EXPR_DEP_BIT);
     }
 
-    DEBUG_PORT(the_port, "change dependency mask is %08X", the_port->change_dep_mask);
+    DEBUG_PORT(the_port, "change dependency mask is %08LX", the_port->change_dep_mask);
 }
 
 void port_sequence_cancel(port_t *port) {
@@ -543,7 +543,7 @@ void port_enable(port_t *port) {
             continue;
         }
 
-        if ((p->mutual_excl_mask & (1 << port->slot)) || (port->mutual_excl_mask & (1 << p->slot))) {
+        if ((p->mutual_excl_mask & (1UL << port->slot)) || (port->mutual_excl_mask & (1UL << p->slot))) {
             if (IS_ENABLED(p)) {
                 DEBUG_PORT(port, "mutually exclusive with %s", p->id);
                 port_disable(p);

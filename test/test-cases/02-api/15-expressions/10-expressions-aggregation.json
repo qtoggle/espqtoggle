@@ -27,6 +27,7 @@
                 "expected_body": 10
             }
         },
+
         {
             "name": "json-http-client",
             "params": {
@@ -37,6 +38,33 @@
                 },
                 "body": {
                     "expression": "MAX(10, 20, 30)"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/num_port/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": 30
+            }
+        },
+
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "AVG(10, 20, 60)"
                 },
                 "expected_status": 204
             }

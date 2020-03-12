@@ -191,8 +191,8 @@ pwm_init(uint32 period, uint32 *duty, uint32 pwm_channel_num,
 		if ((*pin_info)[0]) {
 		    PIN_FUNC_SELECT((*pin_info)[0], (*pin_info)[1]);
 		}
-		gpio_mask[n] = 1 << (*pin_info)[2];
-		all |= 1 << (*pin_info)[2];
+		gpio_mask[n] = 1UL << (*pin_info)[2];
+		all |= 1UL << (*pin_info)[2];
 		if (duty)
 			pwm_set_duty(duty[n], n);
 	}

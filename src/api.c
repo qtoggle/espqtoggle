@@ -2128,7 +2128,7 @@ json_t *get_webhooks(json_t *query_json, int *code) {
 
     int e;
     for (e = EVENT_TYPE_MIN; e <= EVENT_TYPE_MAX; e++) {
-        if (webhooks_events_mask & (1 << e)) {
+        if (webhooks_events_mask & (1U << e)) {
             json_list_append(json_events, json_str_new(EVENT_TYPES_STR[e]));
         }
     }
@@ -2250,7 +2250,8 @@ json_t *patch_webhooks(json_t *query_json, json_t *request_json, int *code) {
             return INVALID_FIELD_VALUE("events");
         }
 
-        int i, e, events_mask = 0, len = json_list_get_len(events_json);
+        int i, e, len = json_list_get_len(events_json);
+        uint8 events_mask = 0;
         for (i = 0; i < len; i++) {
             event_json = json_list_value_at(events_json, i);
             if (json_get_type(event_json) != JSON_TYPE_STR) {
@@ -2259,7 +2260,7 @@ json_t *patch_webhooks(json_t *query_json, json_t *request_json, int *code) {
 
             for (e = EVENT_TYPE_MIN; e <= EVENT_TYPE_MAX; e++) {
                 if (!strcmp(json_str_get(event_json), EVENT_TYPES_STR[e])) {
-                    events_mask |= (1 << e);
+                    events_mask |= (1U << e);
                     break;
                 }
             }
