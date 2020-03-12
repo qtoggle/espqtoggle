@@ -26,9 +26,6 @@
 #define DEBUG_EXPR(...)         {}
 #endif
 
-#define EXPR_TIME_DEP_BIT       30  /* used in port->change_dep_mask */
-#define EXPR_TIME_MS_DEP_BIT    29  /* used in port->change_dep_mask */
-
 
 typedef struct expr {
 

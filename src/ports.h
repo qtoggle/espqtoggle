@@ -129,8 +129,8 @@ typedef struct port {
     int8            slot;               /* integer identifier */
     double          value;              /* current value */
     bool            changed;            /* changed flag */
-    int             change_dep_mask;    /* port change dependency mask */
-    int             mutual_excl_mask;   /* mask for ports that cannot be simultaneously enabled */
+    uint64          change_dep_mask;    /* port change dependency mask */
+    uint32          mutual_excl_mask;   /* mask for ports that cannot be simultaneously enabled */
     int             aux;                /* flag used internally for dependency loops & more */
     int8            mapped;             /* flag used for mapping (e.g. pwm channel) */
     uint8           extra_data[PORT_PERSISTED_EXTRA_DATA_LEN];

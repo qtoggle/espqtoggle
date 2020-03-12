@@ -114,7 +114,7 @@ uint64 system_uptime_us(void) {
 }
 
 int system_get_flash_size(void) {
-    return (1 << ((spi_flash_get_id() >> 16) & 0xff));
+    return (1UL << ((spi_flash_get_id() >> 16) & 0xff));
 }
 
 void system_reset(bool delayed) {

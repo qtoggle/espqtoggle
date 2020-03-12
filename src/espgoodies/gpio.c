@@ -171,13 +171,13 @@ void gpio_configure_input(int gpio_no, bool pull) {
 
     gpio_set_pull(gpio_no, pull);
 
-    gpio_configured_state |= 1 << gpio_no;
-    gpio_output_state &= ~(1 << gpio_no);
+    gpio_configured_state |= 1UL << gpio_no;
+    gpio_output_state &= ~(1UL << gpio_no);
     if (pull) {
-        gpio_pull_state |= 1 << gpio_no;
+        gpio_pull_state |= 1UL << gpio_no;
     }
     else {
-        gpio_pull_state &= ~(1 << gpio_no);
+        gpio_pull_state &= ~(1UL << gpio_no);
     }
 
     DEBUG_GPIO("configuring GPIO%d as input with pull %d", gpio_no, pull);
@@ -196,22 +196,22 @@ void gpio_configure_output(int gpio_no, bool initial) {
         GPIO_OUTPUT_SET(gpio_no, initial);
     }
 
-    gpio_configured_state |= 1 << gpio_no;
-    gpio_output_state |= 1 << gpio_no;
+    gpio_configured_state |= 1UL << gpio_no;
+    gpio_output_state |= 1UL << gpio_no;
 
     DEBUG_GPIO("configuring GPIO%d as output with initial %d", gpio_no, initial);
 }
 
 bool gpio_is_configured(int gpio_no) {
-    return !!(gpio_configured_state & (1 << gpio_no));
+    return !!(gpio_configured_state & (1UL << gpio_no));
 }
 
 bool gpio_is_output(int gpio_no) {
-    return !!(gpio_output_state & (1 << gpio_no));
+    return !!(gpio_output_state & (1UL << gpio_no));
 }
 
 bool gpio_get_pull(int gpio_no) {
-    return !!(gpio_pull_state & (1 << gpio_no));
+    return !!(gpio_pull_state & (1UL << gpio_no));
 }
 
 void gpio_write_value(int gpio_no, bool value) {
