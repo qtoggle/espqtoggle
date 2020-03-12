@@ -31,7 +31,7 @@ typedef struct expr {
 
     double          value;          /* used for constant expressions and other caching purposes */
     double          prev_value;     /* used to determine value changes */
-    int             aux;            /* auxiliary flag */
+    int64           aux;            /* auxiliary flag */
 
     union {
         char      * port_id;

@@ -86,6 +86,7 @@ ICACHE_FLASH_ATTR static double     _timems_callback(expr_t *expr, int argc, dou
 ICACHE_FLASH_ATTR static double     _delay_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _held_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _acc_callback(expr_t *expr, int argc, double *args);
+ICACHE_FLASH_ATTR static double     _deriv_callback(expr_t *expr, int argc, double *args);
 
 ICACHE_FLASH_ATTR static double     _hyst_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _sequence_callback(expr_t *expr, int argc, double *args);
@@ -302,7 +303,7 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
     double delay = args[1];
     int i;
 
-    value_hist_t *hist = (void *) expr->aux;
+    value_hist_t *hist = (void *) (int) expr->aux;
 
     /* expr->aux flag is used as a pointer to a value history queue
      * expr->value is used as current value */
@@ -314,7 +315,7 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
     /* detect system time overflow and reset history */
     if (expr->len && hist[0].time_ms > time_ms) {
         expr->len = 0;
-        free((void *) expr->aux);
+        free((void *) (int) expr->aux);
         expr->aux = 0;
 
         return expr->value;
@@ -332,7 +333,7 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
         }
         else {
             expr->len++;
-            expr->aux = (int) (hist = realloc((void *) expr->aux, sizeof(value_hist_t) * expr->len));
+            expr->aux = (int) (hist = realloc((void *) (int) expr->aux, sizeof(value_hist_t) * expr->len));
         }
 
         hist[expr->len - 1].value = value;
@@ -349,10 +350,10 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
     }
 
     if (expr->len) {
-        expr->aux = (int) realloc((void *) expr->aux, sizeof(value_hist_t) * expr->len);
+        expr->aux = (int) realloc((void *) (int) expr->aux, sizeof(value_hist_t) * expr->len);
     }
     else {
-        free((void *) expr->aux);
+        free((void *) (int) expr->aux);
         expr->aux = 0;
     }
 
@@ -360,7 +361,7 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
 }
 
 double _held_callback(expr_t *expr, int argc, double *args) {
-    int time_ms = (int) (system_uptime_us() / 1000);
+    uint64 time_ms = system_uptime_us() / 1000;
     double value = args[0];
     double fixed_value = args[1];
     int duration = args[2];
@@ -371,9 +372,9 @@ double _held_callback(expr_t *expr, int argc, double *args) {
         expr->aux = time_ms;
     }
     else {
-        int delta = time_ms - expr->aux;
+        uint64 delta = time_ms - expr->aux;
 
-        if ((expr->value != value) /* value changed */ || (delta < 0) /* system time overflow */) {
+        if ((expr->value != value) /* value changed */) {
             /* reset held timer */
             expr->aux = time_ms;
         }
@@ -399,6 +400,32 @@ double _acc_callback(expr_t *expr, int argc, double *args) {
     expr->value = value;
 
     return result;
+}
+
+double _deriv_callback(expr_t *expr, int argc, double *args) {
+    uint64 time_ms = system_uptime_us() / 1000;
+    double value = args[0];
+    double sampling_interval = args[1];
+
+    if (expr->aux) {
+        uint32 delta_time_ms = time_ms - expr->aux;
+        if (delta_time_ms < sampling_interval) {
+            return UNDEFINED;
+        }
+
+        double result = 1000.0 * (value - expr->value) / delta_time_ms;
+
+        expr->value = value;
+        expr->aux = time_ms;
+
+        return result;
+    }
+    else { /* the very first expression eval call */
+        expr->value = value;
+        expr->aux = time_ms;
+
+        return 0;
+    }
 }
 
 double _hyst_callback(expr_t *expr, int argc, double *args) {
@@ -496,6 +523,7 @@ func_t _timems =   {.name = "TIMEMS",   .argc = 0,  .callback = _timems_callback
 func_t _delay =    {.name = "DELAY",    .argc = 2,  .callback = _delay_callback};
 func_t _held =     {.name = "HELD",     .argc = 3,  .callback = _held_callback};
 func_t _acc =      {.name = "ACC",      .argc = 2,  .callback = _acc_callback};
+func_t _deriv =    {.name = "DERIV",    .argc = 2,  .callback = _deriv_callback};
 
 func_t _hyst =     {.name = "HYST",     .argc = 3,  .callback = _hyst_callback};
 func_t _sequence = {.name = "SEQUENCE", .argc = -2, .callback = _sequence_callback};
@@ -543,6 +571,7 @@ func_t *funcs[] = {
     &_delay,
     &_held,
     &_acc,
+    &_deriv,
 
     &_hyst,
     &_sequence,
@@ -892,6 +921,7 @@ bool expr_is_time_dep(expr_t *expr) {
 bool expr_is_time_ms_dep(expr_t *expr) {
     if (expr->func) {
         if (expr->func == &_timems ||
+            expr->func == &_deriv ||
             expr->func == &_held ||
             expr->func == &_delay ||
             expr->func == &_sequence) {
