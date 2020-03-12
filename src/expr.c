@@ -401,8 +401,8 @@ double _hyst_callback(expr_t *expr, int argc, double *args) {
         expr->value = 0;
     }
 
-    expr->value = ((expr->value == 0 && value > threshold1) ||
-                   (expr->value != 0 && value >= threshold2));
+    expr->value = ((expr->value == 0 && value > threshold2) ||
+                   (expr->value != 0 && value >= threshold1));
 
     return expr->value;
 }
