@@ -87,14 +87,15 @@ ICACHE_FLASH_ATTR static double     _delay_callback(expr_t *expr, int argc, doub
 ICACHE_FLASH_ATTR static double     _held_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _acc_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _deriv_callback(expr_t *expr, int argc, double *args);
+ICACHE_FLASH_ATTR static double     _integ_callback(expr_t *expr, int argc, double *args);
 
 ICACHE_FLASH_ATTR static double     _hyst_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _sequence_callback(expr_t *expr, int argc, double *args);
 
-ICACHE_FLASH_ATTR static const_t *  find_const_by_name(char *name);
-ICACHE_FLASH_ATTR static func_t *   find_func_by_name(char *name);
-ICACHE_FLASH_ATTR static expr_t *   parse_port_id_expr(char *port_id, char *input);
-ICACHE_FLASH_ATTR static expr_t *   parse_const_expr(char *input);
+ICACHE_FLASH_ATTR static const_t  * find_const_by_name(char *name);
+ICACHE_FLASH_ATTR static func_t   * find_func_by_name(char *name);
+ICACHE_FLASH_ATTR static expr_t   * parse_port_id_expr(char *port_id, char *input);
+ICACHE_FLASH_ATTR static expr_t   * parse_const_expr(char *input);
 ICACHE_FLASH_ATTR static int        check_loops_rec(port_t *the_port, int level, expr_t *expr);
 
 
@@ -406,26 +407,43 @@ double _deriv_callback(expr_t *expr, int argc, double *args) {
     uint64 time_ms = system_uptime_us() / 1000;
     double value = args[0];
     double sampling_interval = args[1];
+    double result = 0;
 
-    if (expr->aux) {
+    if (expr->aux) { /* not the very first expression eval call */
         uint32 delta_time_ms = time_ms - expr->aux;
         if (delta_time_ms < sampling_interval) {
             return UNDEFINED;
         }
 
-        double result = 1000.0 * (value - expr->value) / delta_time_ms;
-
-        expr->value = value;
-        expr->aux = time_ms;
-
-        return result;
+        result = 1000.0 * (value - expr->value) / delta_time_ms;
     }
-    else { /* the very first expression eval call */
-        expr->value = value;
-        expr->aux = time_ms;
 
-        return 0;
+    expr->value = value;
+    expr->aux = time_ms;
+
+    return result;
+}
+
+double _integ_callback(expr_t *expr, int argc, double *args) {
+    uint64 time_ms = system_uptime_us() / 1000;
+    double value = args[0];
+    double accumulator = args[1];
+    double sampling_interval = args[2];
+    double result = accumulator;
+
+    if (expr->aux) { /* not the very first expression eval call */
+        uint32 delta_time_ms = time_ms - expr->aux;
+        if (delta_time_ms < sampling_interval) {
+            return UNDEFINED;
+        }
+
+        result += (value + expr->value) * delta_time_ms / 2000.0; /* 2 -> mean, 1000 -> millis */
     }
+
+    expr->value = value;
+    expr->aux = time_ms;
+
+    return result;
 }
 
 double _hyst_callback(expr_t *expr, int argc, double *args) {
@@ -524,6 +542,7 @@ func_t _delay =    {.name = "DELAY",    .argc = 2,  .callback = _delay_callback}
 func_t _held =     {.name = "HELD",     .argc = 3,  .callback = _held_callback};
 func_t _acc =      {.name = "ACC",      .argc = 2,  .callback = _acc_callback};
 func_t _deriv =    {.name = "DERIV",    .argc = 2,  .callback = _deriv_callback};
+func_t _integ =    {.name = "INTEG",    .argc = 3,  .callback = _integ_callback};
 
 func_t _hyst =     {.name = "HYST",     .argc = 3,  .callback = _hyst_callback};
 func_t _sequence = {.name = "SEQUENCE", .argc = -2, .callback = _sequence_callback};
@@ -572,6 +591,7 @@ func_t *funcs[] = {
     &_held,
     &_acc,
     &_deriv,
+    &_integ,
 
     &_hyst,
     &_sequence,
@@ -921,9 +941,10 @@ bool expr_is_time_dep(expr_t *expr) {
 bool expr_is_time_ms_dep(expr_t *expr) {
     if (expr->func) {
         if (expr->func == &_timems ||
-            expr->func == &_deriv ||
             expr->func == &_held ||
             expr->func == &_delay ||
+            expr->func == &_deriv ||
+            expr->func == &_integ||
             expr->func == &_sequence) {
 
             return TRUE;
