@@ -74,6 +74,7 @@ ICACHE_FLASH_ATTR static double     _sgn_callback(expr_t *expr, int argc, double
 
 ICACHE_FLASH_ATTR static double     _min_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _max_callback(expr_t *expr, int argc, double *args);
+ICACHE_FLASH_ATTR static double     _avg_callback(expr_t *expr, int argc, double *args);
 
 ICACHE_FLASH_ATTR static double     _floor_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _ceil_callback(expr_t *expr, int argc, double *args);
@@ -244,6 +245,16 @@ double _max_callback(expr_t *expr, int argc, double *args) {
     }
     
     return m;
+}
+
+double _avg_callback(expr_t *expr, int argc, double *args) {
+    int i;
+    double s = 0;
+    for (i = 0; i < argc; i++) {
+        s += args[i];
+    }
+
+    return s / argc;
 }
 
 double _floor_callback(expr_t *expr, int argc, double *args) {
@@ -473,6 +484,7 @@ func_t _sgn =      {.name = "SGN",      .argc = 1,  .callback = _sgn_callback};
 
 func_t _min =      {.name = "MIN",      .argc = -2, .callback = _min_callback};
 func_t _max =      {.name = "MAX",      .argc = -2, .callback = _max_callback};
+func_t _avg =      {.name = "AVG",      .argc = -2, .callback = _avg_callback};
 
 func_t _floor =    {.name = "FLOOR",    .argc = 1,  .callback = _floor_callback};
 func_t _ceil =     {.name = "CEIL",     .argc = 1,  .callback = _ceil_callback};
@@ -519,6 +531,7 @@ func_t *funcs[] = {
 
     &_min,
     &_max,
+    &_avg,
 
     &_floor,
     &_ceil,
