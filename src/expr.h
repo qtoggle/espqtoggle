@@ -20,6 +20,9 @@
 #define _EXPR_H
 
 
+#include <c_types.h>
+
+
 #ifdef _DEBUG_EXPR
 #define DEBUG_EXPR(fmt, ...)    DEBUG("[expressions   ] " fmt, ##__VA_ARGS__)
 #else
@@ -31,7 +34,11 @@ typedef struct expr {
 
     double          value;          /* used for constant expressions and other caching purposes */
     double          prev_value;     /* used to determine value changes */
-    int64           aux;            /* auxiliary flag */
+
+    union {
+        int64       aux;            /* auxiliary flag */
+        void      * paux;           /* auxiliary pointer */
+    };
 
     union {
         char      * port_id;

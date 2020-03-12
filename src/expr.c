@@ -303,7 +303,7 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
     double delay = args[1];
     int i;
 
-    value_hist_t *hist = (void *) (int) expr->aux;
+    value_hist_t *hist = expr->paux;
 
     /* expr->aux flag is used as a pointer to a value history queue
      * expr->value is used as current value */
@@ -315,8 +315,8 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
     /* detect system time overflow and reset history */
     if (expr->len && hist[0].time_ms > time_ms) {
         expr->len = 0;
-        free((void *) (int) expr->aux);
-        expr->aux = 0;
+        free(expr->paux);
+        expr->paux = NULL;
 
         return expr->value;
     }
@@ -333,7 +333,7 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
         }
         else {
             expr->len++;
-            expr->aux = (int) (hist = realloc((void *) (int) expr->aux, sizeof(value_hist_t) * expr->len));
+            expr->paux = (hist = realloc(expr->paux, sizeof(value_hist_t) * expr->len));
         }
 
         hist[expr->len - 1].value = value;
@@ -350,11 +350,11 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
     }
 
     if (expr->len) {
-        expr->aux = (int) realloc((void *) (int) expr->aux, sizeof(value_hist_t) * expr->len);
+        expr->paux = realloc(expr->paux, sizeof(value_hist_t) * expr->len);
     }
     else {
-        free((void *) (int) expr->aux);
-        expr->aux = 0;
+        free(expr->paux);
+        expr->paux = NULL;
     }
 
     return expr->value;
