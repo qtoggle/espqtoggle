@@ -276,7 +276,7 @@ void on_value_change(void) {
         }
 
         bool port_needs_eval = (change_mask & p->change_dep_mask) ||     /* one of port dependencies has changed */
-                               (change_mask & (1ULL << p->slot)) ||         /* the port itself has changed */
+                               (change_mask & (1ULL << p->slot)) ||      /* the port itself has changed */
                                (change_mask == -1);                      /* forced expression reevaluation */
 
         if (port_needs_eval && (change_reasons & (1UL << p->slot)) && (p->change_dep_mask & (1ULL << p->slot))) {
@@ -288,13 +288,9 @@ void on_value_change(void) {
         if (p->expr && IS_OUTPUT(p) && port_needs_eval) {
             double value = expr_eval(p->expr);
 
-            /* ignore invalid values yielded by expressions */
-            if (IS_UNDEFINED(value)) {
-                continue;
-            }
-
-            if (value != p->value) {
+            if (!IS_UNDEFINED(value) && value != p->value) {
                 DEBUG_PORT(p, "expression \"%s\" evaluated to %s", p->sexpr, dtostr(value, -1));
+
                 if (p->type == PORT_TYPE_BOOLEAN) {
                     value = !!value;
                 }
@@ -304,8 +300,11 @@ void on_value_change(void) {
                     p->changed = TRUE;
                     change_reasons |= 1UL << p->slot;
                     new_change_mask |= 1ULL << p->slot;
+                    DEBUG_PORT(p, "mark value changed");
                 }
 
+                /* we can't be sure that we're done with port changes right now; following on_value_change() calls will
+                 * do the rest for this port, as soon as expression value does not change anymore */
                 continue;
             }
         }
