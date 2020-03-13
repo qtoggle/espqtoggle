@@ -30,6 +30,9 @@
 #define MIN(a, b)               (a) > (b) ? (b) : (a)
 #define MAX(a, b)               (a) > (b) ? (a) : (b)
 
+#define FMT_UINT64_VAL(value)   ((unsigned long) (value >> 32)), ((unsigned long) value)
+#define FMT_UINT64_HEX          "%08lX%08lX"
+
 #define htons(x)                (((x)<< 8 & 0xFF00) | ((x)>> 8 & 0x00FF))
 #define ntohs(x)                htons(x)
 
@@ -46,6 +49,7 @@ ICACHE_FLASH_ATTR int           realloc_chunks(char **p, int current_size, int r
 ICACHE_FLASH_ATTR double        strtod(const char *s, char **endptr);
 ICACHE_FLASH_ATTR char        * dtostr(double d, int8 decimals);
 ICACHE_FLASH_ATTR double        decent_round(double d);
+ICACHE_FLASH_ATTR int           compare_double(const void *a, const void *b);
 
 
 #endif /* _ESPGOODIES_UTILS_H */

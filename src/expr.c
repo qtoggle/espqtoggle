@@ -33,9 +33,10 @@
 
 #define MAX_NAME_LEN    16
 #define MAX_ARGS        16
-#define MAX_HIST_LEN    16
+#define MAX_HIST_LEN    32
 
 #define isidornum(c) (isalnum(c) || c == '.' || c == '_' || c == '$' || c == '-' || c == '+')
+
 
 typedef struct {
 
@@ -43,6 +44,7 @@ typedef struct {
     int         time_ms;
 
 } value_hist_t;
+
 
 ICACHE_FLASH_ATTR static double     _add_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _sub_callback(expr_t *expr, int argc, double *args);
@@ -88,6 +90,9 @@ ICACHE_FLASH_ATTR static double     _held_callback(expr_t *expr, int argc, doubl
 ICACHE_FLASH_ATTR static double     _acc_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _deriv_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _integ_callback(expr_t *expr, int argc, double *args);
+ICACHE_FLASH_ATTR static bool       _filter_callback(expr_t *expr, int argc, double *args);
+ICACHE_FLASH_ATTR static double     _fmavg_callback(expr_t *expr, int argc, double *args);
+ICACHE_FLASH_ATTR static double     _fmedian_callback(expr_t *expr, int argc, double *args);
 
 ICACHE_FLASH_ATTR static double     _hyst_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _sequence_callback(expr_t *expr, int argc, double *args);
@@ -446,6 +451,104 @@ double _integ_callback(expr_t *expr, int argc, double *args) {
     return result;
 }
 
+bool _filter_callback(expr_t *expr, int argc, double *args) {
+    int i;
+    uint64 time_ms = system_uptime_us() / 1000;
+    double value = args[0];
+    double *values = expr->paux; /* expr->paux flag is used as a pointer to a value history queue */
+    int width = (int) args[1];
+    int sampling_interval = argc >= 3 ? args[2] : -1;
+
+    /* limit width to reasonable values */
+    if (width > MAX_HIST_LEN) {
+        width = MAX_HIST_LEN;
+    }
+    if (width < 1) {
+        width = 1;
+    }
+
+    /* very first expression eval call */
+    if (!expr->paux) {
+        expr->paux = values = malloc(sizeof(double));
+        expr->len = 1;
+        expr->aux = time_ms;
+        values[0] = value;
+
+        return TRUE;
+    }
+
+    /* don't evaluate if below sampling interval */
+    int32 delta_ms = time_ms - expr->aux;
+    if (delta_ms < sampling_interval) {
+        return FALSE;
+    }
+
+    expr->aux = time_ms;
+
+    int extra = expr->len - width + 1;
+    bool resized = FALSE;
+    if (extra > 0) { /* drop extra elements from queue */
+        for (i = 0; i < expr->len - extra; i++) {
+            values[i] = values[i + extra];
+        }
+
+        /* shrink history if width decreased */
+        if (expr->len > width) {
+            expr->len = width;
+            resized = TRUE;
+        }
+    }
+    else { /* grow history for another element */
+        expr->len++;
+        resized = TRUE;
+    }
+
+    if (resized) {
+        expr->paux = values = realloc(expr->paux, sizeof(double) * expr->len);
+    }
+    values[expr->len - 1] = value;
+
+    return TRUE;
+}
+
+double _fmavg_callback(expr_t *expr, int argc, double *args) {
+    if (!_filter_callback(expr, argc, args)) {
+        return UNDEFINED;
+    }
+
+    /* apply moving average filter */
+    int i;
+    double s = 0;
+    double *values = expr->paux;
+    for (i = 0; i < expr->len; i++) {
+        s += values[i];
+    }
+
+    return s / expr->len;
+}
+
+double _fmedian_callback(expr_t *expr, int argc, double *args) {
+    if (!_filter_callback(expr, argc, args)) {
+        return UNDEFINED;
+    }
+
+    /* when dealing with less than 3 values, simply return the first one */
+    if (expr->len < 3) {
+        return ((double *) expr->paux)[0];
+    }
+
+    /* copy the values to a temporary buffer, so that they can be sorted out-of-place */
+    double *values = malloc(sizeof(double) * expr->len);
+    memcpy(values, expr->paux, sizeof(double) * expr->len);
+
+    /* apply median filter */
+    qsort(values, expr->len, sizeof(double), compare_double);
+    double result = values[expr->len / 2];
+    free(values);
+
+    return result;
+}
+
 double _hyst_callback(expr_t *expr, int argc, double *args) {
     double value = args[0];
     double threshold1 = args[1];
@@ -543,6 +646,8 @@ func_t _held =     {.name = "HELD",     .argc = 3,  .callback = _held_callback};
 func_t _acc =      {.name = "ACC",      .argc = 2,  .callback = _acc_callback};
 func_t _deriv =    {.name = "DERIV",    .argc = 2,  .callback = _deriv_callback};
 func_t _integ =    {.name = "INTEG",    .argc = 3,  .callback = _integ_callback};
+func_t _fmavg =    {.name = "FMAVG",    .argc = -2,  .callback = _fmavg_callback};
+func_t _fmedian =  {.name = "FMEDIAN",  .argc = -2,  .callback = _fmedian_callback};
 
 func_t _hyst =     {.name = "HYST",     .argc = 3,  .callback = _hyst_callback};
 func_t _sequence = {.name = "SEQUENCE", .argc = -2, .callback = _sequence_callback};
@@ -592,6 +697,8 @@ func_t *funcs[] = {
     &_acc,
     &_deriv,
     &_integ,
+    &_fmavg,
+    &_fmedian,
 
     &_hyst,
     &_sequence,
@@ -945,7 +1052,9 @@ bool expr_is_time_ms_dep(expr_t *expr) {
             expr->func == &_delay ||
             expr->func == &_deriv ||
             expr->func == &_integ||
-            expr->func == &_sequence) {
+            expr->func == &_sequence ||
+            (expr->func == &_fmavg && expr->argc >= 3) ||
+            (expr->func == &_fmedian && expr->argc >= 3)) {
 
             return TRUE;
         }

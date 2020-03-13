@@ -35,15 +35,11 @@ typedef struct expr {
     double          value;          /* used for constant expressions and other caching purposes */
     double          prev_value;     /* used to determine value changes */
 
-    union {
-        int64       aux;            /* auxiliary flag */
-        void      * paux;           /* auxiliary pointer */
-    };
+    int64           aux;            /* auxiliary flag */
+    void          * paux;           /* auxiliary pointer */
 
-    union {
-        char      * port_id;
-        uint16      len;            /* used for value history queue size */
-    };
+    char          * port_id;
+    uint16          len;            /* used for value history queue size */
 
     void          * func;
     int8            argc;
