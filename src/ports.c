@@ -68,6 +68,8 @@ void port_load(port_t *port, uint8 *data) {
     uint8 *base_ptr = data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * port->slot;
     char *strings_ptr = (char *) data + CONFIG_OFFS_STR_BASE;
 
+    DEBUG_PORT(port, "slot = %d", port->slot);
+
     /* display name */
     port->display_name = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_DISP_NAME);
     DEBUG_PORT(port, "display_name = \"%s\"", port->display_name ? port->display_name : "");

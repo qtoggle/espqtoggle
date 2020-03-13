@@ -453,10 +453,11 @@ double _integ_callback(expr_t *expr, int argc, double *args) {
 
 bool _filter_callback(expr_t *expr, int argc, double *args) {
     int i;
-
+    uint64 time_ms = system_uptime_us() / 1000;
     double value = args[0];
     double *values = expr->paux; /* expr->paux flag is used as a pointer to a value history queue */
     int width = (int) args[1];
+    int sampling_interval = argc >= 3 ? args[2] : -1;
 
     /* limit width to reasonable values */
     if (width > MAX_HIST_LEN) {
@@ -469,16 +470,20 @@ bool _filter_callback(expr_t *expr, int argc, double *args) {
     /* very first expression eval call */
     if (!expr->paux) {
         expr->paux = values = malloc(sizeof(double));
-        values[0] = value;
         expr->len = 1;
+        expr->aux = time_ms;
+        values[0] = value;
 
         return TRUE;
     }
 
-    /* if value hasn't changed, skip evaluation */
-    if (value == values[expr->len - 1]) {
+    /* don't evaluate if below sampling interval */
+    int32 delta_ms = time_ms - expr->aux;
+    if (delta_ms < sampling_interval) {
         return FALSE;
     }
+
+    expr->aux = time_ms;
 
     int extra = expr->len - width + 1;
     bool resized = FALSE;
@@ -641,8 +646,8 @@ func_t _held =     {.name = "HELD",     .argc = 3,  .callback = _held_callback};
 func_t _acc =      {.name = "ACC",      .argc = 2,  .callback = _acc_callback};
 func_t _deriv =    {.name = "DERIV",    .argc = 2,  .callback = _deriv_callback};
 func_t _integ =    {.name = "INTEG",    .argc = 3,  .callback = _integ_callback};
-func_t _fmavg =    {.name = "FMAVG",    .argc = 2,  .callback = _fmavg_callback};
-func_t _fmedian =  {.name = "FMEDIAN",  .argc = 2,  .callback = _fmedian_callback};
+func_t _fmavg =    {.name = "FMAVG",    .argc = -2,  .callback = _fmavg_callback};
+func_t _fmedian =  {.name = "FMEDIAN",  .argc = -2,  .callback = _fmedian_callback};
 
 func_t _hyst =     {.name = "HYST",     .argc = 3,  .callback = _hyst_callback};
 func_t _sequence = {.name = "SEQUENCE", .argc = -2, .callback = _sequence_callback};
@@ -1047,7 +1052,9 @@ bool expr_is_time_ms_dep(expr_t *expr) {
             expr->func == &_delay ||
             expr->func == &_deriv ||
             expr->func == &_integ||
-            expr->func == &_sequence) {
+            expr->func == &_sequence ||
+            (expr->func == &_fmavg && expr->argc >= 3) ||
+            (expr->func == &_fmedian && expr->argc >= 3)) {
 
             return TRUE;
         }

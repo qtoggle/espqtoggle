@@ -126,7 +126,7 @@ typedef struct attrdef {
 
 typedef struct port {
 
-    int8            slot;               /* integer identifier */
+    int8            slot;               /* slot number */
     double          value;              /* current value */
     bool            changed;            /* changed flag */
     uint64          change_dep_mask;    /* port change dependency mask */

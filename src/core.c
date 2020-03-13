@@ -319,7 +319,6 @@ void on_value_change(void) {
 
         p->changed = FALSE; /* handled */
 
-        /* add a value change event */
 #ifdef _SLEEP
         if (sleep_is_short_wake()) {
             if (!(value_change_trigger_mask & (1UL << p->slot))) {
@@ -332,6 +331,7 @@ void on_value_change(void) {
         }
 #endif
 
+        /* add a value change event */
         event_push_value_change(p);
     }
 
