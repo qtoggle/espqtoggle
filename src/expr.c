@@ -102,6 +102,7 @@ ICACHE_FLASH_ATTR static func_t   * find_func_by_name(char *name);
 ICACHE_FLASH_ATTR static expr_t   * parse_port_id_expr(char *port_id, char *input);
 ICACHE_FLASH_ATTR static expr_t   * parse_const_expr(char *input);
 ICACHE_FLASH_ATTR static int        check_loops_rec(port_t *the_port, int level, expr_t *expr);
+ICACHE_FLASH_ATTR static bool       expr_func_needs_free(expr_t *expr);
 
 
 const_t _false = {.name = "false", .value = 0};
@@ -304,6 +305,14 @@ double _timems_callback(expr_t *expr, int argc, double *args) {
 }
 
 double _delay_callback(expr_t *expr, int argc, double *args) {
+    if (argc < 1) { /* called from expr_free() */
+        if (expr->paux) {
+            free(expr->paux);
+            expr->paux = NULL;
+        }
+        return FALSE;
+    }
+
     int time_ms = (int) (system_uptime_us() / 1000);
     double value = args[0];
     double delay = args[1];
@@ -452,6 +461,14 @@ double _integ_callback(expr_t *expr, int argc, double *args) {
 }
 
 bool _filter_callback(expr_t *expr, int argc, double *args) {
+    if (argc < 1) { /* called from expr_free() */
+        if (expr->paux) {
+            free(expr->paux);
+            expr->paux = NULL;
+        }
+        return FALSE;
+    }
+
     int i;
     uint64 time_ms = system_uptime_us() / 1000;
     double value = args[0];
@@ -819,6 +836,12 @@ int check_loops_rec(port_t *the_port, int level, expr_t *expr) {
     return 0;
 }
 
+bool expr_func_needs_free(expr_t *expr) {
+    return (expr->func == &_fmavg ||
+            expr->func == &_fmedian ||
+            expr->func == &_delay);
+}
+
 
 expr_t *expr_parse(char *port_id, char *input, int len) {
     if (!len) {
@@ -975,6 +998,9 @@ void expr_free(expr_t *expr) {
     int i;
     for (i = 0; i < expr->argc; i++) {
         expr_free(expr->args[i]);
+    }
+    if (expr_func_needs_free(expr)) {
+        ((func_t *) expr->func)->callback(expr, -1, NULL);
     }
     if (expr->args) {
         free(expr->args);
