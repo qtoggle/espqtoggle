@@ -39,8 +39,6 @@ char                              * filter_choices[] = {"disabled", "median", "a
 ICACHE_FLASH_ATTR static void       port_load(port_t *port, uint8 *data);
 ICACHE_FLASH_ATTR static void       port_save(port_t *port, uint8 *data, uint32 *strings_offs);
 
-ICACHE_FLASH_ATTR static int        compare_numbers(const void *a, const void *b);
-
 
 port_t                           ** all_ports = NULL;
 char                              * all_gpio_choices[] = {"0:GPIO0", "1:GPIO1", "2:GPIO2", "3:GPIO3", "4:GPIO4",
@@ -314,22 +312,6 @@ void port_save(port_t *port, uint8 *data, uint32 *strings_offs) {
         string_pool_write(strings_ptr, strings_offs, NULL, base_ptr + CONFIG_OFFS_PORT_CHOICES);
     }
 }
-
-int compare_numbers(const void *a, const void *b) {
-    int x = *(int *) a;
-    int y = *(int *) b;
-
-    if (x < y) {
-        return -1;
-    }
-    else if (x > y) {
-        return 1;
-    }
-    else {
-        return 0;
-    }
-}
-
 
 void ports_init(uint8 *data) {
     /* add the ports list null terminator */
@@ -663,7 +645,7 @@ double port_filter_apply(port_t *port, double value) {
                 /* copy the values to a temporary buffer, so that they can be sorted out-of-place */
                 tmp_values = malloc(sizeof(double) * len);
                 memcpy(tmp_values, port->filter_values, sizeof(double) * len);
-                qsort(tmp_values, len, sizeof(double), compare_numbers);
+                qsort(tmp_values, len, sizeof(double), compare_double);
                 result = tmp_values[len / 2];
                 free(tmp_values);
 

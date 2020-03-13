@@ -209,6 +209,21 @@ double decent_round(double d) {
     }
 }
 
+int compare_double(const void *a, const void *b) {
+    double x = *(double *) a;
+    double y = *(double *) b;
+
+    if (x < y) {
+        return -1;
+    }
+    else if (x > y) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
 char *my_strtok(char *s, char *d) {
     static char *start = NULL;
     char *p;
