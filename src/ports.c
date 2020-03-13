@@ -449,7 +449,7 @@ void port_rebuild_change_dep_mask(port_t *the_port) {
         the_port->change_dep_mask |= (1ULL << TIME_MS_EXPR_DEP_BIT);
     }
 
-    DEBUG_PORT(the_port, "change dependency mask is %08LX", the_port->change_dep_mask);
+    DEBUG_PORT(the_port, "change dependency mask is " FMT_UINT64_HEX, FMT_UINT64_VAL(the_port->change_dep_mask));
 }
 
 void port_sequence_cancel(port_t *port) {

@@ -30,6 +30,9 @@
 #define MIN(a, b)               (a) > (b) ? (b) : (a)
 #define MAX(a, b)               (a) > (b) ? (a) : (b)
 
+#define FMT_UINT64_VAL(value)   ((unsigned long) (value >> 32)), ((unsigned long) value)
+#define FMT_UINT64_HEX          "%08lX%08lX"
+
 #define htons(x)                (((x)<< 8 & 0xFF00) | ((x)>> 8 & 0x00FF))
 #define ntohs(x)                htons(x)
 
