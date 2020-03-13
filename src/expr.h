@@ -38,10 +38,8 @@ typedef struct expr {
     int64           aux;            /* auxiliary flag */
     void          * paux;           /* auxiliary pointer */
 
-    union {
-        char      * port_id;
-        uint16      len;            /* used for value history queue size */
-    };
+    char          * port_id;
+    uint16          len;            /* used for value history queue size */
 
     void          * func;
     int8            argc;
