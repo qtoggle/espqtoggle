@@ -474,7 +474,7 @@ bool _filter_callback(expr_t *expr, int argc, double *args) {
     double value = args[0];
     double *values = expr->paux; /* expr->paux flag is used as a pointer to a value history queue */
     int width = (int) args[1];
-    int sampling_interval = argc >= 3 ? args[2] : -1;
+    int sampling_interval = args[2];
 
     /* limit width to reasonable values */
     if (width > MAX_HIST_LEN) {
@@ -663,8 +663,8 @@ func_t _held =     {.name = "HELD",     .argc = 3,  .callback = _held_callback};
 func_t _acc =      {.name = "ACC",      .argc = 2,  .callback = _acc_callback};
 func_t _deriv =    {.name = "DERIV",    .argc = 2,  .callback = _deriv_callback};
 func_t _integ =    {.name = "INTEG",    .argc = 3,  .callback = _integ_callback};
-func_t _fmavg =    {.name = "FMAVG",    .argc = -2,  .callback = _fmavg_callback};
-func_t _fmedian =  {.name = "FMEDIAN",  .argc = -2,  .callback = _fmedian_callback};
+func_t _fmavg =    {.name = "FMAVG",    .argc = 3,  .callback = _fmavg_callback};
+func_t _fmedian =  {.name = "FMEDIAN",  .argc = 3,  .callback = _fmedian_callback};
 
 func_t _hyst =     {.name = "HYST",     .argc = 3,  .callback = _hyst_callback};
 func_t _sequence = {.name = "SEQUENCE", .argc = -2, .callback = _sequence_callback};
@@ -1079,8 +1079,8 @@ bool expr_is_time_ms_dep(expr_t *expr) {
             expr->func == &_deriv ||
             expr->func == &_integ||
             expr->func == &_sequence ||
-            (expr->func == &_fmavg && expr->argc >= 3) ||
-            (expr->func == &_fmedian && expr->argc >= 3)) {
+            expr->func == &_fmavg ||
+            expr->func == &_fmedian) {
 
             return TRUE;
         }
