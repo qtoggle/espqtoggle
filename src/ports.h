@@ -104,6 +104,11 @@
 #define CONFIG_OFFS_PORT_SAMP_INT       0x6C    /*   4 bytes */
 #define CONFIG_OFFS_PORT_DATA           0x70    /*  16 bytes for custom data */
 
+#define CHANGE_REASON_NATIVE            'N'
+#define CHANGE_REASON_API               'A'
+#define CHANGE_REASON_SEQUENCE          'S'
+#define CHANGE_REASON_EXPRESSION        'E'
+
 
 typedef struct attrdef {
 
@@ -128,9 +133,11 @@ typedef struct port {
 
     int8            slot;               /* slot number */
     double          value;              /* current value */
-    bool            changed;            /* changed flag */
+
+    char            change_reason;      /* last value change reason */
     uint64          change_dep_mask;    /* port change dependency mask */
     uint32          mutual_excl_mask;   /* mask for ports that cannot be simultaneously enabled */
+
     int             aux;                /* flag used internally for dependency loops & more */
     int8            mapped;             /* flag used for mapping (e.g. pwm channel) */
     uint8           extra_data[PORT_PERSISTED_EXTRA_DATA_LEN];
@@ -220,7 +227,7 @@ ICACHE_FLASH_ATTR port_t  * port_find_by_id(char *id);
 ICACHE_FLASH_ATTR void      port_rebuild_change_dep_mask(port_t *port);
 ICACHE_FLASH_ATTR void      port_sequence_cancel(port_t *port);
 ICACHE_FLASH_ATTR void      port_expr_remove(port_t *port);
-ICACHE_FLASH_ATTR bool      port_set_value(port_t *port, double value);
+ICACHE_FLASH_ATTR bool      port_set_value(port_t *port, double value, char reason);
 ICACHE_FLASH_ATTR json_t  * port_get_json_value(port_t *port);
 ICACHE_FLASH_ATTR void      port_enable(port_t *port);
 ICACHE_FLASH_ATTR void      port_disable(port_t *port);

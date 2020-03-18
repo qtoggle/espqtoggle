@@ -1962,7 +1962,7 @@ json_t *patch_port_value(port_t *port, json_t *query_json, json_t *request_json,
             return API_ERROR(400, "invalid value");
         }
 
-        if (!port_set_value(port, json_bool_get(request_json))) {
+        if (!port_set_value(port, json_bool_get(request_json), CHANGE_REASON_API)) {
             return API_ERROR(400, "invalid value");
         }
     }
@@ -1980,7 +1980,7 @@ json_t *patch_port_value(port_t *port, json_t *query_json, json_t *request_json,
             return API_ERROR(400, "invalid value");
         }
 
-        if (!port_set_value(port, value)) {
+        if (!port_set_value(port, value, CHANGE_REASON_API)) {
             return API_ERROR(400, "invalid value");
         }
     }
@@ -2756,7 +2756,7 @@ void on_sequence_timer(void *arg) {
     port_t *port = arg;
 
     if (port->sequence_pos < port->sequence_len) {
-        port_set_value(port, port->sequence_values[port->sequence_pos]);
+        port_set_value(port, port->sequence_values[port->sequence_pos], CHANGE_REASON_SEQUENCE);
 
         DEBUG_PORT(port, "sequence delay of %d ms", port->sequence_delays[port->sequence_pos]);
 

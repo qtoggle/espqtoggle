@@ -222,9 +222,11 @@ void port_load(port_t *port, uint8 *data) {
         }
 
         if (!IS_UNDEFINED(port->value)) {
-            port_set_value(port, port->value);
+            port_set_value(port, port->value, CHANGE_REASON_NATIVE);
         }
     }
+
+    port->change_reason = CHANGE_REASON_NATIVE;
 }
 
 void port_save(port_t *port, uint8 *data, uint32 *strings_offs) {
@@ -477,7 +479,7 @@ void port_expr_remove(port_t *port) {
     }
 }
 
-bool port_set_value(port_t *port, double value) {
+bool port_set_value(port_t *port, double value, char reason) {
     if (port->transform_write) {
         /* temporarily set the port value to the new value,
          * so that the write transform expression takes the new
@@ -493,10 +495,14 @@ bool port_set_value(port_t *port, double value) {
         }
     }
 
+    DEBUG_PORT(port, "setting value %s, reason = %c", dtostr(value, -1), reason);
+
     bool result = port->write_value(port, value);
     if (!result) {
         DEBUG_PORT(port, "setting value failed");
     }
+
+    port->change_reason = reason;
 
     return result;
 }
