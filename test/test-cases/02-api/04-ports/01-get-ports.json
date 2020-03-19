@@ -21,7 +21,6 @@
 				        "sampling_interval": 0,
 				        "transform_read": "",
 				        "type": "boolean",
-				        "debounce": 0,
 				        "output": false,
 				        "pull_up": false,
 				        "value": null,
@@ -39,16 +38,6 @@
 				                "unit": "",
 				                "modifiable": true,
 				                "type": "boolean"
-				            },
-				            "debounce": {
-				                "display_name": "Debounce Time",
-				                "description": "Sets the debounce filtering time.",
-				                "unit": "milliseconds",
-				                "modifiable": true,
-				                "type": "number",
-				                "min": 0,
-				                "max": 1000,
-				                "integer": true
 				            },
 				            "sampling_interval": {
 				                "display_name": "Sampling Interval",
@@ -72,7 +61,6 @@
 				        "sampling_interval": 0,
 				        "transform_read": "",
 				        "type": "boolean",
-				        "debounce": 0,
 				        "output": false,
 				        "pull_up": false,
 				        "value": null,
@@ -90,7 +78,6 @@
 				        "sampling_interval": 0,
 				        "transform_read": "",
 				        "type": "boolean",
-				        "debounce": 0,
 				        "output": false,
 				        "pull_up": false,
 				        "value": null,
@@ -108,7 +95,6 @@
 				        "sampling_interval": 0,
 				        "transform_read": "",
 				        "type": "boolean",
-				        "debounce": 0,
 				        "output": false,
 				        "pull_up": false,
 				        "value": null,
@@ -236,40 +222,11 @@
 				        "sampling_interval": 1000,
 				        "transform_read": "",
 				        "type": "number",
-				        "filter": "disabled",
-				        "filter_width": 2,
 				        "min": 0,
 				        "max": 1000,
 				        "integer": true,
 				        "value": null,
 				        "definitions": {
-				            "filter": {
-				                "display_name": "Filter Type",
-				                "description": "Configures a filter for the port value.",
-				                "modifiable": true,
-				                "type": "string",
-				                "choices": [
-				                    {
-				                        "value": "disabled"
-				                    },
-				                    {
-				                        "value": "median"
-				                    },
-				                    {
-				                        "value": "average"
-				                    }
-				                ]
-				            },
-				            "filter_width": {
-				                "display_name": "Filter Width",
-				                "description": "Sets the filter width.",
-				                "unit": "samples",
-				                "modifiable": true,
-				                "type": "number",
-				                "min": 2,
-				                "max": 1000,
-				                "integer": true
-				            },
 				            "sampling_interval": {
 				                "${DOLLAR}ref": "#/0/definitions/sampling_interval"
 				            }

@@ -34,9 +34,6 @@
 #define DEBUG_PORT(...)                 {}
 #endif
 
-#define PORT_MAX_FILTER_WIDTH           1000
-#define PORT_MAX_DEBOUNCE_TIME          1000
-
 #define PORT_MAX_ID_LEN                 64
 #define PORT_MAX_DISP_NAME_LEN          64
 #define PORT_MAX_UNIT_LEN               16
@@ -53,20 +50,15 @@
 #define ATTR_TYPE_NUMBER                'N'
 #define ATTR_TYPE_STRING                'S'
 
-#define FILTER_TYPE_NONE                0x00
-#define FILTER_TYPE_MEDIAN              0x10
-#define FILTER_TYPE_AVERAGE             0x20
-
 #define PORT_PERSISTED_EXTRA_DATA_LEN   16
 
 #define PORT_FLAG_ENABLED               0x00000001
 #define PORT_FLAG_OUTPUT                0x00000002
 #define PORT_FLAG_PULL_UP               0x00000004
-#define PORT_FLAG_PERSISTED             0x00000008
-#define PORT_FLAG_FILTER_MASK           0x00000030
+#define PORT_FLAG_PERSISTED             0x00000008  /* 0x00000010, 0x00000020: reserved */
 #define PORT_FLAG_PULL_DOWN             0x00000040
 #define PORT_FLAG_VIRTUAL_INTEGER       0x00002000
-#define PORT_FLAG_VIRTUAL_TYPE          0x00004000  /* 0x00008000 - reserved */
+#define PORT_FLAG_VIRTUAL_TYPE          0x00004000  /* 0x00008000: reserved */
 #define PORT_FLAG_VIRTUAL_ACTIVE        0x00010000
 
 #define PORT_SLOT_AUTO                  -1
@@ -84,8 +76,6 @@
 #define IS_PULL_DOWN(port)              ((port)->flags & PORT_FLAG_PULL_DOWN)
 #define IS_PERSISTED(port)              ((port)->flags & PORT_FLAG_PERSISTED)
 #define IS_VIRTUAL(port)                ((port)->flags & PORT_FLAG_VIRTUAL_ACTIVE)
-
-#define FILTER_TYPE(port)               ((port)->flags & PORT_FLAG_FILTER_MASK)
 
 #define CONFIG_OFFS_PORT_ID             0x00    /*   4 bytes */
 #define CONFIG_OFFS_PORT_DISP_NAME      0x04    /*   4 bytes */
@@ -180,11 +170,6 @@ typedef struct port {
     char          * unit;
     int             flags;
     
-    /* filter */
-    uint32          filter_width;
-    uint32          filter_len;
-    double        * filter_values;
-
     /* heart beat */
     int             heart_beat_interval;
     long long       last_heart_beat_time;   /* in milliseconds, since boot */
@@ -210,7 +195,6 @@ typedef double (* float_getter_t)(struct port *port, attrdef_t *attrdef);
 typedef void   (* float_setter_t)(struct port *port, attrdef_t *attrdef, double value);
 
 
-extern char       * filter_choices[];
 extern port_t    ** all_ports;
 extern char       * all_gpio_choices[];
 extern char       * all_gpio_none_choices[];
@@ -232,8 +216,6 @@ ICACHE_FLASH_ATTR json_t  * port_get_json_value(port_t *port);
 ICACHE_FLASH_ATTR void      port_enable(port_t *port);
 ICACHE_FLASH_ATTR void      port_disable(port_t *port);
 ICACHE_FLASH_ATTR void      port_configure(port_t *port);
-ICACHE_FLASH_ATTR void      port_filter_set(port_t *port, int filter, int filter_width);
-ICACHE_FLASH_ATTR double    port_filter_apply(port_t *port, double value);
 
 
 #include "ports/gpio.h"

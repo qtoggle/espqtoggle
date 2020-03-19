@@ -37,9 +37,6 @@ typedef struct {
     uint8                                   type;
     uint8                                   index;
 
-    int8                                    filter_port_index;
-    int8                                    filter_width_port_index;
-    int8                                    debounce_port_index;
     int8                                    sampling_interval_port_index;
 
 } json_refs_ctx_t;
