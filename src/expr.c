@@ -41,7 +41,7 @@
 typedef struct {
 
     double      value;
-    int         time_ms;
+    uint64      time_ms;
 
 } value_hist_t;
 
@@ -87,13 +87,13 @@ ICACHE_FLASH_ATTR static double     _timems_callback(expr_t *expr, int argc, dou
 
 ICACHE_FLASH_ATTR static double     _delay_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _held_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _acc_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _deriv_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _integ_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static bool       _filter_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _fmavg_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _fmedian_callback(expr_t *expr, int argc, double *args);
 
+ICACHE_FLASH_ATTR static double     _acc_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _hyst_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _sequence_callback(expr_t *expr, int argc, double *args);
 
@@ -313,66 +313,55 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
         return FALSE;
     }
 
-    int time_ms = (int) (system_uptime_us() / 1000);
+    uint64 time_ms = system_uptime_us() / 1000;
     double value = args[0];
     double delay = args[1];
+    double result = UNDEFINED;
     int i;
 
     value_hist_t *hist = expr->paux;
 
-    /* expr->aux flag is used as a pointer to a value history queue
-     * expr->value is used as current value */
-
-    if (IS_UNDEFINED(expr->value)) { /* very first expression eval call */
+    /* detect value transitions and push them to history */
+    if (value != expr->value) {
         expr->value = value;
-    }
 
-    /* detect system time overflow and reset history */
-    if (expr->len && hist[0].time_ms > time_ms) {
-        expr->len = 0;
-        free(expr->paux);
-        expr->paux = NULL;
-
-        return expr->value;
-    }
-
-    /* detect value transitions and build history */
-    if (value != expr->prev_value) {
-        expr->prev_value = value;
-
-        /* drop elements from queue if history max size reached */
-        if (expr->len == MAX_HIST_LEN) {
+        if (expr->len == MAX_HIST_LEN) { /* shift elements in queue to make place for new value */
             for (i = 0; i < expr->len - 1; i++) {
                 hist[i] = hist[i + 1];
             }
         }
-        else {
+        else { /* grow history for another value */
             expr->len++;
-            expr->paux = (hist = realloc(expr->paux, sizeof(value_hist_t) * expr->len));
+            expr->paux = hist = realloc(expr->paux, sizeof(value_hist_t) * expr->len);
         }
 
         hist[expr->len - 1].value = value;
         hist[expr->len - 1].time_ms = time_ms;
     }
 
-    /* process history */
-    while (expr->len && (time_ms - hist[0].time_ms >= delay)) {
-        expr->value = hist[0].value;
+    /* go through history (forward) and find the first value that is newer than the delay; use it as a result;
+     * keep only newer values in history */
+    bool resized = FALSE;
+    while (expr->len && (time_ms - hist[0].time_ms > delay)) {
+        result = hist[0].value;
         for (i = 0; i < expr->len - 1; i++) {
             hist[i] = hist[i + 1];
         }
         expr->len--;
+        resized = TRUE;
     }
 
-    if (expr->len) {
-        expr->paux = realloc(expr->paux, sizeof(value_hist_t) * expr->len);
-    }
-    else {
-        free(expr->paux);
-        expr->paux = NULL;
+    if (resized) {
+        if (expr->len) {
+            expr->paux = realloc(expr->paux, sizeof(value_hist_t) * expr->len);
+        }
+        else {
+            free(expr->paux);
+            expr->paux = NULL;
+        }
     }
 
-    return expr->value;
+    return result;
 }
 
 double _held_callback(expr_t *expr, int argc, double *args) {
@@ -396,20 +385,6 @@ double _held_callback(expr_t *expr, int argc, double *args) {
         else {
             result = (delta >= duration) && (value == fixed_value);
         }
-    }
-
-    expr->value = value;
-
-    return result;
-}
-
-double _acc_callback(expr_t *expr, int argc, double *args) {
-    double value = args[0];
-    double accumulator = args[1];
-    double result = accumulator;
-
-    if (!IS_UNDEFINED(expr->value)) { /* not the very first expression eval call */
-        result += value - expr->value;
     }
 
     expr->value = value;
@@ -566,6 +541,20 @@ double _fmedian_callback(expr_t *expr, int argc, double *args) {
     return result;
 }
 
+double _acc_callback(expr_t *expr, int argc, double *args) {
+    double value = args[0];
+    double accumulator = args[1];
+    double result = accumulator;
+
+    if (!IS_UNDEFINED(expr->value)) { /* not the very first expression eval call */
+        result += value - expr->value;
+    }
+
+    expr->value = value;
+
+    return result;
+}
+
 double _hyst_callback(expr_t *expr, int argc, double *args) {
     double value = args[0];
     double threshold1 = args[1];
@@ -660,12 +649,12 @@ func_t _timems =   {.name = "TIMEMS",   .argc = 0,  .callback = _timems_callback
 
 func_t _delay =    {.name = "DELAY",    .argc = 2,  .callback = _delay_callback};
 func_t _held =     {.name = "HELD",     .argc = 3,  .callback = _held_callback};
-func_t _acc =      {.name = "ACC",      .argc = 2,  .callback = _acc_callback};
 func_t _deriv =    {.name = "DERIV",    .argc = 2,  .callback = _deriv_callback};
 func_t _integ =    {.name = "INTEG",    .argc = 3,  .callback = _integ_callback};
 func_t _fmavg =    {.name = "FMAVG",    .argc = 3,  .callback = _fmavg_callback};
 func_t _fmedian =  {.name = "FMEDIAN",  .argc = 3,  .callback = _fmedian_callback};
 
+func_t _acc =      {.name = "ACC",      .argc = 2,  .callback = _acc_callback};
 func_t _hyst =     {.name = "HYST",     .argc = 3,  .callback = _hyst_callback};
 func_t _sequence = {.name = "SEQUENCE", .argc = -2, .callback = _sequence_callback};
 
@@ -711,12 +700,12 @@ func_t *funcs[] = {
 
     &_delay,
     &_held,
-    &_acc,
     &_deriv,
     &_integ,
     &_fmavg,
     &_fmedian,
 
+    &_acc,
     &_hyst,
     &_sequence,
 
@@ -765,7 +754,6 @@ expr_t *parse_port_id_expr(char *port_id, char *input) {
     
     expr_t *expr = zalloc(sizeof(expr_t));
     expr->value = UNDEFINED;
-    expr->prev_value = UNDEFINED;
     
     if (*input) {
         expr->port_id = strdup(input);
@@ -945,7 +933,6 @@ expr_t *expr_parse(char *port_id, char *input, int len) {
         
         expr_t *expr = zalloc(sizeof(expr_t));
         expr->value = UNDEFINED;
-        expr->prev_value = UNDEFINED;
         expr->func = func;
         expr->argc = argc;
         if (argc) {

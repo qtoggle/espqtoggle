@@ -32,8 +32,7 @@
 
 typedef struct expr {
 
-    double          value;          /* used for constant expressions and other caching purposes */
-    double          prev_value;     /* used to determine value changes */
+    double          value;          /* used for constant expressions, value change detection and caching purposes */
 
     int64           aux;            /* auxiliary flag */
     void          * paux;           /* auxiliary pointer */
