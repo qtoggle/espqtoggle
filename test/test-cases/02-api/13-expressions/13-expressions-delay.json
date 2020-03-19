@@ -46,6 +46,18 @@
             "name": "json-http-client",
             "params": {
                 "method": "PATCH",
+                "path": "/ports/num_port2/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": 50,
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
                 "path": "/ports/num_port2",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
@@ -57,11 +69,23 @@
             }
         },
         {
-            "name": "sleep",
+            "name": "json-http-client",
             "params": {
-                "duration": 500
+                "method": "GET",
+                "path": "/ports/num_port2/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": 50
             }
         },
+        {
+            "name": "sleep",
+            "params": {
+                "duration": 1000
+            }
+        },        
         {
             "name": "json-http-client",
             "params": {
@@ -101,7 +125,7 @@
         {
             "name": "sleep",
             "params": {
-                "duration": 1500
+                "duration": 1000
             }
         },
         {
@@ -118,4 +142,3 @@
         }
     ]
 }
-
