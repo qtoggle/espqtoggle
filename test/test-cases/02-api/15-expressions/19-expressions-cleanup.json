@@ -1,5 +1,5 @@
 {
-    "name": "expressions-last",
+    "name": "expressions-cleanup",
     "instructions": [
         {
             "name": "json-http-client",
