@@ -33,7 +33,17 @@
                 },
                 "expected_status": 204
             }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "DELETE",
+                "path": "/ports/num_port3",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 204
+            }
         }
     ]
 }
-
