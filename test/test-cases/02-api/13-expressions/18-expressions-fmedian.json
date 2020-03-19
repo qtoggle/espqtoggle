@@ -50,7 +50,7 @@
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "body": {
-                    "expression": "FMEDIAN(${DOLLAR}num_port, 3, 1000)"
+                    "expression": "FMEDIAN(${DOLLAR}num_port, 3, 2000)"
                 },
                 "expected_status": 204
             }
@@ -82,7 +82,7 @@
         {
             "name": "sleep",
             "params": {
-                "duration": 1100
+                "duration": 2000
             }
         },
         {
@@ -112,7 +112,7 @@
         {
             "name": "sleep",
             "params": {
-                "duration": 1100
+                "duration": 2000
             }
         },
         {
