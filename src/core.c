@@ -165,14 +165,6 @@ void core_poll_ports(void) {
             }
         }
 
-        if (!IS_OUTPUT(p) && FILTER_TYPE(p)) {
-            value = port_filter_apply(p, value);
-        }
-
-        if (IS_UNDEFINED(value)) { /* value could have become undefined after filtering */
-            continue;
-        }
-
         if (p->value != value) {
             if (IS_UNDEFINED(p->value)) {
                 DEBUG_PORT(p, "detected value change: (undefined) -> %s, reason = %c",

@@ -457,11 +457,6 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
     if (port->type == PORT_TYPE_NUMBER) {
         json_obj_append(json, "type", json_str_new(API_PORT_TYPE_NUMBER));
 
-        if (!IS_OUTPUT(port)) {
-            json_obj_append(json, "filter", json_str_new(filter_choices[FILTER_TYPE(port) >> 4]));
-            json_obj_append(json, "filter_width", json_int_new(port->filter_width));
-        }
-
         if (!IS_UNDEFINED(port->min)) {
             json_obj_append(json, "min", json_double_new(port->min));
         }
@@ -515,18 +510,6 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
     /* specific to boolean ports */
     else { /* assuming PORT_TYPE_BOOLEAN */
         json_obj_append(json, "type", json_str_new(API_PORT_TYPE_BOOLEAN));
-
-        if (!IS_OUTPUT(port)) {
-            if (FILTER_TYPE(port)) {
-                uint32 sampling_interval = MAX(1, port->sampling_interval);
-                uint32 debounce = port->filter_width * sampling_interval;
-                debounce = MAX(1, MIN(debounce, PORT_MAX_DEBOUNCE_TIME));
-                json_obj_append(json, "debounce", json_int_new(debounce));
-            }
-            else {
-                json_obj_append(json, "debounce", json_int_new(0));
-            }
-        }
     }
 
     /* specific to output ports */
@@ -1755,58 +1738,6 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                 DEBUG_PORT(port, "read transform set to \"%s\"", port->stransform_read);
             }
         }
-        else if (!IS_OUTPUT(port) && (port->type == PORT_TYPE_NUMBER) && !strcmp(key, "filter")) {
-            if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD_VALUE(key);
-            }
-
-            char *filter = json_str_get(child);
-            int idx;
-            if (!(idx = validate_str(filter, filter_choices))) {
-                return INVALID_FIELD_VALUE(key);
-            }
-
-            port_filter_set(port, (idx - 1) << 4, port->filter_width);
-
-            DEBUG_PORT(port, "filter set to %s", filter);
-        }
-        else if (!IS_OUTPUT(port) && (port->type == PORT_TYPE_NUMBER) && !strcmp(key, "filter_width")) {
-            if (json_get_type(child) != JSON_TYPE_INT) {
-                return INVALID_FIELD_VALUE(key);
-            }
-
-            int filter_width = json_int_get(child);
-            if (!validate_num(filter_width, 2, PORT_MAX_FILTER_WIDTH, TRUE, 0, NULL)) {
-                return INVALID_FIELD_VALUE(key);
-            }
-
-            port_filter_set(port, FILTER_TYPE(port), filter_width);
-
-            DEBUG_PORT(port, "filter width set to %d", filter_width);
-        }
-        else if (!IS_OUTPUT(port) && (port->type == PORT_TYPE_BOOLEAN) && !strcmp(key, "debounce")) {
-            if (json_get_type(child) != JSON_TYPE_INT) {
-                return INVALID_FIELD_VALUE(key);
-            }
-
-            int debounce = json_int_get(child);
-            if (!validate_num(debounce, 0, PORT_MAX_DEBOUNCE_TIME, TRUE, 0, NULL)) {
-                return INVALID_FIELD_VALUE(key);
-            }
-
-            if (debounce) {
-                uint32 sampling_interval = MAX(1, port->sampling_interval);
-                uint32 filter_width = debounce / sampling_interval;
-                filter_width = MAX(1, MIN(PORT_MAX_FILTER_WIDTH, filter_width));
-                port_filter_set(port, FILTER_TYPE_AVERAGE, filter_width);
-            }
-            else {
-                port_filter_set(port, FILTER_TYPE_NONE, 0);
-            }
-
-            DEBUG_PORT(port, "debounce time set to %d", debounce);
-            DEBUG_PORT(port, "filter width set to %d", port->filter_width);
-        }
         else if (!strcmp(key, "persisted")) {
             if (json_get_type(child) != JSON_TYPE_BOOL) {
                 return INVALID_FIELD_VALUE(key);
@@ -1832,18 +1763,6 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                               port->max_sampling_interval, TRUE, 0, NULL)) {
 
                 return INVALID_FIELD_VALUE(key);
-            }
-
-            /* adjust debounce factor which depends on sampling interval */
-            if (port->type == PORT_TYPE_BOOLEAN && FILTER_TYPE(port)) {
-                sampling_interval = MAX(1, sampling_interval);
-                uint32 debounce = port->filter_width * port->sampling_interval;
-                uint32 filter_width = debounce / sampling_interval;
-                filter_width = MAX(1, MIN(PORT_MAX_FILTER_WIDTH, filter_width));
-                port_filter_set(port, FILTER_TYPE_AVERAGE, filter_width);
-
-                DEBUG_PORT(port, "debounce time set to %d", debounce);
-                DEBUG_PORT(port, "filter width set to %d", port->filter_width);
             }
 
             port->sampling_interval = sampling_interval;
@@ -2561,68 +2480,6 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
 
             json_stringify(attrdef_json);
             json_obj_append(json, a->name, attrdef_json);
-        }
-    }
-
-    if (!IS_OUTPUT(port)) {
-        if (port->type == PORT_TYPE_NUMBER) {
-            /* filter attrdef */
-            if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST && json_refs_ctx->filter_port_index >= 0) {
-                attrdef_json = make_json_ref("#/%d/definitions/filter", json_refs_ctx->filter_port_index);
-#if defined(_DEBUG) && defined(_DEBUG_API)
-                char *ref_str = json_str_get(json_obj_value_at(attrdef_json, 0));
-                DEBUG_API("replacing \"%s.definitions.filter\" with $ref \"%s\"", port->id, ref_str);
-#endif
-            }
-            else {
-                attrdef_json = attrdef_to_json("Filter Type", "Configures a filter for the port value.",
-                                               /* unit = */ NULL, ATTR_TYPE_STRING, /* modifiable = */ TRUE,
-                                               /* min = */ UNDEFINED, /* max = */ UNDEFINED, /* integer = */ FALSE,
-                                               /* step = */ 0, filter_choices, /* reconnect = */FALSE);
-                if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST) {
-                    json_refs_ctx->filter_port_index = json_refs_ctx->index;
-                }
-            }
-            json_obj_append(json, "filter", attrdef_json);
-
-            /* filter_width attrdef */
-            if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST && json_refs_ctx->filter_width_port_index >= 0) {
-                attrdef_json = make_json_ref("#/%d/definitions/filter_width", json_refs_ctx->filter_width_port_index);
-#if defined(_DEBUG) && defined(_DEBUG_API)
-                char *ref_str = json_str_get(json_obj_value_at(attrdef_json, 0));
-                DEBUG_API("replacing \"%s.definitions.filter_width\" with $ref \"%s\"", port->id, ref_str);
-#endif
-            }
-            else {
-                attrdef_json = attrdef_to_json("Filter Width", "Sets the filter width.", "samples", ATTR_TYPE_NUMBER,
-                                               /* modifiable = */ TRUE, /* min = */ 2,
-                                               /* max = */ PORT_MAX_FILTER_WIDTH, /* integer = */ TRUE, /* step = */ 0,
-                                               /* choices = */ NULL, /* reconnect */ FALSE);
-                if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST) {
-                    json_refs_ctx->filter_width_port_index = json_refs_ctx->index;
-                }
-            }
-            json_obj_append(json, "filter_width", attrdef_json);
-        }
-        else {  /* assuming PORT_TYPE_BOOLEAN */
-            /* debounce attrdef */
-            if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST && json_refs_ctx->debounce_port_index >= 0) {
-                attrdef_json = make_json_ref("#/%d/definitions/debounce", json_refs_ctx->debounce_port_index);
-#if defined(_DEBUG) && defined(_DEBUG_API)
-                char *ref_str = json_str_get(json_obj_value_at(attrdef_json, 0));
-                DEBUG_API("replacing \"%s.definitions.debounce\" with $ref \"%s\"", port->id, ref_str);
-#endif
-            }
-            else {
-                attrdef_json = attrdef_to_json("Debounce Time", "Sets the debounce filtering time.", "milliseconds",
-                                               ATTR_TYPE_NUMBER, /* modifiable = */ TRUE, /* min = */ 0,
-                                               /* max = */ PORT_MAX_DEBOUNCE_TIME, /* integer = */ TRUE, /* step = */ 0,
-                                               /* choices = */ NULL, /* reconnect = */ FALSE);
-                if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST) {
-                    json_refs_ctx->debounce_port_index = json_refs_ctx->index;
-                }
-            }
-            json_obj_append(json, "debounce", attrdef_json);
         }
     }
 

@@ -34,8 +34,6 @@
 #include "stringpool.h"
 
 
-char                              * filter_choices[] = {"disabled", "median", "average", NULL};
-
 ICACHE_FLASH_ATTR static void       port_load(port_t *port, uint8 *data);
 ICACHE_FLASH_ATTR static void       port_save(port_t *port, uint8 *data, uint32 *strings_offs);
 
@@ -127,23 +125,6 @@ void port_load(port_t *port, uint8 *data) {
     port->last_heart_beat_time = -INT_MAX;
 
     DEBUG_PORT(port, "heart_beat_interval = %d ms", port->heart_beat_interval);
-
-    /* filter */
-    port->filter_values = NULL;
-    port->filter_width = 0;
-    if (!IS_OUTPUT(port)) {
-        memcpy(&port->filter_width, base_ptr + CONFIG_OFFS_PORT_FWIDTH, 4);
-        if (!port->filter_width) {
-            port->filter_width = 2;
-        }
-        if (port->filter_width > PORT_MAX_FILTER_WIDTH) {
-            port->filter_width = PORT_MAX_FILTER_WIDTH;
-        }
-        port_filter_set(port, FILTER_TYPE(port), port->filter_width);
-    }
-
-    DEBUG_PORT(port, "filter = %02X", FILTER_TYPE(port));
-    DEBUG_PORT(port, "filter_width = %d", port->filter_width);
 
     /* custom data */
     memcpy(port->extra_data, base_ptr + CONFIG_OFFS_PORT_DATA, PORT_PERSISTED_EXTRA_DATA_LEN);
@@ -268,9 +249,6 @@ void port_save(port_t *port, uint8 *data, uint32 *strings_offs) {
 
     /* sampling interval */
     memcpy(base_ptr + CONFIG_OFFS_PORT_SAMP_INT, &port->sampling_interval, 4);
-
-    /* filter */
-    memcpy(base_ptr + CONFIG_OFFS_PORT_FWIDTH, &port->filter_width, 4);
 
     /* custom data */
     memcpy(base_ptr + CONFIG_OFFS_PORT_DATA, port->extra_data, PORT_PERSISTED_EXTRA_DATA_LEN);
@@ -597,104 +575,5 @@ void port_configure(port_t *port) {
 
     if (port->configure) {
         port->configure(port);
-    }
-}
-
-void port_filter_set(port_t *port, int filter, int filter_width) {
-    port->flags &= ~PORT_FLAG_FILTER_MASK;
-    port->flags |= filter & PORT_FLAG_FILTER_MASK;
-    port->filter_width = filter_width;
-    port->filter_len = 0;
-
-    if (port->filter_values) {
-        free(port->filter_values);
-        port->filter_values = NULL;
-    }
-
-    if (filter == FILTER_TYPE_NONE) {
-        return;
-    }
-
-    port->filter_values = malloc(filter_width * sizeof(double));
-    int i;
-    for (i = 0; i < filter_width; i++) {
-        port->filter_values[i] = UNDEFINED;
-    }
-}
-
-double port_filter_apply(port_t *port, double value) {
-    int i;
-    double *tmp_values, result;
-    int len = port->filter_len;
-
-    /* ignore undefined values */
-    if (IS_UNDEFINED(value)) {
-        return UNDEFINED;
-    }
-
-    if (len < port->filter_width) {
-        port->filter_values[port->filter_len++] = value;
-
-        /* not enough values for filtering */
-        return UNDEFINED;
-    }
-
-    // TODO this could be managed as a ring buffer for better performance
-    /* shift filter values to left one place, making space for the new value */
-    for (i = 0; i < len - 1; i++) {
-        port->filter_values[i] = port->filter_values[i + 1];
-    }
-    port->filter_values[len - 1] = value;
-
-    result = value;
-    if (port->type == PORT_TYPE_NUMBER) {
-        switch (FILTER_TYPE(port)) {
-            case FILTER_TYPE_MEDIAN: {
-                /* copy the values to a temporary buffer, so that they can be sorted out-of-place */
-                tmp_values = malloc(sizeof(double) * len);
-                memcpy(tmp_values, port->filter_values, sizeof(double) * len);
-                qsort(tmp_values, len, sizeof(double), compare_double);
-                result = tmp_values[len / 2];
-                free(tmp_values);
-
-                break;
-            }
-
-            case FILTER_TYPE_AVERAGE: {
-                double avg_value = 0;
-                for (i = 0; i < len; i++) {
-                    avg_value += port->filter_values[i];
-                }
-
-                result = avg_value / len;
-
-                /* generally, apply some decent rounding */
-                result = decent_round(result);
-
-                break;
-            }
-        }
-
-        /* if a read transform expression begins with a rounding function,
-         * also apply the rounding function to the filtered value */
-        if (port->transform_read && expr_is_rounding(port->transform_read)) {
-            func_t *func = port->transform_read->func;
-            result = func->callback(port->transform_read, 1, &result);
-        }
-
-        return result;
-    }
-    else { /* assuming port->type == PORT_TYPE_BOOLEAN */
-        // TODO a better approach would be to select an evenly-distributed
-        // set of values (e.g. equal to the debounce factor)
-
-        /* simply choose whatever the majority says */
-        int counts[2] = {0 /* false */ , 0 /* true */};
-
-        for (i = 0; i < len; i++) {
-            counts[((int) port->filter_values[i]) & 1]++;
-        }
-
-        return counts[1] >= counts[0];
     }
 }

@@ -87,8 +87,5 @@ void json_refs_ctx_init(json_refs_ctx_t *json_refs_ctx, uint8 type) {
     json_refs_ctx->type = type;
     json_refs_ctx->index = 0;
 
-    json_refs_ctx->filter_port_index = -1;
-    json_refs_ctx->filter_width_port_index = -1;
-    json_refs_ctx->debounce_port_index = -1;
     json_refs_ctx->sampling_interval_port_index = -1;
 }
