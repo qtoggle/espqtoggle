@@ -31,18 +31,6 @@
             "name": "json-http-client",
             "params": {
                 "method": "PATCH",
-                "path": "/ports/num_port/value",
-                "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
-                },
-                "body": 0,
-                "expected_status": 204
-            }
-        },
-        {
-            "name": "json-http-client",
-            "params": {
-                "method": "PATCH",
                 "path": "/ports/num_port",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
@@ -50,6 +38,18 @@
                 "body": {
                     "expression": "IF(${DOLLAR}bool_port, NOT(${DOLLAR}), ${DOLLAR})"
                 },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": 0,
                 "expected_status": 204
             }
         },
