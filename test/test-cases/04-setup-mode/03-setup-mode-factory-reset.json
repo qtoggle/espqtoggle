@@ -39,7 +39,8 @@
                     "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
                 },
                 "body": {
-                    "network_wifi": "${TEST_SSID}:${TEST_PSK}"
+                    "wifi_ssid": "${TEST_SSID}",
+                    "wifi_key": "${TEST_PSK}"
                 },
                 "expected_status": 204,
                 "expected_body": null
@@ -47,4 +48,3 @@
         }
     ]
 }
-

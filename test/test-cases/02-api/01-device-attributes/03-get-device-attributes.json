@@ -26,9 +26,11 @@
                         "uptime",
                         "virtual_ports",
                         "network_ip",
-                        "network_wifi",
-                        "frequency",
+                        "wifi_ssid",
+                        "wifi_key",
+                        "wifi_bssid",
                         "wifi_rssi",
+                        "frequency",
                         "network_bssid",
                         "free_mem",
                         "flash_size",
@@ -86,14 +88,17 @@
                         "network_ip": {
                             "enum": ["${TEST_NETWORK_DEVICE_IP}/${TEST_NETWORK_MASK}:${TEST_NETWORK_HOST_IP}:${TEST_NETWORK_HOST_IP}"]
                         },
-                        "network_wifi": {
-                            "enum": ["${TEST_SSID}:${TEST_PSK}"]
+                        "wifi_ssid": {
+                            "enum": ["${TEST_SSID}"]
                         },
-                        "frequency": {
-                            "enum": [80]
+                        "wifi_key": {
+                            "enum": ["${TEST_PSK}"]
                         },
                         "wifi_rssi": {
                             "type": "integer"
+                        },
+                        "frequency": {
+                            "enum": [80]
                         },
                         "network_bssid": {
                             "enum": ["{{HOST_MAC_ADDRESS_UPPER}}"]

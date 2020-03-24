@@ -53,9 +53,11 @@
                                         "uptime",
                                         "virtual_ports",
                                         "network_ip",
-                                        "network_wifi",
-                                        "frequency",
+                                        "wifi_ssid",
+                                        "wifi_key",
+                                        "wifi_bssid",
                                         "wifi_rssi",
+                                        "frequency",
                                         "network_bssid",
                                         "free_mem",
                                         "flash_size",
@@ -103,13 +105,19 @@
                                         "network_ip": {
                                             "type": "string"
                                         },
-                                        "network_wifi": {
+                                        "wifi_ssid": {
                                             "type": "string"
                                         },
-                                        "frequency": {
-                                            "type": "integer"
+                                        "wifi_key": {
+                                            "type": "string"
+                                        },
+                                        "wifi_bssid": {
+                                            "type": "string"
                                         },
                                         "wifi_rssi": {
+                                            "type": "integer"
+                                        },
+                                        "frequency": {
                                             "type": "integer"
                                         },
                                         "network_bssid": {
