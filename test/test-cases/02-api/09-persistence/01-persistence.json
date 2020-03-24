@@ -21,7 +21,7 @@
             "name": "json-http-client",
             "params": {
                 "method": "PATCH",
-                "path": "/ports/adc0",
+                "path": "/ports/gpio0",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
