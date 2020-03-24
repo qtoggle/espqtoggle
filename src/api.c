@@ -618,17 +618,25 @@ json_t *device_to_json(void) {
     json_obj_append(json, "virtual_ports", json_int_new(VIRTUAL_MAX_PORTS));
 #endif
 
-    /* network_ip */
-    if (wifi_get_static_ip()) {
-        snprintf(value, 256, "%d.%d.%d.%d/%d:%d.%d.%d.%d:%d.%d.%d.%d",
-                 IP2STR(wifi_get_static_ip()),
-                 wifi_get_static_netmask(),
-                 IP2STR(wifi_get_static_gw()),
-                 IP2STR(wifi_get_static_dns()));
-        json_obj_append(json, "network_ip", json_str_new(value));
+    /* IP configuration */
+    if (wifi_get_ip()) {
+        snprintf(value, 256, IPSTR, IP2STR(wifi_get_ip()));
+        json_obj_append(json, "ip_address", json_str_new(value));
+
+        snprintf(value, 256, IPSTR, IP2STR(wifi_get_ip()));
+        json_obj_append(json, "ip_mask", json_int_new(wifi_get_netmask()));
+
+        snprintf(value, 256, IPSTR, IP2STR(wifi_get_gw()));
+        json_obj_append(json, "ip_gateway", json_str_new(value));
+
+        snprintf(value, 256, IPSTR, IP2STR(wifi_get_dns()));
+        json_obj_append(json, "ip_dns", json_str_new(value));
     }
     else {
-        json_obj_append(json, "network_ip", json_str_new(""));
+        json_obj_append(json, "ip_address", json_str_new(""));
+        json_obj_append(json, "ip_mask", json_int_new(0));
+        json_obj_append(json, "ip_gateway", json_str_new(""));
+        json_obj_append(json, "ip_dns", json_str_new(""));
     }
 
     /* network_wifi */
@@ -848,33 +856,85 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
             system_update_cpu_freq(frequency);
             DEBUG_DEVICE("CPU frequency set to %d MHz", frequency);
         }
-        else if (!strcmp(key, "network_ip")) {
+        else if (!strcmp(key, "ip_address")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
                 return INVALID_FIELD_VALUE(key);
             }
 
-            char *ip_config_str = json_str_get(child);
-            if (ip_config_str[0]) { /* static IP */
-                uint8 config[13];
-                if (!validate_str_ip(ip_config_str, config, 13)) {
+            char *ip_str = json_str_get(child);
+            if (ip_str[0]) { /* manual IP */
+                uint8 bytes[4];
+                if (!validate_str_ip(ip_str, bytes)) {
                     return INVALID_FIELD_VALUE(key);
                 }
 
-                if (config[4] > 32) {
-                    return INVALID_FIELD_VALUE(key);
-                }
-
-                ip_addr_t ip, gw, dns;
-                IP4_ADDR(&ip, config[0], config[1], config[2], config[3]);
-                IP4_ADDR(&gw, config[5], config[6], config[7], config[8]);
-                IP4_ADDR(&dns, config[9], config[10], config[11], config[12]);
-
-                wifi_set_ip(&ip, config[4], &gw, &dns);
+                ip_addr_t ip;
+                IP4_ADDR(&ip, bytes[0], bytes[1], bytes[2], bytes[3]);
+                wifi_set_ip(&ip);
 
                 needs_reset = TRUE;
             }
             else { /* DHCP */
-                wifi_set_ip(NULL, 0, NULL, NULL);
+                wifi_set_ip(NULL);
+                needs_reset = TRUE;
+            }
+        }
+        else if (!strcmp(key, "ip_mask")) {
+            if (json_get_type(child) != JSON_TYPE_INT) {
+                return INVALID_FIELD_VALUE(key);
+            }
+
+            int mask = json_int_get(child);
+            if (!validate_num(mask, 0, 31, /* integer = */ TRUE, /* step = */ 0, /* choices = */ NULL)) {
+                return INVALID_FIELD_VALUE(key);
+            }
+
+            wifi_set_netmask(mask);
+            needs_reset = TRUE;
+        }
+        else if (!strcmp(key, "ip_gateway")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD_VALUE(key);
+            }
+
+            char *ip_str = json_str_get(child);
+            if (ip_str[0]) { /* manual IP */
+                uint8 bytes[4];
+                if (!validate_str_ip(ip_str, bytes)) {
+                    return INVALID_FIELD_VALUE(key);
+                }
+
+                ip_addr_t ip;
+                IP4_ADDR(&ip, bytes[0], bytes[1], bytes[2], bytes[3]);
+                wifi_set_gw(&ip);
+
+                needs_reset = TRUE;
+            }
+            else { /* DHCP */
+                wifi_set_gw(NULL);
+                needs_reset = TRUE;
+            }
+        }
+        else if (!strcmp(key, "ip_dns")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD_VALUE(key);
+            }
+
+            char *ip_str = json_str_get(child);
+            if (ip_str[0]) { /* manual IP */
+                uint8 bytes[4];
+                if (!validate_str_ip(ip_str, bytes)) {
+                    return INVALID_FIELD_VALUE(key);
+                }
+
+                ip_addr_t ip;
+                IP4_ADDR(&ip, bytes[0], bytes[1], bytes[2], bytes[3]);
+                wifi_set_dns(&ip);
+
+                needs_reset = TRUE;
+            }
+            else { /* DHCP */
+                wifi_set_dns(NULL);
                 needs_reset = TRUE;
             }
         }

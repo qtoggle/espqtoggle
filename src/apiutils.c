@@ -193,7 +193,7 @@ bool validate_id(char *id) {
     return TRUE;
 }
 
-bool validate_str_ip(char *ip, uint8 *a, int len) {
+bool validate_str_ip(char *ip, uint8 *a) {
     a[0] = 0;
     char *s = ip;
     int c, i = 0;
@@ -201,7 +201,7 @@ bool validate_str_ip(char *ip, uint8 *a, int len) {
         if (isdigit(c)) {
             a[i] = a[i] * 10 + (c - '0');
         }
-        else if ((c == '.' || c == '/' || c == ':') && (i < len - 1)) {
+        else if ((c == '.') && (i < 3)) {
             i++;
             a[i] = 0;
         }
@@ -210,7 +210,7 @@ bool validate_str_ip(char *ip, uint8 *a, int len) {
         }
     }
 
-    if (i < len - 1) {
+    if (i < 3) {
         return FALSE;
     }
 

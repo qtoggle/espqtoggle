@@ -145,7 +145,7 @@ void wifi_set_ssid_psk(char *ssid, uint8 *bssid, char *psk) {
     }
 }
 
-ip_addr_t *wifi_get_static_ip(void) {
+ip_addr_t *wifi_get_ip(void) {
     if (wifi_static_ip.addr) {
         return &wifi_static_ip;
     }
@@ -154,11 +154,11 @@ ip_addr_t *wifi_get_static_ip(void) {
     }
 }
 
-char wifi_get_static_netmask(void) {
+char wifi_get_netmask(void) {
     return wifi_static_netmask;
 }
 
-ip_addr_t *wifi_get_static_gw(void) {
+ip_addr_t *wifi_get_gw(void) {
     if (wifi_static_gw.addr) {
         return &wifi_static_gw;
     }
@@ -167,7 +167,7 @@ ip_addr_t *wifi_get_static_gw(void) {
     }
 }
 
-ip_addr_t *wifi_get_static_dns(void) {
+ip_addr_t *wifi_get_dns(void) {
     if (wifi_static_dns.addr) {
         return &wifi_static_dns;
     }

@@ -43,7 +43,7 @@ ICACHE_FLASH_ATTR bool                      validate_num(double value, double mi
                                                          double step, char **choices);
 ICACHE_FLASH_ATTR bool                      validate_str(char *value, char **choices);
 ICACHE_FLASH_ATTR bool                      validate_id(char *id);
-ICACHE_FLASH_ATTR bool                      validate_str_ip(char *ip, uint8 *a, int len);
+ICACHE_FLASH_ATTR bool                      validate_str_ip(char *ip, uint8 *a);
 ICACHE_FLASH_ATTR bool                      validate_str_wifi(char *wifi, char *ssid, char *psk, uint8 *bssid);
 ICACHE_FLASH_ATTR bool                      validate_str_network_scan(char *scan, int *scan_interval,
                                                                       int *scan_threshold);

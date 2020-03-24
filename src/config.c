@@ -228,10 +228,10 @@ void device_save(uint8 *data, uint32 *strings_offs) {
     memcpy(data + CONFIG_OFFS_SCAN_INTERVAL, &wifi_scan_interval, 2);
     memcpy(data + CONFIG_OFFS_SCAN_THRESH, &wifi_scan_threshold, 1);
 
-    wifi_ip = wifi_get_static_ip();
-    wifi_netmask = wifi_get_static_netmask();
-    wifi_gw = wifi_get_static_gw();
-    wifi_dns = wifi_get_static_dns();
+    wifi_ip = wifi_get_ip();
+    wifi_netmask = wifi_get_netmask();
+    wifi_gw = wifi_get_gw();
+    wifi_dns = wifi_get_dns();
     memcpy(data + CONFIG_OFFS_IP, wifi_ip ? &wifi_ip->addr : &zero, 4);
     memcpy(data + CONFIG_OFFS_GW, wifi_gw ? &wifi_gw->addr : &zero, 4);
     memcpy(data + CONFIG_OFFS_DNS, wifi_dns ? &wifi_dns->addr : &zero, 4);
