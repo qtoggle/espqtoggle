@@ -28,7 +28,7 @@
                         "network_ip",
                         "network_wifi",
                         "frequency",
-                        "network_rssi",
+                        "wifi_rssi",
                         "network_bssid",
                         "free_mem",
                         "flash_size",
@@ -92,7 +92,7 @@
                         "frequency": {
                             "enum": [80]
                         },
-                        "network_rssi": {
+                        "wifi_rssi": {
                             "type": "integer"
                         },
                         "network_bssid": {
@@ -129,7 +129,7 @@
                             "additionalProperties": false,
                             "required": [
                                 "frequency",
-                                "network_rssi",
+                                "wifi_rssi",
                                 "network_bssid",
                                 "network_scan",
                                 "firmware_auto_update",
@@ -190,7 +190,7 @@
                                         }
                                     }
                                 },
-                                "network_rssi": {
+                                "wifi_rssi": {
                                     "type": "object",
                                     "additionalProperties": false,
                                     "required": [

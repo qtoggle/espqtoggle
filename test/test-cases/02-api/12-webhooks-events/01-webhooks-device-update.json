@@ -52,7 +52,7 @@
                                 "network_ip",
                                 "network_wifi",
                                 "frequency",
-                                "network_rssi",
+                                "wifi_rssi",
                                 "network_bssid",
                                 "free_mem",
                                 "flash_size",
@@ -106,7 +106,7 @@
                                 "frequency": {
                                     "type": "integer"
                                 },
-                                "network_rssi": {
+                                "wifi_rssi": {
                                     "type": "integer"
                                 },
                                 "network_bssid": {
