@@ -63,6 +63,7 @@ static ip_addr_t                    wifi_static_ip_address = {0};
 static uint8                        wifi_static_netmask = 0;
 static ip_addr_t                    wifi_static_gateway = {0};
 static ip_addr_t                    wifi_static_dns = {0};
+static struct ip_info               wifi_current_ip_info;
 
 
 ICACHE_FLASH_ATTR static void       on_wifi_event(System_Event_t *evt);
@@ -117,6 +118,13 @@ char *wifi_get_psk(void) {
     return wifi_psk;
 }
 
+void wifi_get_bssid_current(uint8 *bssid) {
+    struct station_config conf;
+    wifi_station_get_config(&conf);
+
+    memcpy(bssid, conf.bssid, WIFI_BSSID_LEN);
+}
+
 void wifi_set_ssid(char *ssid) {
     strncpy(wifi_ssid, ssid, WIFI_SSID_MAX_LEN);
     wifi_ssid[WIFI_SSID_MAX_LEN - 1] = 0;
@@ -156,6 +164,12 @@ ip_addr_t *wifi_get_ip_address(void) {
     else {
         return NULL;
     }
+}
+
+ip_addr_t wifi_get_ip_address_current(void) {
+    wifi_get_ip_info(STATION_IF, &wifi_current_ip_info);
+
+    return wifi_current_ip_info.ip;
 }
 
 uint8 wifi_get_netmask(void) {

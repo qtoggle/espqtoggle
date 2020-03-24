@@ -109,15 +109,20 @@ ICACHE_FLASH_ATTR void                  wifi_set_scan_threshold(char threshold);
 ICACHE_FLASH_ATTR char                * wifi_get_ssid(void);
 ICACHE_FLASH_ATTR uint8               * wifi_get_bssid(void);
 ICACHE_FLASH_ATTR char                * wifi_get_psk(void);
+ICACHE_FLASH_ATTR void                  wifi_get_bssid_current(uint8 *bssid);
 
 ICACHE_FLASH_ATTR void                  wifi_set_ssid(char *ssid);
 ICACHE_FLASH_ATTR void                  wifi_set_psk(char *psk);
 ICACHE_FLASH_ATTR void                  wifi_set_bssid(uint8 *bssid);
 
 ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_ip_address(void);
+ICACHE_FLASH_ATTR ip_addr_t             wifi_get_ip_address_current(void);
 ICACHE_FLASH_ATTR uint8                 wifi_get_netmask(void);
+ICACHE_FLASH_ATTR uint8                 wifi_get_netmask_current(void);
 ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_gateway(void);
+ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_gateway_current(void);
 ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_dns(void);
+ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_dns_current(void);
 
 ICACHE_FLASH_ATTR void                  wifi_set_ip_address(ip_addr_t *ip_address);
 ICACHE_FLASH_ATTR void                  wifi_set_netmask(uint8 netmask);

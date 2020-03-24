@@ -681,15 +681,15 @@ json_t *device_to_json(void) {
         rssi = -30;
     }
 
-    /* current BSSID */
-    struct station_config conf;
-    wifi_station_get_config(&conf);
-    char bssid_str[18] = {0};
-
-    if (wifi_station_get_connect_status() == STATION_GOT_IP) {
-        snprintf(bssid_str, sizeof(bssid_str), "%02X:%02X:%02X:%02X:%02X:%02X", BSSID2STR(conf.bssid));
+    /* current Wi-Fi info */
+    char current_bssid_str[18] = {0};
+    if (wifi_is_connected()) {
+        uint8 current_bssid[WIFI_BSSID_LEN];
+        wifi_get_bssid_current(current_bssid);
+        snprintf(current_bssid_str, sizeof(current_bssid_str),
+                "%02X:%02X:%02X:%02X:%02X:%02X", BSSID2STR(current_bssid));
     }
-    json_obj_append(json, "wifi_bssid_current", json_str_new(bssid_str));
+    json_obj_append(json, "wifi_bssid_current", json_str_new(current_bssid_str));
 
     json_obj_append(json, "wifi_rssi", json_int_new(rssi));
     json_obj_append(json, "frequency", json_int_new(system_get_cpu_freq()));
