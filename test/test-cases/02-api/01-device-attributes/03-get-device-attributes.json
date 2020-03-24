@@ -29,9 +29,9 @@
                         "wifi_ssid",
                         "wifi_key",
                         "wifi_bssid",
+                        "wifi_bssid_current",
                         "wifi_rssi",
                         "frequency",
-                        "network_bssid",
                         "free_mem",
                         "flash_size",
                         "network_scan",
@@ -94,14 +94,17 @@
                         "wifi_key": {
                             "enum": ["${TEST_PSK}"]
                         },
+                        "wifi_bssid": {
+                            "enum": [""]
+                        },
+                        "wifi_bssid_current": {
+                            "enum": ["{{HOST_MAC_ADDRESS_UPPER}}"]
+                        },
                         "wifi_rssi": {
                             "type": "integer"
                         },
                         "frequency": {
                             "enum": [80]
-                        },
-                        "network_bssid": {
-                            "enum": ["{{HOST_MAC_ADDRESS_UPPER}}"]
                         },
                         "free_mem": {
                             "type": "integer"
@@ -135,7 +138,6 @@
                             "required": [
                                 "frequency",
                                 "wifi_rssi",
-                                "network_bssid",
                                 "network_scan",
                                 "firmware_auto_update",
                                 "free_mem",
@@ -232,32 +234,6 @@
                                         },
                                         "integer": {
                                             "enum": [true]
-                                        }
-                                    }
-                                },
-                                "network_bssid": {
-                                    "type": "object",
-                                    "additionalProperties": false,
-                                    "required": [
-                                        "display_name",
-                                        "description",
-                                        "modifiable",
-                                        "type"
-                                    ],
-                                    "properties": {
-                                        "display_name": {
-                                            "type": "string"
-                                        },
-                                        "description": {
-                                            "type": "string"
-                                        },
-                                        "modifiable": {
-                                            "enum": [false]
-                                        },
-                                        "type": {
-                                            "enum": [
-                                                "string"
-                                            ]
                                         }
                                     }
                                 },

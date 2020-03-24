@@ -56,9 +56,9 @@
                                         "wifi_ssid",
                                         "wifi_key",
                                         "wifi_bssid",
+                                        "wifi_bssid_current",
                                         "wifi_rssi",
                                         "frequency",
-                                        "network_bssid",
                                         "free_mem",
                                         "flash_size",
                                         "network_scan",
@@ -114,14 +114,14 @@
                                         "wifi_bssid": {
                                             "type": "string"
                                         },
+                                        "wifi_bssid_current": {
+                                            "type": "string"
+                                        },
                                         "wifi_rssi": {
                                             "type": "integer"
                                         },
                                         "frequency": {
                                             "type": "integer"
-                                        },
-                                        "network_bssid": {
-                                            "type": "string"
                                         },
                                         "free_mem": {
                                             "type": "integer"
