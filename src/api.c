@@ -624,7 +624,7 @@ json_t *device_to_json(void) {
         json_obj_append(json, "ip_address", json_str_new(value));
 
         snprintf(value, 256, IPSTR, IP2STR(wifi_get_ip()));
-        json_obj_append(json, "ip_mask", json_int_new(wifi_get_netmask()));
+        json_obj_append(json, "ip_netmask", json_int_new(wifi_get_netmask()));
 
         snprintf(value, 256, IPSTR, IP2STR(wifi_get_gw()));
         json_obj_append(json, "ip_gateway", json_str_new(value));
@@ -634,7 +634,7 @@ json_t *device_to_json(void) {
     }
     else {
         json_obj_append(json, "ip_address", json_str_new(""));
-        json_obj_append(json, "ip_mask", json_int_new(0));
+        json_obj_append(json, "ip_netmask", json_int_new(0));
         json_obj_append(json, "ip_gateway", json_str_new(""));
         json_obj_append(json, "ip_dns", json_str_new(""));
     }
@@ -879,17 +879,17 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
                 needs_reset = TRUE;
             }
         }
-        else if (!strcmp(key, "ip_mask")) {
+        else if (!strcmp(key, "ip_netmask")) {
             if (json_get_type(child) != JSON_TYPE_INT) {
                 return INVALID_FIELD_VALUE(key);
             }
 
-            int mask = json_int_get(child);
-            if (!validate_num(mask, 0, 31, /* integer = */ TRUE, /* step = */ 0, /* choices = */ NULL)) {
+            int netmask = json_int_get(child);
+            if (!validate_num(netmask, 0, 31, /* integer = */ TRUE, /* step = */ 0, /* choices = */ NULL)) {
                 return INVALID_FIELD_VALUE(key);
             }
 
-            wifi_set_netmask(mask);
+            wifi_set_netmask(netmask);
             needs_reset = TRUE;
         }
         else if (!strcmp(key, "ip_gateway")) {

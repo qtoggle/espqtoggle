@@ -60,7 +60,7 @@ static char                         wifi_ssid[WIFI_SSID_MAX_LEN] = {0};
 static uint8                        wifi_bssid[WIFI_BSSID_LEN] = {0};
 static char                         wifi_psk[WIFI_PSK_MAX_LEN] = {0};
 static ip_addr_t                    wifi_static_ip = {0};
-static char                         wifi_static_netmask = 0;
+static uint8                        wifi_static_netmask = 0;
 static ip_addr_t                    wifi_static_gw = {0};
 static ip_addr_t                    wifi_static_dns = {0};
 
@@ -154,7 +154,7 @@ ip_addr_t *wifi_get_ip(void) {
     }
 }
 
-char wifi_get_netmask(void) {
+uint8 wifi_get_netmask(void) {
     return wifi_static_netmask;
 }
 
@@ -187,7 +187,7 @@ void wifi_set_ip(ip_addr_t *ip) {
     }
 }
 
-void wifi_set_netmask(char netmask) {
+void wifi_set_netmask(uint8 netmask) {
     if (netmask) {  /* manual */
         DEBUG_WIFI("netmask: using manual: %d", netmask);
         wifi_static_netmask = netmask;

@@ -51,7 +51,7 @@ void device_load(uint8 *data) {
     uint8 wifi_bssid[WIFI_BSSID_LEN];
     char wifi_psk[WIFI_PSK_MAX_LEN];
     ip_addr_t wifi_ip, wifi_gw, wifi_dns;
-    int wifi_netmask;
+    uint8 wifi_netmask;
 
 #ifdef _SLEEP
     uint16 wake_interval, wake_duration;
@@ -121,7 +121,10 @@ void device_load(uint8 *data) {
         wifi_set_scan_threshold(wifi_scan_threshold);
         wifi_set_scan_interval(wifi_scan_interval);
         wifi_set_ssid_psk(wifi_ssid, wifi_bssid, wifi_psk);
-        wifi_set_ip(&wifi_ip, wifi_netmask, &wifi_gw, &wifi_dns);
+        wifi_set_ip(&wifi_ip);
+        wifi_set_netmask(wifi_netmask);
+        wifi_set_gw(&wifi_gw);
+        wifi_set_dns(&wifi_dns);
     }
 
     /* flags & others */
@@ -196,7 +199,7 @@ void device_save(uint8 *data, uint32 *strings_offs) {
     char wifi_scan_threshold = wifi_get_scan_threshold();
     char *strings_ptr = (char *) data + CONFIG_OFFS_STR_BASE;
     ip_addr_t *wifi_ip, *wifi_gw, *wifi_dns;
-    int wifi_netmask;
+    uint8 wifi_netmask;
     uint32 zero = 0;
 
 #ifdef _SLEEP
