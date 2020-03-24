@@ -125,10 +125,10 @@ void device_load(uint8 *data) {
         wifi_set_psk(wifi_psk);
         wifi_set_bssid(wifi_bssid);
 
-        wifi_set_ip_address(&wifi_ip);
+        wifi_set_ip_address(wifi_ip);
         wifi_set_netmask(wifi_netmask);
-        wifi_set_gateway(&wifi_gw);
-        wifi_set_dns(&wifi_dns);
+        wifi_set_gateway(wifi_gw);
+        wifi_set_dns(wifi_dns);
     }
 
     /* flags & others */
@@ -202,9 +202,8 @@ void device_save(uint8 *data, uint32 *strings_offs) {
     int wifi_scan_interval = wifi_get_scan_interval();
     char wifi_scan_threshold = wifi_get_scan_threshold();
     char *strings_ptr = (char *) data + CONFIG_OFFS_STR_BASE;
-    ip_addr_t *wifi_ip_address, *wifi_gateway, *wifi_dns;
+    ip_addr_t wifi_ip_address, wifi_gateway, wifi_dns;
     uint8 wifi_netmask;
-    uint32 zero = 0;
 
 #ifdef _SLEEP
     uint16 wake_interval = sleep_get_wake_interval();
@@ -239,9 +238,9 @@ void device_save(uint8 *data, uint32 *strings_offs) {
     wifi_netmask = wifi_get_netmask();
     wifi_gateway = wifi_get_gateway();
     wifi_dns = wifi_get_dns();
-    memcpy(data + CONFIG_OFFS_IP_ADDRESS, wifi_ip_address ? &wifi_ip_address->addr : &zero, 4);
-    memcpy(data + CONFIG_OFFS_GATEWAY, wifi_gateway ? &wifi_gateway->addr : &zero, 4);
-    memcpy(data + CONFIG_OFFS_DNS, wifi_dns ? &wifi_dns->addr : &zero, 4);
+    memcpy(data + CONFIG_OFFS_IP_ADDRESS, &wifi_ip_address, 4);
+    memcpy(data + CONFIG_OFFS_GATEWAY, &wifi_gateway, 4);
+    memcpy(data + CONFIG_OFFS_DNS, &wifi_dns, 4);
     memcpy(data + CONFIG_OFFS_NETMASK, &wifi_netmask, 1);
 
     /* flags & others */

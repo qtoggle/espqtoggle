@@ -157,13 +157,20 @@ void wifi_set_bssid(uint8 *bssid) {
     }
 }
 
-ip_addr_t *wifi_get_ip_address(void) {
-    if (wifi_static_ip_address.addr) {
-        return &wifi_static_ip_address;
-    }
-    else {
-        return NULL;
-    }
+ip_addr_t wifi_get_ip_address(void) {
+    return wifi_static_ip_address;
+}
+
+uint8 wifi_get_netmask(void) {
+    return wifi_static_netmask;
+}
+
+ip_addr_t wifi_get_gateway(void) {
+    return wifi_static_gateway;
+}
+
+ip_addr_t wifi_get_dns(void) {
+    return wifi_static_dns;
 }
 
 ip_addr_t wifi_get_ip_address_current(void) {
@@ -172,32 +179,33 @@ ip_addr_t wifi_get_ip_address_current(void) {
     return wifi_current_ip_info.ip;
 }
 
-uint8 wifi_get_netmask(void) {
-    return wifi_static_netmask;
+uint8 wifi_get_netmask_current(void) {
+    wifi_get_ip_info(STATION_IF, &wifi_current_ip_info);
+
+    uint8 netmask = 0;
+    uint32 netmask_attr = wifi_current_ip_info.netmask.addr;
+    while (netmask_attr) {
+        netmask++;
+        netmask_attr <<= 1;
+    }
+
+    return netmask;
 }
 
-ip_addr_t *wifi_get_gateway(void) {
-    if (wifi_static_gateway.addr) {
-        return &wifi_static_gateway;
-    }
-    else {
-        return NULL;
-    }
+ip_addr_t wifi_get_gateway_current(void) {
+    wifi_get_ip_info(STATION_IF, &wifi_current_ip_info);
+
+    return wifi_current_ip_info.gw;
 }
 
-ip_addr_t *wifi_get_dns(void) {
-    if (wifi_static_dns.addr) {
-        return &wifi_static_dns;
-    }
-    else {
-        return NULL;
-    }
+ip_addr_t wifi_get_dns_current(void) {
+    return espconn_dns_getserver(0);
 }
 
-void wifi_set_ip_address(ip_addr_t *ip_address) {
-    if (ip_address && ip_address->addr) {  /* manual */
-        DEBUG_WIFI("IP address: using manual: " IPSTR, IP2STR(&ip_address->addr));
-        memcpy(&wifi_static_ip_address, ip_address, sizeof(ip_addr_t));
+void wifi_set_ip_address(ip_addr_t ip_address) {
+    if (ip_address.addr) {  /* manual */
+        DEBUG_WIFI("IP address: using manual: " IPSTR, IP2STR(&ip_address.addr));
+        memcpy(&wifi_static_ip_address, &ip_address, sizeof(ip_addr_t));
     }
     else {  /* DHCP */
         DEBUG_WIFI("IP address: using DHCP");
@@ -216,10 +224,10 @@ void wifi_set_netmask(uint8 netmask) {
     }
 }
 
-void wifi_set_gateway(ip_addr_t *gateway) {
-    if (gateway && gateway->addr) {  /* manual */
-        DEBUG_WIFI("gateway: using manual: " IPSTR, IP2STR(&gateway->addr));
-        memcpy(&wifi_static_gateway, gateway, sizeof(ip_addr_t));
+void wifi_set_gateway(ip_addr_t gateway) {
+    if (gateway.addr) {  /* manual */
+        DEBUG_WIFI("gateway: using manual: " IPSTR, IP2STR(&gateway.addr));
+        memcpy(&wifi_static_gateway, &gateway, sizeof(ip_addr_t));
     }
     else {  /* DHCP */
         DEBUG_WIFI("gateway: using DHCP");
@@ -227,10 +235,10 @@ void wifi_set_gateway(ip_addr_t *gateway) {
     }
 }
 
-void wifi_set_dns(ip_addr_t *dns) {
-    if (dns && dns->addr) {  /* manual */
-        DEBUG_WIFI("DNS: using manual: " IPSTR, IP2STR(&dns->addr));
-        memcpy(&wifi_static_dns, dns, sizeof(ip_addr_t));
+void wifi_set_dns(ip_addr_t dns) {
+    if (dns.addr) {  /* manual */
+        DEBUG_WIFI("DNS: using manual: " IPSTR, IP2STR(&dns.addr));
+        memcpy(&wifi_static_dns, &dns, sizeof(ip_addr_t));
     }
     else {  /* DHCP */
         DEBUG_WIFI("DNS: using DHCP");

@@ -619,8 +619,9 @@ json_t *device_to_json(void) {
 #endif
 
     /* IP configuration */
-    if (wifi_get_ip_address()) {
-        snprintf(value, 256, IPSTR, IP2STR(wifi_get_ip_address()));
+    ip_addr_t ip = wifi_get_ip_address();
+    if (ip.addr) {
+        snprintf(value, 256, IPSTR, IP2STR(&ip));
         json_obj_append(json, "ip_address", json_str_new(value));
     }
     else {
@@ -629,16 +630,18 @@ json_t *device_to_json(void) {
 
     json_obj_append(json, "ip_netmask", json_int_new(wifi_get_netmask()));
 
-    if (wifi_get_gateway()) {
-        snprintf(value, 256, IPSTR, IP2STR(wifi_get_gateway()));
+    ip = wifi_get_gateway();
+    if (ip.addr) {
+        snprintf(value, 256, IPSTR, IP2STR(&ip));
         json_obj_append(json, "ip_gateway", json_str_new(value));
     }
     else {
         json_obj_append(json, "ip_gateway", json_str_new(""));
     }
 
-    if (wifi_get_dns()) {
-        snprintf(value, 256, IPSTR, IP2STR(wifi_get_dns()));
+    ip = wifi_get_dns();
+    if (ip.addr) {
+        snprintf(value, 256, IPSTR, IP2STR(&ip));
         json_obj_append(json, "ip_dns", json_str_new(value));
     }
     else {
@@ -878,22 +881,18 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
             }
 
             char *ip_address_str = json_str_get(child);
+            ip_addr_t ip_address = {0};
             if (ip_address_str[0]) { /* manual */
                 uint8 bytes[4];
                 if (!validate_str_ip(ip_address_str, bytes)) {
                     return INVALID_FIELD_VALUE(key);
                 }
 
-                ip_addr_t ip_address;
                 IP4_ADDR(&ip_address, bytes[0], bytes[1], bytes[2], bytes[3]);
-                wifi_set_ip_address(&ip_address);
+            }
 
-                needs_reset = TRUE;
-            }
-            else { /* DHCP */
-                wifi_set_ip_address(NULL);
-                needs_reset = TRUE;
-            }
+            wifi_set_ip_address(ip_address);
+            needs_reset = TRUE;
         }
         else if (!strcmp(key, "ip_netmask")) {
             if (json_get_type(child) != JSON_TYPE_INT) {
@@ -914,22 +913,18 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
             }
 
             char *gateway_str = json_str_get(child);
+            ip_addr_t gateway = {0};
             if (gateway_str[0]) { /* manual */
                 uint8 bytes[4];
                 if (!validate_str_ip(gateway_str, bytes)) {
                     return INVALID_FIELD_VALUE(key);
                 }
 
-                ip_addr_t gateway;
                 IP4_ADDR(&gateway, bytes[0], bytes[1], bytes[2], bytes[3]);
-                wifi_set_gateway(&gateway);
+            }
 
-                needs_reset = TRUE;
-            }
-            else { /* DHCP */
-                wifi_set_gateway(NULL);
-                needs_reset = TRUE;
-            }
+            wifi_set_gateway(gateway);
+            needs_reset = TRUE;
         }
         else if (!strcmp(key, "ip_dns")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
@@ -937,22 +932,19 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
             }
 
             char *dns_str = json_str_get(child);
+            ip_addr_t dns;
             if (dns_str[0]) { /* manual */
                 uint8 bytes[4];
                 if (!validate_str_ip(dns_str, bytes)) {
                     return INVALID_FIELD_VALUE(key);
                 }
 
-                ip_addr_t dns;
                 IP4_ADDR(&dns, bytes[0], bytes[1], bytes[2], bytes[3]);
-                wifi_set_dns(&dns);
+                wifi_set_dns(dns);
+            }
 
-                needs_reset = TRUE;
-            }
-            else { /* DHCP */
-                wifi_set_dns(NULL);
-                needs_reset = TRUE;
-            }
+            wifi_set_dns(dns);
+            needs_reset = TRUE;
         }
         else if (!strcmp(key, "wifi_ssid")) {
             if (json_get_type(child) != JSON_TYPE_STR) {

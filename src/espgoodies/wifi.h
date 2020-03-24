@@ -115,19 +115,20 @@ ICACHE_FLASH_ATTR void                  wifi_set_ssid(char *ssid);
 ICACHE_FLASH_ATTR void                  wifi_set_psk(char *psk);
 ICACHE_FLASH_ATTR void                  wifi_set_bssid(uint8 *bssid);
 
-ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_ip_address(void);
-ICACHE_FLASH_ATTR ip_addr_t             wifi_get_ip_address_current(void);
+ICACHE_FLASH_ATTR ip_addr_t             wifi_get_ip_address(void);
 ICACHE_FLASH_ATTR uint8                 wifi_get_netmask(void);
-ICACHE_FLASH_ATTR uint8                 wifi_get_netmask_current(void);
-ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_gateway(void);
-ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_gateway_current(void);
-ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_dns(void);
-ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_dns_current(void);
+ICACHE_FLASH_ATTR ip_addr_t             wifi_get_gateway(void);
+ICACHE_FLASH_ATTR ip_addr_t             wifi_get_dns(void);
 
-ICACHE_FLASH_ATTR void                  wifi_set_ip_address(ip_addr_t *ip_address);
+ICACHE_FLASH_ATTR ip_addr_t             wifi_get_ip_address_current(void);
+ICACHE_FLASH_ATTR uint8                 wifi_get_netmask_current(void);
+ICACHE_FLASH_ATTR ip_addr_t             wifi_get_gateway_current(void);
+ICACHE_FLASH_ATTR ip_addr_t             wifi_get_dns_current(void);
+
+ICACHE_FLASH_ATTR void                  wifi_set_ip_address(ip_addr_t ip_address);
 ICACHE_FLASH_ATTR void                  wifi_set_netmask(uint8 netmask);
-ICACHE_FLASH_ATTR void                  wifi_set_gateway(ip_addr_t *gateway);
-ICACHE_FLASH_ATTR void                  wifi_set_dns(ip_addr_t *dns);
+ICACHE_FLASH_ATTR void                  wifi_set_gateway(ip_addr_t gateway);
+ICACHE_FLASH_ATTR void                  wifi_set_dns(ip_addr_t dns);
 
 ICACHE_FLASH_ATTR void                  wifi_set_station_mode(wifi_connect_callback_t callback, char *hostname);
 ICACHE_FLASH_ATTR void                  wifi_connect(uint8 *bssid);
