@@ -110,28 +110,28 @@
                                             "type": "integer"
                                         },
                                         "ip_address": {
-                                            "enum": ["${TEST_NETWORK_DEVICE_IP}"]
+                                            "type": "string"
                                         },
                                         "ip_netmask": {
-                                            "enum": [${TEST_NETWORK_MASK}]
+                                            "type": "integer"
                                         },
                                         "ip_gateway": {
-                                            "enum": ["${TEST_NETWORK_HOST_IP}"]
+                                            "type": "string"
                                         },
                                         "ip_dns": {
-                                            "enum": ["${TEST_NETWORK_HOST_IP}"]
+                                            "type": "string"
                                         },
                                         "ip_address_current": {
-                                            "enum": ["${TEST_NETWORK_DEVICE_IP}"]
+                                            "type": "string"
                                         },
                                         "ip_netmask_current": {
-                                            "enum": [${TEST_NETWORK_MASK}]
+                                            "type": "integer"
                                         },
                                         "ip_gateway_current": {
-                                            "enum": ["${TEST_NETWORK_HOST_IP}"]
+                                            "type": "string"
                                         },
                                         "ip_dns_current": {
-                                            "enum": ["${TEST_NETWORK_HOST_IP}"]
+                                            "type": "string"
                                         },
                                         "wifi_ssid": {
                                             "type": "string"
