@@ -37,7 +37,7 @@
                         "wifi_key",
                         "wifi_bssid",
                         "wifi_bssid_current",
-                        "wifi_rssi",
+                        "wifi_signal_strength",
                         "frequency",
                         "free_mem",
                         "flash_size",
@@ -128,8 +128,8 @@
                         "wifi_bssid_current": {
                             "enum": ["{{HOST_MAC_ADDRESS_UPPER}}"]
                         },
-                        "wifi_rssi": {
-                            "type": "integer"
+                        "wifi_signal_strength": {
+                            "enum": [-1, 0, 1, 2, 3]
                         },
                         "frequency": {
                             "enum": [80]
@@ -165,7 +165,6 @@
                             "additionalProperties": false,
                             "required": [
                                 "frequency",
-                                "wifi_rssi",
                                 "network_scan",
                                 "firmware_auto_update",
                                 "free_mem",
@@ -222,46 +221,6 @@
                                                     }
                                                 }
                                             }
-                                        }
-                                    }
-                                },
-                                "wifi_rssi": {
-                                    "type": "object",
-                                    "additionalProperties": false,
-                                    "required": [
-                                        "display_name",
-                                        "description",
-                                        "unit",
-                                        "modifiable",
-                                        "type",
-                                        "min",
-                                        "max",
-                                        "integer"
-                                    ],
-                                    "properties": {
-                                        "display_name": {
-                                            "type": "string"
-                                        },
-                                        "description": {
-                                            "type": "string"
-                                        },
-                                        "unit": {
-                                            "enum": ["dBm"]
-                                        },
-                                        "modifiable": {
-                                            "enum": [false]
-                                        },
-                                        "type": {
-                                            "enum": ["number"]
-                                        },
-                                        "min": {
-                                            "enum": [-100]
-                                        },
-                                        "max": {
-                                            "enum": [-30]
-                                        },
-                                        "integer": {
-                                            "enum": [true]
                                         }
                                     }
                                 },

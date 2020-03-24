@@ -61,7 +61,7 @@
                                 "wifi_key",
                                 "wifi_bssid",
                                 "wifi_bssid_current",
-                                "wifi_rssi",
+                                "wifi_signal_strength",
                                 "frequency",
                                 "free_mem",
                                 "flash_size",
@@ -142,8 +142,8 @@
                                 "wifi_bssid_current": {
                                     "type": "string"
                                 },
-                                "wifi_rssi": {
-                                    "type": "integer"
+                                "wifi_signal_strength": {
+                                    "enum": [-1, 0, 1, 2, 3]
                                 },
                                 "frequency": {
                                     "type": "integer"

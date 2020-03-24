@@ -128,14 +128,18 @@
     goto response;                                                                      \
 }
 
+#define WIFI_RSSI_EXCELLENT     -50
+#define WIFI_RSSI_GOOD          -60
+#define WIFI_RSSI_FAIR          -70
 
-static uint8            api_access_level = 0;
-static struct espconn * api_conn;
 
-static char           * frequency_choices[] = {"80", "160", NULL};
+static uint8                    api_access_level = 0;
+static struct espconn         * api_conn;
+
+static char                   * frequency_choices[] = {"80", "160", NULL};
 
 #ifdef _OTA
-static char           * ota_states_str[] = {"idle", "checking", "downloading", "restarting"};
+static char                   * ota_states_str[] = {"idle", "checking", "downloading", "restarting"};
 #endif
 
 
@@ -723,7 +727,23 @@ json_t *device_to_json(void) {
     }
     json_obj_append(json, "wifi_bssid_current", json_str_new(current_bssid_str));
 
-    json_obj_append(json, "wifi_rssi", json_int_new(rssi));
+    int8  wifi_signal_strength = -1;
+    if (wifi_is_connected()) {
+        if (rssi >= WIFI_RSSI_EXCELLENT) {
+            wifi_signal_strength = 3;
+        }
+        else if (rssi >= WIFI_RSSI_GOOD) {
+            wifi_signal_strength = 2;
+        }
+        else if (rssi >= WIFI_RSSI_FAIR) {
+            wifi_signal_strength = 1;
+        }
+        else {
+            wifi_signal_strength = 0;
+        }
+    }
+    json_obj_append(json, "wifi_signal_strength", json_int_new(wifi_signal_strength));
+
     json_obj_append(json, "frequency", json_int_new(system_get_cpu_freq()));
     json_obj_append(json, "free_mem", json_int_new(system_get_free_heap_size() / 1024));
     json_obj_append(json, "flash_size", json_int_new(system_get_flash_size() / 1024));
@@ -2630,11 +2650,6 @@ json_t *device_attrdefs_to_json(void) {
                                    /* modifiable = */TRUE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
                                    /* integer = */ TRUE, /* step = */ 0, frequency_choices, /* reconnect = */ FALSE);
     json_obj_append(json, "frequency", attrdef_json);
-
-    attrdef_json = attrdef_to_json("Wi-Fi Connection RSSI", "The measured RSSI (signal strength).", "dBm",
-                                   ATTR_TYPE_NUMBER, /* modifiable = */ FALSE, /* min = */ -100, /* max = */ -30,
-                                   /* integer = */ TRUE, /* step = */ 0, /* choices = */ NULL, /* reconnect = */ FALSE);
-    json_obj_append(json, "wifi_rssi", attrdef_json);
 
     attrdef_json = attrdef_to_json("Network Scan",
                                    "Controls the WiFi scanning mode; format is <interval_seconds>:<threshold_dBm>. "
