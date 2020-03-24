@@ -115,7 +115,11 @@ ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_static_ip(void);
 ICACHE_FLASH_ATTR char                  wifi_get_static_netmask(void);
 ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_static_gw(void);
 ICACHE_FLASH_ATTR ip_addr_t           * wifi_get_static_dns(void);
-ICACHE_FLASH_ATTR void                  wifi_set_ip(ip_addr_t *ip, char netmask, ip_addr_t *gw, ip_addr_t *dns);
+
+ICACHE_FLASH_ATTR void                  wifi_set_ip(ip_addr_t *ip);
+ICACHE_FLASH_ATTR void                  wifi_set_netmask(char netmask);
+ICACHE_FLASH_ATTR void                  wifi_set_gw(ip_addr_t *gw);
+ICACHE_FLASH_ATTR void                  wifi_set_dns(ip_addr_t *dns);
 
 ICACHE_FLASH_ATTR void                  wifi_set_station_mode(wifi_connect_callback_t callback, char *hostname);
 ICACHE_FLASH_ATTR void                  wifi_connect(uint8 *bssid);
