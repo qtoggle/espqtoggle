@@ -648,6 +648,36 @@ json_t *device_to_json(void) {
         json_obj_append(json, "ip_dns", json_str_new(""));
     }
 
+    /* current IP info */
+    ip = wifi_get_ip_address_current();
+    if (ip.addr) {
+        snprintf(value, 256, IPSTR, IP2STR(&ip));
+        json_obj_append(json, "ip_address_current", json_str_new(value));
+    }
+    else {
+        json_obj_append(json, "ip_address_current", json_str_new(""));
+    }
+
+    json_obj_append(json, "ip_netmask_current", json_int_new(wifi_get_netmask_current()));
+
+    ip = wifi_get_gateway_current();
+    if (ip.addr) {
+        snprintf(value, 256, IPSTR, IP2STR(&ip));
+        json_obj_append(json, "ip_gateway_current", json_str_new(value));
+    }
+    else {
+        json_obj_append(json, "ip_gateway_current", json_str_new(""));
+    }
+
+    ip = wifi_get_dns_current();
+    if (ip.addr) {
+        snprintf(value, 256, IPSTR, IP2STR(&ip));
+        json_obj_append(json, "ip_dns_current", json_str_new(value));
+    }
+    else {
+        json_obj_append(json, "ip_dns_current", json_str_new(""));
+    }
+
     /* Wi-Fi configuration */
     char *ssid = wifi_get_ssid();
     char *psk = wifi_get_psk();
@@ -675,7 +705,7 @@ json_t *device_to_json(void) {
         json_obj_append(json, "wifi_bssid", json_str_new(""));
     }
 
-    /* rssi */
+    /* current Wi-Fi info */
     int rssi = wifi_station_get_rssi();
     if (rssi < -100) {
         rssi = -100;
@@ -684,7 +714,6 @@ json_t *device_to_json(void) {
         rssi = -30;
     }
 
-    /* current Wi-Fi info */
     char current_bssid_str[18] = {0};
     if (wifi_is_connected()) {
         uint8 current_bssid[WIFI_BSSID_LEN];
