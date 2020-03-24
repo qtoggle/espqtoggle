@@ -52,7 +52,10 @@
                                         "flags",
                                         "uptime",
                                         "virtual_ports",
-                                        "network_ip",
+                                        "ip_address",
+                                        "ip_netmask",
+                                        "ip_gateway",
+                                        "ip_dns",
                                         "wifi_ssid",
                                         "wifi_key",
                                         "wifi_bssid",
@@ -102,8 +105,17 @@
                                         "virtual_ports": {
                                             "type": "integer"
                                         },
-                                        "network_ip": {
-                                            "type": "string"
+                                        "ip_address": {
+                                            "enum": ["${TEST_NETWORK_DEVICE_IP}"]
+                                        },
+                                        "ip_netmask": {
+                                            "enum": [${TEST_NETWORK_MASK}]
+                                        },
+                                        "ip_gateway": {
+                                            "enum": ["${TEST_NETWORK_HOST_IP}"]
+                                        },
+                                        "ip_dns": {
+                                            "enum": ["${TEST_NETWORK_HOST_IP}"]
                                         },
                                         "wifi_ssid": {
                                             "type": "string"
