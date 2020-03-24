@@ -59,10 +59,11 @@ static int                          wifi_watchdog_counter = 0;
 static char                         wifi_ssid[WIFI_SSID_MAX_LEN] = {0};
 static uint8                        wifi_bssid[WIFI_BSSID_LEN] = {0};
 static char                         wifi_psk[WIFI_PSK_MAX_LEN] = {0};
-static ip_addr_t                    wifi_static_ip = {0};
-static char                         wifi_static_netmask = 0;
-static ip_addr_t                    wifi_static_gw = {0};
+static ip_addr_t                    wifi_static_ip_address = {0};
+static uint8                        wifi_static_netmask = 0;
+static ip_addr_t                    wifi_static_gateway = {0};
 static ip_addr_t                    wifi_static_dns = {0};
+static struct ip_info               wifi_current_ip_info;
 
 
 ICACHE_FLASH_ATTR static void       on_wifi_event(System_Event_t *evt);
@@ -117,7 +118,14 @@ char *wifi_get_psk(void) {
     return wifi_psk;
 }
 
-void wifi_set_ssid_psk(char *ssid, uint8 *bssid, char *psk) {
+void wifi_get_bssid_current(uint8 *bssid) {
+    struct station_config conf;
+    wifi_station_get_config(&conf);
+
+    memcpy(bssid, conf.bssid, WIFI_BSSID_LEN);
+}
+
+void wifi_set_ssid(char *ssid) {
     strncpy(wifi_ssid, ssid, WIFI_SSID_MAX_LEN);
     wifi_ssid[WIFI_SSID_MAX_LEN - 1] = 0;
     if (wifi_ssid[0]) {
@@ -126,7 +134,9 @@ void wifi_set_ssid_psk(char *ssid, uint8 *bssid, char *psk) {
     else {
         DEBUG_WIFI("ssid not set");
     }
+}
 
+void wifi_set_psk(char *psk) {
     strncpy(wifi_psk, psk, WIFI_PSK_MAX_LEN);
     wifi_psk[WIFI_PSK_MAX_LEN - 1] = 0;
     if (psk[0]) {
@@ -135,7 +145,9 @@ void wifi_set_ssid_psk(char *ssid, uint8 *bssid, char *psk) {
     else {
         DEBUG_WIFI("psk not set");
     }
+}
 
+void wifi_set_bssid(uint8 *bssid) {
     memcpy(wifi_bssid, bssid, WIFI_BSSID_LEN);
     if (bssid[0]) {
         DEBUG_WIFI("bssid set to " BSSID_FMT, BSSID2STR(bssid));
@@ -145,53 +157,91 @@ void wifi_set_ssid_psk(char *ssid, uint8 *bssid, char *psk) {
     }
 }
 
-ip_addr_t *wifi_get_static_ip(void) {
-    if (wifi_static_ip.addr) {
-        return &wifi_static_ip;
-    }
-    else {
-        return NULL;
-    }
+ip_addr_t wifi_get_ip_address(void) {
+    return wifi_static_ip_address;
 }
 
-char wifi_get_static_netmask(void) {
+uint8 wifi_get_netmask(void) {
     return wifi_static_netmask;
 }
 
-ip_addr_t *wifi_get_static_gw(void) {
-    if (wifi_static_gw.addr) {
-        return &wifi_static_gw;
-    }
-    else {
-        return NULL;
-    }
+ip_addr_t wifi_get_gateway(void) {
+    return wifi_static_gateway;
 }
 
-ip_addr_t *wifi_get_static_dns(void) {
-    if (wifi_static_dns.addr) {
-        return &wifi_static_dns;
-    }
-    else {
-        return NULL;
-    }
+ip_addr_t wifi_get_dns(void) {
+    return wifi_static_dns;
 }
 
-void wifi_set_ip(ip_addr_t *ip, char netmask, ip_addr_t *gw, ip_addr_t *dns) {
-    if (ip && ip->addr) {  /* static IP */
-        DEBUG_WIFI("using static IP configuration: %d.%d.%d.%d/%d:%d.%d.%d.%d:%d.%d.%d.%d",
-                   IP2STR(&ip->addr), netmask, IP2STR(&gw->addr), IP2STR(&dns->addr));
+ip_addr_t wifi_get_ip_address_current(void) {
+    wifi_get_ip_info(STATION_IF, &wifi_current_ip_info);
 
-        memcpy(&wifi_static_ip, ip, sizeof(ip_addr_t));
-        wifi_static_netmask = netmask;
-        memcpy(&wifi_static_gw, gw, sizeof(ip_addr_t));
-        memcpy(&wifi_static_dns, dns, sizeof(ip_addr_t));
+    return wifi_current_ip_info.ip;
+}
+
+uint8 wifi_get_netmask_current(void) {
+    wifi_get_ip_info(STATION_IF, &wifi_current_ip_info);
+
+    uint8 netmask = 0;
+    uint32 netmask_addr = wifi_current_ip_info.netmask.addr;
+    while (netmask_addr) {
+        netmask++;
+        netmask_addr >>= 1;
+    }
+
+    return netmask;
+}
+
+ip_addr_t wifi_get_gateway_current(void) {
+    wifi_get_ip_info(STATION_IF, &wifi_current_ip_info);
+
+    return wifi_current_ip_info.gw;
+}
+
+ip_addr_t wifi_get_dns_current(void) {
+    return espconn_dns_getserver(0);
+}
+
+void wifi_set_ip_address(ip_addr_t ip_address) {
+    if (ip_address.addr) {  /* manual */
+        DEBUG_WIFI("IP address: using manual: " IPSTR, IP2STR(&ip_address.addr));
+        memcpy(&wifi_static_ip_address, &ip_address, sizeof(ip_addr_t));
     }
     else {  /* DHCP */
-        DEBUG_WIFI("using DHCP");
+        DEBUG_WIFI("IP address: using DHCP");
+        wifi_static_ip_address.addr = 0;
+    }
+}
 
-        wifi_static_ip.addr = 0;
+void wifi_set_netmask(uint8 netmask) {
+    if (netmask) {  /* manual */
+        DEBUG_WIFI("netmask: using manual: %d", netmask);
+        wifi_static_netmask = netmask;
+    }
+    else {  /* DHCP */
+        DEBUG_WIFI("netmask: using DHCP");
         wifi_static_netmask = 0;
-        wifi_static_gw.addr = 0;
+    }
+}
+
+void wifi_set_gateway(ip_addr_t gateway) {
+    if (gateway.addr) {  /* manual */
+        DEBUG_WIFI("gateway: using manual: " IPSTR, IP2STR(&gateway.addr));
+        memcpy(&wifi_static_gateway, &gateway, sizeof(ip_addr_t));
+    }
+    else {  /* DHCP */
+        DEBUG_WIFI("gateway: using DHCP");
+        wifi_static_gateway.addr = 0;
+    }
+}
+
+void wifi_set_dns(ip_addr_t dns) {
+    if (dns.addr) {  /* manual */
+        DEBUG_WIFI("DNS: using manual: " IPSTR, IP2STR(&dns.addr));
+        memcpy(&wifi_static_dns, &dns, sizeof(ip_addr_t));
+    }
+    else {  /* DHCP */
+        DEBUG_WIFI("DNS: using DHCP");
         wifi_static_dns.addr = 0;
     }
 }
@@ -259,15 +309,19 @@ void wifi_connect(uint8 *bssid) {
     DEBUG_WIFI("connecting to ssid/bssid %s/" BSSID_FMT, wifi_ssid, BSSID2STR(bssid));
 
     /* set IP configuration */
-    if (wifi_static_ip.addr) {  /* static IP */
+    if (wifi_static_ip_address.addr &&
+        wifi_static_netmask &&
+        wifi_static_gateway.addr &&
+        wifi_static_dns.addr) {  /* manual IP configuration */
+
         if (wifi_station_dhcpc_status() == DHCP_STARTED) {
             DEBUG_WIFI("stopping DHCP client");
             wifi_station_dhcpc_stop();
         }
 
         struct ip_info info;
-        info.ip = wifi_static_ip;
-        info.gw = wifi_static_gw;
+        info.ip = wifi_static_ip_address;
+        info.gw = wifi_static_gateway;
 
         int m = wifi_static_netmask;
         info.netmask.addr = 1;

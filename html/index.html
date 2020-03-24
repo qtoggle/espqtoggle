@@ -129,7 +129,7 @@
             div.wifi-item.selected {
                 border-top-width: 0;
                 border-bottom-width: 0;
-                height: 25em;
+                height: 40em;
                 color: #eee;
             }
             
@@ -212,7 +212,7 @@
                 var scanButton = document.getElementsByClassName('scan-button')[0];
                 var infoDiv = document.getElementsByClassName('info')[0];
                 var progress = false;
-                var okButton, selectedItem, pskInput, ipInput, gwInput, dnsInput;
+                var okButton, selectedItem, ssidInput, pskInput, ipInput, nmInput, gwInput, dnsInput;
                 
                 function fetchWiFiList(callback) {
                     var request = new XMLHttpRequest();
@@ -242,25 +242,13 @@
                 }
                 
                 function sendSettings() {
-                    var networkWifi = selectedItem.childNodes[0].data;
-                    if (pskInput.value) {
-                        networkWifi += ':' + pskInput.value;
-                    }
-                    
-                    var networkIp = '';
-                    if (ipInput.value) {
-                        networkIp = ipInput.value;
-                    }
-                    if (gwInput.value) {
-                        networkIp += ':' + gwInput.value;
-                    }
-                    if (dnsInput.value) {
-                        networkIp += ':' + dnsInput.value;
-                    }
-
                     var attrs = {
-                        'network_wifi': networkWifi,
-                        'network_ip': networkIp
+                        'wifi_ssid': ssidInput.value,
+                        'wifi_key': pskInput.value,
+                        'ip_address': ipInput.value,
+                        'ip_netmask': nmInput.value ? parseInt(nmInput.value) : 0,
+                        'ip_gateway': gwInput.value,
+                        'ip_dns': dnsInput.value
                     };
 
                     var request = new XMLHttpRequest();
@@ -330,6 +318,14 @@
                     this.classList.add('selected');
                     this.onclick = null;
                     
+                    ssidInput = document.createElement('input');
+                    ssidInput.setAttribute('type', 'text');
+                    ssidInput.setAttribute('placeholder', 'network name');
+                    if (this.childNodes[0].data != 'Other...') {
+                        ssidInput.value = this.childNodes[0].data;
+                    }
+                    this.append(ssidInput);
+                    
                     pskInput = document.createElement('input');
                     pskInput.setAttribute('type', 'password');
                     pskInput.setAttribute('placeholder', 'network key');
@@ -337,17 +333,22 @@
                     
                     ipInput = document.createElement('input');
                     ipInput.setAttribute('type', 'text');
-                    ipInput.setAttribute('placeholder', '(optional) IP (e.g. 192.168.1.10/24)');
+                    ipInput.setAttribute('placeholder', '(optional) IP address (e.g. 192.168.1.10)');
                     this.append(ipInput);
+                    
+                    nmInput = document.createElement('input');
+                    nmInput.setAttribute('type', 'text');
+                    nmInput.setAttribute('placeholder', '(optional) netmask length (e.g. 24)');
+                    this.append(nmInput);
                     
                     gwInput = document.createElement('input');
                     gwInput.setAttribute('type', 'text');
-                    gwInput.setAttribute('placeholder', '(optional) GW (e.g. 192.168.1.1)');
+                    gwInput.setAttribute('placeholder', '(optional) gateway (e.g. 192.168.1.1)');
                     this.append(gwInput);
                     
                     dnsInput = document.createElement('input');
                     dnsInput.setAttribute('type', 'text');
-                    dnsInput.setAttribute('placeholder', '(optional) DNS (e.g. 8.8.8.8)');
+                    dnsInput.setAttribute('placeholder', '(optional) DNS server (e.g. 8.8.8.8)');
                     this.append(dnsInput);
                     
                     okButton = document.createElement('div');
@@ -368,6 +369,7 @@
                 
                 function startScan() {
                     fetchWiFiList(function (list) {
+                        list.push({ssid: 'Other...', rssi: 0});
                         list.forEach(function (network) {
                             var div = document.createElement('div');
                             var cls = 'low';
@@ -394,19 +396,19 @@
     </head>
     
     <body>
-        <div class="wifi-list-header">Choose WiFi Network</div>
+        <div class="wifi-list-header">Choose Wi-Fi Network</div>
         <div class="wifi-list limit-width">
             <div class="button scan-button">Start Scanning</div>
             <div class="info">
-                The device should now connect to your WiFi network. <br> <br>
-                If you don't see it connected within 1 minute or if you need to change the WiFi settings, simply switch it to setup mode again and repeat this procedure. <br> <br>
+                The device should now connect to your Wi-Fi network. <br> <br>
+                If you don't see it connected within 1 minute or if you need to change the Wi-Fi settings, simply switch it to setup mode again and repeat this procedure. <br> <br>
                 You can now close me.
             </div>
         </div>
         <div class="wifi-list-footer">espQToggle {{VERSION}}</div>
         <div class="progress-overlay">
             <img class="limit-width" src="data:image/svg+xml,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 100 100' preserveAspectRatio='xMidYMid'%3E%3Csvg version='1.1' id='d1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 100 100' style='transform-origin: 50px 50px 0px;' xml:space='preserve'%3E%3Cg style='transform-origin: 50px 50px 0px;'%3E%3Cg style='transform-origin: 50px 50px 0px; transform: scale(0.6);'%3E%3Cg style='transform-origin: 50px 50px 0px;'%3E%3Cg%3E%3Cstyle type='text/css' class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -1s; animation-direction: normal;'%3E.st0%7Bfill:%23C7B299;stroke:%23333333;stroke-width:6;stroke-miterlimit:10;%7D .st1%7Bfill:%23F5E169;%7D .st2%7Bfill:%23666666;%7D .st3%7Bfill:%23F5E6C8;%7D .st4%7Bfill:%23333333;%7D .st5%7Bfill:%23E0E0E0;%7D .st6%7Bfill:%23F8B26A;%7D .st7%7Bfill:%23FFFFFF;stroke:%23000000;stroke-width:4;stroke-miterlimit:10;%7D .st8%7Bfill:%23F47E60;%7D .st9%7Bfill:%23ABBD81;%7D .st10%7Bfill:%23E15B64;%7D .st11%7Bfill:%23666666;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st12%7Bfill:%23FFFFFF;stroke:%23221E1F;stroke-width:6;stroke-linejoin:round;stroke-miterlimit:10;%7D .st13%7Bfill:%2377A4BD;%7D .st14%7Bfill:%23FFDC6C;%7D .st15%7Bfill:%23FFFFFF;%7D .st16%7Bfill:%23353035;%7D .st17%7Bfill:%23E0E0E0;stroke:%23000000;stroke-width:6;stroke-miterlimit:10;%7D .st18%7Bfill:none;stroke:%23000000;stroke-width:5;stroke-linecap:round;stroke-miterlimit:10;%7D .st19%7Bfill:none;stroke:%23000000;stroke-width:5;stroke-miterlimit:10;%7D .st20%7Bfill:none;%7D .st21%7Bfill:%23666666;stroke:%23221E1F;stroke-width:6;stroke-linejoin:round;stroke-miterlimit:10;%7D .st22%7Bfill:%23FFFFFF;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st23%7Bfill:%23333333;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st24%7Bfill:%231BD112;%7D .st25%7Bfill:%23FFFFFF;stroke:%23333333;stroke-width:8;stroke-miterlimit:10;%7D .st26%7Bfill:none;stroke:%23666666;stroke-width:8;stroke-miterlimit:10;%7D .st27%7Bfill:%23FFFFFF;stroke:%23333333;stroke-miterlimit:10;%7D .st28%7Bfill:none;stroke:%23333333;stroke-miterlimit:10;%7D .st29%7Bstroke:%23333333;stroke-miterlimit:10;%7D .st30%7Bfill:none;stroke:%23000000;stroke-width:4;stroke-linecap:round;stroke-miterlimit:10;%7D .st31%7Bfill:none;stroke:%23000000;stroke-width:6;stroke-miterlimit:10;%7D .st32%7Bfill:%23C33737;%7D .st33%7Bfill:%23849B87;%7D .st34%7Bfill:%2366503A;%7D .st35%7Bfill:none;stroke:%23333333;stroke-width:6;stroke-miterlimit:10;%7D .st36%7Bfill:none;stroke:%23333333;stroke-width:4;stroke-miterlimit:10;%7D .st37%7Bfill:%23C59B6D;%7D .st38%7Bfill:%23E0E0E0;stroke:%23221E1F;stroke-width:4.5;stroke-linejoin:round;stroke-miterlimit:10;%7D .st39%7Bfill:%23666666;stroke:%23000000;stroke-width:3;stroke-miterlimit:10;%7D .st40%7Bfill:%23F5E6C8;stroke:%23000000;stroke-width:3;stroke-miterlimit:10;%7D .st41%7Bfill:%23FFFFFF;stroke:%23808080;stroke-width:4;stroke-miterlimit:10;%7D .st42%7Bfill:%23808080;stroke:%23808080;stroke-width:4;stroke-miterlimit:10;%7D .st43%7Bfill:%23666666;stroke:%23B3B3B3;stroke-width:12;stroke-linecap:round;stroke-miterlimit:10;%7D .st44%7Bfill:%23808080;%7D .st45%7Bfill:%23B3B3B3;%7D .st46%7Bfill:%23FFFF00;stroke:%23E15B64;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;%7D .st47%7Bfill:none;stroke:%23E15B64;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;%7D .st48%7Bfill:%23F5E6C8;stroke:%23333333;stroke-width:4;stroke-miterlimit:10;%7D%3C/style%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.928571s; animation-direction: normal;'%3E%3Cpath class='st10' d='M56.4,75.4c-3.6-3.6-9.3-3.6-12.9,0l6.4,6.4L56.4,75.4z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.857143s; animation-direction: normal;'%3E%3Cpath class='st10' d='M62.9,69l6.4-6.4c-10.7-10.7-27.9-10.7-38.6,0l6.4,6.4C44.2,61.9,55.8,61.9,62.9,69z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.785714s; animation-direction: normal;'%3E%3Cpath class='st10' d='M75.7,56.1l6.4-6.4c-17.8-17.8-46.5-17.8-64.3,0l6.4,6.4C38.5,41.9,61.5,41.9,75.7,56.1z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cg class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.714286s; animation-direction: normal;'%3E%3Cpath class='st10' d='M88.6,43.2l6.4-6.4C70.1,12,29.9,12,5,36.8l6.4,6.4C32.7,22,67.3,22,88.6,43.2z' fill='%23fff' style='fill: rgb(255, 255, 255);'%3E%3C/path%3E%3C/g%3E%3Cmetadata xmlns:d='https://loading.io/stock/' class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.642857s; animation-direction: normal;'%3E%3C/metadata%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/g%3E%3Cstyle type='text/css' class='ld ld-fade' style='transform-origin: 50px 50px 0px; animation-duration: 1s; animation-delay: -0.285714s; animation-direction: normal;'%3E@keyframes ld-fade %7B0%25 %7Bopacity: 1;%7D100%25 %7Bopacity: 0;%7D%7D@keyframes ld-fade %7B0%25 %7Bopacity: 1;%7D100%25 %7Bopacity: 0;%7D%7D.ld.ld-fade %7Banimation: ld-fade 1s infinite linear;animation: ld-fade 1s infinite linear;%7D%3C/style%3E%3C/svg%3E%3C/svg%3E">
-            <div>Scanning for WiFi networks...</div>
+            <div>Scanning for Wi-Fi networks...</div>
         </div>
     </body>
 </html>

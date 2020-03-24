@@ -49,11 +49,20 @@
                                 "flags",
                                 "uptime",
                                 "virtual_ports",
-                                "network_ip",
-                                "network_wifi",
+                                "ip_address",
+                                "ip_netmask",
+                                "ip_gateway",
+                                "ip_dns",
+                                "ip_address_current",
+                                "ip_netmask_current",
+                                "ip_gateway_current",
+                                "ip_dns_current",
+                                "wifi_ssid",
+                                "wifi_key",
+                                "wifi_bssid",
+                                "wifi_bssid_current",
+                                "wifi_rssi",
                                 "frequency",
-                                "network_rssi",
-                                "network_bssid",
                                 "free_mem",
                                 "flash_size",
                                 "network_scan",
@@ -97,20 +106,47 @@
                                 "virtual_ports": {
                                     "type": "integer"
                                 },
-                                "network_ip": {
+                                "ip_address": {
                                     "type": "string"
                                 },
-                                "network_wifi": {
+                                "ip_netmask": {
+                                    "type": "integer"
+                                },
+                                "ip_gateway": {
                                     "type": "string"
+                                },
+                                "ip_dns": {
+                                    "type": "string"
+                                },
+                                "ip_address_current": {
+                                    "type": "string"
+                                },
+                                "ip_netmask_current": {
+                                    "type": "integer"
+                                },
+                                "ip_gateway_current": {
+                                    "type": "string"
+                                },
+                                "ip_dns_current": {
+                                    "type": "string"
+                                },
+                                "wifi_ssid": {
+                                    "type": "string"
+                                },
+                                "wifi_key": {
+                                    "type": "string"
+                                },
+                                "wifi_bssid": {
+                                    "type": "string"
+                                },
+                                "wifi_bssid_current": {
+                                    "type": "string"
+                                },
+                                "wifi_rssi": {
+                                    "type": "integer"
                                 },
                                 "frequency": {
                                     "type": "integer"
-                                },
-                                "network_rssi": {
-                                    "type": "integer"
-                                },
-                                "network_bssid": {
-                                    "type": "string"
                                 },
                                 "free_mem": {
                                     "type": "integer"

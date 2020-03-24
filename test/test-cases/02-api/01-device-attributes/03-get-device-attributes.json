@@ -25,11 +25,20 @@
                         "flags",
                         "uptime",
                         "virtual_ports",
-                        "network_ip",
-                        "network_wifi",
+                        "ip_address",
+                        "ip_netmask",
+                        "ip_gateway",
+                        "ip_dns",
+                        "ip_address_current",
+                        "ip_netmask_current",
+                        "ip_gateway_current",
+                        "ip_dns_current",
+                        "wifi_ssid",
+                        "wifi_key",
+                        "wifi_bssid",
+                        "wifi_bssid_current",
+                        "wifi_rssi",
                         "frequency",
-                        "network_rssi",
-                        "network_bssid",
                         "free_mem",
                         "flash_size",
                         "network_scan",
@@ -83,20 +92,47 @@
                         "virtual_ports": {
                             "enum": [8]
                         },
-                        "network_ip": {
-                            "enum": ["${TEST_NETWORK_DEVICE_IP}/${TEST_NETWORK_MASK}:${TEST_NETWORK_HOST_IP}:${TEST_NETWORK_HOST_IP}"]
+                        "ip_address": {
+                            "enum": ["${TEST_NETWORK_DEVICE_IP}"]
                         },
-                        "network_wifi": {
-                            "enum": ["${TEST_SSID}:${TEST_PSK}"]
+                        "ip_netmask": {
+                            "enum": [${TEST_NETWORK_MASK}]
+                        },
+                        "ip_gateway": {
+                            "enum": ["${TEST_NETWORK_HOST_IP}"]
+                        },
+                        "ip_dns": {
+                            "enum": ["${TEST_NETWORK_HOST_IP}"]
+                        },
+                        "ip_address_current": {
+                            "enum": ["${TEST_NETWORK_DEVICE_IP}"]
+                        },
+                        "ip_netmask_current": {
+                            "enum": [${TEST_NETWORK_MASK}]
+                        },
+                        "ip_gateway_current": {
+                            "enum": ["${TEST_NETWORK_HOST_IP}"]
+                        },
+                        "ip_dns_current": {
+                            "enum": ["${TEST_NETWORK_HOST_IP}"]
+                        },
+                        "wifi_ssid": {
+                            "enum": ["${TEST_SSID}"]
+                        },
+                        "wifi_key": {
+                            "enum": ["${TEST_PSK}"]
+                        },
+                        "wifi_bssid": {
+                            "enum": [""]
+                        },
+                        "wifi_bssid_current": {
+                            "enum": ["{{HOST_MAC_ADDRESS_UPPER}}"]
+                        },
+                        "wifi_rssi": {
+                            "type": "integer"
                         },
                         "frequency": {
                             "enum": [80]
-                        },
-                        "network_rssi": {
-                            "type": "integer"
-                        },
-                        "network_bssid": {
-                            "enum": ["{{HOST_MAC_ADDRESS_UPPER}}"]
                         },
                         "free_mem": {
                             "type": "integer"
@@ -129,8 +165,7 @@
                             "additionalProperties": false,
                             "required": [
                                 "frequency",
-                                "network_rssi",
-                                "network_bssid",
+                                "wifi_rssi",
                                 "network_scan",
                                 "firmware_auto_update",
                                 "free_mem",
@@ -190,7 +225,7 @@
                                         }
                                     }
                                 },
-                                "network_rssi": {
+                                "wifi_rssi": {
                                     "type": "object",
                                     "additionalProperties": false,
                                     "required": [
@@ -227,32 +262,6 @@
                                         },
                                         "integer": {
                                             "enum": [true]
-                                        }
-                                    }
-                                },
-                                "network_bssid": {
-                                    "type": "object",
-                                    "additionalProperties": false,
-                                    "required": [
-                                        "display_name",
-                                        "description",
-                                        "modifiable",
-                                        "type"
-                                    ],
-                                    "properties": {
-                                        "display_name": {
-                                            "type": "string"
-                                        },
-                                        "description": {
-                                            "type": "string"
-                                        },
-                                        "modifiable": {
-                                            "enum": [false]
-                                        },
-                                        "type": {
-                                            "enum": [
-                                                "string"
-                                            ]
                                         }
                                     }
                                 },

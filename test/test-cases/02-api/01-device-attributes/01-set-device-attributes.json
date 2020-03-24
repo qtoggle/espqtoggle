@@ -12,7 +12,10 @@
                     "admin_password": "${TEST_PASSWORD}",
                     "normal_password": "${TEST_PASSWORD}",
                     "viewonly_password": "${TEST_PASSWORD}",
-                    "network_ip": "${TEST_NETWORK_DEVICE_IP}/${TEST_NETWORK_MASK}:${TEST_NETWORK_HOST_IP}:${TEST_NETWORK_HOST_IP}"
+                    "ip_address": "${TEST_NETWORK_DEVICE_IP}",
+                    "ip_netmask": ${TEST_NETWORK_MASK},
+                    "ip_gateway": "${TEST_NETWORK_HOST_IP}",
+                    "ip_dns": "${TEST_NETWORK_HOST_IP}"
                 },
                 "expected_status": 204,
                 "expected_body": null
@@ -48,7 +51,14 @@
                         "admin_password",
                         "normal_password",
                         "viewonly_password",
-                        "network_ip"
+                        "ip_address",
+                        "ip_netmask",
+                        "ip_gateway",
+                        "ip_dns",
+                        "ip_address_current",
+                        "ip_netmask_current",
+                        "ip_gateway_current",
+                        "ip_dns_current"
                     ],
                     "properties": {
                         "name": {
@@ -66,8 +76,29 @@
                         "viewonly_password": {
                             "enum": [""]
                         },
-                        "network_ip": {
-                            "enum": ["${TEST_NETWORK_DEVICE_IP}/${TEST_NETWORK_MASK}:${TEST_NETWORK_HOST_IP}:${TEST_NETWORK_HOST_IP}"]
+                        "ip_address": {
+                            "enum": ["${TEST_NETWORK_DEVICE_IP}"]
+                        },
+                        "ip_netmask": {
+                            "enum": [${TEST_NETWORK_MASK}]
+                        },
+                        "ip_gateway": {
+                            "enum": ["${TEST_NETWORK_HOST_IP}"]
+                        },
+                        "ip_dns": {
+                            "enum": ["${TEST_NETWORK_HOST_IP}"]
+                        },
+                        "ip_address_current": {
+                            "enum": ["${TEST_NETWORK_DEVICE_IP}"]
+                        },
+                        "ip_netmask_current": {
+                            "enum": [${TEST_NETWORK_MASK}]
+                        },
+                        "ip_gateway_current": {
+                            "enum": ["${TEST_NETWORK_HOST_IP}"]
+                        },
+                        "ip_dns_current": {
+                            "enum": ["${TEST_NETWORK_HOST_IP}"]
                         }
                     }
                 }
