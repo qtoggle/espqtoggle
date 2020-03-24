@@ -74,7 +74,12 @@ void port_load(port_t *port, uint8 *data) {
 
     /* unit */
     if (port->type == PORT_TYPE_NUMBER) {
-        port->unit = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_UNIT);
+        if (string_pool_read(strings_ptr, base_ptr + CONFIG_OFFS_PORT_UNIT)) {
+            if (port->unit) {
+                free(port->unit);
+            }
+            port->unit = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_UNIT);
+        }
         DEBUG_PORT(port, "unit = \"%s\"", port->unit ? port->unit : "");
     }
 
