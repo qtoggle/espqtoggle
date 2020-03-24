@@ -698,7 +698,7 @@ json_t *device_to_json(void) {
     }
 
     if (bssid[0]) {
-        snprintf(value, 256, "%02X%02X%02X%02X%02X%02X", BSSID2STR(bssid));
+        snprintf(value, 256, "%02X:%02X:%02X:%02X:%02X:%02X", BSSID2STR(bssid));
         json_obj_append(json, "wifi_bssid", json_str_new(value));
     }
     else {
@@ -913,7 +913,7 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
             ip_addr_t ip_address = {0};
             if (ip_address_str[0]) { /* manual */
                 uint8 bytes[4];
-                if (!validate_str_ip(ip_address_str, bytes)) {
+                if (!validate_ip_address(ip_address_str, bytes)) {
                     return INVALID_FIELD_VALUE(key);
                 }
 
@@ -945,7 +945,7 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
             ip_addr_t gateway = {0};
             if (gateway_str[0]) { /* manual */
                 uint8 bytes[4];
-                if (!validate_str_ip(gateway_str, bytes)) {
+                if (!validate_ip_address(gateway_str, bytes)) {
                     return INVALID_FIELD_VALUE(key);
                 }
 
@@ -964,7 +964,7 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
             ip_addr_t dns;
             if (dns_str[0]) { /* manual */
                 uint8 bytes[4];
-                if (!validate_str_ip(dns_str, bytes)) {
+                if (!validate_ip_address(dns_str, bytes)) {
                     return INVALID_FIELD_VALUE(key);
                 }
 
@@ -981,7 +981,7 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
             }
 
             char *ssid = json_str_get(child);
-            if (!validate_str_wifi_ssid(ssid)) {
+            if (!validate_wifi_ssid(ssid)) {
                 return INVALID_FIELD_VALUE(key);
             }
 
@@ -994,7 +994,7 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
             }
 
             char *psk = json_str_get(child);
-            if (!validate_str_wifi_key(psk)) {
+            if (!validate_wifi_key(psk)) {
                 return INVALID_FIELD_VALUE(key);
             }
 
@@ -1008,7 +1008,7 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
 
             char *bssid_str = json_str_get(child);
             uint8 bssid[WIFI_BSSID_LEN];
-            if (!validate_str_wifi_bssid(bssid_str, bssid)) {
+            if (!validate_wifi_bssid(bssid_str, bssid)) {
                 return INVALID_FIELD_VALUE(key);
             }
 

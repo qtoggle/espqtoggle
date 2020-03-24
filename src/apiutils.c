@@ -193,7 +193,7 @@ bool validate_id(char *id) {
     return TRUE;
 }
 
-bool validate_str_ip(char *ip, uint8 *a) {
+bool validate_ip_address(char *ip, uint8 *a) {
     a[0] = 0;
     char *s = ip;
     int c, i = 0;
@@ -217,16 +217,16 @@ bool validate_str_ip(char *ip, uint8 *a) {
     return TRUE;
 }
 
-bool validate_str_wifi_ssid(char *ssid) {
+bool validate_wifi_ssid(char *ssid) {
     int len = strlen(ssid);
     return len > 0 && len <= WIFI_SSID_MAX_LEN;
 }
 
-bool validate_str_wifi_key(char *key) {
+bool validate_wifi_key(char *key) {
     return strlen(key) <= WIFI_PSK_MAX_LEN;
 }
 
-bool validate_str_wifi_bssid(char *bssid_str, uint8 *bssid) {
+bool validate_wifi_bssid(char *bssid_str, uint8 *bssid) {
     int len = 0;
     char *s = bssid_str;
     char t[3] = {0, 0, 0};
@@ -247,7 +247,7 @@ bool validate_str_wifi_bssid(char *bssid_str, uint8 *bssid) {
         t[0] = s[0]; t[1] = s[1];
         bssid[len++] = strtol(t, NULL, 16);
 
-        s += 2;
+        s += 3;
     }
 
     if (len != WIFI_BSSID_LEN && len != 0) {
