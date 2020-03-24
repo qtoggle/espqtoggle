@@ -53,6 +53,10 @@
                                 "ip_netmask",
                                 "ip_gateway",
                                 "ip_dns",
+                                "ip_address_current",
+                                "ip_netmask_current",
+                                "ip_gateway_current",
+                                "ip_dns_current",
                                 "wifi_ssid",
                                 "wifi_key",
                                 "wifi_bssid",
@@ -112,6 +116,18 @@
                                     "enum": ["${TEST_NETWORK_HOST_IP}"]
                                 },
                                 "ip_dns": {
+                                    "enum": ["${TEST_NETWORK_HOST_IP}"]
+                                },
+                                "ip_address_current": {
+                                    "enum": ["${TEST_NETWORK_DEVICE_IP}"]
+                                },
+                                "ip_netmask_current": {
+                                    "enum": [${TEST_NETWORK_MASK}]
+                                },
+                                "ip_gateway_current": {
+                                    "enum": ["${TEST_NETWORK_HOST_IP}"]
+                                },
+                                "ip_dns_current": {
                                     "enum": ["${TEST_NETWORK_HOST_IP}"]
                                 },
                                 "wifi_ssid": {
