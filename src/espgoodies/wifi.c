@@ -117,7 +117,7 @@ char *wifi_get_psk(void) {
     return wifi_psk;
 }
 
-void wifi_set_ssid_psk(char *ssid, uint8 *bssid, char *psk) {
+void wifi_set_ssid(char *ssid) {
     strncpy(wifi_ssid, ssid, WIFI_SSID_MAX_LEN);
     wifi_ssid[WIFI_SSID_MAX_LEN - 1] = 0;
     if (wifi_ssid[0]) {
@@ -126,7 +126,9 @@ void wifi_set_ssid_psk(char *ssid, uint8 *bssid, char *psk) {
     else {
         DEBUG_WIFI("ssid not set");
     }
+}
 
+void wifi_set_psk(char *psk) {
     strncpy(wifi_psk, psk, WIFI_PSK_MAX_LEN);
     wifi_psk[WIFI_PSK_MAX_LEN - 1] = 0;
     if (psk[0]) {
@@ -135,7 +137,9 @@ void wifi_set_ssid_psk(char *ssid, uint8 *bssid, char *psk) {
     else {
         DEBUG_WIFI("psk not set");
     }
+}
 
+void wifi_set_bssid(uint8 *bssid) {
     memcpy(wifi_bssid, bssid, WIFI_BSSID_LEN);
     if (bssid[0]) {
         DEBUG_WIFI("bssid set to " BSSID_FMT, BSSID2STR(bssid));
