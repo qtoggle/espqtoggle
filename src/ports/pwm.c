@@ -74,6 +74,7 @@ static port_t _pwm_freq = {
     .id = "pwm_freq",
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
+    .unit = "Hz",
 
     .value = PWM_FREQ_DEF,
     .min = PWM_FREQ_MIN,
@@ -97,6 +98,7 @@ static port_t _pwm0 = {
     .id = PWM0_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
+    .unit = "%",
 
     .min = PWM_MIN,
     .max = PWM_MAX,
@@ -120,6 +122,7 @@ static port_t _pwm1 = {
     .id = PWM1_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
+    .unit = "%",
 
     .min = PWM_MIN,
     .max = PWM_MAX,
@@ -143,6 +146,7 @@ static port_t _pwm2 = {
     .id = PWM2_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
+    .unit = "%",
 
     .min = PWM_MIN,
     .max = PWM_MAX,
@@ -166,6 +170,7 @@ static port_t _pwm3 = {
     .id = PWM3_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
+    .unit = "%",
 
     .min = PWM_MIN,
     .max = PWM_MAX,
@@ -189,6 +194,7 @@ static port_t _pwm4 = {
     .id = PWM4_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
+    .unit = "%",
 
     .min = PWM_MIN,
     .max = PWM_MAX,
@@ -212,6 +218,7 @@ static port_t _pwm5 = {
     .id = PWM5_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
+    .unit = "%",
 
     .min = PWM_MIN,
     .max = PWM_MAX,
@@ -235,6 +242,7 @@ static port_t _pwm12 = {
     .id = PWM12_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
+    .unit = "%",
 
     .min = PWM_MIN,
     .max = PWM_MAX,
@@ -258,6 +266,7 @@ static port_t _pwm13 = {
     .id = PWM13_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
+    .unit = "%",
 
     .min = PWM_MIN,
     .max = PWM_MAX,
@@ -281,6 +290,7 @@ static port_t _pwm14 = {
     .id = PWM14_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
+    .unit = "%",
 
     .min = PWM_MIN,
     .max = PWM_MAX,
@@ -304,6 +314,7 @@ static port_t _pwm15 = {
     .id = PWM15_ID,
     .type = PORT_TYPE_NUMBER,
     .flags = PORT_FLAG_OUTPUT,
+    .unit = "%",
 
     .min = PWM_MIN,
     .max = PWM_MAX,

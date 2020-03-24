@@ -42,7 +42,6 @@
                                     "required": [
                                         "id",
                                         "display_name",
-                                        "unit",
                                         "writable",
                                         "enabled",
                                         "persisted",
@@ -58,9 +57,6 @@
                                         },
                                         "display_name": {
                                             "enum": ["test display name {{TEST_CASE_NAME}}"]
-                                        },
-                                        "unit": {
-                                            "type": "string"
                                         },
                                         "writable": {
                                             "type": "boolean"

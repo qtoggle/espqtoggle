@@ -51,7 +51,7 @@ static port_t _adc0 = {
 
     .id = ADC0_ID,
     .type = PORT_TYPE_NUMBER,
-    .unit = "millivolts",
+    .unit = "mV",
 
     .min = ADC_MIN,
     .max = ADC_MAX,

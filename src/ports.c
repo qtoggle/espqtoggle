@@ -73,8 +73,10 @@ void port_load(port_t *port, uint8 *data) {
     DEBUG_PORT(port, "display_name = \"%s\"", port->display_name ? port->display_name : "");
 
     /* unit */
-    port->unit = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_UNIT);
-    DEBUG_PORT(port, "unit = \"%s\"", port->unit ? port->unit : "");
+    if (port->type == PORT_TYPE_NUMBER) {
+        port->unit = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_UNIT);
+        DEBUG_PORT(port, "unit = \"%s\"", port->unit ? port->unit : "");
+    }
 
     /* flags */
     bool initially_output = port->flags & PORT_FLAG_OUTPUT;
@@ -228,8 +230,10 @@ void port_save(port_t *port, uint8 *data, uint32 *strings_offs) {
     }
 
     /* unit */
-    if (!string_pool_write(strings_ptr, strings_offs, port->unit, base_ptr + CONFIG_OFFS_PORT_UNIT)) {
-        DEBUG_PORT(port, "no more string space to save unit");
+    if (port->type == PORT_TYPE_NUMBER) {
+        if (!string_pool_write(strings_ptr, strings_offs, port->unit, base_ptr + CONFIG_OFFS_PORT_UNIT)) {
+            DEBUG_PORT(port, "no more string space to save unit");
+        }
     }
 
     /* flags */
@@ -350,6 +354,11 @@ void port_register(port_t *port) {
 
         port->slot = next_extra_slot++;
         DEBUG_PORT(port, "automatically allocated extra slot %d", port->slot);
+    }
+
+    /* If a unit is present, it's normally a literal string. Make sure it's a free()-able string. */
+    if (port->unit) {
+        port->unit = strdup(port->unit);
     }
 
     all_ports = realloc(all_ports, (all_ports_count + 2) * sizeof(port_t *));

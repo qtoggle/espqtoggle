@@ -21,13 +21,12 @@
             "name": "json-http-client",
             "params": {
                 "method": "PATCH",
-                "path": "/ports/gpio0",
+                "path": "/ports/adc0",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "body": {
                     "display_name": "test display name 2",
-                    "unit": "test unit2",
                     "enabled": true,
                     "persisted": true,
                     "sampling_interval": 150,
@@ -106,7 +105,6 @@
                             "required": [
                                 "id",
                                 "display_name",
-                                "unit",
                                 "enabled",
                                 "persisted",
                                 "sampling_interval",
@@ -120,9 +118,6 @@
                                 },
                                 "display_name": {
                                     "enum": ["test display name 2"]
-                                },
-                                "unit": {
-                                    "enum": ["test unit2"]
                                 },
                                 "enabled": {
                                     "enum": [true]

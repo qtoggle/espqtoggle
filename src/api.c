@@ -438,7 +438,6 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
 
     json_obj_append(json, "id", json_str_new(port->id));
     json_obj_append(json, "display_name", json_str_new(port->display_name ? port->display_name : ""));
-    json_obj_append(json, "unit", json_str_new(port->unit ? port->unit : ""));
     json_obj_append(json, "writable", json_bool_new(IS_OUTPUT(port)));
     json_obj_append(json, "enabled", json_bool_new(IS_ENABLED(port)));
     json_obj_append(json, "persisted", json_bool_new(IS_PERSISTED(port)));
@@ -460,6 +459,7 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
     /* specific to numeric ports */
     if (port->type == PORT_TYPE_NUMBER) {
         json_obj_append(json, "type", json_str_new(API_PORT_TYPE_NUMBER));
+        json_obj_append(json, "unit", json_str_new(port->unit ? port->unit : ""));
 
         if (!IS_UNDEFINED(port->min)) {
             json_obj_append(json, "min", json_double_new(port->min));
@@ -1699,7 +1699,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
 
             DEBUG_PORT(port, "display_name set to \"%s\"", port->display_name);
         }
-        else if (!strcmp(key, "unit")) {
+        else if (!strcmp(key, "unit") && (port->type == PORT_TYPE_NUMBER)) {
             if (json_get_type(child) != JSON_TYPE_STR) {
                 return INVALID_FIELD_VALUE(key);
             }
@@ -2577,7 +2577,7 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
 
             attrdef_json = attrdef_to_json(a->display_name ? a->display_name : "",
                                            a->description ? a->description : "",
-                                           a->unit ? a->unit : "", a->type, a->modifiable,
+                                           a->unit, a->type, a->modifiable,
                                            a->min, a->max, a->integer, a->step, choices, a->reconnect);
 
             /* if similar choices found, replace with $ref */

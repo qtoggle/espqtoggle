@@ -14,7 +14,6 @@
 				    {
 				        "id": "gpio0",
 				        "display_name": "",
-				        "unit": "",
 				        "writable": false,
 				        "enabled": false,
 				        "persisted": false,
@@ -28,14 +27,12 @@
 				            "output": {
 				                "display_name": "Output Mode",
 				                "description": "Makes this GPIO an output pin.",
-				                "unit": "",
 				                "modifiable": true,
 				                "type": "boolean"
 				            },
 				            "pull_up": {
 				                "display_name": "Pull-Up",
 				                "description": "Enables the internal pull-up.",
-				                "unit": "",
 				                "modifiable": true,
 				                "type": "boolean"
 				            },
@@ -54,7 +51,6 @@
 				    {
 				        "id": "gpio2",
 				        "display_name": "",
-				        "unit": "",
 				        "writable": false,
 				        "enabled": false,
 				        "persisted": false,
@@ -71,7 +67,6 @@
 				    {
 				        "id": "gpio4",
 				        "display_name": "",
-				        "unit": "",
 				        "writable": false,
 				        "enabled": false,
 				        "persisted": false,
@@ -88,7 +83,6 @@
 				    {
 				        "id": "gpio5",
 				        "display_name": "",
-				        "unit": "",
 				        "writable": false,
 				        "enabled": false,
 				        "persisted": false,
@@ -105,7 +99,7 @@
 				    {
 				        "id": "pwm_freq",
 				        "display_name": "",
-				        "unit": "",
+				        "unit": "Hz",
 				        "writable": true,
 				        "enabled": false,
 				        "persisted": false,
@@ -127,7 +121,7 @@
 				    {
 				        "id": "pwm12",
 				        "display_name": "",
-				        "unit": "",
+				        "unit": "%",
 				        "writable": true,
 				        "enabled": false,
 				        "persisted": false,
@@ -149,7 +143,7 @@
 				    {
 				        "id": "pwm13",
 				        "display_name": "",
-				        "unit": "",
+				        "unit": "%",
 				        "writable": true,
 				        "enabled": false,
 				        "persisted": false,
@@ -171,7 +165,7 @@
 				    {
 				        "id": "pwm14",
 				        "display_name": "",
-				        "unit": "",
+				        "unit": "%",
 				        "writable": true,
 				        "enabled": false,
 				        "persisted": false,
@@ -193,7 +187,7 @@
 				    {
 				        "id": "pwm15",
 				        "display_name": "",
-				        "unit": "",
+				        "unit": "%",
 				        "writable": true,
 				        "enabled": false,
 				        "persisted": false,
@@ -215,7 +209,7 @@
 				    {
 				        "id": "adc0",
 				        "display_name": "",
-				        "unit": "",
+				        "unit": "mV",
 				        "writable": false,
 				        "enabled": false,
 				        "persisted": false,

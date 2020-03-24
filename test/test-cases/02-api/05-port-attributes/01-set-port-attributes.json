@@ -11,7 +11,6 @@
                 },
                 "body": {
                     "display_name": "test display name",
-                    "unit": "test unit",
                     "enabled": true,
                     "persisted": true,
                     "sampling_interval": 10,
@@ -41,7 +40,6 @@
                             "required": [
                                 "id",
                                 "display_name",
-                                "unit",
                                 "writable",
                                 "enabled",
                                 "persisted",
@@ -56,9 +54,6 @@
                                 },
                                 "display_name": {
                                     "enum": ["test display name"]
-                                },
-                                "unit": {
-                                    "enum": ["test unit"]
                                 },
                                 "writable": {
                                     "enum": [true]
