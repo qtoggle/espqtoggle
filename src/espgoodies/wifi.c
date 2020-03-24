@@ -183,10 +183,10 @@ uint8 wifi_get_netmask_current(void) {
     wifi_get_ip_info(STATION_IF, &wifi_current_ip_info);
 
     uint8 netmask = 0;
-    uint32 netmask_attr = wifi_current_ip_info.netmask.addr;
-    while (netmask_attr) {
+    uint32 netmask_addr = wifi_current_ip_info.netmask.addr;
+    while (netmask_addr) {
         netmask++;
-        netmask_attr <<= 1;
+        netmask_addr >>= 1;
     }
 
     return netmask;
