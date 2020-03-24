@@ -645,20 +645,32 @@ json_t *device_to_json(void) {
         json_obj_append(json, "ip_dns", json_str_new(""));
     }
 
-    /* network_wifi */
+    /* Wi-Fi configuration */
     char *ssid = wifi_get_ssid();
     char *psk = wifi_get_psk();
     uint8 *bssid = wifi_get_bssid();
+
+    if (ssid) {
+        json_obj_append(json, "wifi_ssid", json_str_new(ssid));
+    }
+    else {
+        json_obj_append(json, "wifi_ssid", json_str_new(""));
+    }
+
+    if (psk) {
+        json_obj_append(json, "wifi_key", json_str_new(psk));
+    }
+    else {
+        json_obj_append(json, "wifi_key", json_str_new(""));
+    }
+
     if (bssid[0]) {
-        snprintf(value, 256, "%s:%s:%02X%02X%02X%02X%02X%02X", ssid, psk, BSSID2STR(bssid));
+        snprintf(value, 256, "%02X%02X%02X%02X%02X%02X", BSSID2STR(bssid));
+        json_obj_append(json, "wifi_bssid", json_str_new(value));
     }
-    else if (psk[0]) {  /* no bssid */
-        snprintf(value, 256, "%s:%s", ssid, psk);
+    else {
+        json_obj_append(json, "wifi_bssid", json_str_new(""));
     }
-    else {  /* no bssid, no psk */
-        snprintf(value, 256, "%s", ssid);
-    }
-    json_obj_append(json, "network_wifi", json_str_new(value));
 
     /* rssi */
     int rssi = wifi_station_get_rssi();
@@ -669,20 +681,18 @@ json_t *device_to_json(void) {
         rssi = -30;
     }
 
-    /* bssid */
+    /* current BSSID */
     struct station_config conf;
     wifi_station_get_config(&conf);
     char bssid_str[18] = {0};
 
     if (wifi_station_get_connect_status() == STATION_GOT_IP) {
-        snprintf(bssid_str, sizeof(bssid_str), "%02X:%02X:%02X:%02X:%02X:%02X",
-                 conf.bssid[0], conf.bssid[1], conf.bssid[2],
-                 conf.bssid[3], conf.bssid[4], conf.bssid[5]);
+        snprintf(bssid_str, sizeof(bssid_str), "%02X:%02X:%02X:%02X:%02X:%02X", BSSID2STR(conf.bssid));
     }
+    json_obj_append(json, "wifi_bssid_current", json_str_new(bssid_str));
 
+    json_obj_append(json, "wifi_rssi", json_int_new(rssi));
     json_obj_append(json, "frequency", json_int_new(system_get_cpu_freq()));
-    json_obj_append(json, "network_rssi", json_int_new(rssi));
-    json_obj_append(json, "network_bssid", json_str_new(bssid_str));
     json_obj_append(json, "free_mem", json_int_new(system_get_free_heap_size() / 1024));
     json_obj_append(json, "flash_size", json_int_new(system_get_flash_size() / 1024));
 
@@ -944,31 +954,45 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
                 needs_reset = TRUE;
             }
         }
-        else if (!strcmp(key, "network_wifi")) {
+        else if (!strcmp(key, "wifi_ssid")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
                 return INVALID_FIELD_VALUE(key);
             }
 
-            char *wifi_config_str = json_str_get(child);
-            if (!wifi_config_str[0]) {
-                return INVALID_FIELD_VALUE(key);  /* don't allow disabling wifi */
-            }
-
-            char ssid[WIFI_SSID_MAX_LEN];
-            char psk[WIFI_PSK_MAX_LEN];
-            uint8 bssid[WIFI_BSSID_LEN];
-            if (!validate_str_wifi(wifi_config_str, ssid, psk, bssid)) {
+            char *ssid = json_str_get(child);
+            if (!validate_str_wifi_ssid(ssid)) {
                 return INVALID_FIELD_VALUE(key);
             }
 
-            int new_ssid  = strncmp(wifi_get_ssid(), ssid, WIFI_SSID_MAX_LEN);
-            int new_psk   = strncmp(wifi_get_psk(), psk, WIFI_PSK_MAX_LEN);
-            int new_bssid = memcmp(wifi_get_bssid(), bssid, WIFI_BSSID_LEN);
-
-            if (new_ssid || new_psk || new_bssid) {
-                wifi_set_ssid_psk(ssid, bssid, psk);
-                needs_reset = TRUE;
+            wifi_set_ssid(ssid);
+            needs_reset = TRUE;
+        }
+        else if (!strcmp(key, "wifi_key")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD_VALUE(key);
             }
+
+            char *psk = json_str_get(child);
+            if (!validate_str_wifi_key(psk)) {
+                return INVALID_FIELD_VALUE(key);
+            }
+
+            wifi_set_psk(psk);
+            needs_reset = TRUE;
+        }
+        else if (!strcmp(key, "wifi_bssid")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD_VALUE(key);
+            }
+
+            char *bssid_str = json_str_get(child);
+            uint8 bssid[WIFI_BSSID_LEN];
+            if (!validate_str_wifi_bssid(bssid_str, bssid)) {
+                return INVALID_FIELD_VALUE(key);
+            }
+
+            wifi_set_bssid(bssid);
+            needs_reset = TRUE;
         }
         else if (!strcmp(key, "network_scan")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
@@ -2586,16 +2610,10 @@ json_t *device_attrdefs_to_json(void) {
                                    /* integer = */ TRUE, /* step = */ 0, frequency_choices, /* reconnect = */ FALSE);
     json_obj_append(json, "frequency", attrdef_json);
 
-    attrdef_json = attrdef_to_json("Network RSSI", "The measured RSSI (signal strength).", "dBm", ATTR_TYPE_NUMBER,
-                                   /* modifiable = */ FALSE, /* min = */ -100, /* max = */ -30, /* integer = */ TRUE,
-                                   /* step = */ 0, /* choices = */ NULL, /* reconnect = */ FALSE);
-    json_obj_append(json, "network_rssi", attrdef_json);
-
-    attrdef_json = attrdef_to_json("Network BSSID", "The BSSID of the currently connected AP.", /* unit = */ NULL,
-                                   ATTR_TYPE_STRING, /* modifiable = */ FALSE, /* min = */ UNDEFINED,
-                                   /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
-                                   /* reconnect = */ FALSE);
-    json_obj_append(json, "network_bssid", attrdef_json);
+    attrdef_json = attrdef_to_json("Wi-Fi Connection RSSI", "The measured RSSI (signal strength).", "dBm",
+                                   ATTR_TYPE_NUMBER, /* modifiable = */ FALSE, /* min = */ -100, /* max = */ -30,
+                                   /* integer = */ TRUE, /* step = */ 0, /* choices = */ NULL, /* reconnect = */ FALSE);
+    json_obj_append(json, "wifi_rssi", attrdef_json);
 
     attrdef_json = attrdef_to_json("Network Scan",
                                    "Controls the WiFi scanning mode; format is <interval_seconds>:<threshold_dBm>. "

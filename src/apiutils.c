@@ -217,56 +217,20 @@ bool validate_str_ip(char *ip, uint8 *a) {
     return TRUE;
 }
 
-bool validate_str_wifi(char *wifi, char *ssid, char *psk, uint8 *bssid) {
-    // TODO special treatment for escaped colons \:, which should not be considered separators
-    char *s = wifi;
-    int c, len;
+bool validate_str_wifi_ssid(char *ssid) {
+    int len = strlen(ssid);
+    return len > 0 && len <= WIFI_SSID_MAX_LEN;
+}
+
+bool validate_str_wifi_key(char *key) {
+    return strlen(key) <= WIFI_PSK_MAX_LEN;
+}
+
+bool validate_str_wifi_bssid(char *bssid_str, uint8 *bssid) {
+    int len = 0;
+    char *s = bssid_str;
     char t[3] = {0, 0, 0};
 
-    memset(ssid, 0, WIFI_SSID_MAX_LEN);
-    memset(psk, 0, WIFI_PSK_MAX_LEN);
-    memset(bssid, 0, WIFI_BSSID_LEN);
-
-    /* SSID */
-    len = 0;
-    while ((c = *s++)) {
-        if (c == ':') {
-            break;
-        }
-        else {
-            if (len > WIFI_SSID_MAX_LEN) {
-                return FALSE;
-            }
-
-            ssid[len++] = c;
-        }
-    }
-
-    if (!c) {
-        return TRUE;
-    }
-
-    /* PSK */
-    len = 0;
-    while ((c = *s++)) {
-        if (c == ':') {
-            break;
-        }
-        else {
-            if (len > WIFI_PSK_MAX_LEN) {
-                return FALSE;
-            }
-
-            psk[len++] = c;
-        }
-    }
-
-    if (!c) {
-        return TRUE;
-    }
-
-    /* BSSID */
-    len = 0;
     while (TRUE) {
         if (len > WIFI_BSSID_LEN) {
             return FALSE;
@@ -286,12 +250,13 @@ bool validate_str_wifi(char *wifi, char *ssid, char *psk, uint8 *bssid) {
         s += 2;
     }
 
-    if (len != 6 && len != 0) {
+    if (len != WIFI_BSSID_LEN && len != 0) {
         return FALSE;
     }
 
     return TRUE;
 }
+
 
 bool validate_str_network_scan(char *scan, int *scan_interval, int *scan_threshold) {
     char c, *s = scan;

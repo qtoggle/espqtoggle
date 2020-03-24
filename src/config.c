@@ -120,7 +120,11 @@ void device_load(uint8 *data) {
     if (wifi_ssid[0] || wifi_bssid[0]) {
         wifi_set_scan_threshold(wifi_scan_threshold);
         wifi_set_scan_interval(wifi_scan_interval);
-        wifi_set_ssid_psk(wifi_ssid, wifi_bssid, wifi_psk);
+
+        wifi_set_ssid(wifi_ssid);
+        wifi_set_psk(wifi_psk);
+        wifi_set_bssid(wifi_bssid);
+
         wifi_set_ip_address(&wifi_ip);
         wifi_set_netmask(wifi_netmask);
         wifi_set_gateway(&wifi_gw);
