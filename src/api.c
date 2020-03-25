@@ -603,6 +603,7 @@ json_t *device_to_json(void) {
     /* flags */
     json_t *flags_json = json_list_new();
 
+    json_list_append(flags_json, json_str_new("expressions"));
 #ifdef _OTA
     json_list_append(flags_json, json_str_new("firmware"));
 #endif
