@@ -4,7 +4,7 @@
         {
             "name": "json-http-client",
             "params": {
-                "method": "POST",
+                "method": "PATCH",
                 "path": "/ports/gpio0/sequence",
                 "headers": {
                     "Authorization": "Bearer inexistent"
@@ -20,7 +20,7 @@
         {
             "name": "json-http-client",
             "params": {
-                "method": "POST",
+                "method": "PATCH",
                 "path": "/ports/gpio0/sequence",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_VIEWONLY}"
@@ -36,7 +36,7 @@
         {
             "name": "json-http-client",
             "params": {
-                "method": "POST",
+                "method": "PATCH",
                 "path": "/ports/gpio0/sequence",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_NORMAL}"

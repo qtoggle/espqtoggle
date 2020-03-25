@@ -160,7 +160,7 @@ ICACHE_FLASH_ATTR static json_t       * delete_port(port_t *port, json_t *query_
 ICACHE_FLASH_ATTR static json_t       * get_port_value(port_t *port, json_t *query_json, int *code);
 ICACHE_FLASH_ATTR static json_t       * patch_port_value(port_t *port, json_t *query_json, json_t *request_json,
                                                          int *code);
-ICACHE_FLASH_ATTR static json_t       * post_port_sequence(port_t *port, json_t *query_json, json_t *request_json,
+ICACHE_FLASH_ATTR static json_t       * patch_port_sequence(port_t *port, json_t *query_json, json_t *request_json,
                                                            int *code);
 
 ICACHE_FLASH_ATTR static json_t       * get_webhooks(json_t *query_json, int *code);
@@ -295,8 +295,8 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
                     }
                 }
                 else if (!strcmp(part3, "sequence")) { /* /ports/{id}/sequence */
-                    if (method == HTTP_METHOD_POST) {
-                        response_json = post_port_sequence(port, query_json, request_json, code);
+                    if (method == HTTP_METHOD_PATCH) {
+                        response_json = patch_port_sequence(port, query_json, request_json, code);
                     }
                     else {
                         RESPOND_NO_SUCH_FUNCTION();
@@ -2044,7 +2044,7 @@ json_t *patch_port_value(port_t *port, json_t *query_json, json_t *request_json,
     return response_json;
 }
 
-json_t *post_port_sequence(port_t *port, json_t *query_json, json_t *request_json, int *code) {
+json_t *patch_port_sequence(port_t *port, json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = NULL;
 
     if (api_access_level < API_ACCESS_LEVEL_NORMAL) {

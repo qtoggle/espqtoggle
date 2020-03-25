@@ -4,7 +4,7 @@
         {
             "name": "json-http-client",
             "params": {
-                "method": "POST",
+                "method": "PATCH",
                 "path": "/ports/gpio2/sequence",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
