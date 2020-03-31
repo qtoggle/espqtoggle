@@ -1965,13 +1965,49 @@ json_t *api_delete_port(port_t *port, json_t *query_json, int *code) {
     /* removing virtual flag disables virtual port */
     port->flags &= ~PORT_FLAG_VIRTUAL_ACTIVE;
 
-    /* we can't use port_mark_for_saving() here; the port is going to be destroyed immediately,
-     * and we must save the configuration right away */
-    config_save();
+    /* free display name & unit */
+    if (port->display_name) {
+        free(port->display_name);
+        port->display_name = NULL;
+    }
+    if (port->unit) {
+        free(port->unit);
+        port->unit = NULL;
+    }
+
+    /* destroy value expression */
+    if (port->expr) {
+        port_expr_remove(port);
+    }
+
+    /* destroy transform expressions */
+    if (port->transform_read) {
+        expr_free(port->transform_read);
+        port->transform_read = NULL;
+    }
+    if (port->stransform_read) {
+        free(port->stransform_read);
+        port->stransform_read = NULL;
+    }
+    if (port->transform_write) {
+        expr_free(port->transform_write);
+        port->transform_write = NULL;
+    }
+    if (port->stransform_write) {
+        free(port->stransform_write);
+        port->stransform_write = NULL;
+    }
+
+    /* cancel sequence */
+    if (port->sequence_pos >= 0) {
+        port_sequence_cancel(port);
+    }
 
     if (!virtual_port_unregister(port)) {
         return API_ERROR(500, "port unregister failed");
     }
+
+    port_mark_for_saving(port); // TODO replace with config_mark_for_saving(); !!!
 
     free(port);
 
