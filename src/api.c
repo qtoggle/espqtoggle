@@ -1515,7 +1515,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
     }
 
     /* sequence */
-    port->sequence_pos = -1;
+    new_port->sequence_pos = -1;
 
     if (!virtual_port_register(new_port)) {
         return API_ERROR(500, "port registration failed");
@@ -1527,6 +1527,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
         port_rebuild_change_dep_mask(p);
     }
 
+    /* persist configuration */
     port_mark_for_saving(new_port);
     event_push_port_add(new_port);
 
@@ -1909,11 +1910,10 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
     device_flags |= DEVICE_FLAG_CONFIGURED;
 
     /* persist configuration */
-    config_save();
+    port_mark_for_saving(port);
+    event_push_port_update(port);
 
     *code = 204;
-
-    event_push_port_update(port);
 
     return response_json;
 }
