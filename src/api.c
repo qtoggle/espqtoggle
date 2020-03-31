@@ -133,8 +133,11 @@
 #define WIFI_RSSI_FAIR          -70
 
 
-static uint8                    api_access_level = 0;
+static uint8                    api_access_level;
+static uint8                    api_access_level_saved;
 static struct espconn         * api_conn;
+static struct espconn         * api_conn_saved;
+
 
 static char                   * frequency_choices[] = {"80", "160", NULL};
 
@@ -400,6 +403,26 @@ uint8 api_conn_access_level_get(void) {
 void api_conn_reset(void) {
     api_conn = NULL;
     api_access_level = API_ACCESS_LEVEL_NONE;
+}
+
+void api_conn_save(void) {
+    DEBUG_API("saving connection state");
+
+    api_conn_saved = api_conn;
+    api_access_level_saved = api_access_level;
+
+    api_conn = NULL;
+    api_access_level = API_ACCESS_LEVEL_NONE;
+}
+
+void api_conn_restore(void) {
+    DEBUG_API("restoring connection state");
+
+    api_conn = api_conn_saved;
+    api_access_level = api_access_level_saved;
+
+    api_conn_saved = NULL;
+    api_access_level_saved = API_ACCESS_LEVEL_NONE;
 }
 
 
@@ -1630,7 +1653,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                             }
                         }
 
-                        DEBUG_PORT(port, "%s set to %d", a->name, !!value);
+                        DEBUG_PORT(port, "%s set to %s", a->name, dtostr(value, -1));
 
                         break;
                     }
@@ -1655,7 +1678,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                             ((str_setter_t) a->set)(port, a, value);
                         }
 
-                        DEBUG_PORT(port, "%s set to %s", a->name, value);
+                        DEBUG_PORT(port, "%s set to %s", a->name, value ? value : "");
 
                         break;
                     }
@@ -1682,7 +1705,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 port->display_name = strndup(json_str_get(child), PORT_MAX_DISP_NAME_LEN);
             }
 
-            DEBUG_PORT(port, "display_name set to \"%s\"", port->display_name);
+            DEBUG_PORT(port, "display_name set to \"%s\"", port->display_name ? port->display_name : "");
         }
         else if (!strcmp(key, "unit") && (port->type == PORT_TYPE_NUMBER)) {
             if (json_get_type(child) != JSON_TYPE_STR) {
@@ -1695,7 +1718,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 port->unit = strndup(json_str_get(child), PORT_MAX_UNIT_LEN);
             }
 
-            DEBUG_PORT(port, "unit set to \"%s\"", port->unit);
+            DEBUG_PORT(port, "unit set to \"%s\"", port->unit ? port->unit : "");
         }
         else if (IS_OUTPUT(port) && !strcmp(key, "expression")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
@@ -1741,9 +1764,9 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                     expr_free(expr);
                 }
 
-                DEBUG_PORT(port, "expression set to \"%s\"", port->sexpr);
             }
 
+            DEBUG_PORT(port, "expression set to \"%s\"", port->sexpr ? port->sexpr : "");
             update_port_expression(port);
         }
         else if (IS_OUTPUT(port) && !strcmp(key, "transform_write")) {
@@ -1797,7 +1820,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 port->stransform_write = strdup(stransform_write);
                 port->transform_write = transform_write;
 
-                DEBUG_PORT(port, "write transform set to \"%s\"", port->stransform_write);
+                DEBUG_PORT(port, "write transform set to \"%s\"", port->stransform_write ? port->stransform_write : "");
             }
         }
         else if (!strcmp(key, "transform_read")) {
@@ -1851,7 +1874,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 port->stransform_read = strdup(stransform_read);
                 port->transform_read = transform_read;
 
-                DEBUG_PORT(port, "read transform set to \"%s\"", port->stransform_read);
+                DEBUG_PORT(port, "read transform set to \"%s\"", port->stransform_read ? port->stransform_read : "");
             }
         }
         else if (!strcmp(key, "persisted")) {

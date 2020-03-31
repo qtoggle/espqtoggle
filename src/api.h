@@ -77,6 +77,8 @@ ICACHE_FLASH_ATTR bool                      api_conn_busy(void);
 ICACHE_FLASH_ATTR bool                      api_conn_equal(struct espconn *conn);
 ICACHE_FLASH_ATTR uint8                     api_conn_access_level_get(void);
 ICACHE_FLASH_ATTR void                      api_conn_reset(void);
+ICACHE_FLASH_ATTR void                      api_conn_save(void);
+ICACHE_FLASH_ATTR void                      api_conn_restore(void);
 
 ICACHE_FLASH_ATTR json_t                  * api_get_device(json_t *query_json, int *code);
 ICACHE_FLASH_ATTR json_t                  * api_patch_device(json_t *query_json, json_t *request_json, int *code);
