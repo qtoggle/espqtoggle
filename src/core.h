@@ -44,8 +44,8 @@ ICACHE_FLASH_ATTR void                  core_disable_ports_polling(void);
 ICACHE_FLASH_ATTR void                  core_poll_ports(void);
 
 ICACHE_FLASH_ATTR void                  update_port_expression(port_t *port);
-ICACHE_FLASH_ATTR void                  port_mark_for_saving(port_t *port);
-ICACHE_FLASH_ATTR void                  ensure_ports_saved(void);
+ICACHE_FLASH_ATTR void                  config_mark_for_saving(void);
+ICACHE_FLASH_ATTR void                  config_ensure_saved(void);
 
 
 #endif /* _CORE_H */

@@ -1150,7 +1150,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
         config_start_provisioning();
     }
 
-    config_save();
+    config_mark_for_saving();
     
     if (needs_reset) {
         DEBUG_API("reset needed");
@@ -1550,8 +1550,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
         port_rebuild_change_dep_mask(p);
     }
 
-    /* persist configuration */
-    port_mark_for_saving(new_port);
+    config_mark_for_saving();
     event_push_port_add(new_port);
 
     *code = 201;
@@ -1932,8 +1931,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
     DEBUG_DEVICE("mark device as configured");
     device_flags |= DEVICE_FLAG_CONFIGURED;
 
-    /* persist configuration */
-    port_mark_for_saving(port);
+    config_mark_for_saving();
     event_push_port_update(port);
 
     *code = 204;
@@ -2007,7 +2005,7 @@ json_t *api_delete_port(port_t *port, json_t *query_json, int *code) {
         return API_ERROR(500, "port unregister failed");
     }
 
-    port_mark_for_saving(port); // TODO replace with config_mark_for_saving(); !!!
+    config_mark_for_saving();
 
     free(port);
 
@@ -2083,7 +2081,7 @@ json_t *api_patch_port_value(port_t *port, json_t *query_json, json_t *request_j
     }
 
     if (IS_PERSISTED(port)) {
-        port_mark_for_saving(port);
+        config_mark_for_saving();
     }
 
     *code = 204;
@@ -2428,7 +2426,7 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
         }
     }
 
-    config_save();
+    config_mark_for_saving();
 
     *code = 204;
 
@@ -2808,7 +2806,7 @@ void on_sequence_timer(void *arg) {
             DEBUG_PORT(port, "sequence done");
 
             if (IS_PERSISTED(port)) {
-                port_mark_for_saving(port);
+                config_mark_for_saving();
             }
         }
     }

@@ -43,14 +43,14 @@
 #define TASK_LISTEN_RESPOND         0x03
 #define TASK_UPDATE_SYSTEM          0x04
 
-#define PORT_SAVE_INTERVAL          5
+#define CONFIG_SAVE_INTERVAL          5
 
 
 static uint32                       last_expr_time = 0;
-static uint32                       last_port_save_time = 0;
+static uint32                       last_config_save_time = 0;
 
 static uint32                       force_eval_expressions_mask = 0;
-static uint32                       port_save_mask = 0;
+static bool                         config_needs_saving = FALSE;
 static bool                         ports_polling_enabled = FALSE;
 
 #ifdef _SLEEP
@@ -116,10 +116,10 @@ void core_poll_ports(void) {
 
     change_mask |= (1ULL << TIME_MS_EXPR_DEP_BIT);
 
-    /* port saving routine */
-    if (port_save_mask && (now - last_port_save_time > PORT_SAVE_INTERVAL)) {
-        last_port_save_time = now;
-        port_save_mask = 0;
+    /* config saving routine */
+    if (config_needs_saving && (now - last_config_save_time > CONFIG_SAVE_INTERVAL)) {
+        last_config_save_time = now;
+        config_needs_saving = FALSE;
         config_save();
     }
 
@@ -200,20 +200,17 @@ void update_port_expression(port_t *port) {
     port->change_reason = CHANGE_REASON_NATIVE;
 }
 
-void port_mark_for_saving(port_t *port) {
-    DEBUG_PORT(port, "marking for saving");
-    port_save_mask |= 1UL << port->slot;
+void config_mark_for_saving(void) {
+    DEBUG_CORE("marking config for saving");
+    config_needs_saving = TRUE;
 }
 
-void ensure_ports_saved(void) {
-    if (port_save_mask) {
-        DEBUG_CORE("ports need saving");
-        last_port_save_time = system_uptime();
+void config_ensure_saved(void) {
+    if (config_needs_saving) {
+        DEBUG_CORE("config needs saving");
+        last_config_save_time = system_uptime();
+        config_needs_saving = FALSE;
         config_save();
-        port_save_mask = 0;
-    }
-    else {
-        DEBUG_CORE("ports are all saved");
     }
 }
 
@@ -282,7 +279,7 @@ void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_m
 #endif
 
         if (IS_PERSISTED(p)) {
-            port_mark_for_saving(p);
+            config_mark_for_saving();
         }
     }
 

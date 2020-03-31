@@ -117,14 +117,14 @@ void on_system_ready(void) {
 void on_system_reset(void) {
     DEBUG_SYSTEM("cleaning up before reset");
 
-    ensure_ports_saved();
+    config_ensure_saved();
     sessions_respond_all();
     tcp_server_stop();
 }
 
 #ifdef _OTA
 void on_ota_auto_perform(int code) {
-    ensure_ports_saved();
+    config_ensure_saved();
     sessions_respond_all();
 }
 #endif
