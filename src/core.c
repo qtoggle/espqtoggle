@@ -43,7 +43,7 @@
 #define TASK_LISTEN_RESPOND         0x03
 #define TASK_UPDATE_SYSTEM          0x04
 
-#define CONFIG_SAVE_INTERVAL          5
+#define CONFIG_SAVE_INTERVAL        5  /* seconds */
 
 
 static uint32                       last_expr_time = 0;
@@ -51,6 +51,7 @@ static uint32                       last_config_save_time = 0;
 
 static uint32                       force_eval_expressions_mask = 0;
 static bool                         config_needs_saving = FALSE;
+static bool                         config_save_enabled = FALSE;
 static bool                         ports_polling_enabled = FALSE;
 
 #ifdef _SLEEP
@@ -116,8 +117,20 @@ void core_poll_ports(void) {
 
     change_mask |= (1ULL << TIME_MS_EXPR_DEP_BIT);
 
-    /* config saving routine */
-    if (config_needs_saving && (now - last_config_save_time > CONFIG_SAVE_INTERVAL)) {
+    /* never save config during the first few 2 seconds since polling starts;
+     * this avoids saving at each boot due to port values transitioning from undefined to their initial value */
+    if (!config_save_enabled) {
+        config_needs_saving = FALSE;
+        if (last_config_save_time == 0) {
+            last_config_save_time = now + 1;
+        }
+        else if (now > last_config_save_time) {
+            config_save_enabled = TRUE;
+            DEBUG("enabling config saving");
+        }
+    }
+
+    if (config_needs_saving && ((int64) now - last_config_save_time > CONFIG_SAVE_INTERVAL)) {
         last_config_save_time = now;
         config_needs_saving = FALSE;
         config_save();
