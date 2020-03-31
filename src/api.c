@@ -1120,12 +1120,11 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
     }
 
-    /* update device configured flag, depending on whether the configuration model has just been updated or not */
+    /* if the configuration model has changed, mark the device unconfigured so that it will automatically reconfigure */
     if (config_model_changed) {
+        DEBUG_DEVICE("marking device as unconfigured");
         device_flags &= ~DEVICE_FLAG_CONFIGURED;
-    }
-    else {
-        device_flags |= DEVICE_FLAG_CONFIGURED;
+        config_start_provisioning();
     }
 
     config_save();
@@ -1515,6 +1514,9 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
         DEBUG_API("adding virtual port: %d choices", len);
     }
 
+    /* sequence */
+    port->sequence_pos = -1;
+
     if (!virtual_port_register(new_port)) {
         return API_ERROR(500, "port registration failed");
     }
@@ -1903,6 +1905,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
     }
 
     /* set device configured flag */
+    DEBUG_DEVICE("mark device as configured");
     device_flags |= DEVICE_FLAG_CONFIGURED;
 
     /* persist configuration */
