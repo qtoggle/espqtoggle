@@ -144,6 +144,14 @@ void on_wifi_connect(bool connected) {
     os_timer_disarm(&connect_timeout_timer);
     core_enable_ports_polling();
 
+    if (!(device_flags & DEVICE_FLAG_CONFIGURED)) {
+        DEBUG_SYSTEM("system not configured, starting provisioning");
+        config_start_provisioning();
+    }
+    else {
+        DEBUG_SYSTEM("system configured");
+    }
+
 #ifdef _SLEEP
     /* start sleep timer now that we're connected */
     sleep_reset();

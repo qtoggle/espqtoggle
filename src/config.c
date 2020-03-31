@@ -21,6 +21,8 @@
 #include "espgoodies/common.h"
 #include "espgoodies/crypto.h"
 #include "espgoodies/flashcfg.h"
+#include "espgoodies/httpclient.h"
+#include "espgoodies/json.h"
 #include "espgoodies/system.h"
 #include "espgoodies/wifi.h"
 
@@ -32,6 +34,7 @@
 #include "apiutils.h"
 #include "common.h"
 #include "device.h"
+#include "ports.h"
 #include "stringpool.h"
 #include "webhooks.h"
 #include "config.h"
@@ -39,8 +42,19 @@
 
 #define NULL_HASH                       "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 
+
+static bool                             provisioning = FALSE;
+
+
 ICACHE_FLASH_ATTR void                  device_load(uint8 *data);
 ICACHE_FLASH_ATTR void                  device_save(uint8 *data, uint32 *strings_offs);
+
+ICACHE_FLASH_ATTR void                  on_config_provisioning_response(char *body, int body_len, int status,
+                                                                        char *header_names[], char *header_values[],
+                                                                        int header_count, uint8 addr[]);
+ICACHE_FLASH_ATTR void                  apply_device_provisioning_config(json_t *device_config);
+ICACHE_FLASH_ATTR void                  apply_ports_provisioning_config(json_t *ports_config);
+ICACHE_FLASH_ATTR void                  apply_port_provisioning_config(json_t *port_config);
 
 
 void device_load(uint8 *data) {
@@ -345,4 +359,229 @@ void config_save(void) {
     free(config_data);
 
     DEBUG_FLASHCFG("total strings size is %d", strings_offs - 1);
+}
+
+void config_start_provisioning(void) {
+    if (provisioning) {
+        DEBUG_DEVICE("provisioning: busy");
+        return;
+    }
+
+    provisioning = TRUE;
+
+    char url[256];
+    if (device_config_model_choices[0]) {
+        snprintf(url, sizeof(url), "%s%s/%s/%s.json",
+                 FW_BASE_URL, FW_BASE_CFG_PATH, FW_CONFIG_NAME, device_config_model);
+    }
+    else {
+        snprintf(url, sizeof(url), "%s%s/%s.json", FW_BASE_URL, FW_BASE_CFG_PATH, FW_CONFIG_NAME);
+    }
+
+    DEBUG_DEVICE("provisioning: fetching from %s", url);
+
+    httpclient_request("GET", url, /* body = */ NULL, /* body_len = */ 0,
+                       /* header_names = */ NULL, /* header_values = */ NULL, /* header_count = */ 0,
+                       on_config_provisioning_response, HTTP_DEF_TIMEOUT);
+}
+
+void on_config_provisioning_response(char *body, int body_len, int status, char *header_names[], char *header_values[],
+                                     int header_count, uint8 addr[]) {
+
+    provisioning = FALSE;
+
+    if (status == 200) {
+        json_t *config = json_parse(body);
+        if (!config) {
+            DEBUG_DEVICE("provisioning: invalid json");
+            return;
+        }
+
+        if (json_get_type(config) == JSON_TYPE_OBJ) {
+            DEBUG_DEVICE("provisioning: got config");
+
+            /* temporarily set API access level to admin */
+            api_conn_save();
+            api_conn_set((void *) 1, API_ACCESS_LEVEL_ADMIN);
+
+            json_t *device_config = json_obj_lookup_key(config, "device");
+            apply_device_provisioning_config(device_config);
+
+            json_t *ports_config = json_obj_lookup_key(config, "ports");
+            apply_ports_provisioning_config(ports_config);
+
+            api_conn_restore();
+
+            json_free(config);
+        }
+        else {
+            DEBUG_DEVICE("provisioning: invalid config");
+        }
+    }
+    else {
+        DEBUG_DEVICE("provisioning: got status %d", status);
+    }
+}
+
+void apply_device_provisioning_config(json_t *device_config) {
+    json_t *response_json;
+    json_t *attr_json;
+    int code;
+
+    DEBUG_DEVICE("provisioning: applying device config");
+
+    /* never update device name */
+    attr_json = json_obj_pop_key(device_config, "name");
+    if (attr_json) {
+        json_free(attr_json);
+    }
+
+    /* don't overwrite display name */
+    if (device_display_name[0]) {
+        attr_json = json_obj_pop_key(device_config, "display_name");
+        if (attr_json) {
+            json_free(attr_json);
+        }
+    }
+
+    if (device_config && json_get_type(device_config) == JSON_TYPE_OBJ) {
+        DEBUG_DEVICE("provisioning: setting device attributes");
+        code = 200;
+        response_json = api_patch_device(/* query_json = */ NULL, device_config, &code);
+        json_free(response_json);
+        if (code / 100 != 2) {
+            DEBUG_DEVICE("provisioning: api_patch_device() failed with status code %d", code);
+        }
+    }
+    else {
+        DEBUG_DEVICE("provisioning: invalid or missing device config");
+    }
+}
+
+void apply_ports_provisioning_config(json_t *ports_config) {
+    json_t *port_config;
+    int i;
+
+    DEBUG_DEVICE("provisioning: applying ports config");
+
+    if (ports_config && json_get_type(ports_config) == JSON_TYPE_LIST) {
+        for (i = 0; i < json_list_get_len(ports_config); i++) {
+            port_config = json_list_value_at(ports_config, i);
+            apply_port_provisioning_config(port_config);
+        }
+    }
+    else {
+        DEBUG_DEVICE("provisioning: invalid or missing ports config");
+    }
+}
+
+void apply_port_provisioning_config(json_t *port_config) {
+    json_t *response_json;
+    json_t *port_id_json;
+    json_t *virtual_json;
+    json_t *request_json;
+    json_t *attr_json;
+    json_t *value_json;
+    port_t *port;
+    int code;
+
+    if (port_config && json_get_type(port_config) == JSON_TYPE_OBJ) {
+        port_id_json = json_obj_pop_key(port_config, "id");
+        virtual_json = json_obj_pop_key(port_config, "virtual");
+        if (port_id_json && json_get_type(port_id_json) == JSON_TYPE_STR) {
+            char *port_id = json_str_get(port_id_json);
+            DEBUG_DEVICE("provisioning: applying port %s config", port_id);
+            port = port_find_by_id(port_id);
+
+            /* virtual ports have to be added first */
+            if (virtual_json && json_get_type(virtual_json) == JSON_TYPE_BOOL && json_bool_get(virtual_json)) {
+                if (port) {
+                    DEBUG_DEVICE("provisioning: virtual port %s exists, removing it first", port_id);
+                    code = 200;
+                    response_json = api_delete_port(port, /* query_json = */ NULL, &code);
+                    json_free(response_json);
+                    if (code / 100 != 2) {
+                        DEBUG_DEVICE("provisioning: api_delete_port() failed with status code %d", code);
+                    }
+                }
+
+                DEBUG_DEVICE("provisioning: adding virtual port %s", port_id);
+                request_json = json_obj_new();
+                json_obj_append(request_json, "id", json_str_new(port_id));
+
+                /* pass non-modifiable virtual port attributes from port_config to request_json */
+                attr_json = json_obj_pop_key(port_config, "type");
+                if (attr_json) {
+                    json_obj_append(request_json, "type", attr_json);
+                }
+                attr_json = json_obj_pop_key(port_config, "min");
+                if (attr_json) {
+                    json_obj_append(request_json, "min", attr_json);
+                }
+                attr_json = json_obj_pop_key(port_config, "max");
+                if (attr_json) {
+                    json_obj_append(request_json, "max", attr_json);
+                }
+                attr_json = json_obj_pop_key(port_config, "integer");
+                if (attr_json) {
+                    json_obj_append(request_json, "integer", attr_json);
+                }
+                attr_json = json_obj_pop_key(port_config, "step");
+                if (attr_json) {
+                    json_obj_append(request_json, "step", attr_json);
+                }
+                attr_json = json_obj_pop_key(port_config, "choices");
+                if (attr_json) {
+                    json_obj_append(request_json, "choices", attr_json);
+                }
+
+                code = 200;
+                response_json = api_post_ports(/* query_json = */ NULL, request_json, &code);
+                json_free(response_json);
+                if (code / 100 != 2) {
+                    DEBUG_DEVICE("provisioning: api_post_ports() failed with status code %d", code);
+                }
+                json_free(request_json);
+
+                /* lookup port reference after adding it */
+                port = port_find_by_id(port_id);
+            }
+
+            value_json = json_obj_pop_key(port_config, "value");
+
+            DEBUG_DEVICE("provisioning: setting port %s attributes", port_id);
+
+            code = 200;
+            response_json = api_patch_port(port, /* query_json = */ NULL, port_config, &code);
+            json_free(response_json);
+            if (code / 100 != 2) {
+                DEBUG_DEVICE("provisioning: api_patch_port() failed with status code %d", code);
+            }
+
+            if (value_json) { /* if value was also supplied with provisioning */
+                DEBUG_DEVICE("provisioning: setting port %s value", port_id);
+
+                code = 200;
+                response_json = api_patch_port_value(port, /* query_json = */ NULL, value_json, &code);
+                json_free(response_json);
+                if (code / 100 != 2) {
+                    DEBUG_DEVICE("provisioning: api_patch_port_value() failed with status code %d", code);
+                }
+                json_free(value_json);
+            }
+        }
+        else {
+            DEBUG_DEVICE("provisioning: invalid or missing port id");
+        }
+
+        if (port_id_json) {
+            json_free(port_id_json);
+        }
+        if (virtual_json) {
+            json_free(virtual_json);
+        }
+    }
+    else {
+        DEBUG_DEVICE("provisioning: invalid or missing port config");
+    }
 }

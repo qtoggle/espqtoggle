@@ -46,7 +46,7 @@ FW_CONFIG_MODELS ?= # model1|model2|model3
 
 FW_BASE_URL  ?= http://provisioning.qtoggle.io
 FW_BASE_OTA_PATH ?= /firmware/espqtoggle
-FW_BASE_CFG_PATH ?= /config/espqtoggle
+FW_BASE_CFG_PATH ?= /config
 
 # ---- configurable stuff ends here ---- #
 
