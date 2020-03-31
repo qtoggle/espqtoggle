@@ -955,7 +955,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
             }
 
             char *dns_str = json_str_get(child);
-            ip_addr_t dns;
+            ip_addr_t dns = {0};
             if (dns_str[0]) { /* manual */
                 uint8 bytes[4];
                 if (!validate_ip_address(dns_str, bytes)) {
@@ -963,7 +963,6 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
                 }
 
                 IP4_ADDR(&dns, bytes[0], bytes[1], bytes[2], bytes[3]);
-                wifi_set_dns(dns);
             }
 
             wifi_set_dns(dns);
