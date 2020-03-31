@@ -78,6 +78,35 @@ ICACHE_FLASH_ATTR bool                      api_conn_equal(struct espconn *conn)
 ICACHE_FLASH_ATTR uint8                     api_conn_access_level_get(void);
 ICACHE_FLASH_ATTR void                      api_conn_reset(void);
 
+ICACHE_FLASH_ATTR json_t                  * api_get_device(json_t *query_json, int *code);
+ICACHE_FLASH_ATTR json_t                  * api_patch_device(json_t *query_json, json_t *request_json, int *code);
+
+ICACHE_FLASH_ATTR json_t                  * api_post_reset(json_t *query_json, json_t *request_json, int *code);
+#ifdef _OTA
+ICACHE_FLASH_ATTR json_t                  * api_get_firmware(json_t *query_json, int *code);
+ICACHE_FLASH_ATTR json_t                  * api_patch_firmware(json_t *query_json, json_t *request_json, int *code);
+#endif
+ICACHE_FLASH_ATTR json_t                  * api_get_access(json_t *query_json, int *code);
+ICACHE_FLASH_ATTR json_t                  * api_get_ports(json_t *query_json, int *code);
+ICACHE_FLASH_ATTR json_t                  * api_post_ports(json_t *query_json, json_t *request_json, int *code);
+ICACHE_FLASH_ATTR json_t                  * api_patch_port(port_t *port, json_t *query_json, json_t *request_json,
+                                                           int *code);
+ICACHE_FLASH_ATTR json_t                  * api_delete_port(port_t *port, json_t *query_json, int *code);
+
+ICACHE_FLASH_ATTR json_t                  * api_get_port_value(port_t *port, json_t *query_json, int *code);
+ICACHE_FLASH_ATTR json_t                  * api_patch_port_value(port_t *port, json_t *query_json, json_t *request_json,
+                                                                 int *code);
+ICACHE_FLASH_ATTR json_t                  * api_patch_port_sequence(port_t *port, json_t *query_json, json_t *request_json,
+                                                                    int *code);
+
+ICACHE_FLASH_ATTR json_t                  * api_get_webhooks(json_t *query_json, int *code);
+ICACHE_FLASH_ATTR json_t                  * api_patch_webhooks(json_t *query_json, json_t *request_json, int *code);
+
+ICACHE_FLASH_ATTR json_t                  * api_get_wifi(json_t *query_json, int *code);
+
+ICACHE_FLASH_ATTR json_t                  * api_get_raw_io(char *io, json_t *query_json, int *code);
+ICACHE_FLASH_ATTR json_t                  * api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int *code);
+
 ICACHE_FLASH_ATTR json_t                  * port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx);
 ICACHE_FLASH_ATTR json_t                  * device_to_json(void);
 
