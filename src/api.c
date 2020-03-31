@@ -843,6 +843,7 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
 
     int i;
     bool needs_reset = FALSE;
+    bool config_model_changed = FALSE;
 #ifdef _SLEEP
     bool needs_sleep_reset = FALSE;
 #endif
@@ -1119,6 +1120,7 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
             strncpy(device_config_model, model, API_MAX_DEVICE_CONFIG_MODEL_LEN);
             device_config_model[API_MAX_DEVICE_CONFIG_MODEL_LEN - 1] = 0;
 
+            config_model_changed = TRUE;
             DEBUG_DEVICE("config model set to %s", device_config_model);
         }
         else if (!strcmp(key, "version") ||
@@ -1145,6 +1147,14 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
         else {
             return NO_SUCH_ATTRIBUTE(key);
         }
+    }
+
+    /* update device configured flag, depending on whether the configuration model has just been updated or not */
+    if (config_model_changed) {
+        device_flags &= ~DEVICE_FLAG_CONFIGURED;
+    }
+    else {
+        device_flags |= DEVICE_FLAG_CONFIGURED;
     }
 
     config_save();
@@ -1920,6 +1930,9 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
     if (IS_ENABLED(port)) {
         port_configure(port);
     }
+
+    /* set device configured flag */
+    device_flags |= DEVICE_FLAG_CONFIGURED;
 
     /* persist configuration */
     config_save();

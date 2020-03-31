@@ -134,6 +134,8 @@ void device_load(uint8 *data) {
     /* flags & others */
     memcpy(&device_tcp_port, data + CONFIG_OFFS_TCP_PORT, 2);
     memcpy(&device_flags, data + CONFIG_OFFS_DEVICE_FLAGS, 4);
+    DEBUG_DEVICE("flags = %08X", device_flags);
+
     memcpy(&frequency, data + CONFIG_OFFS_CPU_FREQ, 4);
     if (frequency) {
         system_update_cpu_freq(frequency);

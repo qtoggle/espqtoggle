@@ -31,6 +31,7 @@
 #define DEVICE_FLAG_WEBHOOKS_ENABLED    0x00000001
 #define DEVICE_FLAG_WEBHOOKS_HTTPS      0x00000002
 #define DEVICE_FLAG_OTA_AUTO_UPDATE     0x00000004
+#define DEVICE_FLAG_CONFIGURED          0x00000008
 
 
 extern char                             device_hostname[];
