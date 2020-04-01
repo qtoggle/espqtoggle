@@ -48,10 +48,12 @@
 
 static uint32                       last_expr_time = 0;
 static uint32                       last_config_save_time = 0;
+static uint32                       now;
+static uint64                       now_ms;
 
 static uint32                       force_eval_expressions_mask = 0;
 static bool                         config_needs_saving = FALSE;
-static bool                         config_save_enabled = FALSE;
+static uint32                       poll_started_time_ms = 0;
 static bool                         polling_enabled = FALSE;
 
 #ifdef _SLEEP
@@ -106,8 +108,8 @@ void core_poll(void) {
     uint32 change_reasons_expression_mask = 0;
 
     double value;
-    uint32 now = system_uptime();
-    uint64 now_ms = system_uptime_ms();
+    now = system_uptime();
+    now_ms = system_uptime_ms();
 
     /* add time dependency masks */
     if (now != last_expr_time) {
@@ -115,20 +117,11 @@ void core_poll(void) {
         change_mask |= (1ULL << TIME_EXPR_DEP_BIT);
     }
 
-    change_mask |= (1ULL << TIME_MS_EXPR_DEP_BIT);
-
-    /* never save config during the first few 2 seconds since polling starts;
-     * this avoids saving at each boot due to port values transitioning from undefined to their initial value */
-    if (!config_save_enabled) {
-        config_needs_saving = FALSE;
-        if (last_config_save_time == 0) {
-            last_config_save_time = now + 1;
-        }
-        else if (now > last_config_save_time) {
-            config_save_enabled = TRUE;
-            DEBUG("enabling config saving");
-        }
+    if (poll_started_time_ms == 0) {
+        poll_started_time_ms = now_ms;
     }
+
+    change_mask |= (1ULL << TIME_MS_EXPR_DEP_BIT);
 
     if (config_needs_saving && ((int64) now - last_config_save_time > CONFIG_SAVE_INTERVAL)) {
         last_config_save_time = now;
@@ -214,14 +207,8 @@ void update_port_expression(port_t *port) {
 }
 
 void config_mark_for_saving(void) {
-    if (polling_enabled) {
-        DEBUG_CORE("marking config for saving");
-        config_needs_saving = TRUE;
-    }
-    else {
-        DEBUG_CORE("saving config");
-        config_save();
-    }
+    DEBUG_CORE("marking config for saving");
+    config_needs_saving = TRUE;
 }
 
 void config_ensure_saved(void) {
@@ -297,7 +284,9 @@ void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_m
         event_push_value_change(p);
 #endif
 
-        if (IS_PERSISTED(p)) {
+        if (IS_PERSISTED(p) && (now_ms - poll_started_time_ms > 2000)) {
+            /* don't save config during the first few seconds since polling starts; this avoids saving at each boot due
+             * to port values transitioning from undefined to their initial value */
             config_mark_for_saving();
         }
     }
