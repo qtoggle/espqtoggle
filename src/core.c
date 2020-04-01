@@ -39,7 +39,7 @@
 
 #define TASK_QUEUE_SIZE             8
 
-#define TASK_POLL_PORTS             0x02
+#define TASK_POLL                   0x02
 #define TASK_LISTEN_RESPOND         0x03
 #define TASK_UPDATE_SYSTEM          0x04
 
@@ -52,7 +52,7 @@ static uint32                       last_config_save_time = 0;
 static uint32                       force_eval_expressions_mask = 0;
 static bool                         config_needs_saving = FALSE;
 static bool                         config_save_enabled = FALSE;
-static bool                         ports_polling_enabled = FALSE;
+static bool                         polling_enabled = FALSE;
 
 #ifdef _SLEEP
 /* used to prevent more than one value-change per port when using sleep mode with short wakes */
@@ -75,26 +75,26 @@ void core_listen_respond(session_t *session) {
     system_os_post(USER_TASK_PRIO_0, TASK_LISTEN_RESPOND, (os_param_t) session);
 }
 
-void core_enable_ports_polling(void) {
-    if (ports_polling_enabled) {
+void core_enable_polling(void) {
+    if (polling_enabled) {
         return;
     }
 
-    DEBUG_CORE("enabling ports polling");
-    ports_polling_enabled = TRUE;
-    system_os_post(USER_TASK_PRIO_0, TASK_POLL_PORTS, (os_param_t) NULL);
+    DEBUG_CORE("enabling polling");
+    polling_enabled = TRUE;
+    system_os_post(USER_TASK_PRIO_0, TASK_POLL, (os_param_t) NULL);
 }
 
-void core_disable_ports_polling(void) {
-    if (!ports_polling_enabled) {
+void core_disable_polling(void) {
+    if (!polling_enabled) {
         return;
     }
 
-    DEBUG_CORE("disabling ports polling");
-    ports_polling_enabled = FALSE;
+    DEBUG_CORE("disabling polling");
+    polling_enabled = FALSE;
 }
 
-void core_poll_ports(void) {
+void core_poll(void) {
 #ifdef _OTA
     /* prevent port polling and related logic during OTA */
     if (ota_current_state() == OTA_STATE_DOWNLOADING) {
@@ -214,8 +214,14 @@ void update_port_expression(port_t *port) {
 }
 
 void config_mark_for_saving(void) {
-    DEBUG_CORE("marking config for saving");
-    config_needs_saving = TRUE;
+    if (polling_enabled) {
+        DEBUG_CORE("marking config for saving");
+        config_needs_saving = TRUE;
+    }
+    else {
+        DEBUG_CORE("saving config");
+        config_save();
+    }
 }
 
 void config_ensure_saved(void) {
@@ -230,11 +236,11 @@ void config_ensure_saved(void) {
 
 void core_task(os_event_t *e) {
     switch (e->sig) {
-        case TASK_POLL_PORTS: {
-            if (ports_polling_enabled) {
-                /* schedule next ports polling */
-                system_os_post(USER_TASK_PRIO_0, TASK_POLL_PORTS, (os_param_t) NULL);
-                core_poll_ports();
+        case TASK_POLL: {
+            if (polling_enabled) {
+                /* schedule next polling */
+                system_os_post(USER_TASK_PRIO_0, TASK_POLL, (os_param_t) NULL);
+                core_poll();
             }
 
             break;

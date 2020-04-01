@@ -142,7 +142,7 @@ void on_wifi_connect(bool connected) {
 
     wifi_first_time_connected = TRUE;
     os_timer_disarm(&connect_timeout_timer);
-    core_enable_ports_polling();
+    core_enable_polling();
 
     if (!(device_flags & DEVICE_FLAG_CONFIGURED)) {
         DEBUG_SYSTEM("system not configured, starting provisioning");
@@ -192,7 +192,7 @@ void on_wifi_connect(bool connected) {
 
 void on_wifi_connect_timeout(void *arg) {
     DEBUG_SYSTEM("timeout waiting for initial WiFi connection");
-    core_enable_ports_polling();
+    core_enable_polling();
 #ifdef _SLEEP
     sleep_reset();
 #endif

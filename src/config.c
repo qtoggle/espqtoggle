@@ -73,7 +73,11 @@ void device_load(uint8 *data) {
 
     /* device name */
     memcpy(device_hostname, data + CONFIG_OFFS_HOSTNAME, API_MAX_DEVICE_NAME_LEN);
+    DEBUG_DEVICE("device hostname = \"%s\"", device_hostname);
+
+    /* device display name */
     memcpy(device_display_name, data + CONFIG_OFFS_DISP_NAME, API_MAX_DEVICE_DISP_NAME_LEN);
+    DEBUG_DEVICE("device display_name = \"%s\"", device_display_name);
 
     /* passwords */
     memcpy(device_admin_password_hash, data + CONFIG_OFFS_ADMIN_PASSWORD, SHA256_LEN);

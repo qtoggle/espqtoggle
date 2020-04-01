@@ -2028,7 +2028,7 @@ json_t *api_get_port_value(port_t *port, json_t *query_json, int *code) {
     }
 
     /* poll ports before retrieving current port value, ensuring value is as up-to-date as possible */
-    core_poll_ports();
+    core_poll();
 
     response_json = port_get_json_value(port);
 

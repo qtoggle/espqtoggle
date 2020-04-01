@@ -39,9 +39,9 @@
 ICACHE_FLASH_ATTR void                  core_init(void);
 ICACHE_FLASH_ATTR void                  core_listen_respond(session_t *session);
 
-ICACHE_FLASH_ATTR void                  core_enable_ports_polling(void);
-ICACHE_FLASH_ATTR void                  core_disable_ports_polling(void);
-ICACHE_FLASH_ATTR void                  core_poll_ports(void);
+ICACHE_FLASH_ATTR void                  core_enable_polling(void);
+ICACHE_FLASH_ATTR void                  core_disable_polling(void);
+ICACHE_FLASH_ATTR void                  core_poll(void);
 
 ICACHE_FLASH_ATTR void                  update_port_expression(port_t *port);
 ICACHE_FLASH_ATTR void                  config_mark_for_saving(void);
