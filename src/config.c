@@ -166,7 +166,7 @@ void device_load(uint8 *data) {
         DEBUG_WEBHOOKS("webhooks host = \"%s\"", webhooks_host);
     }
     else {
-        DEBUG_WEBHOOKS("null webhooks host");
+        DEBUG_WEBHOOKS("webhooks host = \"\"");
     }
 
     memcpy(&webhooks_port, data + CONFIG_OFFS_WEBHOOKS_PORT, 2);
@@ -176,7 +176,7 @@ void device_load(uint8 *data) {
         DEBUG_WEBHOOKS("webhooks path = \"%s\"", webhooks_path);
     }
     else {
-        DEBUG_WEBHOOKS("null webhooks path");
+        DEBUG_WEBHOOKS("webhooks path = \"\"");
     }
 
     char *password_hash = string_pool_read(strings_ptr, data + CONFIG_OFFS_WEBHOOKS_PASSWORD);
@@ -184,7 +184,7 @@ void device_load(uint8 *data) {
         strncpy(webhooks_password_hash, password_hash, SHA256_HEX_LEN + 1);
     }
     if (!webhooks_password_hash[0]) {  /* use hash of empty string, by default */
-        DEBUG_WEBHOOKS("null webhooks password");
+        DEBUG_WEBHOOKS("webhooks password = \"\"");
 
         char *hex_digest = sha256_hex("");
         strncpy(webhooks_password_hash, hex_digest, SHA256_HEX_LEN + 1);

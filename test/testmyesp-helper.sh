@@ -361,7 +361,7 @@ function parse_options() {
             --test-case)
                 test -z "$2" && exit_usage
                 test_cases+=($2)
-                echo "Test case \"$(jq -r .name <$2)\" added."
+                echo "Test case \"$(cat $2 | envsubst | jq -r .name)\" added."
                 shift 2
                 ;;
 
@@ -371,7 +371,7 @@ function parse_options() {
 
                 while [[ -n "$1" ]] && [[ "$1" != --* ]]; do
                     test_cases+=($1)
-                    echo "Test case \"$(jq -r .name <$1)\" added."
+                    echo "Test case \"$(cat $1 | envsubst | jq -r .name)\" added."
                     shift 1
                 done
                 ;;
