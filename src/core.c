@@ -107,7 +107,7 @@ void core_poll_ports(void) {
 
     double value;
     uint32 now = system_uptime();
-    uint64 now_ms = system_uptime_us() / 1000;
+    uint64 now_ms = system_uptime_ms();
 
     /* add time dependency masks */
     if (now != last_expr_time) {

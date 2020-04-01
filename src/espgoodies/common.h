@@ -23,7 +23,7 @@
 #include <math.h>
 #include <osapi.h>
 #include <os_type.h>
-
+#include <c_types.h>
 
 #include "system.h"
 
@@ -52,8 +52,7 @@
 #endif
 
 #ifdef _DEBUG
-#define DEBUG(fmt, ...)         os_printf("%5d.%03d: " fmt "\n", system_uptime(), \
-                                          (int) ((system_uptime_us() / 1000) % 1000), ##__VA_ARGS__)
+#define DEBUG(fmt, ...)         os_printf("%8d: " fmt "\n", (uint32) system_uptime_ms(), ##__VA_ARGS__)
 #else
 #define DEBUG(...)              {}
 #endif

@@ -301,7 +301,7 @@ double _time_callback(expr_t *expr, int argc, double *args) {
 }
 
 double _timems_callback(expr_t *expr, int argc, double *args) {
-    return system_uptime_us() / 1000;
+    return system_uptime_ms();
 }
 
 double _delay_callback(expr_t *expr, int argc, double *args) {
@@ -313,7 +313,7 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
         return FALSE;
     }
 
-    uint64 time_ms = system_uptime_us() / 1000;
+    uint64 time_ms = system_uptime_ms();
     double value = args[0];
     double delay = args[1];
     double result = UNDEFINED;
@@ -365,7 +365,7 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
 }
 
 double _held_callback(expr_t *expr, int argc, double *args) {
-    uint64 time_ms = system_uptime_us() / 1000;
+    uint64 time_ms = system_uptime_ms();
     double value = args[0];
     double fixed_value = args[1];
     int duration = args[2];
@@ -414,7 +414,7 @@ double _deriv_callback(expr_t *expr, int argc, double *args) {
 }
 
 double _integ_callback(expr_t *expr, int argc, double *args) {
-    uint64 time_ms = system_uptime_us() / 1000;
+    uint64 time_ms = system_uptime_ms();
     double value = args[0];
     double accumulator = args[1];
     double sampling_interval = args[2];
@@ -445,7 +445,7 @@ bool _filter_callback(expr_t *expr, int argc, double *args) {
     }
 
     int i;
-    uint64 time_ms = system_uptime_us() / 1000;
+    uint64 time_ms = system_uptime_ms();
     double value = args[0];
     double *values = expr->paux; /* expr->paux flag is used as a pointer to a value history queue */
     int width = (int) args[1];
@@ -573,7 +573,7 @@ double _hyst_callback(expr_t *expr, int argc, double *args) {
 }
 
 double _sequence_callback(expr_t *expr, int argc, double *args) {
-    int time_ms = (int) (system_uptime_us() / 1000);
+    int64 time_ms = system_uptime_ms();
     double result = args[0];
     int delta = time_ms - expr->aux;
 

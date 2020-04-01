@@ -106,6 +106,13 @@ uint32 system_uptime(void) {
     return uptime / 1000000;
 }
 
+uint64 system_uptime_ms(void) {
+    /* call system_uptime() to update the internal uptime value */
+    system_uptime();
+
+    return uptime / 1000;
+}
+
 uint64 system_uptime_us(void) {
     /* call system_uptime() to update the internal uptime value */
     system_uptime();
