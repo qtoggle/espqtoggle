@@ -170,10 +170,9 @@
         {
             "name": "check-serial",
             "params": {
-                "wait_duration": 500,
+                "wait_duration": 1000,
                 "expected_content_regex": ".*system initialization done.*"
             }
         }
     ]
 }
-
