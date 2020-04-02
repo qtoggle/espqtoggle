@@ -444,13 +444,13 @@ double read_pow_fact(port_t *port) {
 bool read_status_if_needed(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
-    uint64 now = system_uptime_us() / 1000;
+    uint64 now = system_uptime_ms();
     uint64 delta = now - extra_info->last_read_time;
     if (delta > port->sampling_interval) {
         DEBUG_V9821(port, "status needs new reading");
 
         /* update last read time */
-        extra_info->last_read_time = system_uptime_us() / 1000;
+        extra_info->last_read_time = system_uptime_ms();
 
         if (!read_status(port)) {
             DEBUG_V9821(port, "status reading failed");

@@ -357,7 +357,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         goto done;
     }
 
-    DEBUG_ESPQTCLIENT_CONN(conn, "JWT valid, access granted");
+    DEBUG_ESPQTCLIENT_CONN(conn, "JWT valid, user authenticated");
 
     free(jwt_str);
     jwt_str = NULL;

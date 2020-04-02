@@ -23,6 +23,9 @@
 #include <math.h>
 #include <osapi.h>
 #include <os_type.h>
+#include <c_types.h>
+
+#include "system.h"
 
 
 /* we need to alter the ICACHE_RODATA_ATTR definition to add 4-byte alignment specifier */
@@ -49,7 +52,7 @@
 #endif
 
 #ifdef _DEBUG
-#define DEBUG(fmt, ...)         os_printf("DEBUG: " fmt "\n", ##__VA_ARGS__)
+#define DEBUG(fmt, ...)         os_printf("%8d: " fmt "\n", (uint32) system_uptime_ms(), ##__VA_ARGS__)
 #else
 #define DEBUG(...)              {}
 #endif

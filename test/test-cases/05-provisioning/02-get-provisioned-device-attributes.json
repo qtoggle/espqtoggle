@@ -1,0 +1,33 @@
+{
+    "name": "get-provisioned-device-attributes",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "required": [
+                        "name",
+                        "display_name"
+                    ],
+                    "properties": {
+                        "name": {
+                            "enum": ["esp{{DEVICE_SERIAL_NUMBER}}"]
+                        },
+                        "display_name": {
+                            "enum": ["Test"]
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
+

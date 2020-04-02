@@ -257,6 +257,7 @@ def gen_appbin():
         write_file(flash_bin_name,data_bin)
     write_file(flash_bin_name,chr(chk_sum & 0xFF))
 
+    flash_image_size = os.stat(flash_bin_name).st_size
     # extra.bin
     if extra_bin:
         with open(extra_bin, 'rb') as fp:
@@ -289,6 +290,12 @@ def gen_appbin():
         write_file(flash_bin_name,chr((all_bin_crc & 0x000000FF))+chr((all_bin_crc & 0x0000FF00) >> 8)+chr((all_bin_crc & 0x00FF0000) >> 16)+chr((all_bin_crc & 0xFF000000) >> 24))
     cmd = 'rm eagle.app.sym'
     os.system(cmd)
+    
+    print('Flash program image size: %d bytes' % flash_image_size)
+    extra_bin_size = os.stat(extra_bin).st_size if extra_bin else 0
+    if extra_bin:
+        print('Flash extra data size: %d bytes' % extra_bin_size)
+    print('Remaining program space: %d bytes' % (476 * 1024 - flash_image_size))
 
 if __name__=='__main__':
     gen_appbin()

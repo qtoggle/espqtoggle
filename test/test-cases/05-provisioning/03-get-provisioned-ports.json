@@ -1,0 +1,71 @@
+{
+    "name": "get-provisioned-ports",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "expected_status": 200,
+                "expected_body": [
+				    {
+				        "id": "gpio4",
+				        "display_name": "GPIO 4",
+				        "writable": false,
+				        "enabled": true,
+				        "persisted": false,
+				        "sampling_interval": 10,
+				        "transform_read": "NOT(${DOLLAR})",
+				        "type": "boolean",
+				        "output": false,
+				        "pull_up": true,
+				        "value": false,
+				        "definitions": {
+				            "output": {
+				                "display_name": "Output Mode",
+				                "description": "Makes this GPIO an output pin.",
+				                "modifiable": true,
+				                "type": "boolean"
+				            },
+				            "pull_up": {
+				                "display_name": "Pull-Up",
+				                "description": "Enables the internal pull-up.",
+				                "modifiable": true,
+				                "type": "boolean"
+				            },
+				            "sampling_interval": {
+				                "display_name": "Sampling Interval",
+				                "description": "Indicates how often to read the port value.",
+				                "unit": "milliseconds",
+				                "modifiable": true,
+				                "type": "number",
+				                "min": 0,
+				                "max": 86400000,
+				                "integer": true
+				            }
+				        }
+				    },
+				    {
+				        "id": "virtual1",
+				        "display_name": "Virtual Port",
+				        "unit": "unit1",
+				        "type": "number",
+				        "writable": true,
+				        "enabled": true,
+				        "persisted": false,
+				        "virtual": true,
+				        "expression": "NOT(${DOLLAR}gpio4)",
+				        "transform_read": "",
+				        "transform_write": "",
+				        "value": 1,
+				        "definitions": {}
+				    }
+				]
+            }
+        }
+    ]
+}
+

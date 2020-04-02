@@ -125,6 +125,12 @@
         },
         
         {
+            "name": "sleep",
+            "params": {
+                "duration": 2000
+            }
+        },
+        {
             "name": "reset-serial-log",
             "params": {
                 "wait_duration": 0

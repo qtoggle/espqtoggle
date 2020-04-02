@@ -133,8 +133,11 @@
 #define WIFI_RSSI_FAIR          -70
 
 
-static uint8                    api_access_level = 0;
+static uint8                    api_access_level;
+static uint8                    api_access_level_saved;
 static struct espconn         * api_conn;
+static struct espconn         * api_conn_saved;
+
 
 static char                   * frequency_choices[] = {"80", "160", NULL};
 
@@ -142,34 +145,6 @@ static char                   * frequency_choices[] = {"80", "160", NULL};
 static char                   * ota_states_str[] = {"idle", "checking", "downloading", "restarting"};
 #endif
 
-
-ICACHE_FLASH_ATTR static json_t       * get_device(json_t *query_json, int *code);
-ICACHE_FLASH_ATTR static json_t       * patch_device(json_t *query_json, json_t *request_json, int *code);
-
-ICACHE_FLASH_ATTR static json_t       * post_reset(json_t *query_json, json_t *request_json, int *code);
-#ifdef _OTA
-ICACHE_FLASH_ATTR static json_t       * get_firmware(json_t *query_json, int *code);
-ICACHE_FLASH_ATTR static json_t       * patch_firmware(json_t *query_json, json_t *request_json, int *code);
-#endif
-ICACHE_FLASH_ATTR static json_t       * get_access(json_t *query_json, int *code);
-ICACHE_FLASH_ATTR static json_t       * get_ports(json_t *query_json, int *code);
-ICACHE_FLASH_ATTR static json_t       * post_ports(json_t *query_json, json_t *request_json, int *code);
-ICACHE_FLASH_ATTR static json_t       * patch_port(port_t *port, json_t *query_json, json_t *request_json, int *code);
-ICACHE_FLASH_ATTR static json_t       * delete_port(port_t *port, json_t *query_json, int *code);
-
-ICACHE_FLASH_ATTR static json_t       * get_port_value(port_t *port, json_t *query_json, int *code);
-ICACHE_FLASH_ATTR static json_t       * patch_port_value(port_t *port, json_t *query_json, json_t *request_json,
-                                                         int *code);
-ICACHE_FLASH_ATTR static json_t       * patch_port_sequence(port_t *port, json_t *query_json, json_t *request_json,
-                                                           int *code);
-
-ICACHE_FLASH_ATTR static json_t       * get_webhooks(json_t *query_json, int *code);
-ICACHE_FLASH_ATTR static json_t       * patch_webhooks(json_t *query_json, json_t *request_json, int *code);
-
-ICACHE_FLASH_ATTR static json_t       * get_wifi(json_t *query_json, int *code);
-
-ICACHE_FLASH_ATTR static json_t       * get_raw_io(char *io, json_t *query_json, int *code);
-ICACHE_FLASH_ATTR static json_t       * patch_raw_io(char *io, json_t *query_json, json_t *request_json, int *code);
 
 ICACHE_FLASH_ATTR static json_t       * port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx);
 ICACHE_FLASH_ATTR static json_t       * device_attrdefs_to_json(void);
@@ -240,10 +215,10 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
         }
         else {
             if (method == HTTP_METHOD_GET) {
-                response_json = get_device(query_json, code);
+                response_json = api_get_device(query_json, code);
             }
             else if (method == HTTP_METHOD_PATCH) {
-                response_json = patch_device(query_json, request_json, code);
+                response_json = api_patch_device(query_json, request_json, code);
             }
             else {
                 RESPOND_NO_SUCH_FUNCTION();
@@ -251,15 +226,15 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
         }
     }
     else if (!strcmp(part1, "reset") && method == HTTP_METHOD_POST && !part2) {
-        response_json = post_reset(query_json, request_json, code);
+        response_json = api_post_reset(query_json, request_json, code);
     }
 #ifdef _OTA
     else if (!strcmp(part1, "firmware") && !part2) {
         if (method == HTTP_METHOD_GET) {
-            response_json = get_firmware(query_json, code);
+            response_json = api_get_firmware(query_json, code);
         }
         else if (method == HTTP_METHOD_PATCH) {
-            response_json = patch_firmware(query_json, request_json, code);
+            response_json = api_patch_firmware(query_json, request_json, code);
         }
         else {
             RESPOND_NO_SUCH_FUNCTION();
@@ -268,7 +243,7 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
 #endif
     else if (!strcmp(part1, "access")) {
         if (!part2) {
-            response_json = get_access(query_json, code);
+            response_json = api_get_access(query_json, code);
         }
         else {
             RESPOND_NO_SUCH_FUNCTION();
@@ -285,10 +260,10 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
             if (part3) {
                 if (!strcmp(part3, "value")) { /* /ports/{id}/value */
                     if (method == HTTP_METHOD_GET) {
-                        response_json = get_port_value(port, query_json, code);
+                        response_json = api_get_port_value(port, query_json, code);
                     }
                     else if (method == HTTP_METHOD_PATCH) {
-                        response_json = patch_port_value(port, query_json, request_json, code);
+                        response_json = api_patch_port_value(port, query_json, request_json, code);
                     }
                     else {
                         RESPOND_NO_SUCH_FUNCTION();
@@ -296,7 +271,7 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
                 }
                 else if (!strcmp(part3, "sequence")) { /* /ports/{id}/sequence */
                     if (method == HTTP_METHOD_PATCH) {
-                        response_json = patch_port_sequence(port, query_json, request_json, code);
+                        response_json = api_patch_port_sequence(port, query_json, request_json, code);
                     }
                     else {
                         RESPOND_NO_SUCH_FUNCTION();
@@ -308,11 +283,11 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
             }
             else { /* /ports/{id} */
                 if (method == HTTP_METHOD_PATCH) {
-                    response_json = patch_port(port, query_json, request_json, code);
+                    response_json = api_patch_port(port, query_json, request_json, code);
                 }
 #ifdef HAS_VIRTUAL
                 else if (method == HTTP_METHOD_DELETE) {
-                    response_json = delete_port(port, query_json, code);
+                    response_json = api_delete_port(port, query_json, code);
                 }
 #endif
                 else {
@@ -322,11 +297,11 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
         }
         else { /* /ports */
             if (method == HTTP_METHOD_GET) {
-                response_json = get_ports(query_json, code);
+                response_json = api_get_ports(query_json, code);
             }
 #ifdef HAS_VIRTUAL
             else if (method == HTTP_METHOD_POST) {
-                response_json = post_ports( query_json, request_json, code);
+                response_json = api_post_ports( query_json, request_json, code);
             }
 #endif
             else {
@@ -340,10 +315,10 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
         }
 
         if (method == HTTP_METHOD_GET) {
-            response_json = get_webhooks(query_json, code);
+            response_json = api_get_webhooks(query_json, code);
         }
         else if (method == HTTP_METHOD_PATCH) {
-            response_json = patch_webhooks(query_json, request_json, code);
+            response_json = api_patch_webhooks(query_json, request_json, code);
         }
         else {
             RESPOND_NO_SUCH_FUNCTION();
@@ -355,7 +330,7 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
         }
 
         if (method == HTTP_METHOD_GET) {
-            response_json = get_wifi(query_json, code);
+            response_json = api_get_wifi(query_json, code);
         }
         else {
             RESPOND_NO_SUCH_FUNCTION();
@@ -368,10 +343,10 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
             }
 
             if (method == HTTP_METHOD_GET) {
-                response_json = get_raw_io(part2, query_json, code);
+                response_json = api_get_raw_io(part2, query_json, code);
             }
             else if (method == HTTP_METHOD_PATCH) {
-                response_json = patch_raw_io(part2, query_json, request_json, code);
+                response_json = api_patch_raw_io(part2, query_json, request_json, code);
             }
             else {
                 RESPOND_NO_SUCH_FUNCTION();
@@ -428,6 +403,26 @@ uint8 api_conn_access_level_get(void) {
 void api_conn_reset(void) {
     api_conn = NULL;
     api_access_level = API_ACCESS_LEVEL_NONE;
+}
+
+void api_conn_save(void) {
+    DEBUG_API("saving connection state");
+
+    api_conn_saved = api_conn;
+    api_access_level_saved = api_access_level;
+
+    api_conn = NULL;
+    api_access_level = API_ACCESS_LEVEL_NONE;
+}
+
+void api_conn_restore(void) {
+    DEBUG_API("restoring connection state");
+
+    api_conn = api_conn_saved;
+    api_access_level = api_access_level_saved;
+
+    api_conn_saved = NULL;
+    api_access_level_saved = API_ACCESS_LEVEL_NONE;
 }
 
 
@@ -814,7 +809,7 @@ json_t *device_to_json(void) {
 }
 
 
-json_t *get_device(json_t *query_json, int *code) {
+json_t *api_get_device(json_t *query_json, int *code) {
     json_t *response_json = NULL;
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
@@ -828,7 +823,7 @@ json_t *get_device(json_t *query_json, int *code) {
     return device_to_json();
 }
 
-json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
+json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
     DEBUG_API("updating device attributes");
 
     json_t *response_json = json_obj_new();
@@ -843,6 +838,7 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
 
     int i;
     bool needs_reset = FALSE;
+    bool config_model_changed = FALSE;
 #ifdef _SLEEP
     bool needs_sleep_reset = FALSE;
 #endif
@@ -982,7 +978,7 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
             }
 
             char *dns_str = json_str_get(child);
-            ip_addr_t dns;
+            ip_addr_t dns = {0};
             if (dns_str[0]) { /* manual */
                 uint8 bytes[4];
                 if (!validate_ip_address(dns_str, bytes)) {
@@ -990,7 +986,6 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
                 }
 
                 IP4_ADDR(&dns, bytes[0], bytes[1], bytes[2], bytes[3]);
-                wifi_set_dns(dns);
             }
 
             wifi_set_dns(dns);
@@ -1119,6 +1114,7 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
             strncpy(device_config_model, model, API_MAX_DEVICE_CONFIG_MODEL_LEN);
             device_config_model[API_MAX_DEVICE_CONFIG_MODEL_LEN - 1] = 0;
 
+            config_model_changed = TRUE;
             DEBUG_DEVICE("config model set to %s", device_config_model);
         }
         else if (!strcmp(key, "version") ||
@@ -1147,7 +1143,14 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
     }
 
-    config_save();
+    /* if the configuration model has changed, mark the device unconfigured so that it will automatically reconfigure */
+    if (config_model_changed) {
+        DEBUG_DEVICE("marking device as unconfigured");
+        device_flags &= ~DEVICE_FLAG_CONFIGURED;
+        config_start_provisioning();
+    }
+
+    config_mark_for_saving();
     
     if (needs_reset) {
         DEBUG_API("reset needed");
@@ -1168,7 +1171,7 @@ json_t *patch_device(json_t *query_json, json_t *request_json, int *code) {
     return response_json;
 }
 
-json_t *post_reset(json_t *query_json, json_t *request_json, int *code) {
+json_t *api_post_reset(json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = json_obj_new();
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
@@ -1201,7 +1204,7 @@ json_t *post_reset(json_t *query_json, json_t *request_json, int *code) {
 
 #ifdef _OTA
 
-json_t *get_firmware(json_t *query_json, int *code) {
+json_t *api_get_firmware(json_t *query_json, int *code) {
     json_t *response_json = NULL;
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
@@ -1234,7 +1237,7 @@ json_t *get_firmware(json_t *query_json, int *code) {
     return response_json;
 }
 
-json_t *patch_firmware(json_t *query_json, json_t *request_json, int *code) {
+json_t *api_patch_firmware(json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = NULL;
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
@@ -1271,7 +1274,7 @@ json_t *patch_firmware(json_t *query_json, json_t *request_json, int *code) {
 
 #endif /* _OTA */
 
-json_t *get_access(json_t *query_json, int *code) {
+json_t *api_get_access(json_t *query_json, int *code) {
     json_t *response_json = json_obj_new();
 
     switch (api_access_level) {
@@ -1297,7 +1300,7 @@ json_t *get_access(json_t *query_json, int *code) {
     return response_json;
 }
 
-json_t *get_ports(json_t *query_json, int *code) {
+json_t *api_get_ports(json_t *query_json, int *code) {
     json_t *response_json = json_list_new();
 
     if (api_access_level < API_ACCESS_LEVEL_VIEWONLY) {
@@ -1318,7 +1321,7 @@ json_t *get_ports(json_t *query_json, int *code) {
     return response_json;
 }
 
-json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
+json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = json_obj_new();
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
@@ -1534,6 +1537,9 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
         DEBUG_API("adding virtual port: %d choices", len);
     }
 
+    /* sequence */
+    new_port->sequence_pos = -1;
+
     if (!virtual_port_register(new_port)) {
         return API_ERROR(500, "port registration failed");
     }
@@ -1544,7 +1550,7 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
         port_rebuild_change_dep_mask(p);
     }
 
-    port_mark_for_saving(new_port);
+    config_mark_for_saving();
     event_push_port_add(new_port);
 
     *code = 201;
@@ -1555,7 +1561,7 @@ json_t *post_ports(json_t *query_json, json_t *request_json, int *code) {
     return port_to_json(new_port, &json_refs_ctx);
 }
 
-json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *code) {
+json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, int *code) {
     DEBUG_API("updating attributes of port %s", port->id);
     
     json_t *response_json = json_obj_new();
@@ -1646,7 +1652,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                             }
                         }
 
-                        DEBUG_PORT(port, "%s set to %d", a->name, !!value);
+                        DEBUG_PORT(port, "%s set to %s", a->name, dtostr(value, -1));
 
                         break;
                     }
@@ -1671,7 +1677,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                             ((str_setter_t) a->set)(port, a, value);
                         }
 
-                        DEBUG_PORT(port, "%s set to %s", a->name, value);
+                        DEBUG_PORT(port, "%s set to %s", a->name, value ? value : "");
 
                         break;
                     }
@@ -1698,7 +1704,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                 port->display_name = strndup(json_str_get(child), PORT_MAX_DISP_NAME_LEN);
             }
 
-            DEBUG_PORT(port, "display_name set to \"%s\"", port->display_name);
+            DEBUG_PORT(port, "display_name set to \"%s\"", port->display_name ? port->display_name : "");
         }
         else if (!strcmp(key, "unit") && (port->type == PORT_TYPE_NUMBER)) {
             if (json_get_type(child) != JSON_TYPE_STR) {
@@ -1711,7 +1717,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                 port->unit = strndup(json_str_get(child), PORT_MAX_UNIT_LEN);
             }
 
-            DEBUG_PORT(port, "unit set to \"%s\"", port->unit);
+            DEBUG_PORT(port, "unit set to \"%s\"", port->unit ? port->unit : "");
         }
         else if (IS_OUTPUT(port) && !strcmp(key, "expression")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
@@ -1757,9 +1763,9 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                     expr_free(expr);
                 }
 
-                DEBUG_PORT(port, "expression set to \"%s\"", port->sexpr);
             }
 
+            DEBUG_PORT(port, "expression set to \"%s\"", port->sexpr ? port->sexpr : "");
             update_port_expression(port);
         }
         else if (IS_OUTPUT(port) && !strcmp(key, "transform_write")) {
@@ -1813,7 +1819,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                 port->stransform_write = strdup(stransform_write);
                 port->transform_write = transform_write;
 
-                DEBUG_PORT(port, "write transform set to \"%s\"", port->stransform_write);
+                DEBUG_PORT(port, "write transform set to \"%s\"", port->stransform_write ? port->stransform_write : "");
             }
         }
         else if (!strcmp(key, "transform_read")) {
@@ -1867,7 +1873,7 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
                 port->stransform_read = strdup(stransform_read);
                 port->transform_read = transform_read;
 
-                DEBUG_PORT(port, "read transform set to \"%s\"", port->stransform_read);
+                DEBUG_PORT(port, "read transform set to \"%s\"", port->stransform_read ? port->stransform_read : "");
             }
         }
         else if (!strcmp(key, "persisted")) {
@@ -1921,17 +1927,19 @@ json_t *patch_port(port_t *port, json_t *query_json, json_t *request_json, int *
         port_configure(port);
     }
 
-    /* persist configuration */
-    config_save();
+    /* set device configured flag */
+    DEBUG_DEVICE("mark device as configured");
+    device_flags |= DEVICE_FLAG_CONFIGURED;
+
+    config_mark_for_saving();
+    event_push_port_update(port);
 
     *code = 204;
-
-    event_push_port_update(port);
 
     return response_json;
 }
 
-json_t *delete_port(port_t *port, json_t *query_json, int *code) {
+json_t *api_delete_port(port_t *port, json_t *query_json, int *code) {
     DEBUG_API("deleting virtual port %s", port->id);
 
     json_t *response_json = json_obj_new();
@@ -1955,13 +1963,49 @@ json_t *delete_port(port_t *port, json_t *query_json, int *code) {
     /* removing virtual flag disables virtual port */
     port->flags &= ~PORT_FLAG_VIRTUAL_ACTIVE;
 
-    /* we can't use port_mark_for_saving() here; the port is going to be destroyed immediately,
-     * and we must save the configuration right away */
-    config_save();
+    /* free display name & unit */
+    if (port->display_name) {
+        free(port->display_name);
+        port->display_name = NULL;
+    }
+    if (port->unit) {
+        free(port->unit);
+        port->unit = NULL;
+    }
+
+    /* destroy value expression */
+    if (port->expr) {
+        port_expr_remove(port);
+    }
+
+    /* destroy transform expressions */
+    if (port->transform_read) {
+        expr_free(port->transform_read);
+        port->transform_read = NULL;
+    }
+    if (port->stransform_read) {
+        free(port->stransform_read);
+        port->stransform_read = NULL;
+    }
+    if (port->transform_write) {
+        expr_free(port->transform_write);
+        port->transform_write = NULL;
+    }
+    if (port->stransform_write) {
+        free(port->stransform_write);
+        port->stransform_write = NULL;
+    }
+
+    /* cancel sequence */
+    if (port->sequence_pos >= 0) {
+        port_sequence_cancel(port);
+    }
 
     if (!virtual_port_unregister(port)) {
         return API_ERROR(500, "port unregister failed");
     }
+
+    config_mark_for_saving();
 
     free(port);
 
@@ -1976,7 +2020,7 @@ json_t *delete_port(port_t *port, json_t *query_json, int *code) {
     return response_json;
 }
 
-json_t *get_port_value(port_t *port, json_t *query_json, int *code) {
+json_t *api_get_port_value(port_t *port, json_t *query_json, int *code) {
     json_t *response_json = NULL;
 
     if (api_access_level < API_ACCESS_LEVEL_VIEWONLY) {
@@ -1984,7 +2028,7 @@ json_t *get_port_value(port_t *port, json_t *query_json, int *code) {
     }
 
     /* poll ports before retrieving current port value, ensuring value is as up-to-date as possible */
-    core_poll_ports();
+    core_poll();
 
     response_json = port_get_json_value(port);
 
@@ -1993,7 +2037,7 @@ json_t *get_port_value(port_t *port, json_t *query_json, int *code) {
     return response_json;
 }
 
-json_t *patch_port_value(port_t *port, json_t *query_json, json_t *request_json, int *code) {
+json_t *api_patch_port_value(port_t *port, json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = json_obj_new();
 
     if (api_access_level < API_ACCESS_LEVEL_NORMAL) {
@@ -2037,7 +2081,7 @@ json_t *patch_port_value(port_t *port, json_t *query_json, json_t *request_json,
     }
 
     if (IS_PERSISTED(port)) {
-        port_mark_for_saving(port);
+        config_mark_for_saving();
     }
 
     *code = 204;
@@ -2045,7 +2089,7 @@ json_t *patch_port_value(port_t *port, json_t *query_json, json_t *request_json,
     return response_json;
 }
 
-json_t *patch_port_sequence(port_t *port, json_t *query_json, json_t *request_json, int *code) {
+json_t *api_patch_port_sequence(port_t *port, json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = NULL;
 
     if (api_access_level < API_ACCESS_LEVEL_NORMAL) {
@@ -2159,7 +2203,7 @@ json_t *patch_port_sequence(port_t *port, json_t *query_json, json_t *request_js
     return response_json;
 }
 
-json_t *get_webhooks(json_t *query_json, int *code) {
+json_t *api_get_webhooks(json_t *query_json, int *code) {
     json_t *response_json = json_obj_new();
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
@@ -2193,7 +2237,7 @@ json_t *get_webhooks(json_t *query_json, int *code) {
     return response_json;
 }
 
-json_t *patch_webhooks(json_t *query_json, json_t *request_json, int *code) {
+json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) {
     DEBUG_API("updating webhooks parameters");
 
     json_t *response_json = json_obj_new();
@@ -2382,14 +2426,14 @@ json_t *patch_webhooks(json_t *query_json, json_t *request_json, int *code) {
         }
     }
 
-    config_save();
+    config_mark_for_saving();
 
     *code = 204;
 
     return response_json;
 }
 
-json_t *get_wifi(json_t *query_json, int *code) {
+json_t *api_get_wifi(json_t *query_json, int *code) {
     json_t *response_json = NULL;
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
@@ -2407,7 +2451,7 @@ json_t *get_wifi(json_t *query_json, int *code) {
     return NULL;
 }
 
-json_t *get_raw_io(char *io, json_t *query_json, int *code) {
+json_t *api_get_raw_io(char *io, json_t *query_json, int *code) {
     json_t *response_json = json_obj_new();
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
@@ -2444,7 +2488,7 @@ json_t *get_raw_io(char *io, json_t *query_json, int *code) {
     return response_json;
 }
 
-json_t *patch_raw_io(char *io, json_t *query_json, json_t *request_json, int *code) {
+json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = json_obj_new();
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
@@ -2762,7 +2806,7 @@ void on_sequence_timer(void *arg) {
             DEBUG_PORT(port, "sequence done");
 
             if (IS_PERSISTED(port)) {
-                port_mark_for_saving(port);
+                config_mark_for_saving();
             }
         }
     }

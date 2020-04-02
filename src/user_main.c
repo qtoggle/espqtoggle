@@ -117,14 +117,14 @@ void on_system_ready(void) {
 void on_system_reset(void) {
     DEBUG_SYSTEM("cleaning up before reset");
 
-    ensure_ports_saved();
+    config_ensure_saved();
     sessions_respond_all();
     tcp_server_stop();
 }
 
 #ifdef _OTA
 void on_ota_auto_perform(int code) {
-    ensure_ports_saved();
+    config_ensure_saved();
     sessions_respond_all();
 }
 #endif
@@ -142,7 +142,15 @@ void on_wifi_connect(bool connected) {
 
     wifi_first_time_connected = TRUE;
     os_timer_disarm(&connect_timeout_timer);
-    core_enable_ports_polling();
+    core_enable_polling();
+
+    if (!(device_flags & DEVICE_FLAG_CONFIGURED)) {
+        DEBUG_SYSTEM("system not configured, starting provisioning");
+        config_start_provisioning();
+    }
+    else {
+        DEBUG_SYSTEM("system configured");
+    }
 
 #ifdef _SLEEP
     /* start sleep timer now that we're connected */
@@ -184,7 +192,7 @@ void on_wifi_connect(bool connected) {
 
 void on_wifi_connect_timeout(void *arg) {
     DEBUG_SYSTEM("timeout waiting for initial WiFi connection");
-    core_enable_ports_polling();
+    core_enable_polling();
 #ifdef _SLEEP
     sleep_reset();
 #endif
@@ -235,9 +243,9 @@ DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
     config_init();
 #ifdef _OTA
     ota_init(/* current_version = */ FW_VERSION,
-             /* url = */             FW_BASE_URL FW_BASE_PATH "/" FW_CONFIG_NAME FW_LATEST_FILE,
-             /* beta_url = */        FW_BASE_URL FW_BASE_PATH "/" FW_CONFIG_NAME FW_LATEST_BETA_FILE,
-             /* url_template = */    FW_BASE_URL FW_BASE_PATH "/" FW_CONFIG_NAME "/%s");
+             /* url = */             FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME FW_LATEST_FILE,
+             /* beta_url = */        FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME FW_LATEST_BETA_FILE,
+             /* url_template = */    FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME "/%s");
 #endif
     wifi_set_station_mode(on_wifi_connect, device_hostname);
     client_init();

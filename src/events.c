@@ -67,7 +67,7 @@ void event_push_port_add(port_t *port) {
 }
 
 void event_push_port_remove(port_t *port) {
-    DEBUG("generating port-remove event");
+    DEBUG_PORT(port, "generating port-remove event");
 
     event_push(EVENT_TYPE_PORT_REMOVE, port->id);
 }
