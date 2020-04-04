@@ -2080,10 +2080,6 @@ json_t *api_patch_port_value(port_t *port, json_t *query_json, json_t *request_j
         }
     }
 
-    if (IS_PERSISTED(port)) {
-        config_mark_for_saving();
-    }
-
     *code = 204;
     
     return response_json;
