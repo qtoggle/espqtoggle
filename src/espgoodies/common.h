@@ -39,10 +39,10 @@
 #define strdup                  my_strdup
 #define strndup                 my_strndup
 
-#define malloc                  os_malloc
-#define realloc                 os_realloc
-#define free                    os_free
-#define zalloc                  os_zalloc
+#define malloc                  my_malloc
+#define realloc                 my_realloc
+#define free                    my_free
+#define zalloc                  my_zalloc
 
 #define printf                  os_printf
 
@@ -66,6 +66,11 @@
 ICACHE_FLASH_ATTR char        * my_strtok(char *s, char *d);
 ICACHE_FLASH_ATTR char        * my_strdup(const char *s);
 ICACHE_FLASH_ATTR char        * my_strndup(const char *s, int n);
+
+ICACHE_FLASH_ATTR void        * my_malloc(size_t size);
+ICACHE_FLASH_ATTR void        * my_realloc(void *ptr, size_t size);
+ICACHE_FLASH_ATTR void          my_free(void *ptr);
+ICACHE_FLASH_ATTR void        * my_zalloc(size_t size);
 
 #ifdef _DEBUG_IP
 ICACHE_FLASH_ATTR int           udp_printf(const char *format, ...);
