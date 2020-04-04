@@ -20,11 +20,12 @@
 #include <user_interface.h>
 
 #include "espgoodies/common.h"
-#include "espgoodies/json.h"
+#include "espgoodies/crypto.h"
 #include "espgoodies/httpclient.h"
 #include "espgoodies/httputils.h"
-#include "espgoodies/crypto.h"
+#include "espgoodies/json.h"
 #include "espgoodies/jwt.h"
+#include "espgoodies/wifi.h"
 
 #ifdef _OTA
 #include "espgoodies/ota.h"
@@ -126,8 +127,7 @@ void process_queue() {
     }
 #endif
 
-    bool connected = wifi_station_get_connect_status() == STATION_GOT_IP;
-    if (!connected) {
+    if (!wifi_is_connected()) {
         DEBUG_WEBHOOKS("not connected, retrying in 1 second");
 
         process_queue_later();
