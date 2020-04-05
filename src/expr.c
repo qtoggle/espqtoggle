@@ -339,8 +339,8 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
         hist[expr->len - 1].time_ms = time_ms;
     }
 
-    /* Go through history (forward) and find the first value that is newer than the delay; use it as a result;
-     * keep only newer values in history */
+    /* Go through history (forward) and find the first value that is newer than the delay; use it as a result; keep only
+     * newer values in history */
     bool resized = FALSE;
     while (expr->len && (time_ms - hist[0].time_ms > delay)) {
         result = hist[0].value;
@@ -794,8 +794,7 @@ int check_loops_rec(port_t *the_port, int level, expr_t *expr) {
 
     if (expr->port_id) {
         if ((port = port_find_by_id(expr->port_id))) {
-            /* A loop is detected when we stumble upon the initial port
-             * at a level deeper than 1 */
+            /* A loop is detected when we stumble upon the initial port at a level deeper than 1 */
             if (port == the_port && level > 1) {
                 return level;
             }

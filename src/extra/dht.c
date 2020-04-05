@@ -621,8 +621,8 @@ uint64 read_data(port_t *port) {
         return -1;
     }
 
-    /* os_delay_us() is not as precise as we would need it to be;
-     * we compute a delay ratio based on the expected 80us initial sensor pulse */
+    /* os_delay_us() is not as precise as we would need it to be; we compute a delay ratio based on the expected 80us
+     * initial sensor pulse */
     int bit1_threshold = 60 * width / 80;
 
     for (data_bits = 0; data_bits < 40; data_bits++) {

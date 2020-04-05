@@ -151,8 +151,7 @@ char *dtostr(double d, int8 decimals) {
     }
 
     if (decimals >= 0) {
-        /* If the number of decimals is too big,
-         * we risk having an integer overflow here! */
+        /* If the number of decimals is too big, we risk having an integer overflow here! */
         for (i = 0; i < decimals; i++) {
             d *= 10;
         }

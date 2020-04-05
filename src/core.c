@@ -158,8 +158,7 @@ void core_poll(void) {
         }
 
         if (p->transform_read) {
-            /* Temporarily set the new value to the port,
-             * so that the transform expression uses the newly read value */
+            /* Temporarily set the new value to the port, so that the transform expression uses the newly read value */
             double prev_value = p->value;
             p->value = value;
             value = expr_eval(p->transform_read);
@@ -245,8 +244,7 @@ void core_task(os_event_t *e) {
         case TASK_LISTEN_RESPOND: {
             session_t *session = (session_t *) e->par;
 
-            /* Between event_push and this task,
-             * another listen request might have been received for this session,
+            /* Between event_push and this task, another listen request might have been received for this session,
              * which would have eaten up our queued events */
             if (session->queue_len) {
                 session_respond(session);

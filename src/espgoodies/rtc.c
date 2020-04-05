@@ -69,8 +69,8 @@ uint32 rtc_get_boot_count(void) {
 
 uint32 rtc_get_value(uint8 addr) {
     if (full_boot) {
-        /* In case of full boot, RTC memory contents are random uninitialized crap,
-         * so the best we can do here is to return 0 */
+        /* In case of full boot, RTC memory contents are random uninitialized crap, so the best we can do here is to
+         * return 0 */
         return 0;
     }
 

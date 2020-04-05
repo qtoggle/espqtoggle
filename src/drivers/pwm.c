@@ -64,13 +64,9 @@ struct pwm_phase {
 
 };
 
-/* Three sets of PWM phases, the active one, the one used
- * starting with the next cycle, and the one updated
- * by pwm_start. After the update pwm_next_set
- * is set to the last updated set. pwm_current_set is set to
- * pwm_next_set from the interrupt routine during the first
- * pwm phase
- */
+/* Three sets of PWM phases, the active one, the one used starting with the next cycle, and the one updated by
+ * pwm_start. After the update pwm_next_set is set to the last updated set. pwm_current_set is set to pwm_next_set from
+ * the interrupt routine during the first pwm phase */
 typedef struct pwm_phase (pwm_phase_array)[PWM_MAX_CHANNELS + 2];
 static pwm_phase_array pwm_phases[3];
 

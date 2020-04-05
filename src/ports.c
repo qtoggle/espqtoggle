@@ -473,9 +473,8 @@ void port_expr_remove(port_t *port) {
 
 bool port_set_value(port_t *port, double value, char reason) {
     if (port->transform_write) {
-        /* Temporarily set the port value to the new value,
-         * so that the write transform expression takes the new
-         * value into consideration when evaluating the result */
+        /* Temporarily set the port value to the new value, so that the write transform expression takes the new value
+         * into consideration when evaluating the result */
         double old_value = port->value;
         port->value = value;
         value = expr_eval(port->transform_write);
@@ -575,9 +574,8 @@ void port_disable(port_t *port) {
 void port_configure(port_t *port) {
     DEBUG_PORT(port, "configuring");
 
-    /* Attribute getters may cache values inside port->extra_info;
-     * calling all attribute getters here ensures that this cached
-     * data is up-do-date with latest attribute values */
+    /* Attribute getters may cache values inside port->extra_info; calling all attribute getters here ensures that this
+     * cached data is up-do-date with latest attribute values */
     if (port->attrdefs) {
         attrdef_t *a, **attrdefs = port->attrdefs;
         while ((a = *attrdefs++)) {

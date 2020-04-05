@@ -223,8 +223,8 @@ void system_connected_led_update(void) {
     static bool old_led_level = FALSE;
 
     if ((system_connected_led_gpio_no == system_setup_mode_led_gpio_no) && setup_mode) {
-        /* If we use the same led for both connected status and setup mode,
-         * the setup mode led update takes precedence */
+        /* If we use the same led for both connected status and setup mode, the setup mode led update takes
+         * precedence */
         return;
     }
 

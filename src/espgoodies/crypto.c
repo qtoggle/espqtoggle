@@ -221,8 +221,8 @@ char *b64_encode(uint8 *data, int len, bool padding) {
             buf[2] = ((tmp[1] & 0x0f) << 2) + ((tmp[2] & 0xc0) >> 6);
             buf[3] = tmp[2] & 0x3f;
 
-            /* Allocate 4 new bytes for enc and then translate each encoded buffer
-             * part by index from the base 64 index table into enc unsigned char array */
+            /* Allocate 4 new bytes for enc and then translate each encoded buffer part by index from the base 64 index
+             * table into enc unsigned char array */
             enc = realloc(enc, size + 4);
             for (i = 0; i < 4; i++) {
                 enc[size++] = b64_table[buf[i]];
@@ -615,8 +615,8 @@ uint8 *sha256_final(sha256_ctx_t *ctx) {
     ctx->data[56] = ctx->bitlen >> 56;
     sha256_transform(ctx, ctx->data);
 
-    /* Since this implementation uses little endian byte ordering and SHA uses big endian,
-     * reverse all the bytes when copying the final state to the output hash */
+    /* Since this implementation uses little endian byte ordering and SHA uses big endian, reverse all the bytes when
+     * copying the final state to the output hash */
     for (i = 0; i < 4; i++) {
         digest[i]      = (ctx->state[0] >> (24 - i * 8)) & 0x000000ff;
         digest[i + 4]  = (ctx->state[1] >> (24 - i * 8)) & 0x000000ff;

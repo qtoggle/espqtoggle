@@ -311,8 +311,8 @@ uint8 *prepare_ip_response(dns_header_t *request_header, ip_addr_t ip_addr,
     *len += query_len;
     response_p += query_len;
 
-    /* Rather than restating the name here, we use a pointer to the name contained
-     * in the query section; pointers have the top two bits set */
+    /* Rather than restating the name here, we use a pointer to the name contained in the query section; pointers have
+     * the top two bits set */
     uint16 svalue = htons(0xC000 | DNS_HEADER_SIZE);
     uint32 lvalue;
     memcpy(response_p, &svalue, 2);
