@@ -744,17 +744,6 @@ json_t *device_to_json(void) {
     json_obj_append(json, "free_mem", json_int_new(system_get_free_heap_size() / 1024));
     json_obj_append(json, "flash_size", json_int_new(system_get_flash_size() / 1024));
 
-    /* network scan */
-    int wifi_scan_interval = wifi_get_scan_interval();
-    int wifi_scan_threshold = wifi_get_scan_threshold();
-
-    if (!wifi_scan_interval) {
-        json_obj_append(json, "network_scan", json_str_new(""));
-    }
-    else {
-        snprintf(value, 256, "%d:%d", wifi_scan_interval, wifi_scan_threshold);
-    }
-
 #ifdef _OTA
     json_obj_append(json, "firmware_auto_update", json_bool_new(device_flags & DEVICE_FLAG_OTA_AUTO_UPDATE));
 #endif
@@ -1030,36 +1019,6 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
 
             wifi_set_bssid(bssid);
             needs_reset = TRUE;
-        }
-        else if (!strcmp(key, "network_scan")) {
-            if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD_VALUE(key);
-            }
-
-            char *scan_str = json_str_get(child);
-            if (!scan_str[0]) {
-                wifi_set_scan_interval(0);
-                wifi_set_scan_threshold(0);
-            }
-            else {
-                int scan_interval, scan_threshold;
-                if (!validate_str_network_scan(scan_str, &scan_interval, &scan_threshold)) {
-                    return INVALID_FIELD_VALUE(key);
-                }
-
-                if (!validate_num(scan_interval, WIFI_SCAN_INTERVAL_MIN, WIFI_SCAN_INTERVAL_MAX, /* integer = */ TRUE,
-                                  /* step = */ 0, /* choices = */ NULL)) {
-                    return INVALID_FIELD_VALUE(key);
-                }
-
-                if (!validate_num(scan_threshold, WIFI_SCAN_THRESH_MIN, WIFI_SCAN_THRESH_MAX, /* integer = */ TRUE,
-                                  /* step = */ 0, /* choices = */ NULL)) {
-                    return INVALID_FIELD_VALUE(key);
-                }
-
-                wifi_set_scan_interval(scan_interval);
-                wifi_set_scan_threshold(scan_threshold);
-            }
         }
 #ifdef _SLEEP
         else if (!strcmp(key, "sleep_mode")) {
@@ -2691,15 +2650,6 @@ json_t *device_attrdefs_to_json(void) {
                                    /* modifiable = */TRUE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
                                    /* integer = */ TRUE, /* step = */ 0, frequency_choices, /* reconnect = */ FALSE);
     json_obj_append(json, "frequency", attrdef_json);
-
-    attrdef_json = attrdef_to_json("Network Scan",
-                                   "Controls the WiFi scanning mode; format is <interval_seconds>:<threshold_dBm>. "
-                                   "Interval is between 1 and 3600 seconds; threshold is between 1 and 50 dBm. "
-                                   "Empty string disables scanning mode.", /* unit = */ NULL,
-                                   ATTR_TYPE_STRING, /* modifiable = */ TRUE, /* min = */ UNDEFINED,
-                                   /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
-                                   /* reconnect = */ FALSE);
-    json_obj_append(json, "network_scan", attrdef_json);
 
 #ifdef _SLEEP
     attrdef_json = attrdef_to_json("Sleep Mode",

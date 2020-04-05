@@ -136,9 +136,6 @@ void device_load(uint8 *data) {
     }
 
     if (wifi_ssid[0] || wifi_bssid[0]) {
-        wifi_set_scan_threshold(wifi_scan_threshold);
-        wifi_set_scan_interval(wifi_scan_interval);
-
         wifi_set_ssid(wifi_ssid);
         wifi_set_psk(wifi_psk);
         wifi_set_bssid(wifi_bssid);

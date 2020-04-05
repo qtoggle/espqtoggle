@@ -41,7 +41,6 @@
                         "frequency",
                         "free_mem",
                         "flash_size",
-                        "network_scan",
                         "firmware_auto_update",
                         "flash_id",
                         "chip_id",
@@ -141,9 +140,6 @@
                         "flash_size": {
                             "enum": [1024, 2048, 4096]
                         },
-                        "network_scan": {
-                            "enum": [""]
-                        },
                         "firmware_auto_update": {
                             "enum": [false]
                         },
@@ -166,7 +162,6 @@
                             "additionalProperties": false,
                             "required": [
                                 "frequency",
-                                "network_scan",
                                 "firmware_auto_update",
                                 "free_mem",
                                 "flash_size",
@@ -222,30 +217,6 @@
                                                     }
                                                 }
                                             }
-                                        }
-                                    }
-                                },
-                                "network_scan": {
-                                    "type": "object",
-                                    "additionalProperties": false,
-                                    "required": [
-                                        "display_name",
-                                        "description",
-                                        "modifiable",
-                                        "type"
-                                    ],
-                                    "properties": {
-                                        "display_name": {
-                                            "type": "string"
-                                        },
-                                        "description": {
-                                            "type": "string"
-                                        },
-                                        "modifiable": {
-                                            "enum": [true]
-                                        },
-                                        "type": {
-                                            "enum": ["string"]
                                         }
                                     }
                                 },

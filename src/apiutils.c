@@ -258,38 +258,6 @@ bool validate_wifi_bssid(char *bssid_str, uint8 *bssid) {
 }
 
 
-bool validate_str_network_scan(char *scan, int *scan_interval, int *scan_threshold) {
-    char c, *s = scan;
-    int pos = 0;
-    int no = 0;
-    while ((c = *s++)) {
-        if (c == ':') {
-            if (pos >= 1) {
-                return FALSE;
-            }
-
-            pos++;
-            *scan_interval = no;
-            no = 0;
-        }
-        else if (isdigit((int) c)) {
-            no = no * 10 + c - '0';
-        }
-        else {
-            return FALSE;
-        }
-    }
-
-    if (pos == 1) {
-        *scan_threshold = no;
-    }
-    else {
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
 #ifdef _SLEEP
 
 bool validate_str_sleep_mode(char *sleep_mode, int *wake_interval, int *wake_duration) {

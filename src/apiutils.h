@@ -47,8 +47,6 @@ ICACHE_FLASH_ATTR bool                      validate_ip_address(char *ip, uint8 
 ICACHE_FLASH_ATTR bool                      validate_wifi_ssid(char *ssid);
 ICACHE_FLASH_ATTR bool                      validate_wifi_key(char *key);
 ICACHE_FLASH_ATTR bool                      validate_wifi_bssid(char *bssid_str, uint8 *bssid);
-ICACHE_FLASH_ATTR bool                      validate_str_network_scan(char *scan, int *scan_interval,
-                                                                      int *scan_threshold);
 #ifdef _SLEEP
 ICACHE_FLASH_ATTR bool                      validate_str_sleep_mode(char *sleep_mode, int *wake_interval,
                                                                     int *wake_duration);
