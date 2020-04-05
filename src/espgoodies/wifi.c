@@ -36,8 +36,6 @@
 #endif
 
 
-#define WIFI_BETTER_COUNT           3   /* a network has to be better 3 times in a row */
-#define WIFI_SCAN_INTERVAL_QUICK    1   /* seconds */
 #define WIFI_WATCHDOG_INTERVAL      10  /* seconds */
 #define WIFI_WATCHDOG_MAX_COUNT     3   /* disconnected times, in a row, that trigger a reset */
 
@@ -45,13 +43,9 @@
 /* we have to maintain a separate connected status, as wifi_station_get_connect_status() appears to return  wrong values
  * after disconnect */
 static bool                         wifi_connected = FALSE;
-static os_timer_t                   wifi_auto_scan_timer;
-static int                          wifi_scan_interval = 0;
-static char                         wifi_scan_threshold = 0;
 static bool                         wifi_scanning = FALSE;
 static wifi_scan_callback_t         wifi_scan_callback = NULL;
 static wifi_connect_callback_t      wifi_connect_callback = NULL;
-static int                          wifi_better_counter = WIFI_BETTER_COUNT;
 static os_timer_t                   wifi_watchdog_timer;
 static int                          wifi_watchdog_counter = 0;
 
@@ -66,44 +60,10 @@ static struct ip_info               wifi_current_ip_info;
 
 
 ICACHE_FLASH_ATTR static void       on_wifi_event(System_Event_t *evt);
-ICACHE_FLASH_ATTR static void       on_wifi_auto_scan(void *arg);
-ICACHE_FLASH_ATTR static void       on_wifi_auto_scan_done(void *arg, STATUS status);
 ICACHE_FLASH_ATTR static void       on_wifi_scan_done(void *arg, STATUS status);
 ICACHE_FLASH_ATTR static void       on_wifi_watchdog(void *arg);
 ICACHE_FLASH_ATTR static int        compare_wifi_rssi(const void *a, const void *b);
 
-
-int wifi_get_scan_interval(void) {
-    return wifi_scan_interval;
-}
-
-void wifi_set_scan_interval(int interval) {
-    if (!wifi_scan_interval && interval) {
-        os_timer_arm(&wifi_auto_scan_timer, interval * 1000, /* repeat = */ FALSE);
-    }
-    else if (wifi_scan_interval && !interval) {
-        os_timer_disarm(&wifi_auto_scan_timer);
-    }
-
-    wifi_scan_interval = interval;
-
-    if (interval) {
-        DEBUG_WIFI("scan interval set to %d seconds", interval);
-    }
-    else {
-        DEBUG_WIFI("scan disabled");
-    }
-}
-
-char wifi_get_scan_threshold(void) {
-    return wifi_scan_threshold;
-}
-
-void wifi_set_scan_threshold(char threshold) {
-    wifi_scan_threshold = threshold;
-
-    DEBUG_WIFI("scan threshold set to %d dBm", threshold);
-}
 
 char *wifi_get_ssid(void) {
     return wifi_ssid;
@@ -263,14 +223,6 @@ void wifi_set_station_mode(wifi_connect_callback_t callback, char *hostname) {
     }
 
     wifi_set_event_handler_cb(on_wifi_event);
-
-    /* initialize auto-scan timer */
-    os_timer_disarm(&wifi_auto_scan_timer);
-    os_timer_setfn(&wifi_auto_scan_timer, on_wifi_auto_scan, NULL);
-
-    if (wifi_scan_interval) {
-        os_timer_arm(&wifi_auto_scan_timer, wifi_scan_interval * 1000, /* repeat = */ FALSE);
-    }
 
     /* initialize watchdog timer */
 #ifdef _SLEEP
@@ -435,46 +387,55 @@ bool wifi_scan(wifi_scan_callback_t callback) {
     return TRUE;
 }
 
-void wifi_auto_scan() {
-    if (system_setup_mode_active()) {
-        return; /* no AP scanning in setup mode */
-    }
-
-    if (wifi_scanning) {
-        return; /* already scanning */
-    }
-
-#ifdef _OTA
-    if (ota_busy()) {
-        return; /* ota started */
-    }
-#endif
-
-    wifi_scanning = TRUE;
-
-    struct scan_config conf;
-    memset(&conf, 0, sizeof(struct scan_config));
-    conf.scan_type = WIFI_SCAN_TYPE_ACTIVE;
-
-    conf.ssid = (uint8 *) wifi_ssid;
-    conf.show_hidden = 1;
-
-    if (wifi_bssid[0]) {
-        conf.bssid = wifi_bssid;
-    }
-
-    DEBUG_WIFI("starting ap auto scan for %s/" BSSID_FMT,
-               wifi_ssid[0] ? wifi_ssid : "<hidden>", BSSID2STR(wifi_bssid));
-
-    /* start scanning for AP */
-    wifi_station_scan(&conf, on_wifi_auto_scan_done);
-}
-
-
 void on_wifi_event(System_Event_t *evt) {
+    char *event_name = "unknown";
+
+    switch (evt->event) {
+        case EVENT_STAMODE_CONNECTED:
+            event_name = "sta_connected";
+            break;
+
+        case EVENT_STAMODE_DISCONNECTED:
+            event_name = "sta_disconnected";
+            break;
+
+        case EVENT_STAMODE_AUTHMODE_CHANGE:
+            event_name = "sta_auth_mode_change";
+            break;
+
+        case EVENT_STAMODE_GOT_IP:
+            event_name = "sta_got_ip";
+            break;
+
+        case EVENT_STAMODE_DHCP_TIMEOUT:
+            event_name = "sta_dhcp_timeout";
+            break;
+
+        case EVENT_SOFTAPMODE_STACONNECTED:
+            event_name = "softap_sta_connected";
+            break;
+
+        case EVENT_SOFTAPMODE_STADISCONNECTED:
+            event_name = "softap_sta_disconnected";
+            break;
+
+        case EVENT_SOFTAPMODE_PROBEREQRECVED:
+            event_name = "softap_probe_req_recved";
+            break;
+
+        case EVENT_OPMODE_CHANGED:
+            event_name = "opmode_changed";
+            break;
+
+        case EVENT_SOFTAPMODE_DISTRIBUTE_STA_IP:
+            event_name = "softap_distribute_sta_ip";
+            break;
+    }
+
+    DEBUG_WIFI("got \"%s\" event", event_name);
+
      switch (evt->event) {
-         case EVENT_STAMODE_DISCONNECTED: {
-             wifi_better_counter = WIFI_BETTER_COUNT;  /* prepared to (re)connect */
+         case EVENT_STAMODE_DISCONNECTED:
              wifi_connected = FALSE;
 
              DEBUG_WIFI("disconnected from ssid %s, bssid " BSSID_FMT ", reason %d",
@@ -482,36 +443,15 @@ void on_wifi_event(System_Event_t *evt) {
                         BSSID2STR(evt->event_info.disconnected.bssid),
                         evt->event_info.disconnected.reason);
 
-             bool reconnect = TRUE;
-             if (evt->event_info.disconnected.reason == REASON_ASSOC_LEAVE) {
-                 /* REASON_ASSOC_LEAVE indicates explicit disconnection */
-                 reconnect = FALSE;
-             }
-
-#ifdef _SLEEP
-             if (sleep_pending()) {
-                 reconnect = FALSE;
-             }
-#endif
-
-             if (reconnect) {
-                 /* do a quick scan and try to reconnect asap */
-                 DEBUG_WIFI("attempting to reconnect in %d seconds", WIFI_SCAN_INTERVAL_QUICK);
-                 os_timer_disarm(&wifi_auto_scan_timer);
-                 os_timer_arm(&wifi_auto_scan_timer, WIFI_SCAN_INTERVAL_QUICK * 1000, /* repeat = */ FALSE);
-             }
-
              if (wifi_connect_callback) {
                  wifi_connect_callback(FALSE);
              }
 
              break;
-         }
 
          case EVENT_STAMODE_GOT_IP:
              DEBUG_WIFI("connected and ready at " IPSTR, IP2STR(&evt->event_info.got_ip.ip));
 
-             wifi_better_counter = 0;  /* reset counter */
              wifi_connected = TRUE;
 
              if (wifi_connect_callback) {
@@ -519,89 +459,7 @@ void on_wifi_event(System_Event_t *evt) {
              }
 
              break;
-
-         default:
-             DEBUG_WIFI("received event %d", evt->event);
      }
-}
-
-void on_wifi_auto_scan(void *arg) {
-    /* schedule the next check */
-    os_timer_disarm(&wifi_auto_scan_timer);
-    if (wifi_scan_interval) {
-        os_timer_arm(&wifi_auto_scan_timer, wifi_scan_interval * 1000, /* repeat = */ FALSE);
-    }
-
-    wifi_auto_scan();
-}
-
-void on_wifi_auto_scan_done(void *arg, STATUS status) {
-    wifi_scanning = FALSE;
-
-    if (status != OK) {
-        DEBUG_WIFI("auto scan failed");
-        return;
-    }
-
-    struct bss_info *result = (struct bss_info *) arg;
-
-    int max_rssi = -1000;
-    uint8 best_bssid[WIFI_BSSID_LEN];
-    while (result) {
-        result->ssid[result->ssid_len] = 0;
-        DEBUG_WIFI("found ssid \"%s\" on channel %d, rssi %d, bssid " BSSID_FMT,
-                   result->ssid, result->channel, result->rssi, BSSID2STR(result->bssid));
-
-        if (max_rssi < result->rssi) {
-            max_rssi = result->rssi;
-            memcpy(best_bssid, result->bssid, WIFI_BSSID_LEN);
-        }
-
-        result = STAILQ_NEXT(result, next);
-    }
-
-    if (max_rssi == -1000) {
-        DEBUG_WIFI("no ap found");
-        wifi_auto_scan();
-        return;
-    }
-
-    int wifi_status = wifi_station_get_connect_status();
-    int rssi = wifi_station_get_rssi();
-    struct station_config conf;
-
-    DEBUG_WIFI("connection status = %d", wifi_status);
-
-    if (wifi_status == STATION_GOT_IP && wifi_connected) {
-        wifi_station_get_config(&conf);
-        if (!memcmp(conf.bssid, best_bssid, WIFI_BSSID_LEN)) {
-            DEBUG_WIFI("already connected to best ap");
-            wifi_better_counter = 0;  /* reset counter */
-
-            return;
-        }
-
-        if (rssi < max_rssi + wifi_scan_threshold) {
-            wifi_better_counter++;
-
-            DEBUG_WIFI("ap with bssid " BSSID_FMT " has better rssi (%d vs. %d, count = %d)",
-                       BSSID2STR(best_bssid), max_rssi, rssi, wifi_better_counter);
-        }
-
-        if (wifi_better_counter < WIFI_BETTER_COUNT) {
-            return;
-        }
-
-        DEBUG_WIFI("disconnecting from current ap with bssid " BSSID_FMT, BSSID2STR(conf.bssid));
-
-        if (!wifi_station_disconnect()) {
-            DEBUG_WIFI("wifi_station_disconnect() failed");
-        }
-    }
-
-    wifi_better_counter = 0;  /* reset counter */
-
-    wifi_connect(best_bssid);
 }
 
 void on_wifi_scan_done(void *arg, STATUS status) {

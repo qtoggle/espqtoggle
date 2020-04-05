@@ -59,7 +59,6 @@ ICACHE_FLASH_ATTR void                  apply_port_provisioning_config(json_t *p
 
 void device_load(uint8 *data) {
     int frequency;
-    int wifi_scan_interval = 0, wifi_scan_threshold = 0;
     char *strings_ptr = (char *) data + CONFIG_OFFS_STR_BASE;
     char wifi_ssid[WIFI_SSID_MAX_LEN];
     uint8 wifi_bssid[WIFI_BSSID_LEN];
@@ -123,17 +122,11 @@ void device_load(uint8 *data) {
     memcpy(wifi_ssid, data + CONFIG_OFFS_SSID, WIFI_SSID_MAX_LEN);
     memcpy(wifi_bssid, data + CONFIG_OFFS_BSSID, WIFI_BSSID_LEN);
     memcpy(wifi_psk, data + CONFIG_OFFS_PSK, WIFI_PSK_MAX_LEN);
-    memcpy(&wifi_scan_interval, data + CONFIG_OFFS_SCAN_INTERVAL, 2);
-    memcpy(&wifi_scan_threshold, data + CONFIG_OFFS_SCAN_THRESH, 1);
 
     memcpy(&wifi_ip.addr, data + CONFIG_OFFS_IP_ADDRESS, 4);
     memcpy(&wifi_gw.addr, data + CONFIG_OFFS_GATEWAY, 4);
     memcpy(&wifi_dns.addr, data + CONFIG_OFFS_DNS, 4);
     memcpy(&wifi_netmask, data + CONFIG_OFFS_NETMASK, 1);
-
-    if (!wifi_scan_threshold) {
-        wifi_scan_threshold = WIFI_SCAN_THRESH_DEF;
-    }
 
     if (wifi_ssid[0] || wifi_bssid[0]) {
         wifi_set_ssid(wifi_ssid);
@@ -216,8 +209,6 @@ void device_load(uint8 *data) {
 
 void device_save(uint8 *data, uint32 *strings_offs) {
     int frequency = system_get_cpu_freq();
-    int wifi_scan_interval = wifi_get_scan_interval();
-    char wifi_scan_threshold = wifi_get_scan_threshold();
     char *strings_ptr = (char *) data + CONFIG_OFFS_STR_BASE;
     ip_addr_t wifi_ip_address, wifi_gateway, wifi_dns;
     uint8 wifi_netmask;
@@ -248,8 +239,6 @@ void device_save(uint8 *data, uint32 *strings_offs) {
     memcpy(data + CONFIG_OFFS_SSID, wifi_get_ssid(), WIFI_SSID_MAX_LEN);
     memcpy(data + CONFIG_OFFS_BSSID, wifi_get_bssid(), WIFI_BSSID_LEN);
     strncpy((char *) data + CONFIG_OFFS_PSK, wifi_get_psk() ? wifi_get_psk() : "", WIFI_PSK_MAX_LEN);
-    memcpy(data + CONFIG_OFFS_SCAN_INTERVAL, &wifi_scan_interval, 2);
-    memcpy(data + CONFIG_OFFS_SCAN_THRESH, &wifi_scan_threshold, 1);
 
     wifi_ip_address = wifi_get_ip_address();
     wifi_netmask = wifi_get_netmask();

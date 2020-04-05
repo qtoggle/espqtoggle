@@ -46,9 +46,7 @@
 #define CONFIG_OFFS_GATEWAY             0x0150 /*   4 bytes */
 #define CONFIG_OFFS_DNS                 0x0154 /*   4 bytes */
 #define CONFIG_OFFS_NETMASK             0x0158 /*   1 bytes */
-
-#define CONFIG_OFFS_SCAN_INTERVAL       0x0159 /*   2 bytes */
-#define CONFIG_OFFS_SCAN_THRESH         0x015B /*   1 bytes */
+                                               /* 0x0159 - 0x015B: reserved */
 
 #define CONFIG_OFFS_MODEL               0x015C /*   4 bytes - strings pool pointer */
                                                /* 0x0160 - 0x016F: reserved */

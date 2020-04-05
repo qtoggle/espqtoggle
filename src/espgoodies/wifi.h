@@ -32,13 +32,6 @@
 #define BSSID_FMT                       "%02X:%02X:%02X:%02X:%02X:%02X"
 #define BSSID2STR(bssid)                (bssid[0]), (bssid[1]), (bssid[2]), (bssid[3]), (bssid[4]), (bssid[5])
 
-#define WIFI_SCAN_INTERVAL_MIN          1       /* seconds */
-#define WIFI_SCAN_INTERVAL_MAX          3600    /* seconds */
-
-#define WIFI_SCAN_THRESH_MIN            1       /* RSSI dBm */
-#define WIFI_SCAN_THRESH_MAX            50      /* RSSI dBm */
-#define WIFI_SCAN_THRESH_DEF            15      /* RSSI dBm */
-
 #define WIFI_EVENT_CONNECTED            1
 #define WIFI_EVENT_DISCONNECTED         2
 #define WIFI_EVENT_CONNECT_TIMEOUT      3
@@ -101,11 +94,6 @@ typedef void (* wifi_scan_callback_t)(wifi_scan_result_t *results, int len);
 typedef void (* wifi_connect_callback_t)(bool connected);
 
 
-ICACHE_FLASH_ATTR int                   wifi_get_scan_interval(void);
-ICACHE_FLASH_ATTR void                  wifi_set_scan_interval(int interval);
-ICACHE_FLASH_ATTR char                  wifi_get_scan_threshold(void);
-ICACHE_FLASH_ATTR void                  wifi_set_scan_threshold(char threshold);
-
 ICACHE_FLASH_ATTR char                * wifi_get_ssid(void);
 ICACHE_FLASH_ATTR uint8               * wifi_get_bssid(void);
 ICACHE_FLASH_ATTR char                * wifi_get_psk(void);
@@ -136,7 +124,6 @@ ICACHE_FLASH_ATTR void                  wifi_set_ap_mode(char *hostname);
 ICACHE_FLASH_ATTR bool                  wifi_is_connected(void);
 
 ICACHE_FLASH_ATTR bool                  wifi_scan(wifi_scan_callback_t callback);
-ICACHE_FLASH_ATTR void                  wifi_auto_scan(void);
 
 
 #endif /* _ESPGOODIES_WIFI_H */
