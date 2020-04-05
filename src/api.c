@@ -848,7 +848,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
             strncpy(device_name, value, API_MAX_DEVICE_NAME_LEN);
             device_name[API_MAX_DEVICE_NAME_LEN - 1] = 0;
             
-            DEBUG_DEVICE("name set to %s", device_name);
+            DEBUG_DEVICE("name set to \"%s\"", device_name);
 
             httpserver_set_name(device_name);
         }
@@ -1072,7 +1072,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
             device_config_model[API_MAX_DEVICE_CONFIG_MODEL_LEN - 1] = 0;
 
             config_model_changed = TRUE;
-            DEBUG_DEVICE("config model set to %s", device_config_model);
+            DEBUG_DEVICE("config model set to \"%s\"", device_config_model);
         }
         else if (!strcmp(key, "version") ||
                  !strcmp(key, "api_version") ||
@@ -1709,7 +1709,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 }
 
                 if (expr_check_loops(expr, port) > 1) {
-                    DEBUG_API("loop detected in expression %s", sexpr);
+                    DEBUG_API("loop detected in expression \"%s\"", sexpr);
                     expr_free(expr);
                     return INVALID_FIELD_VALUE(key);
                 }
@@ -2217,12 +2217,12 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
 #ifdef _SSL
         if (!strcmp(json_str_get(scheme_json), "https")) {
             device_flags |= DEVICE_FLAG_WEBHOOKS_HTTPS;
-            DEBUG_WEBHOOKS("scheme set to https");
+            DEBUG_WEBHOOKS("scheme set to HTTPS");
         }
         else
 #endif
         if (!strcmp(json_str_get(scheme_json), "http")) {
-            DEBUG_WEBHOOKS("scheme set to http");
+            DEBUG_WEBHOOKS("scheme set to HTTP");
             device_flags &= ~DEVICE_FLAG_WEBHOOKS_HTTPS;
         }
         else {

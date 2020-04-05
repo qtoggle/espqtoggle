@@ -386,7 +386,7 @@ void config_start_provisioning(void) {
         snprintf(url, sizeof(url), "%s%s/%s.json", FW_BASE_URL, FW_BASE_CFG_PATH, FW_CONFIG_NAME);
     }
 
-    DEBUG_DEVICE("provisioning: fetching from %s", url);
+    DEBUG_DEVICE("provisioning: fetching from \"%s\"", url);
 
     httpclient_request("GET", url, /* body = */ NULL, /* body_len = */ 0,
                        /* header_names = */ NULL, /* header_values = */ NULL, /* header_count = */ 0,

@@ -120,10 +120,10 @@ void wifi_set_ssid(char *ssid) {
     }
 
     if (ssid && ssid[0]) {
-        DEBUG_WIFI("ssid set to \"%s\"", ssid);
+        DEBUG_WIFI("SSID set to \"%s\"", ssid);
     }
     else {
-        DEBUG_WIFI("ssid unset");
+        DEBUG_WIFI("SSID unset");
     }
 
     cached_station_config_changed = TRUE;
@@ -138,10 +138,10 @@ void wifi_set_psk(char *psk) {
     }
 
     if (psk && psk[0]) {
-        DEBUG_WIFI("psk set");
+        DEBUG_WIFI("PSK set");
     }
     else {
-        DEBUG_WIFI("psk unset");
+        DEBUG_WIFI("PSK unset");
     }
 
     cached_station_config_changed = TRUE;
@@ -159,10 +159,10 @@ void wifi_set_bssid(uint8 *bssid) {
     cached_station_config.bssid_set = (bssid != NULL);
 
     if (bssid) {
-        DEBUG_WIFI("bssid set to " BSSID_FMT, BSSID2STR(bssid));
+        DEBUG_WIFI("BSSID set to " BSSID_FMT, BSSID2STR(bssid));
     }
     else {
-        DEBUG_WIFI("bssid unset");
+        DEBUG_WIFI("BSSID unset");
     }
 
     cached_station_config_changed = TRUE;
@@ -577,7 +577,7 @@ void on_wifi_event(System_Event_t *evt) {
          case EVENT_STAMODE_DISCONNECTED:
              station_connected = FALSE;
 
-             DEBUG_WIFI("disconnected from ssid %s, bssid " BSSID_FMT ", reason %d",
+             DEBUG_WIFI("disconnected from SSID \"%s\", BSSID " BSSID_FMT ", reason %d",
                         evt->event_info.disconnected.ssid,
                         BSSID2STR(evt->event_info.disconnected.bssid),
                         evt->event_info.disconnected.reason);
@@ -624,7 +624,7 @@ void on_wifi_scan_done(void *arg, STATUS status) {
 
     while (result) {
         result->ssid[result->ssid_len] = 0;
-        DEBUG_WIFI("found ssid \"%s\" on channel %d, rssi %d, bssid " BSSID_FMT,
+        DEBUG_WIFI("found SSID=\"%s\", channel=%d, RSSI=%d, BSSID=" BSSID_FMT,
                    result->ssid, result->channel, result->rssi, BSSID2STR(result->bssid));
 
         results = realloc(results, sizeof(wifi_scan_result_t) * (len + 1));

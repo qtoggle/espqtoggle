@@ -101,7 +101,7 @@ static void ICACHE_FLASH_ATTR receive_callback(void * arg, char * buf, uint16 le
     }
 
     os_memcpy(new_buffer, req->buffer, req->buffer_size);
-    os_memcpy(new_buffer + req->buffer_size - 1 /*overwrite the null character*/, buf, len);  /* append new data */
+    os_memcpy(new_buffer + req->buffer_size - 1 /* overwrite the null character */, buf, len);  /* append new data */
     new_buffer[new_size - 1] = '\0';  /* make sure there is an end of string */
 
     free(req->buffer);

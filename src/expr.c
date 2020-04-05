@@ -741,13 +741,13 @@ expr_t *parse_port_id_expr(char *port_id, char *input) {
     char *s = input;
     
     if (input[0] && !isalpha((int) input[0]) && input[0] != '_') {
-        DEBUG_EXPR("invalid port identifier %s", input);
+        DEBUG_EXPR("invalid port identifier \"%s\"", input);
         return NULL;
     }
 
     while ((c = *s++)) {
         if (!isalnum((int) c) && c != '_' && c != '-') {
-            DEBUG_EXPR("invalid port identifier %s", input);
+            DEBUG_EXPR("invalid port identifier \"%s\"", input);
             return NULL;
         }
     }
@@ -777,7 +777,7 @@ expr_t *parse_const_expr(char *input) {
         char *error;
         double value = strtod(input, &error);
         if (error[0]) {
-            DEBUG_EXPR("invalid token %s", input);
+            DEBUG_EXPR("invalid token \"%s\"", input);
             return NULL;
         }
 
@@ -900,7 +900,7 @@ expr_t *expr_parse(char *port_id, char *input, int len) {
         }
 
         if (!isalnum((int) name[0])) {
-            DEBUG_EXPR("invalid function name %s", name);
+            DEBUG_EXPR("invalid function name \"%s\"", name);
             return NULL;
         }
         
@@ -920,13 +920,13 @@ expr_t *expr_parse(char *port_id, char *input, int len) {
 
         func_t *func = find_func_by_name(name);
         if (!func) {
-            DEBUG_EXPR("no such function %s", name);
+            DEBUG_EXPR("no such function \"%s\"", name);
             while (argc > 0) expr_free(args[--argc]);
             return NULL;
         }
         
         if ((func->argc >= 0 && func->argc != argc) || (func->argc < 0 && -func->argc > argc)) {
-            DEBUG_EXPR("invalid number of arguments to function %s", name);
+            DEBUG_EXPR("invalid number of arguments to function \"%s\"", name);
             while (argc > 0) expr_free(args[--argc]);
             return NULL;
         }

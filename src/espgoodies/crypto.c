@@ -228,7 +228,7 @@ char *b64_encode(uint8 *data, int len, bool padding) {
                 enc[size++] = b64_table[buf[i]];
             }
 
-            /*reset index */
+            /* reset index */
             i = 0;
         }
     }

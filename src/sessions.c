@@ -50,7 +50,7 @@ session_t *session_find_by_id(char *id) {
         }
     }
 
-    DEBUG_SESSIONS("no %s found", id);
+    DEBUG_SESSIONS("no \"%s\" found", id);
 
     return NULL;
 }
@@ -94,7 +94,7 @@ session_t *session_create(char *id, struct espconn *conn, int timeout, int acces
     session->access_level = access_level;
     session->conn = conn;
 
-    DEBUG_SESSIONS("assigned id %s to slot %d", id, free_slot);
+    DEBUG_SESSIONS("assigned id \"%s\" to slot %d", id, free_slot);
 
     return session;
 }
