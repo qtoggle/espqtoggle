@@ -1153,6 +1153,7 @@ json_t *api_post_reset(json_t *query_json, json_t *request_json, int *code) {
 
     if (factory) {
         flashcfg_reset();
+        wifi_reset();
     }
 
     *code = 204;

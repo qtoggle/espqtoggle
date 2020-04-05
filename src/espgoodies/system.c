@@ -196,6 +196,8 @@ void system_setup_mode_update(void) {
             setup_mode_state = SETUP_MODE_RESET;
 
             flashcfg_reset();
+            wifi_reset();
+
             system_reset(/* delayed = */ TRUE);
         }
         else if (setup_mode_state == SETUP_MODE_PRESSED && now - setup_mode_timer > system_setup_mode_int) {

@@ -127,6 +127,7 @@ ICACHE_FLASH_ATTR void                  wifi_ap_disable(void);
 ICACHE_FLASH_ATTR bool                  wifi_scan(wifi_scan_callback_t callback);
 
 ICACHE_FLASH_ATTR void                  wifi_init(void);
+ICACHE_FLASH_ATTR void                  wifi_reset(void);
 
 
 #endif /* _ESPGOODIES_WIFI_H */

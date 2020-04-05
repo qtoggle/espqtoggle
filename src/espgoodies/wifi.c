@@ -507,6 +507,12 @@ void wifi_init(void) {
 #endif
 }
 
+void wifi_reset(void) {
+    DEBUG_WIFI("resetting to factory defaults");
+    system_restore();
+}
+
+
 void ensure_station_config_read(void) {
     if (!cached_station_config_read) {
         DEBUG_WIFI("loading configuration");
