@@ -37,14 +37,13 @@
 
 
 #define WIFI_BETTER_COUNT           3   /* a network has to be better 3 times in a row */
-#define WIFI_SCAN_INTERVAL_QUICK    5   /* seconds */
+#define WIFI_SCAN_INTERVAL_QUICK    1   /* seconds */
 #define WIFI_WATCHDOG_INTERVAL      10  /* seconds */
 #define WIFI_WATCHDOG_MAX_COUNT     3   /* disconnected times, in a row, that trigger a reset */
 
 
-/* we have to maintain a separate connected status,
- * as wifi_station_get_connect_status() appears to return
- * wrong values after disconnect */
+/* we have to maintain a separate connected status, as wifi_station_get_connect_status() appears to return  wrong values
+ * after disconnect */
 static bool                         wifi_connected = FALSE;
 static os_timer_t                   wifi_auto_scan_timer;
 static int                          wifi_scan_interval = 0;
@@ -248,7 +247,7 @@ void wifi_set_dns(ip_addr_t dns) {
 
 void wifi_set_station_mode(wifi_connect_callback_t callback, char *hostname) {
     if (!wifi_set_opmode_current(STATION_MODE)) {
-        DEBUG_WIFI("wifi_set_opmode() failed");
+        DEBUG_WIFI("wifi_set_opmode_current() failed");
     }
     if (!wifi_station_set_hostname(hostname)) {
         DEBUG_WIFI("wifi_station_set_hostname() failed");
@@ -294,13 +293,6 @@ void wifi_connect(uint8 *bssid) {
     memset(&conf, 0, sizeof(struct station_config));
 
     conf.bssid_set = 1;
-    if (wifi_psk[0]) {
-        conf.threshold.authmode = AUTH_WPA_WPA2_PSK;
-    }
-    else {
-        conf.threshold.authmode = AUTH_OPEN;
-    }
-    conf.threshold.rssi = -127;
 
     memcpy(conf.ssid, wifi_ssid, WIFI_SSID_MAX_LEN);
     memcpy(conf.bssid, bssid, WIFI_BSSID_LEN);
@@ -490,10 +482,6 @@ void on_wifi_event(System_Event_t *evt) {
                         BSSID2STR(evt->event_info.disconnected.bssid),
                         evt->event_info.disconnected.reason);
 
-             /* it seems that sometimes wifi_station_get_connect_status() returns STATION_GOT_IP,
-              * in some disconnect cases; explicitly calling wifi_station_disconnect() seems to fix this */
-             wifi_station_disconnect();
-
              bool reconnect = TRUE;
              if (evt->event_info.disconnected.reason == REASON_ASSOC_LEAVE) {
                  /* REASON_ASSOC_LEAVE indicates explicit disconnection */
@@ -531,6 +519,9 @@ void on_wifi_event(System_Event_t *evt) {
              }
 
              break;
+
+         default:
+             DEBUG_WIFI("received event %d", evt->event);
      }
 }
 
@@ -566,7 +557,7 @@ void on_wifi_auto_scan_done(void *arg, STATUS status) {
             memcpy(best_bssid, result->bssid, WIFI_BSSID_LEN);
         }
 
-        result = result->next.stqe_next;
+        result = STAILQ_NEXT(result, next);
     }
 
     if (max_rssi == -1000) {
@@ -579,7 +570,7 @@ void on_wifi_auto_scan_done(void *arg, STATUS status) {
     int rssi = wifi_station_get_rssi();
     struct station_config conf;
 
-    DEBUG_WIFI("connection status: %d", wifi_status);
+    DEBUG_WIFI("connection status = %d", wifi_status);
 
     if (wifi_status == STATION_GOT_IP && wifi_connected) {
         wifi_station_get_config(&conf);
