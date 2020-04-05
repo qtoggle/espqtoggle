@@ -22,6 +22,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <user_interface.h>
+#include <osapi.h>
 #include <espconn.h>
 
 #include "common.h"
@@ -30,11 +31,27 @@
 
 #define REALLOC_CHUNK_SIZE      8
 #define DTOSTR_BUF_LEN          32
+#define MAX_CALL_LATER_TIMERS   16
 
 #if defined(_DEBUG) && defined(_DEBUG_IP)
 static struct espconn         * debug_udp_conn = NULL;
 ICACHE_FLASH_ATTR static void   debug_udp_send(char *buf, int len);
 #endif
+
+static os_timer_t            ** call_later_timers = NULL;
+static uint8                    call_later_timers_count = 0;
+
+
+typedef struct {
+
+    os_timer_t                * timer;
+    call_later_callback_t       callback;
+    void                      * arg;
+
+} call_later_callback_wrapper_arg_t;
+
+
+ICACHE_FLASH_ATTR static void   call_later_callback_wrapper(call_later_callback_wrapper_arg_t *arg);
 
 
 void append_max_len(char *s, char c, int max_len) {
@@ -223,6 +240,60 @@ int compare_double(const void *a, const void *b) {
         return 0;
     }
 }
+
+bool call_later(call_later_callback_t callback, void *arg, uint32 delay_ms) {
+    if (call_later_timers_count >= MAX_CALL_LATER_TIMERS) {
+        DEBUG("too many call-later timers");
+        return FALSE;
+    }
+
+    /* allocate new timer */
+    call_later_timers = realloc(call_later_timers, sizeof(os_timer_t *) * call_later_timers_count + 1);
+    os_timer_t *timer = call_later_timers[call_later_timers_count++] = malloc(sizeof(os_timer_t));
+
+    /* allocate new callback wrapper argument structure */
+    call_later_callback_wrapper_arg_t *wrapper_arg = malloc(sizeof(call_later_callback_wrapper_arg_t));
+    wrapper_arg->timer = timer;
+    wrapper_arg->callback = callback;
+    wrapper_arg->arg = arg;
+
+    /* arm the timer */
+    os_timer_disarm(timer);
+    os_timer_setfn(timer, (os_timer_func_t *) call_later_callback_wrapper, wrapper_arg);
+    os_timer_arm(timer, delay_ms, /* repeat = */ FALSE);
+
+    return TRUE;
+}
+
+void call_later_callback_wrapper(call_later_callback_wrapper_arg_t *arg) {
+    /* look-up timer in timers list */
+    int16 i, pos = -1;
+    for (i = 0; i < call_later_timers_count; i++) {
+        if (call_later_timers[i] == arg->timer) {
+            pos = i;
+            break;
+        }
+    }
+
+    if (pos < 0) {
+        DEBUG("call-later timer not found");
+        return;
+    }
+
+    /* remove timer from timers list, by shifting back following timers */
+    for (i = pos; i < call_later_timers_count - 1; i++) {
+        call_later_timers[i] = call_later_timers[i + 1];
+    }
+    call_later_timers = realloc(call_later_timers, sizeof(os_timer_t *) * --call_later_timers_count);
+
+    /* call the original callback */
+    arg->callback(arg->arg);
+
+    /* we must free the timer as well as the received argument */
+    free(arg->timer);
+    free(arg);
+}
+
 
 char *my_strtok(char *s, char *d) {
     static char *start = NULL;

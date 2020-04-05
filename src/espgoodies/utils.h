@@ -44,12 +44,16 @@
 #define ntohl(x)                htonl(x)
 
 
+typedef void (* call_later_callback_t)(void *arg);
+
+
 ICACHE_FLASH_ATTR void          append_max_len(char *s, char c, int max_len);
 ICACHE_FLASH_ATTR int           realloc_chunks(char **p, int current_size, int req_size);
 ICACHE_FLASH_ATTR double        strtod(const char *s, char **endptr);
 ICACHE_FLASH_ATTR char        * dtostr(double d, int8 decimals);
 ICACHE_FLASH_ATTR double        decent_round(double d);
 ICACHE_FLASH_ATTR int           compare_double(const void *a, const void *b);
+ICACHE_FLASH_ATTR bool          call_later(call_later_callback_t callback, void *arg, uint32 delay_ms);
 
 
 #endif /* _ESPGOODIES_UTILS_H */
