@@ -27,7 +27,7 @@
 
 #define DEBUG_PWM(fmt, ...)         DEBUG("[pwm           ] " fmt, ##__VA_ARGS__)
 
-/* no user serviceable parts beyond this point */
+/* No user serviceable parts beyond this point */
 
 #define PWM_MAX_TICKS 0x7fffff
 #if SDK_PWM_PERIOD_COMPAT_MODE
@@ -52,7 +52,7 @@
 #include "common.h"
 
 
-/* from SDK hw_timer.c */
+/* From SDK hw_timer.c */
 #define TIMER1_DIVIDE_BY_16             0x0004
 #define TIMER1_ENABLE_TIMER             0x0080
 

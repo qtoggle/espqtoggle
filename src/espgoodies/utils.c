@@ -85,7 +85,7 @@ double strtod(const char *s, char **endptr) {
         s++;
     }
 
-    /* detect and skip sign */
+    /* Detect and skip sign */
     if (*s == '-') {
         sign = 1;
         s++;
@@ -132,26 +132,26 @@ char *dtostr(double d, int8 decimals) {
     char c;
     uint64 n;
 
-    /* define two reentrant buffers and use them in a round-robin manner, so that two dtostr() calls can be used in the
+    /* Define two reentrant buffers and use them in a round-robin manner, so that two dtostr() calls can be used in the
      * same expression or function call */
     static char dtostr_buf1[DTOSTR_BUF_LEN];
     static char dtostr_buf2[DTOSTR_BUF_LEN];
     static uint8 buf_sel = 0;
     char *dtostr_buf = buf_sel++ % 2 ? dtostr_buf1 : dtostr_buf2;
 
-    /* process the sign */
+    /* Process the sign */
     if (d < 0) {
         d = -d;
         sign = TRUE;
     }
 
     if (decimals < 0) {
-        decimals = 10; /* analyze up to 10 decimals */
+        decimals = 10; /* Analyze up to 10 decimals */
         auto_decimals = TRUE;
     }
 
     if (decimals >= 0) {
-        /* if the number of decimals is too big,
+        /* If the number of decimals is too big,
          * we risk having an integer overflow here! */
         for (i = 0; i < decimals; i++) {
             d *= 10;
@@ -182,12 +182,12 @@ char *dtostr(double d, int8 decimals) {
         }
     }
 
-    /* add sign */
+    /* Add sign */
     if (sign && (len > 1 || dtostr_buf[0] != '0')) {
         dtostr_buf[len++] = '-';
     }
 
-    /* reverse the string  */
+    /* Reverse the string  */
     for (i = 0; i < len / 2; i++) {
         c = dtostr_buf[i];
         dtostr_buf[i] = dtostr_buf[len - i - 1];
@@ -247,17 +247,17 @@ bool call_later(call_later_callback_t callback, void *arg, uint32 delay_ms) {
         return FALSE;
     }
 
-    /* allocate new timer */
+    /* Allocate new timer */
     call_later_timers = realloc(call_later_timers, sizeof(os_timer_t *) * call_later_timers_count + 1);
     os_timer_t *timer = call_later_timers[call_later_timers_count++] = malloc(sizeof(os_timer_t));
 
-    /* allocate new callback wrapper argument structure */
+    /* Allocate new callback wrapper argument structure */
     call_later_callback_wrapper_arg_t *wrapper_arg = malloc(sizeof(call_later_callback_wrapper_arg_t));
     wrapper_arg->timer = timer;
     wrapper_arg->callback = callback;
     wrapper_arg->arg = arg;
 
-    /* arm the timer */
+    /* Arm the timer */
     os_timer_disarm(timer);
     os_timer_setfn(timer, (os_timer_func_t *) call_later_callback_wrapper, wrapper_arg);
     os_timer_arm(timer, delay_ms, /* repeat = */ FALSE);
@@ -266,7 +266,7 @@ bool call_later(call_later_callback_t callback, void *arg, uint32 delay_ms) {
 }
 
 void call_later_callback_wrapper(call_later_callback_wrapper_arg_t *arg) {
-    /* look-up timer in timers list */
+    /* Look-up timer in timers list */
     int16 i, pos = -1;
     for (i = 0; i < call_later_timers_count; i++) {
         if (call_later_timers[i] == arg->timer) {
@@ -280,16 +280,16 @@ void call_later_callback_wrapper(call_later_callback_wrapper_arg_t *arg) {
         return;
     }
 
-    /* remove timer from timers list, by shifting back following timers */
+    /* Remove timer from timers list, by shifting back following timers */
     for (i = pos; i < call_later_timers_count - 1; i++) {
         call_later_timers[i] = call_later_timers[i + 1];
     }
     call_later_timers = realloc(call_later_timers, sizeof(os_timer_t *) * --call_later_timers_count);
 
-    /* call the original callback */
+    /* Call the original callback */
     arg->callback(arg->arg);
 
-    /* we must free the timer as well as the received argument */
+    /* We must free the timer as well as the received argument */
     free(arg->timer);
     free(arg);
 }
@@ -314,7 +314,7 @@ char *my_strtok(char *s, char *d) {
         s++;
     }
 
-    if (*s == *d) { /* delimiter */
+    if (*s == *d) { /* Delimiter */
         while (*s == *d) {
             *s = 0;
             s++;
@@ -325,7 +325,7 @@ char *my_strtok(char *s, char *d) {
 
         return p;
     }
-    else { /* end of string */
+    else { /* End of string */
         if (s == start) {
             return NULL;
         }
@@ -382,7 +382,7 @@ void debug_udp_send(char *buf, int len) {
     int result;
 
     if (!debug_udp_conn) {
-        /* initialize the debug UDP connection */
+        /* Initialize the debug UDP connection */
         debug_udp_conn = zalloc(sizeof(struct espconn));
 
         debug_udp_conn->type = ESPCONN_UDP;

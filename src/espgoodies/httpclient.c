@@ -19,10 +19,10 @@
 #include "httpclient.h"
 
 
-#define BUFFER_SIZE_MAX             5000    /* size of http responses that will cause an error */
+#define BUFFER_SIZE_MAX             5000    /* Size of http responses that will cause an error */
 
 
-/* internal request state */
+/* Internal request state */
 typedef struct {
 
     char              * path;
@@ -72,7 +72,7 @@ static int ICACHE_FLASH_ATTR chunked_decode(char *chunked, int size) {
     //footer CRLF
     //
 
-    /* decoded size */
+    /* Decoded size */
     return dst;
 }
 
@@ -81,15 +81,15 @@ static void ICACHE_FLASH_ATTR receive_callback(void * arg, char * buf, uint16 le
     request_args_t *req = (request_args_t *) conn->reverse;
 
     if (req->buffer == NULL) {
-        return;  /* the disconnect callback will be called */
+        return;  /* The disconnect callback will be called */
     }
 
-    /* do the equivalent of a realloc() */
+    /* Do the equivalent of a realloc() */
     const int new_size = req->buffer_size + len;
     char * new_buffer;
     if (new_size > BUFFER_SIZE_MAX || NULL == (new_buffer = (char *) malloc(new_size))) {
         DEBUG_HTTPCLIENT("response too long (%d)", new_size);
-        req->buffer[0] = '\0';  /* discard the buffer to avoid using an incomplete response */
+        req->buffer[0] = '\0';  /* Discard the buffer to avoid using an incomplete response */
 #ifdef _SSL
         if (req->secure)
             espconn_secure_disconnect(conn);
@@ -97,12 +97,12 @@ static void ICACHE_FLASH_ATTR receive_callback(void * arg, char * buf, uint16 le
 #endif
         espconn_disconnect(conn);
 
-        return;  /* the disconnect callback will be called */
+        return;  /* The disconnect callback will be called */
     }
 
     os_memcpy(new_buffer, req->buffer, req->buffer_size);
-    os_memcpy(new_buffer + req->buffer_size - 1 /* overwrite the null character */, buf, len);  /* append new data */
-    new_buffer[new_size - 1] = '\0';  /* make sure there is an end of string */
+    os_memcpy(new_buffer + req->buffer_size - 1 /* Overwrite the null character */, buf, len);  /* Append new data */
+    new_buffer[new_size - 1] = '\0';  /* Make sure there is an end of string */
 
     free(req->buffer);
     req->buffer = new_buffer;
@@ -117,7 +117,7 @@ static void ICACHE_FLASH_ATTR sent_callback(void *arg) {
         DEBUG_HTTPCLIENT("all sent");
     }
     else {
-        /* the head was sent, now send the body */
+        /* The head was sent, now send the body */
 
         DEBUG_HTTPCLIENT("request body (%d bytes):\n----------------\n%s\n----------------", req->body_len, req->body);
 
@@ -198,7 +198,7 @@ static void ICACHE_FLASH_ATTR disconnect_callback(void * arg) {
             }
             else {
                 http_status = strtol(req->buffer + strlen(version10), NULL, 10);
-                /* find body and zero terminate headers */
+                /* Find body and zero terminate headers */
                 body = (char *)os_strstr(req->buffer, "\r\n\r\n") + 2;
                 *body++ = '\0';
                 *body++ = '\0';
@@ -213,14 +213,14 @@ static void ICACHE_FLASH_ATTR disconnect_callback(void * arg) {
             }
         }
 
-        /* parse req->buffer which contains raw headers */
+        /* Parse req->buffer which contains raw headers */
 
         i = 0;
-        while (req->buffer[i] && req->buffer[i] != '\n') {  /* skip response line */
+        while (req->buffer[i] && req->buffer[i] != '\n') {  /* Skip response line */
             i++;
         }
 
-        if (req->buffer[i]) {  /* skip \n */
+        if (req->buffer[i]) {  /* Skip \n */
             i++;
         }
 
@@ -228,30 +228,30 @@ static void ICACHE_FLASH_ATTR disconnect_callback(void * arg) {
             header_names = realloc(header_names, sizeof(char *) * (header_count + 1));
             header_names[header_count] = req->buffer + i;
 
-            while (req->buffer[i] && req->buffer[i] != ':') {  /* skip name */
+            while (req->buffer[i] && req->buffer[i] != ':') {  /* Skip name */
                 i++;
             }
             if (!req->buffer[i]) {
-                break;  /* unexpected headers end */
+                break;  /* Unexpected headers end */
             }
             req->buffer[i++] = 0;  /* null terminate header name */
 
-            while (req->buffer[i] == ' ') {  /* skip spaces */
+            while (req->buffer[i] == ' ') {  /* Skip spaces */
                 i++;
             }
 
             header_values = realloc(header_values, sizeof(char *) * (header_count + 1));
             header_values[header_count] = req->buffer + i;
 
-            while (req->buffer[i] && req->buffer[i] != '\r' && req->buffer[i] != '\n') {  /* skip value */
+            while (req->buffer[i] && req->buffer[i] != '\r' && req->buffer[i] != '\n') {  /* Skip value */
                 i++;
             }
             if (!req->buffer[i]) {
-                break;  /* unexpected headers end */
+                break;  /* Unexpected headers end */
             }
 
             req->buffer[i++] = 0;  /* null terminate header name */
-            i++;  /* skip \n */
+            i++;  /* Skip \n */
 
             header_count++;
         }
@@ -260,7 +260,7 @@ static void ICACHE_FLASH_ATTR disconnect_callback(void * arg) {
             req->callback(body, body_size, http_status, header_names, header_values, header_count, req->ip_addr);
         }
 
-        /* make sure we won't fire the timeout timer anymore */
+        /* Make sure we won't fire the timeout timer anymore */
         os_timer_disarm(&req->timer);
 
         free(header_names);
@@ -332,7 +332,7 @@ static void ICACHE_FLASH_ATTR dns_callback(const char * hostname, ip_addr_t *add
 
 #ifdef _SSL
         if (req->secure) {
-            espconn_secure_set_size(ESPCONN_CLIENT, 5120);  /* set SSL buffer size */
+            espconn_secure_set_size(ESPCONN_CLIENT, 5120);  /* Set SSL buffer size */
             espconn_secure_connect(conn);
         } else
 #endif
@@ -350,7 +350,7 @@ static void ICACHE_FLASH_ATTR timeout_callback(void *arg) {
     }
 
     req->callback = NULL;
-    if (req->buffer[0] != 0) {  /* prevents further lookup through body when handling disconnect */
+    if (req->buffer[0] != 0) {  /* Prevents further lookup through body when handling disconnect */
         req->buffer[0] = 0;
     }
 
@@ -390,7 +390,7 @@ void http_raw_request(char *hostname, uint16 port, bool secure, char *path, char
         DEBUG_HTTPCLIENT("DNS pending");
     }
     else if (error == ESPCONN_OK) {
-        /* already in the local names table (or hostname was an IP address), execute the callback ourselves */
+        /* Already in the local names table (or hostname was an IP address), execute the callback ourselves */
         dns_callback(hostname, &addr, req);
     }
     else {
@@ -400,10 +400,10 @@ void http_raw_request(char *hostname, uint16 port, bool secure, char *path, char
         else {
             DEBUG_HTTPCLIENT("DNS error code %d", error);
         }
-        dns_callback(hostname, NULL, req); /* handle all DNS errors the same way */
+        dns_callback(hostname, NULL, req); /* Handle all DNS errors the same way */
     }
 
-    /* timeout timer */
+    /* Timeout timer */
     os_timer_disarm(&req->timer);
     os_timer_setfn(&req->timer, timeout_callback, req);
     os_timer_arm(&req->timer, timeout * 1000, /* repeat = */ FALSE);
@@ -469,11 +469,11 @@ void ICACHE_FLASH_ATTR httpclient_request(char *method, char *url, uint8 *body, 
     }
 
 
-    if (path[0] == 0) { /* empty path is not allowed */
+    if (path[0] == 0) { /* Empty path is not allowed */
         path = "/";
     }
 
-    /* add required Host header */
+    /* Add required Host header */
     char host_value[strlen(hostname) + 7];
     snprintf(host_value, sizeof(host_value), "%s:%d", hostname, port);
 
@@ -483,14 +483,14 @@ void ICACHE_FLASH_ATTR httpclient_request(char *method, char *url, uint8 *body, 
     h = headers + headers_len - hl;
     snprintf(h, hl + 1, "Host: %s\r\n", host_value);
 
-    /* add required Connection header */
+    /* Add required Connection header */
     hl = 19;  /* Connection: close\r\n */
     headers_len += hl;
     headers = realloc(headers, headers_len + 1);
     h = headers + headers_len - hl;
     snprintf(h, hl + 1, "Connection: close\r\n");
 
-    /* add required User-Agent header */
+    /* Add required User-Agent header */
     hl = strlen(user_agent) + 14;  /* User-Agent: value\r\n */
     headers_len += hl;
     headers = realloc(headers, headers_len + 1);
@@ -498,7 +498,7 @@ void ICACHE_FLASH_ATTR httpclient_request(char *method, char *url, uint8 *body, 
     snprintf(h, hl + 1, "User-Agent: %s\r\n", user_agent);
 
     if (body_len) {
-        /* add required Content-Length header */
+        /* Add required Content-Length header */
         char cl_value[16];
         snprintf(cl_value, sizeof(cl_value), "%d", body_len);
 
@@ -508,7 +508,7 @@ void ICACHE_FLASH_ATTR httpclient_request(char *method, char *url, uint8 *body, 
         h = headers + headers_len - hl;
         snprintf(h, hl + 1, "Content-Length: %s\r\n", cl_value);
 
-        /* add extra headers */
+        /* Add extra headers */
         for (i = 0; i < header_count; i++) {
             hl = strlen(header_names[i]) + strlen(header_values[i]) + 4;
             headers_len += hl;

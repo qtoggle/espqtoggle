@@ -49,7 +49,7 @@
 #define WIFI_AP_IP4                     1
 #endif
 
-    /* netmask */
+    /* Netmask */
 #ifndef WIFI_AP_NM
 #define WIFI_AP_NM1                     255
 #define WIFI_AP_NM2                     255
@@ -57,7 +57,7 @@
 #define WIFI_AP_NM4                     0
 #endif
 
-    /* start DHCP IP address */
+    /* Start DHCP IP address */
 #ifndef WIFI_AP_SI1
 #define WIFI_AP_SI1                     192
 #define WIFI_AP_SI2                     168
@@ -65,7 +65,7 @@
 #define WIFI_AP_SI4                     100
 #endif
 
-    /* end DHCP IP address */
+    /* End DHCP IP address */
 #ifndef WIFI_AP_EI1
 #define WIFI_AP_EI1                     192
 #define WIFI_AP_EI2                     168
@@ -85,7 +85,7 @@ typedef struct {
 } wifi_scan_result_t;
 
 
-/* results is an array that must be freed() in callback! */
+/* Results is an array that must be freed() in callback! */
 typedef void (* wifi_scan_callback_t)(wifi_scan_result_t *results, int len);
 typedef void (* wifi_connect_callback_t)(bool connected);
 

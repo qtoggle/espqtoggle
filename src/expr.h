@@ -32,13 +32,13 @@
 
 typedef struct expr {
 
-    double          value;          /* used for constant expressions, value change detection and caching purposes */
+    double          value;          /* Used for constant expressions, value change detection and caching purposes */
 
-    int64           aux;            /* auxiliary flag */
-    void          * paux;           /* auxiliary pointer */
+    int64           aux;            /* Auxiliary flag */
+    void          * paux;           /* Auxiliary pointer */
 
     char          * port_id;
-    uint16          len;            /* used for value history queue size */
+    uint16          len;            /* Used for value history queue size */
 
     void          * func;
     int8            argc;
@@ -60,7 +60,7 @@ typedef double (* func_callback_t)(expr_t *expr, int argc, double *args);
 typedef struct {
 
     char          * name;
-    int8            argc;           /* if negative, acts as a minimum */
+    int8            argc;           /* If negative, acts as a minimum */
     func_callback_t callback;
 
 } func_t;

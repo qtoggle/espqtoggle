@@ -91,7 +91,7 @@ typedef struct {
 
     os_timer_t              timer;
 
-    /* for debugging purposes */
+    /* For debugging purposes */
     uint8                   slot_index;
     uint8                   ip[4];
     uint16                  port;
@@ -117,7 +117,7 @@ ICACHE_FLASH_ATTR void              httpserver_setup_connection(httpserver_conte
 ICACHE_FLASH_ATTR void              httpserver_parse_req_char(httpserver_context_t *hc, int c);
 ICACHE_FLASH_ATTR void              httpserver_context_reset(httpserver_context_t *hc);
 
-    /* the response returned by this function must be freed after use */
+    /* The response returned by this function must be freed after use */
 ICACHE_FLASH_ATTR uint8           * httpserver_build_response(int status, char *content_type,
                                                               char *header_names[], char *header_values[],
                                                               int header_count, uint8 *body, int *len);

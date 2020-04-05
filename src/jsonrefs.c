@@ -52,7 +52,7 @@ void lookup_port_attrdef_choices(char **choices, port_t *port, attrdef_t *attrde
     uint8 pi = 0;
 
     if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST) {
-        /* look through the attrdefs of all ports for similar choices */
+        /* Look through the attrdefs of all ports for similar choices */
         while ((p = *ports++)) {
             if ((attrdefs = p->attrdefs)) {
                 while ((a = *attrdefs++) && (a != attrdef)) {
@@ -71,7 +71,7 @@ void lookup_port_attrdef_choices(char **choices, port_t *port, attrdef_t *attrde
         }
     }
     else {
-        /* look through the attrdefs of this port for similar choices */
+        /* Look through the attrdefs of this port for similar choices */
         if ((attrdefs = port->attrdefs)) {
             while ((a = *attrdefs++) && (a != attrdef)) {
                 if (choices_equal(choices, a->choices)) {

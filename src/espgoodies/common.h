@@ -28,13 +28,13 @@
 #include "system.h"
 
 
-/* we need to alter the ICACHE_RODATA_ATTR definition to add 4-byte alignment specifier */
+/* We need to alter the ICACHE_RODATA_ATTR definition to add 4-byte alignment specifier */
 #ifdef ICACHE_RODATA_ATTR
 #undef ICACHE_RODATA_ATTR
 #endif
 #define ICACHE_RODATA_ATTR      __attribute__((aligned(4))) __attribute__((section(".irom.text")))
 
-/* we need to redefine these string functions here because the built-in ones fail at linkage */
+/* We need to redefine these string functions here because the built-in ones fail at linkage */
 #define strtok                  my_strtok
 #define strdup                  my_strdup
 #define strndup                 my_strndup

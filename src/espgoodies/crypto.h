@@ -33,7 +33,7 @@
 #define SHA256_HEX_LEN          64
 
 
-    /* result must be freed after using the following functions */
+    /* Result must be freed after using the following functions */
 
 ICACHE_FLASH_ATTR uint8       * sha1(uint8 *data, int len);
 ICACHE_FLASH_ATTR char        * sha1_hex(char *s);

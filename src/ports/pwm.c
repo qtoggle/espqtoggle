@@ -348,7 +348,7 @@ void freq_configure(port_t *port) {
     DEBUG_PWM(port, "setting pwm frequency to %d Hz", pwm_cur_freq);
     pwm_set_period(10000000 / (pwm_cur_freq * 2));
 
-    /* recalculate duty period for all enabled pwm ports */
+    /* Recalculate duty period for all enabled pwm ports */
     for (i = 0; i < pwm_count; i++) {
         pwm_set_duty(IS_ENABLED(port) ? pwm_cur_duty[i] * pwm_get_period() / 100 : 0, i);
     }
@@ -463,7 +463,7 @@ void pwm_init_ports(void) {
     pwm_duty_list = zalloc(sizeof(uint32) * pwm_count);
     pwm_cur_duty = zalloc(sizeof(char) * pwm_count);
 
-    pwm_init(5000 /* will be overwritten later */, pwm_duty_list, pwm_count, pwm_info);
+    pwm_init(5000 /* Will be overwritten later */, pwm_duty_list, pwm_count, pwm_info);
     pwm_start();
 }
 

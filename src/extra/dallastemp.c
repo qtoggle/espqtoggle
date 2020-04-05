@@ -46,11 +46,11 @@
 
 #define ERROR_VALUE                     85
 
-#define MIN_SAMP_INT                    1000    /* milliseconds */
-#define DEF_SAMP_INT                    1000    /* milliseconds */
-#define MAX_SAMP_INT                    3600000 /* milliseconds */
+#define MIN_SAMP_INT                    1000    /* Milliseconds */
+#define DEF_SAMP_INT                    1000    /* Milliseconds */
+#define MAX_SAMP_INT                    3600000 /* Milliseconds */
 
-#define HEART_BEAT_INTERVAL             2000    /* milliseconds */
+#define HEART_BEAT_INTERVAL             2000    /* Milliseconds */
 
 #define GPIO_CONFIG_OFFS                0x00    /* 1 byte */
 
@@ -335,7 +335,7 @@ void configure(port_t *port) {
 void heart_beat(port_t *port) {
     one_wire_t *one_wire = get_one_wire(port);
     if (!one_wire) {
-        return;  /* not properly configured */
+        return;  /* Not properly configured */
     }
 
     one_wire_reset(one_wire);
@@ -375,10 +375,10 @@ void heart_beat(port_t *port) {
 int attr_get_gpio(port_t *port, attrdef_t *attrdef) {
     uint8 value;
 
-    /* read from persisted data */
+    /* Read from persisted data */
     memcpy(&value, port->extra_data + GPIO_CONFIG_OFFS, 1);
 
-    /* update cached value */
+    /* Update cached value */
     set_gpio(port, get_choice_value_num(attrdef->choices[value]));
 
     return value;
@@ -387,10 +387,10 @@ int attr_get_gpio(port_t *port, attrdef_t *attrdef) {
 void attr_set_gpio(port_t *port, attrdef_t *attrdef, int index) {
     uint8 value = index;
 
-    /* update cached value */
+    /* Update cached value */
     set_gpio(port, get_choice_value_num(attrdef->choices[value]));
 
-    /* write to persisted data */
+    /* Write to persisted data */
     memcpy(port->extra_data + GPIO_CONFIG_OFFS, &value, 1);
 }
 

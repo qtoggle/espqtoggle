@@ -32,8 +32,8 @@
 #define DEBUG_CORE(...)                 {}
 #endif
 
-#define TIME_EXPR_DEP_BIT               63  /* used in change masks */
-#define TIME_MS_EXPR_DEP_BIT            62  /* used in change masks */
+#define TIME_EXPR_DEP_BIT               63  /* Used in change masks */
+#define TIME_MS_EXPR_DEP_BIT            62  /* Used in change masks */
 
 
 ICACHE_FLASH_ATTR void                  core_init(void);

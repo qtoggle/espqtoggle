@@ -35,11 +35,11 @@
 
 #define ADC0_SLOT                   17
 
-#define ADC_MIN                     0       /* mV */
-#define ADC_MAX                     1000    /* mV */
+#define ADC_MIN                     0       /* Millivolts */
+#define ADC_MAX                     1000    /* Millivolts */
 
-#define ADC_MIN_SAMP_INT            100     /* ms */
-#define ADC_DEF_SAMP_INT            1000    /* ms */
+#define ADC_MIN_SAMP_INT            100     /* Milliseconds */
+#define ADC_DEF_SAMP_INT            1000    /* Milliseconds */
 
 
 ICACHE_FLASH_ATTR static double     read_value(port_t *port);

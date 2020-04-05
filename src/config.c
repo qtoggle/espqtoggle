@@ -67,27 +67,27 @@ void device_load(uint8 *data) {
     uint16 wake_interval, wake_duration;
 #endif
 
-    /* device name */
+    /* Device name */
     memcpy(device_name, data + CONFIG_OFFS_DEVICE_NAME, API_MAX_DEVICE_NAME_LEN);
     DEBUG_DEVICE("device name = \"%s\"", device_name);
 
-    /* device display name */
+    /* Device display_name */
     memcpy(device_display_name, data + CONFIG_OFFS_DEVICE_DISP_NAME, API_MAX_DEVICE_DISP_NAME_LEN);
     DEBUG_DEVICE("device display_name = \"%s\"", device_display_name);
 
-    /* passwords */
+    /* Passwords */
     memcpy(device_admin_password_hash, data + CONFIG_OFFS_ADMIN_PASSWORD, SHA256_LEN);
     memcpy(device_normal_password_hash, data + CONFIG_OFFS_NORMAL_PASSWORD, SHA256_LEN);
     memcpy(device_viewonly_password_hash, data + CONFIG_OFFS_VIEWONLY_PASSWORD, SHA256_LEN);
 
-    /* transform default (null) password hashes into hashes of empty strings */
+    /* Transform default (null) password hashes into hashes of empty strings */
     char *hex_digest;
     if (!memcmp(device_admin_password_hash, NULL_HASH, SHA256_LEN)) {
         memcpy(device_admin_password_hash, EMPTY_SHA256_HEX, SHA256_HEX_LEN);
         DEBUG_DEVICE("empty admin password");
     }
     else {
-        /* passwords are stored as binary digest, must be converted to hex digest before use */
+        /* Passwords are stored as binary digest, must be converted to hex digest before use */
         hex_digest = bin2hex((uint8 *) device_admin_password_hash, SHA256_LEN);
         strncpy(device_admin_password_hash, hex_digest, SHA256_HEX_LEN + 1);
         free(hex_digest);
@@ -98,7 +98,7 @@ void device_load(uint8 *data) {
         DEBUG_DEVICE("empty normal password");
     }
     else {
-        /* passwords are stored as binary digest, must be converted to hex digest before use */
+        /* Passwords are stored as binary digest, must be converted to hex digest before use */
         hex_digest = bin2hex((uint8 *) device_normal_password_hash, SHA256_LEN);
         strncpy(device_normal_password_hash, hex_digest, SHA256_HEX_LEN + 1);
         free(hex_digest);
@@ -109,7 +109,7 @@ void device_load(uint8 *data) {
         DEBUG_DEVICE("empty viewonly password");
     }
     else {
-        /* passwords are stored as binary digest, must be converted to hex digest before use */
+        /* Passwords are stored as binary digest, must be converted to hex digest before use */
         hex_digest = bin2hex((uint8 *) device_viewonly_password_hash, SHA256_LEN);
         strncpy(device_viewonly_password_hash, hex_digest, SHA256_HEX_LEN + 1);
         free(hex_digest);
@@ -126,7 +126,7 @@ void device_load(uint8 *data) {
     wifi_set_gateway(wifi_gw);
     wifi_set_dns(wifi_dns);
 
-    /* flags & others */
+    /* Flags & others */
     memcpy(&device_tcp_port, data + CONFIG_OFFS_TCP_PORT, 2);
     memcpy(&device_flags, data + CONFIG_OFFS_DEVICE_FLAGS, 4);
     DEBUG_DEVICE("flags = %08X", device_flags);
@@ -136,13 +136,13 @@ void device_load(uint8 *data) {
         system_update_cpu_freq(frequency);
     }
 
-    /* config model */
+    /* Config model */
     char *model = string_pool_read(strings_ptr, data + CONFIG_OFFS_MODEL);
     if (model) {
         strncpy(device_config_model, model, API_MAX_DEVICE_CONFIG_MODEL_LEN);
     }
 
-    /* webhooks */
+    /* Webhooks */
     if ((webhooks_host = string_pool_read_dup(strings_ptr, data + CONFIG_OFFS_WEBHOOKS_HOST))) {
         DEBUG_WEBHOOKS("webhooks host = \"%s\"", webhooks_host);
     }
@@ -164,7 +164,7 @@ void device_load(uint8 *data) {
     if (password_hash) {
         strncpy(webhooks_password_hash, password_hash, SHA256_HEX_LEN + 1);
     }
-    if (!webhooks_password_hash[0]) {  /* use hash of empty string, by default */
+    if (!webhooks_password_hash[0]) {  /* Use hash of empty string, by default */
         DEBUG_WEBHOOKS("webhooks password = \"\"");
 
         char *hex_digest = sha256_hex("");
@@ -185,7 +185,7 @@ void device_load(uint8 *data) {
     DEBUG_WEBHOOKS("webhooks timeout = %d", webhooks_timeout);
 
 #ifdef _SLEEP
-    /* sleep mode */
+    /* Sleep mode */
     memcpy(&wake_interval, data + CONFIG_OFFS_WAKE_INTERVAL, 2);
     memcpy(&wake_duration, data + CONFIG_OFFS_WAKE_DURATION, 2);
 
@@ -205,11 +205,11 @@ void device_save(uint8 *data, uint32 *strings_offs) {
     uint16 wake_duration = sleep_get_wake_duration();
 #endif
 
-    /* device name */
+    /* Device name */
     memcpy(data + CONFIG_OFFS_DEVICE_NAME, device_name, API_MAX_DEVICE_NAME_LEN);
     memcpy(data + CONFIG_OFFS_DEVICE_DISP_NAME, device_display_name, API_MAX_DEVICE_DISP_NAME_LEN);
 
-    /* passwords - stored as binary digests */
+    /* Passwords - stored as binary digests */
     uint8 *digest = hex2bin(device_admin_password_hash);
     memcpy(data + CONFIG_OFFS_ADMIN_PASSWORD, digest, SHA256_LEN);
     free(digest);
@@ -232,17 +232,17 @@ void device_save(uint8 *data, uint32 *strings_offs) {
     memcpy(data + CONFIG_OFFS_DNS, &wifi_dns, 4);
     memcpy(data + CONFIG_OFFS_NETMASK, &wifi_netmask, 1);
 
-    /* flags & others */
+    /* Flags & others */
     memcpy(data + CONFIG_OFFS_TCP_PORT, &device_tcp_port, 2);
     memcpy(data + CONFIG_OFFS_DEVICE_FLAGS, &device_flags, 4);
     memcpy(data + CONFIG_OFFS_CPU_FREQ, &frequency, 4);
 
-    /* config model */
+    /* Config model */
     if (!string_pool_write(strings_ptr, strings_offs, device_config_model, data + CONFIG_OFFS_MODEL)) {
         DEBUG_DEVICE("no more string space to save config model");
     }
 
-    /* webhooks */
+    /* Webhooks */
     if (!string_pool_write(strings_ptr, strings_offs, webhooks_host, data + CONFIG_OFFS_WEBHOOKS_HOST)) {
         DEBUG_WEBHOOKS("no more string space to save host");
     }
@@ -262,7 +262,7 @@ void device_save(uint8 *data, uint32 *strings_offs) {
     data[CONFIG_OFFS_WEBHOOKS_RETRIES] = webhooks_retries;
 
 #ifdef _SLEEP
-    /* sleep mode */
+    /* Sleep mode */
     memcpy(data + CONFIG_OFFS_WAKE_INTERVAL, &wake_interval, 2);
     memcpy(data + CONFIG_OFFS_WAKE_DURATION, &wake_duration, 2);
 #endif
@@ -276,7 +276,7 @@ void config_init(void) {
     device_load(config_data);
 
 
-    /* backwards compatibility code */
+    /* Backwards compatibility code */
     /* TODO: remove this */
 
     int legacy_ssid_offs = 0x00C0;
@@ -307,7 +307,7 @@ void config_init(void) {
         system_reset(/* delayed = */ FALSE);
     }
 
-    /* backwards compatibility code ends */
+    /* Backwards compatibility code ends */
 
 
     DEBUG_DEVICE("CPU frequency set to %d MHz", system_get_cpu_freq());
@@ -330,10 +330,10 @@ void config_init(void) {
 
     ports_init(config_data);
 
-    /* at this point we no longer need the config data */
+    /* At this point we no longer need the config data */
     free(config_data);
 
-    /* parse port value expressions */
+    /* Parse port value expressions */
     port_t *p, **port = all_ports;
     while ((p = *port++)) {
         if (!IS_ENABLED(p)) {
@@ -358,7 +358,7 @@ void config_init(void) {
 
 void config_save(void) {
     uint8 *config_data = zalloc(FLASH_CONFIG_SIZE);
-    uint32 strings_offs = 1; /* address 0 in strings pool represents an unset string, so it's left out */
+    uint32 strings_offs = 1; /* Address 0 in strings pool represents an unset string, so it's left out */
 
     flashcfg_load(config_data);
     ports_save(config_data, &strings_offs);
@@ -408,7 +408,7 @@ void on_config_provisioning_response(char *body, int body_len, int status, char 
         if (json_get_type(config) == JSON_TYPE_OBJ) {
             DEBUG_DEVICE("provisioning: got config");
 
-            /* temporarily set API access level to admin */
+            /* Temporarily set API access level to admin */
             api_conn_save();
             api_conn_set((void *) 1, API_ACCESS_LEVEL_ADMIN);
 
@@ -438,13 +438,13 @@ void apply_device_provisioning_config(json_t *device_config) {
 
     DEBUG_DEVICE("provisioning: applying device config");
 
-    /* never update device name */
+    /* Never update device name */
     attr_json = json_obj_pop_key(device_config, "name");
     if (attr_json) {
         json_free(attr_json);
     }
 
-    /* don't overwrite display name */
+    /* Don't overwrite display name */
     if (device_display_name[0]) {
         attr_json = json_obj_pop_key(device_config, "display_name");
         if (attr_json) {
@@ -501,7 +501,7 @@ void apply_port_provisioning_config(json_t *port_config) {
             DEBUG_DEVICE("provisioning: applying port %s config", port_id);
             port = port_find_by_id(port_id);
 
-            /* virtual ports have to be added first */
+            /* Virtual ports have to be added first */
             if (virtual_json && json_get_type(virtual_json) == JSON_TYPE_BOOL && json_bool_get(virtual_json)) {
                 if (port) {
                     DEBUG_DEVICE("provisioning: virtual port %s exists, removing it first", port_id);
@@ -517,7 +517,7 @@ void apply_port_provisioning_config(json_t *port_config) {
                 request_json = json_obj_new();
                 json_obj_append(request_json, "id", json_str_new(port_id));
 
-                /* pass non-modifiable virtual port attributes from port_config to request_json */
+                /* Pass non-modifiable virtual port attributes from port_config to request_json */
                 attr_json = json_obj_pop_key(port_config, "type");
                 if (attr_json) {
                     json_obj_append(request_json, "type", attr_json);
@@ -551,7 +551,7 @@ void apply_port_provisioning_config(json_t *port_config) {
                 }
                 json_free(request_json);
 
-                /* lookup port reference after adding it */
+                /* Lookup port reference after adding it */
                 port = port_find_by_id(port_id);
             }
 
@@ -566,7 +566,7 @@ void apply_port_provisioning_config(json_t *port_config) {
                 DEBUG_DEVICE("provisioning: api_patch_port() failed with status code %d", code);
             }
 
-            if (value_json) { /* if value was also supplied with provisioning */
+            if (value_json) { /* If value was also supplied with provisioning */
                 DEBUG_DEVICE("provisioning: setting port %s value", port_id);
 
                 code = 200;

@@ -88,69 +88,69 @@ char *jwt_dump(jwt_t *jwt, char *secret) {
 }
 
 jwt_t *jwt_parse(char *jwt_str) {
-    /* look for the first dot */
+    /* Look for the first dot */
     char *p1 = jwt_str;
     while (*p1 && *p1 != '.') {
         p1++;
     }
     if (!*p1) {
-        /* no dot found */
+        /* No dot found */
         return NULL;
     }
 
     char *header_b64 = strndup(jwt_str, p1 - jwt_str);
 
-    /* look for the second dot */
+    /* Look for the second dot */
     char *p2 = p1 + 1;
     while (*p2 && *p2 != '.') {
         p2++;
     }
     if (!*p2) {
-        /* no dot found */
+        /* No dot found */
         free(header_b64);
         return NULL;
     }
 
-    /* parse header */
+    /* Parse header */
     char *header_str = (char *) b64_decode(header_b64);
     free(header_b64);
 
     json_t *header = json_parse(header_str);
     free(header_str);
     if (!header) {
-        /* invalid json */
+        /* Invalid json */
         return NULL;
     }
 
     json_t *typ_json = json_obj_lookup_key(header, "typ");
     if (!typ_json || json_get_type(typ_json) != JSON_TYPE_STR || strcmp(json_str_get(typ_json), "JWT")) {
-        /* missing or invalid typ field */
+        /* Missing or invalid typ field */
         json_free(header);
         return NULL;
     }
 
     json_t *alg_json = json_obj_lookup_key(header, "alg");
     if (!alg_json || json_get_type(alg_json) != JSON_TYPE_STR) {
-        /* missing or invalid alg field */
+        /* Missing or invalid alg field */
         json_free(header);
         return NULL;
     }
 
     char *alg_str = strdup(json_str_get(alg_json));
-    json_free(header);  /* we don't need the header anymore */
+    json_free(header);  /* We don't need the header anymore */
     uint8 alg;
 
     if (!strcmp(alg_str, "HS256")) {
         alg = JWT_ALG_HS256;
     }
     else {
-        /* unknown algorithm */
+        /* Unknown algorithm */
         free(alg_str);
         return NULL;
     }
     free(alg_str);
 
-    /* parse payload */
+    /* Parse payload */
     char *payload_b64 = strndup(p1 + 1, p2 - p1);
     char *payload_str = (char *) b64_decode(payload_b64);
     free(payload_b64);
@@ -158,7 +158,7 @@ jwt_t *jwt_parse(char *jwt_str) {
     json_t *claims = json_parse(payload_str);
     free(payload_str);
     if (!claims) {
-        /* invalid json */
+        /* Invalid json */
         return NULL;
     }
 
@@ -169,23 +169,23 @@ jwt_t *jwt_parse(char *jwt_str) {
 }
 
 bool jwt_validate(char *jwt_str, uint8 alg, char *secret) {
-    /* look for the first dot */
+    /* Look for the first dot */
     char *p = jwt_str;
     while (*p && *p != '.') {
         p++;
     }
     if (!*p) {
-        /* no dot found */
+        /* No dot found */
         return FALSE;
     }
 
-    /* look for the second dot */
+    /* Look for the second dot */
     p++;
     while (*p && *p != '.') {
         p++;
     }
     if (!*p) {
-        /* no dot found */
+        /* No dot found */
         return FALSE;
     }
 
@@ -202,20 +202,20 @@ bool jwt_validate(char *jwt_str, uint8 alg, char *secret) {
             return FALSE;
     }
 
-    /* compute the signing string */
+    /* Compute the signing string */
     int signing_len = p - jwt_str;
     char *signing_str = strndup(jwt_str, signing_len);
 
-    /* compute the local signature */
+    /* Compute the local signature */
     uint8 *local_signature = sign_func((uint8 *) signing_str, signing_len, (uint8 *) secret, strlen(secret));
     free(signing_str);
 
-    /* encode signature as base64 */
+    /* Encode signature as base64 */
     char *local_signature_b64 = b64_encode(local_signature, signature_len, /* padding = */ FALSE);
     free(local_signature);
 
     char *signature_b64 = p + 1;
-    /* remove any padding */
+    /* Remove any padding */
     int l = strlen(signature_b64);
     while (signature_b64[l - 1] == '=') {
         signature_b64[l - 1] = 0;

@@ -41,13 +41,13 @@
 #define UART_PARITY                     UART_PARITY_EVEN
 #define UART_STOP_BITS                  UART_STOP_BITS_1
 
-#define MIN_SAMP_INT                    1000    /* milliseconds */
-#define DEF_SAMP_INT                    5000    /* milliseconds */
-#define MAX_SAMP_INT                    3600000 /* milliseconds */
+#define MIN_SAMP_INT                    1000    /* Milliseconds */
+#define DEF_SAMP_INT                    5000    /* Milliseconds */
+#define MAX_SAMP_INT                    3600000 /* Milliseconds */
 
-#define WRITE_REQ_TIMEOUT               20000   /* microseconds */
-#define WAIT_RESP_TIMEOUT               70000   /* microseconds */
-#define READ_RESP_TIMEOUT               50000   /* microseconds */
+#define WRITE_REQ_TIMEOUT               20000   /* Microseconds */
+#define WAIT_RESP_TIMEOUT               70000   /* Microseconds */
+#define READ_RESP_TIMEOUT               50000   /* Microseconds */
 #define REQUEST                         {0xFE, 0x01, 0x0F, 0x08, 0x00, 0x00, 0x00, 0x1C}
 #define RESPONSE_HEADER                 {0xFE, 0x01, 0x08}
 #define RESPONSE_LEN                    36
@@ -63,7 +63,7 @@ typedef struct {
     double                              last_reactive_power;
     double                              last_apparent_power;
     double                              last_power_factor;
-    uint64                              last_read_time; /* milliseconds */
+    uint64                              last_read_time; /* Milliseconds */
     bool                                configured;
 
 } extra_info_t;
@@ -337,7 +337,7 @@ port_t *v9821_pow_fact = &_v9821_pow_fact;
 void configure(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
-    /* prevent multiple serial port setups */
+    /* Prevent multiple serial port setups */
     if (!extra_info->configured) {
         DEBUG_V9821(port, "configuring serial port");
         uart_setup(UART_NO, UART_BAUD, UART_PARITY, UART_STOP_BITS);
@@ -449,14 +449,14 @@ bool read_status_if_needed(port_t *port) {
     if (delta > port->sampling_interval) {
         DEBUG_V9821(port, "status needs new reading");
 
-        /* update last read time */
+        /* Update last read time */
         extra_info->last_read_time = system_uptime_ms();
 
         if (!read_status(port)) {
             DEBUG_V9821(port, "status reading failed");
         }
 
-        /* within up to twice the sampling interval, cached status can be used */
+        /* Within up to twice the sampling interval, cached status can be used */
         if (delta > port->sampling_interval * 2) {
             return FALSE;
         }
@@ -468,7 +468,7 @@ bool read_status_if_needed(port_t *port) {
 bool read_status(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
-    /* write request */
+    /* Write request */
     static uint8 request[] = REQUEST;
     uint16 size = uart_write(UART_NO, request, sizeof(request), WRITE_REQ_TIMEOUT);
     if (size!= sizeof(request)) {
@@ -477,7 +477,7 @@ bool read_status(port_t *port) {
     }
     DEBUG_V9821(port, "request sent");
 
-    /* read response */
+    /* Read response */
     static uint8 read_buff[RESPONSE_LEN];
     uint16 i;
 
@@ -487,14 +487,14 @@ bool read_status(port_t *port) {
         return FALSE;
     }
 
-    /* validate header */
+    /* Validate header */
     static uint8 response_header[] = RESPONSE_HEADER;
     if (memcmp(read_buff, response_header, sizeof(response_header))) {
         DEBUG_V9821(port, "failed to read response: unexpected response header");
         return FALSE;
     }
 
-    /* compute & validate checksum */
+    /* Compute & validate checksum */
     uint8 checksum = 0;
     for (i = 0; i < size - 1; i++) {
         checksum += read_buff[i];
@@ -513,56 +513,56 @@ bool read_status(port_t *port) {
     static char hex_value[9];
     static uint32 int_value;
 
-    /* parse energy */
+    /* Parse energy */
     p_value = read_buff + 3;
     snprintf(hex_value, sizeof(hex_value), "%02X%02X%02X%02X", p_value[3], p_value[2], p_value[1], p_value[0]);
     int_value = strtol(hex_value, NULL, 10);
     DEBUG_V9821(port, "read energy: %d/100 kWh", int_value);
     extra_info->last_energy = int_value / 100.0;
 
-    /* parse voltage */
+    /* Parse voltage */
     p_value = read_buff + 7;
     snprintf(hex_value, sizeof(hex_value), "%02X%02X%02X%02X", p_value[3], p_value[2], p_value[1], p_value[0]);
     int_value = strtol(hex_value, NULL, 10);
     DEBUG_V9821(port, "read voltage: %d/10 V", int_value);
     extra_info->last_voltage = int_value / 10.0;
 
-    /* parse current */
+    /* Parse current */
     p_value = read_buff + 11;
     snprintf(hex_value, sizeof(hex_value), "%02X%02X%02X%02X", p_value[3], p_value[2], p_value[1], p_value[0]);
     int_value = strtol(hex_value, NULL, 10);
     DEBUG_V9821(port, "read current: %d/10000 A", int_value);
     extra_info->last_current = int_value / 10000.0;
 
-    /* parse frequency */
+    /* Parse frequency */
     p_value = read_buff + 15;
     snprintf(hex_value, sizeof(hex_value), "%02X%02X%02X%02X", p_value[3], p_value[2], p_value[1], p_value[0]);
     int_value = strtol(hex_value, NULL, 10);
     DEBUG_V9821(port, "read frequency: %d/100 Hz", int_value);
     extra_info->last_freq = int_value / 100.0;
 
-    /* parse active power */
+    /* Parse active power */
     p_value = read_buff + 19;
     snprintf(hex_value, sizeof(hex_value), "%02X%02X%02X%02X", p_value[3], p_value[2], p_value[1], p_value[0]);
     int_value = strtol(hex_value, NULL, 10);
     DEBUG_V9821(port, "read active power: %d/100 W", int_value);
     extra_info->last_active_power = int_value / 100.0;
 
-    /* parse reactive power */
+    /* Parse reactive power */
     p_value = read_buff + 23;
     snprintf(hex_value, sizeof(hex_value), "%02X%02X%02X%02X", p_value[3], p_value[2], p_value[1], p_value[0]);
     int_value = strtol(hex_value, NULL, 10);
     DEBUG_V9821(port, "read reactive power: %d/100 W", int_value);
     extra_info->last_reactive_power = int_value / 100.0;
 
-    /* parse apparent power */
+    /* Parse apparent power */
     p_value = read_buff + 27;
     snprintf(hex_value, sizeof(hex_value), "%02X%02X%02X%02X", p_value[3], p_value[2], p_value[1], p_value[0]);
     int_value = strtol(hex_value, NULL, 10);
     DEBUG_V9821(port, "read apparent power: %d/100 W", int_value);
     extra_info->last_apparent_power = int_value / 100.0;
 
-    /* parse power factor */
+    /* Parse power factor */
     p_value = read_buff + 31;
     snprintf(hex_value, sizeof(hex_value), "%02X%02X%02X%02X", p_value[3], p_value[2], p_value[1], p_value[0]);
     int_value = strtol(hex_value, NULL, 10);

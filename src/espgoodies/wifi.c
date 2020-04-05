@@ -36,8 +36,8 @@
 #endif
 
 
-#define CONNECTED_WATCHDOG_INTERVAL 10  /* seconds */
-#define CONNECTED_WATCHDOG_COUNT    3   /* disconnected times, in a row, that trigger a reset */
+#define CONNECTED_WATCHDOG_INTERVAL 10  /* Seconds */
+#define CONNECTED_WATCHDOG_COUNT    3   /* Disconnected times, in a row, that trigger a reset */
 
 
 static bool                         station_connected = FALSE;
@@ -232,7 +232,7 @@ ip_addr_t wifi_get_dns_current(void) {
 }
 
 void wifi_set_ip_address(ip_addr_t ip_address) {
-    if (ip_address.addr) {  /* manual */
+    if (ip_address.addr) {  /* Manual */
         DEBUG_WIFI("IP address: using manual: " IPSTR, IP2STR(&ip_address.addr));
         memcpy(&manual_ip_address, &ip_address, sizeof(ip_addr_t));
     }
@@ -243,7 +243,7 @@ void wifi_set_ip_address(ip_addr_t ip_address) {
 }
 
 void wifi_set_netmask(uint8 netmask) {
-    if (netmask) {  /* manual */
+    if (netmask) {  /* Manual */
         DEBUG_WIFI("netmask: using manual: %d", netmask);
         manual_netmask = netmask;
     }
@@ -254,7 +254,7 @@ void wifi_set_netmask(uint8 netmask) {
 }
 
 void wifi_set_gateway(ip_addr_t gateway) {
-    if (gateway.addr) {  /* manual */
+    if (gateway.addr) {  /* Manual */
         DEBUG_WIFI("gateway: using manual: " IPSTR, IP2STR(&gateway.addr));
         memcpy(&manual_gateway, &gateway, sizeof(ip_addr_t));
     }
@@ -265,7 +265,7 @@ void wifi_set_gateway(ip_addr_t gateway) {
 }
 
 void wifi_set_dns(ip_addr_t dns) {
-    if (dns.addr) {  /* manual */
+    if (dns.addr) {  /* Manual */
         DEBUG_WIFI("DNS: using manual: " IPSTR, IP2STR(&dns.addr));
         memcpy(&manual_dns, &dns, sizeof(ip_addr_t));
     }
@@ -318,11 +318,11 @@ void wifi_station_enable(char *hostname, wifi_connect_callback_t callback) {
 
     station_connect_callback = callback;
 
-    /* set IP configuration */
+    /* Set IP configuration */
     if (manual_ip_address.addr &&
         manual_netmask &&
         manual_gateway.addr &&
-        manual_dns.addr) {  /* manual IP configuration */
+        manual_dns.addr) {  /* Manual IP configuration */
 
         if (wifi_station_dhcpc_status() == DHCP_STARTED) {
             DEBUG_WIFI("stopping DHCP client");
@@ -451,13 +451,13 @@ bool wifi_scan(wifi_scan_callback_t callback) {
 
     if (scanning) {
         DEBUG_WIFI("attempt to scan while already scanning");
-        return FALSE; /* already scanning */
+        return FALSE; /* Already scanning */
     }
 
 #ifdef _OTA
     if (ota_busy()) {
         DEBUG_WIFI("attempt to scan while OTA busy");
-        return FALSE; /* ota started */
+        return FALSE; /* OTA started */
     }
 #endif
 
@@ -473,7 +473,7 @@ bool wifi_scan(wifi_scan_callback_t callback) {
     struct scan_config conf;
     memset(&conf, 0, sizeof(struct scan_config));
 
-    /* start scanning for APs */
+    /* Start scanning for APs */
     wifi_station_scan(&conf, on_wifi_scan_done);
 
     return TRUE;
@@ -482,19 +482,19 @@ bool wifi_scan(wifi_scan_callback_t callback) {
 void wifi_init(void) {
     DEBUG_WIFI("initializing");
 
-    /* start with both AP and station modes disabled */
+    /* Start with both AP and station modes disabled */
     if (!wifi_set_opmode_current(NULL_MODE)) {
         DEBUG_WIFI("wifi_set_opmode_current() failed");
     }
 
-    /* disable sleep/power saving mode, as it is known to cause Wi-Fi connectivity issues */
+    /* Disable sleep/power saving mode, as it is known to cause Wi-Fi connectivity issues */
     if (!wifi_set_sleep_type(NONE_SLEEP_T)) {
         DEBUG_WIFI("wifi_set_sleep_type() failed");
     }
 
     wifi_set_event_handler_cb(on_wifi_event);
 
-    /* initialize connected watchdog timer */
+    /* Initialize connected watchdog timer */
 #ifdef _SLEEP
     if (!sleep_is_short_wake()) {
 #endif
@@ -556,7 +556,7 @@ void on_wifi_event(System_Event_t *evt) {
             break;
 
         case EVENT_SOFTAPMODE_PROBEREQRECVED:
-            /* this event is received too often and just floods the serial log */
+            /* This event is received too often and just floods the serial log */
             /* event_name = "softap_probe_req_recved"; */
             break;
 

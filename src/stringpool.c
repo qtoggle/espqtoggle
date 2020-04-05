@@ -25,7 +25,7 @@ char *string_pool_read(char *pool, void *offs_save) {
     uint32 offs;
     memcpy(&offs, offs_save, 4);
 
-    if (offs == 0 || offs >= 65536) {  /* some extra checking, just in case */
+    if (offs == 0 || offs >= 65536) {  /* Some extra checking, just in case */
         return NULL;
     }
 

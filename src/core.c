@@ -43,7 +43,7 @@
 #define TASK_LISTEN_RESPOND         0x03
 #define TASK_UPDATE_SYSTEM          0x04
 
-#define CONFIG_SAVE_INTERVAL        5  /* seconds */
+#define CONFIG_SAVE_INTERVAL        5  /* Seconds */
 
 
 static uint32                       last_expr_time = 0;
@@ -57,7 +57,7 @@ static uint32                       poll_started_time_ms = 0;
 static bool                         polling_enabled = FALSE;
 
 #ifdef _SLEEP
-/* used to prevent more than one value-change per port when using sleep mode with short wakes */
+/* Used to prevent more than one value-change per port when using sleep mode with short wakes */
 static uint32                       value_change_trigger_mask = 0;
 #endif
 
@@ -98,7 +98,7 @@ void core_disable_polling(void) {
 
 void core_poll(void) {
 #ifdef _OTA
-    /* prevent port polling and related logic during OTA */
+    /* Prevent port polling and related logic during OTA */
     if (ota_current_state() == OTA_STATE_DOWNLOADING) {
         return;
     }
@@ -111,7 +111,7 @@ void core_poll(void) {
     now = system_uptime();
     now_ms = system_uptime_ms();
 
-    /* add time dependency masks */
+    /* Add time dependency masks */
     if (now != last_expr_time) {
         last_expr_time = now;
         change_mask |= (1ULL << TIME_EXPR_DEP_BIT);
@@ -129,14 +129,14 @@ void core_poll(void) {
         config_save();
     }
 
-    /* determine changed ports */
+    /* Determine changed ports */
     port_t **port = all_ports, *p;
     while ((p = *port++)) {
         if (!IS_ENABLED(p)) {
             continue;
         }
 
-        /* don't mess with the led while in setup mode */
+        /* Don't mess with the led while in setup mode */
         if ((system_setup_mode_led_gpio_no == p->slot) && system_setup_mode_active()) {
             continue;
         }
@@ -146,7 +146,7 @@ void core_poll(void) {
             p->heart_beat(p);
         }
 
-        /* don't read value more often than indicated by sampling interval */
+        /* Don't read value more often than indicated by sampling interval */
         if (now_ms - p->last_sample_time < p->sampling_interval) {
             continue;
         }
@@ -158,14 +158,14 @@ void core_poll(void) {
         }
 
         if (p->transform_read) {
-            /* temporarily set the new value to the port,
+            /* Temporarily set the new value to the port,
              * so that the transform expression uses the newly read value */
             double prev_value = p->value;
             p->value = value;
             value = expr_eval(p->transform_read);
             p->value = prev_value;
 
-            /* ignore invalid value yielded by expression */
+            /* Ignore invalid value yielded by expression */
             if (IS_UNDEFINED(value)) {
                 continue;
             }
@@ -184,7 +184,7 @@ void core_poll(void) {
             p->value = value;
             change_mask |= 1ULL << p->slot;
 
-            /* remember and reset change reason */
+            /* Remember and reset change reason */
             if (p->change_reason == CHANGE_REASON_EXPRESSION) {
                 change_reasons_expression_mask |= 1UL << p->slot;
             }
@@ -225,7 +225,7 @@ void core_task(os_event_t *e) {
     switch (e->sig) {
         case TASK_POLL: {
             if (polling_enabled) {
-                /* schedule next polling */
+                /* Schedule next polling */
                 system_os_post(USER_TASK_PRIO_0, TASK_POLL, (os_param_t) NULL);
                 core_poll();
             }
@@ -234,7 +234,7 @@ void core_task(os_event_t *e) {
         }
 
         case TASK_UPDATE_SYSTEM: {
-            /* schedule next system update */
+            /* Schedule next system update */
             system_os_post(USER_TASK_PRIO_0, TASK_UPDATE_SYSTEM, (os_param_t) NULL);
             system_setup_mode_update();
             system_connected_led_update();
@@ -245,7 +245,7 @@ void core_task(os_event_t *e) {
         case TASK_LISTEN_RESPOND: {
             session_t *session = (session_t *) e->par;
 
-            /* between event_push and this task,
+            /* Between event_push and this task,
              * another listen request might have been received for this session,
              * which would have eaten up our queued events */
             if (session->queue_len) {
@@ -258,18 +258,18 @@ void core_task(os_event_t *e) {
 }
 
 void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_mask) {
-    /* also consider ports whose expressions were marked for forced evaluation */
+    /* Also consider ports whose expressions were marked for forced evaluation */
     change_mask |= force_eval_expressions_mask;
     force_eval_expressions_mask = 0;
 
-    /* trigger value-change events; save persisted ports */
+    /* Trigger value-change events; save persisted ports */
     port_t **port = all_ports, *p;
     while ((p = *port++)) {
         if (!((1ULL << p->slot) & change_mask)) {
             continue;
         }
 
-        /* add a value change event */
+        /* Add a value change event */
 #ifdef _SLEEP
         if (sleep_is_short_wake()) {
             if (!(value_change_trigger_mask & (1UL << p->slot))) {
@@ -285,20 +285,20 @@ void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_m
 #endif
 
         if (IS_PERSISTED(p) && (now_ms - poll_started_time_ms > 2000)) {
-            /* don't save config during the first few seconds since polling starts; this avoids saving at each boot due
+            /* Don't save config during the first few seconds since polling starts; this avoids saving at each boot due
              * to port values transitioning from undefined to their initial value */
             config_mark_for_saving();
         }
     }
 
-    /* reevaluate the expressions depending on changed ports */
+    /* Reevaluate the expressions depending on changed ports */
     port = all_ports;
     while ((p = *port++)) {
         if (!IS_ENABLED(p)) {
             continue;
         }
 
-        /* only output (writable) ports have value expressions */
+        /* Only output (writable) ports have value expressions */
         if (!IS_OUTPUT(p)) {
             continue;
         }
@@ -307,7 +307,7 @@ void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_m
             continue;
         }
 
-        /* if port expression depends on port itself and the change reason is the evaluation of its expression, prevent
+        /* If port expression depends on port itself and the change reason is the evaluation of its expression, prevent
          * evaluating its expression again to avoid evaluation loops */
         if ((change_mask & (1ULL << p->slot)) &&
             (change_reasons_expression_mask & (1UL << p->slot)) &&
@@ -315,7 +315,7 @@ void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_m
             continue;
         }
 
-        /* evaluate a port's expression when:
+        /* Evaluate a port's expression when:
          * - one of its deps changed
          * - its own value changed */
 
@@ -328,12 +328,12 @@ void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_m
             continue;
         }
 
-        /* adapt boolean type value */
+        /* Adapt boolean type value */
         if (p->type == PORT_TYPE_BOOLEAN) {
             value = !!value;
         }
 
-        /* check if value has changed after expression evaluation */
+        /* Check if value has changed after expression evaluation */
         if (value == p->value) {
             continue;
         }

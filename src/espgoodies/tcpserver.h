@@ -24,7 +24,7 @@
 #include <espconn.h>
 
 #define TCP_MAX_CONNECTIONS                     8
-#define TCP_CONNECTION_TIMEOUT                  3600     /* seconds */
+#define TCP_CONNECTION_TIMEOUT                  3600     /* Seconds */
 
 
 #if defined(_DEBUG) && defined(_DEBUG_TCPSERVER)

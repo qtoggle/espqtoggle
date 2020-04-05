@@ -32,7 +32,7 @@
 #include "system.h"
 
 
-#define RESET_DELAY                 3000    /* milliseconds */
+#define RESET_DELAY                 3000    /* Milliseconds */
 
 #define SETUP_MODE_IDLE             0
 #define SETUP_MODE_PRESSED          1
@@ -63,7 +63,7 @@ ICACHE_FLASH_ATTR static void       on_system_reset(void *arg);
 
 void system_init(void) {
 #ifdef SETUP_MODE_PORT
-    /* skip "gpio" and convert the rest to number */
+    /* Skip "gpio" and convert the rest to number */
     system_setup_mode_gpio_no = strtol(_STRING(SETUP_MODE_PORT) + 4, NULL, 10);
     gpio_configure_input(system_setup_mode_gpio_no, !SETUP_MODE_LEVEL);
     DEBUG_SYSTEM("setup mode GPIO set to %d", system_setup_mode_gpio_no);
@@ -93,7 +93,7 @@ void system_init(void) {
 
 uint32 system_uptime(void) {
     uint32 time = system_get_time();
-    if (time < last_time) { /* time overflow */
+    if (time < last_time) { /* Time overflow */
         uptime += time + UINT_MAX - last_time;
     }
     else {
@@ -106,14 +106,14 @@ uint32 system_uptime(void) {
 }
 
 uint64 system_uptime_ms(void) {
-    /* call system_uptime() to update the internal uptime value */
+    /* Call system_uptime() to update the internal uptime value */
     system_uptime();
 
     return uptime / 1000;
 }
 
 uint64 system_uptime_us(void) {
-    /* call system_uptime() to update the internal uptime value */
+    /* Call system_uptime() to update the internal uptime value */
     system_uptime();
 
     return uptime;
@@ -128,7 +128,7 @@ void system_reset(bool delayed) {
         reset_callback();
     }
 
-    /* this will save configuration only if changed */
+    /* This will save configuration only if changed */
     wifi_save_config();
 
     if (delayed) {
@@ -174,7 +174,7 @@ void system_setup_mode_update(void) {
 
 #ifdef SETUP_MODE_PORT
     if (system_setup_mode_gpio_no != -1) {
-        /* read setup mode port state */
+        /* Read setup mode port state */
         bool value = gpio_read_value(system_setup_mode_gpio_no);
         if (value == SETUP_MODE_LEVEL && setup_mode_state == SETUP_MODE_IDLE) {
             DEBUG_SYSTEM("setup mode timer started");
@@ -189,7 +189,7 @@ void system_setup_mode_update(void) {
     }
 #endif
 
-    /* check setup mode & reset pin */
+    /* Check setup mode & reset pin */
     if (setup_mode_state != SETUP_MODE_IDLE) {
         if (setup_mode_state != SETUP_MODE_RESET && now - setup_mode_timer > system_setup_mode_reset_int) {
             DEBUG_SYSTEM("resetting to factory defaults");
@@ -207,7 +207,7 @@ void system_setup_mode_update(void) {
     }
 
     if (system_setup_mode_led_gpio_no != -1) {
-        /* blink the setup mode led */
+        /* Blink the setup mode led */
         int ota_state = ota_current_state();
         if (setup_mode || ota_state == OTA_STATE_DOWNLOADING || ota_state == OTA_STATE_RESTARTING) {
             bool old_blink_value = gpio_read_value(system_setup_mode_led_gpio_no);
@@ -223,13 +223,13 @@ void system_connected_led_update(void) {
     static bool old_led_level = FALSE;
 
     if ((system_connected_led_gpio_no == system_setup_mode_led_gpio_no) && setup_mode) {
-        /* if we use the same led for both connected status and setup mode,
+        /* If we use the same led for both connected status and setup mode,
          * the setup mode led update takes precedence */
         return;
     }
 
     if (system_connected_led_gpio_no != -1) {
-        /* blink the connected status led if not connected */
+        /* Blink the connected status led if not connected */
         if (!wifi_station_is_connected()) {
             bool new_led_level = (system_uptime_us() * 2 / 1000000) % 2;
             if (old_led_level != new_led_level) {

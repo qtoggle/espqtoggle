@@ -50,14 +50,14 @@ typedef struct session_queue_node {
 
 typedef struct {
 
-    /* a session is unused if the length of its id is 0 */
+    /* A session is unused if the length of its id is 0 */
     char                            id[API_MAX_LISTEN_SESSION_ID_LEN + 1];
     session_queue_node_t          * queue;
     int                             queue_len;
     int                             timeout;
     int                             access_level;
 
-    /* a session has a listen request attached when conn is not NULL */
+    /* A session has a listen request attached when conn is not NULL */
     struct espconn                * conn;
     os_timer_t                      timer;
 

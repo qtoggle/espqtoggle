@@ -47,7 +47,7 @@ ICACHE_FLASH_ATTR static void       attr_set_output(port_t *port, attrdef_t *att
 
 typedef struct {
 
-    bool                            output_value;  /* used for output buffering */
+    bool                            output_value;  /* Used for output buffering */
 
 } extra_info_t;
 
@@ -531,7 +531,7 @@ void configure(port_t *port) {
     if (IS_OUTPUT(port)) {
         DEBUG_GPIOP(port, "output enabled");
 
-        /* set initial value to current GPIO value */
+        /* Set initial value to current GPIO value */
         value = gpio_read_value(port->slot);
 
         gpio_configure_output(port->slot, value);
