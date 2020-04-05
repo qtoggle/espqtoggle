@@ -60,9 +60,6 @@ ICACHE_FLASH_ATTR void                  apply_port_provisioning_config(json_t *p
 void device_load(uint8 *data) {
     int frequency;
     char *strings_ptr = (char *) data + CONFIG_OFFS_STR_BASE;
-    char wifi_ssid[WIFI_SSID_MAX_LEN];
-    uint8 wifi_bssid[WIFI_BSSID_LEN];
-    char wifi_psk[WIFI_PSK_MAX_LEN];
     ip_addr_t wifi_ip, wifi_gw, wifi_dns;
     uint8 wifi_netmask;
 
@@ -71,11 +68,11 @@ void device_load(uint8 *data) {
 #endif
 
     /* device name */
-    memcpy(device_hostname, data + CONFIG_OFFS_HOSTNAME, API_MAX_DEVICE_NAME_LEN);
-    DEBUG_DEVICE("device hostname = \"%s\"", device_hostname);
+    memcpy(device_name, data + CONFIG_OFFS_DEVICE_NAME, API_MAX_DEVICE_NAME_LEN);
+    DEBUG_DEVICE("device name = \"%s\"", device_name);
 
     /* device display name */
-    memcpy(device_display_name, data + CONFIG_OFFS_DISP_NAME, API_MAX_DEVICE_DISP_NAME_LEN);
+    memcpy(device_display_name, data + CONFIG_OFFS_DEVICE_DISP_NAME, API_MAX_DEVICE_DISP_NAME_LEN);
     DEBUG_DEVICE("device display_name = \"%s\"", device_display_name);
 
     /* passwords */
@@ -118,26 +115,16 @@ void device_load(uint8 *data) {
         free(hex_digest);
     }
 
-    /* wifi */
-    memcpy(wifi_ssid, data + CONFIG_OFFS_SSID, WIFI_SSID_MAX_LEN);
-    memcpy(wifi_bssid, data + CONFIG_OFFS_BSSID, WIFI_BSSID_LEN);
-    memcpy(wifi_psk, data + CONFIG_OFFS_PSK, WIFI_PSK_MAX_LEN);
-
+    /* IP configuration */
     memcpy(&wifi_ip.addr, data + CONFIG_OFFS_IP_ADDRESS, 4);
     memcpy(&wifi_gw.addr, data + CONFIG_OFFS_GATEWAY, 4);
     memcpy(&wifi_dns.addr, data + CONFIG_OFFS_DNS, 4);
     memcpy(&wifi_netmask, data + CONFIG_OFFS_NETMASK, 1);
 
-    if (wifi_ssid[0] || wifi_bssid[0]) {
-        wifi_set_ssid(wifi_ssid);
-        wifi_set_psk(wifi_psk);
-        wifi_set_bssid(wifi_bssid);
-
-        wifi_set_ip_address(wifi_ip);
-        wifi_set_netmask(wifi_netmask);
-        wifi_set_gateway(wifi_gw);
-        wifi_set_dns(wifi_dns);
-    }
+    wifi_set_ip_address(wifi_ip);
+    wifi_set_netmask(wifi_netmask);
+    wifi_set_gateway(wifi_gw);
+    wifi_set_dns(wifi_dns);
 
     /* flags & others */
     memcpy(&device_tcp_port, data + CONFIG_OFFS_TCP_PORT, 2);
@@ -219,8 +206,8 @@ void device_save(uint8 *data, uint32 *strings_offs) {
 #endif
 
     /* device name */
-    memcpy(data + CONFIG_OFFS_HOSTNAME, device_hostname, API_MAX_DEVICE_NAME_LEN);
-    memcpy(data + CONFIG_OFFS_DISP_NAME, device_display_name, API_MAX_DEVICE_DISP_NAME_LEN);
+    memcpy(data + CONFIG_OFFS_DEVICE_NAME, device_name, API_MAX_DEVICE_NAME_LEN);
+    memcpy(data + CONFIG_OFFS_DEVICE_DISP_NAME, device_display_name, API_MAX_DEVICE_DISP_NAME_LEN);
 
     /* passwords - stored as binary digests */
     uint8 *digest = hex2bin(device_admin_password_hash);
@@ -235,11 +222,7 @@ void device_save(uint8 *data, uint32 *strings_offs) {
     memcpy(data + CONFIG_OFFS_VIEWONLY_PASSWORD, digest, SHA256_LEN);
     free(digest);
 
-    /* wifi */
-    memcpy(data + CONFIG_OFFS_SSID, wifi_get_ssid(), WIFI_SSID_MAX_LEN);
-    memcpy(data + CONFIG_OFFS_BSSID, wifi_get_bssid(), WIFI_BSSID_LEN);
-    strncpy((char *) data + CONFIG_OFFS_PSK, wifi_get_psk() ? wifi_get_psk() : "", WIFI_PSK_MAX_LEN);
-
+    /* IP configuration */
     wifi_ip_address = wifi_get_ip_address();
     wifi_netmask = wifi_get_netmask();
     wifi_gateway = wifi_get_gateway();
@@ -292,13 +275,48 @@ void config_init(void) {
 
     device_load(config_data);
 
-    DEBUG_DEVICE("CPU frequency set to %d MHz", system_get_cpu_freq());
 
-    if (!device_hostname[0]) {
-        snprintf(device_hostname, API_MAX_DEVICE_NAME_LEN, DEFAULT_HOSTNAME, system_get_chip_id());
+    /* backwards compatibility code */
+    /* TODO: remove this */
+
+    int legacy_ssid_offs = 0x00C0;
+    int legacy_psk_offs = 0x0100;
+
+    char legacy_ssid[WIFI_SSID_MAX_LEN + 1];
+    char legacy_psk[WIFI_PSK_MAX_LEN + 1];
+
+    memcpy(legacy_ssid, config_data + legacy_ssid_offs, WIFI_SSID_MAX_LEN);
+    memcpy(legacy_psk, config_data + legacy_psk_offs, WIFI_PSK_MAX_LEN);
+
+    legacy_ssid[WIFI_SSID_MAX_LEN] = 0;
+    legacy_psk[WIFI_PSK_MAX_LEN] = 0;
+
+    if (legacy_ssid[0]) {
+        DEBUG_WIFI("detected legacy configuration: SSID=\"%s\", PSK=\"%s\"", legacy_ssid, legacy_psk);
+
+        wifi_set_opmode_current(STATION_MODE);
+
+        wifi_set_ssid(legacy_ssid);
+        wifi_set_psk(legacy_psk);
+        wifi_save_config();
+
+        memset(config_data + legacy_ssid_offs, 0, WIFI_SSID_MAX_LEN);
+        memset(config_data + legacy_psk_offs, 0, WIFI_PSK_MAX_LEN);
+        flashcfg_save(config_data);
+
+        system_reset(/* delayed = */ FALSE);
     }
 
-    DEBUG_DEVICE("hostname is \"%s\"", device_hostname);
+    /* backwards compatibility code ends */
+
+
+    DEBUG_DEVICE("CPU frequency set to %d MHz", system_get_cpu_freq());
+
+    if (!device_name[0]) {
+        snprintf(device_name, API_MAX_DEVICE_NAME_LEN, DEFAULT_HOSTNAME, system_get_chip_id());
+    }
+
+    DEBUG_DEVICE("hostname is \"%s\"", device_name);
 
     if (!device_tcp_port) {
         device_tcp_port = DEFAULT_TCP_PORT;

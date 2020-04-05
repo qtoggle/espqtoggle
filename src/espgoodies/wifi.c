@@ -36,113 +36,183 @@
 #endif
 
 
-#define WIFI_WATCHDOG_INTERVAL      10  /* seconds */
-#define WIFI_WATCHDOG_MAX_COUNT     3   /* disconnected times, in a row, that trigger a reset */
+#define CONNECTED_WATCHDOG_INTERVAL 10  /* seconds */
+#define CONNECTED_WATCHDOG_COUNT    3   /* disconnected times, in a row, that trigger a reset */
 
 
-/* we have to maintain a separate connected status, as wifi_station_get_connect_status() appears to return  wrong values
- * after disconnect */
-static bool                         wifi_connected = FALSE;
-static bool                         wifi_scanning = FALSE;
-static wifi_scan_callback_t         wifi_scan_callback = NULL;
-static wifi_connect_callback_t      wifi_connect_callback = NULL;
-static os_timer_t                   wifi_watchdog_timer;
-static int                          wifi_watchdog_counter = 0;
+static bool                         station_connected = FALSE;
+static bool                         scanning = FALSE;
+static wifi_scan_callback_t         scan_callback = NULL;
+static wifi_connect_callback_t      station_connect_callback = NULL;
+static os_timer_t                   connected_watchdog_timer;
+static int                          connected_watchdog_counter = 0;
 
-static char                         wifi_ssid[WIFI_SSID_MAX_LEN] = {0};
-static uint8                        wifi_bssid[WIFI_BSSID_LEN] = {0};
-static char                         wifi_psk[WIFI_PSK_MAX_LEN] = {0};
-static ip_addr_t                    wifi_static_ip_address = {0};
-static uint8                        wifi_static_netmask = 0;
-static ip_addr_t                    wifi_static_gateway = {0};
-static ip_addr_t                    wifi_static_dns = {0};
-static struct ip_info               wifi_current_ip_info;
+static ip_addr_t                    manual_ip_address = {0};
+static uint8                        manual_netmask = 0;
+static ip_addr_t                    manual_gateway = {0};
+static ip_addr_t                    manual_dns = {0};
 
+static uint8                        current_bssid[WIFI_BSSID_LEN];
+static struct station_config        cached_station_config;
+static bool                         cached_station_config_changed = FALSE;
+static bool                         cached_station_config_read = FALSE;
+static struct ip_info               cached_ip_info;
+
+static bool                         station_enabled = FALSE;
+static bool                         ap_enabled = FALSE;
+
+
+ICACHE_FLASH_ATTR static void       ensure_station_config_read(void);
 
 ICACHE_FLASH_ATTR static void       on_wifi_event(System_Event_t *evt);
 ICACHE_FLASH_ATTR static void       on_wifi_scan_done(void *arg, STATUS status);
-ICACHE_FLASH_ATTR static void       on_wifi_watchdog(void *arg);
+ICACHE_FLASH_ATTR static void       on_connected_watchdog(void *arg);
 ICACHE_FLASH_ATTR static int        compare_wifi_rssi(const void *a, const void *b);
 
 
 char *wifi_get_ssid(void) {
-    return wifi_ssid;
+    ensure_station_config_read();
+
+    if (cached_station_config.ssid[0]) {
+        return (char *) cached_station_config.ssid;
+    }
+    else {
+        return NULL;
+    }
 }
 
 uint8 *wifi_get_bssid(void) {
-    return wifi_bssid;
+    ensure_station_config_read();
+
+    if (cached_station_config.bssid[0] && cached_station_config.bssid_set) {
+        return cached_station_config.bssid;
+    }
+    else {
+        return NULL;
+    }
 }
 
 char *wifi_get_psk(void) {
-    return wifi_psk;
+    ensure_station_config_read();
+
+    if (cached_station_config.password[0]) {
+        return (char *) cached_station_config.password;
+    }
+    else {
+        return NULL;
+    }
 }
 
-void wifi_get_bssid_current(uint8 *bssid) {
-    struct station_config conf;
-    wifi_station_get_config(&conf);
+uint8 *wifi_get_bssid_current() {
+    struct station_config config;
+    wifi_station_get_config(&config);
+    memcpy(current_bssid, config.bssid, WIFI_BSSID_LEN);
 
-    memcpy(bssid, conf.bssid, WIFI_BSSID_LEN);
+    return current_bssid;
 }
 
 void wifi_set_ssid(char *ssid) {
-    strncpy(wifi_ssid, ssid, WIFI_SSID_MAX_LEN);
-    wifi_ssid[WIFI_SSID_MAX_LEN - 1] = 0;
-    if (wifi_ssid[0]) {
-        DEBUG_WIFI("ssid set to %s", ssid);
+    ensure_station_config_read();
+
+    memset(cached_station_config.ssid, 0, WIFI_SSID_MAX_LEN);
+    if (ssid) {
+        strcpy((char *) cached_station_config.ssid, ssid);
+    }
+
+    if (ssid && ssid[0]) {
+        DEBUG_WIFI("ssid set to \"%s\"", ssid);
     }
     else {
-        DEBUG_WIFI("ssid not set");
+        DEBUG_WIFI("ssid unset");
     }
+
+    cached_station_config_changed = TRUE;
 }
 
 void wifi_set_psk(char *psk) {
-    strncpy(wifi_psk, psk, WIFI_PSK_MAX_LEN);
-    wifi_psk[WIFI_PSK_MAX_LEN - 1] = 0;
-    if (psk[0]) {
+    ensure_station_config_read();
+
+    memset(cached_station_config.password, 0, WIFI_PSK_MAX_LEN);
+    if (psk) {
+        strcpy((char *) cached_station_config.password, psk);
+    }
+
+    if (psk && psk[0]) {
         DEBUG_WIFI("psk set");
     }
     else {
-        DEBUG_WIFI("psk not set");
+        DEBUG_WIFI("psk unset");
     }
+
+    cached_station_config_changed = TRUE;
 }
 
 void wifi_set_bssid(uint8 *bssid) {
-    memcpy(wifi_bssid, bssid, WIFI_BSSID_LEN);
-    if (bssid[0]) {
+    ensure_station_config_read();
+
+    if (bssid) {
+        memcpy(cached_station_config.bssid, bssid, WIFI_BSSID_LEN);
+    }
+    else {
+        memset(cached_station_config.bssid, 0, WIFI_BSSID_LEN);
+    }
+    cached_station_config.bssid_set = (bssid != NULL);
+
+    if (bssid) {
         DEBUG_WIFI("bssid set to " BSSID_FMT, BSSID2STR(bssid));
     }
     else {
-        DEBUG_WIFI("bssid not set");
+        DEBUG_WIFI("bssid unset");
+    }
+
+    cached_station_config_changed = TRUE;
+}
+
+void wifi_save_config(void) {
+    if (cached_station_config_changed) {
+        if (!station_enabled) {
+            DEBUG_WIFI("attempt to save configuration while station disabled");
+        }
+        else {
+            DEBUG_WIFI("saving configuration");
+        }
+
+        if (!wifi_station_set_config(&cached_station_config)) {
+            DEBUG_WIFI("wifi_station_set_config() failed");
+        }
+
+        cached_station_config_changed = FALSE;
+        cached_station_config_read = TRUE;
     }
 }
 
 ip_addr_t wifi_get_ip_address(void) {
-    return wifi_static_ip_address;
+    return manual_ip_address;
 }
 
 uint8 wifi_get_netmask(void) {
-    return wifi_static_netmask;
+    return manual_netmask;
 }
 
 ip_addr_t wifi_get_gateway(void) {
-    return wifi_static_gateway;
+    return manual_gateway;
 }
 
 ip_addr_t wifi_get_dns(void) {
-    return wifi_static_dns;
+    return manual_dns;
 }
 
 ip_addr_t wifi_get_ip_address_current(void) {
-    wifi_get_ip_info(STATION_IF, &wifi_current_ip_info);
+    wifi_get_ip_info(STATION_IF, &cached_ip_info);
 
-    return wifi_current_ip_info.ip;
+    return cached_ip_info.ip;
 }
 
 uint8 wifi_get_netmask_current(void) {
-    wifi_get_ip_info(STATION_IF, &wifi_current_ip_info);
+    wifi_get_ip_info(STATION_IF, &cached_ip_info);
 
     uint8 netmask = 0;
-    uint32 netmask_addr = wifi_current_ip_info.netmask.addr;
+    uint32 netmask_addr = cached_ip_info.netmask.addr;
     while (netmask_addr) {
         netmask++;
         netmask_addr >>= 1;
@@ -152,9 +222,9 @@ uint8 wifi_get_netmask_current(void) {
 }
 
 ip_addr_t wifi_get_gateway_current(void) {
-    wifi_get_ip_info(STATION_IF, &wifi_current_ip_info);
+    wifi_get_ip_info(STATION_IF, &cached_ip_info);
 
-    return wifi_current_ip_info.gw;
+    return cached_ip_info.gw;
 }
 
 ip_addr_t wifi_get_dns_current(void) {
@@ -164,99 +234,95 @@ ip_addr_t wifi_get_dns_current(void) {
 void wifi_set_ip_address(ip_addr_t ip_address) {
     if (ip_address.addr) {  /* manual */
         DEBUG_WIFI("IP address: using manual: " IPSTR, IP2STR(&ip_address.addr));
-        memcpy(&wifi_static_ip_address, &ip_address, sizeof(ip_addr_t));
+        memcpy(&manual_ip_address, &ip_address, sizeof(ip_addr_t));
     }
     else {  /* DHCP */
         DEBUG_WIFI("IP address: using DHCP");
-        wifi_static_ip_address.addr = 0;
+        manual_ip_address.addr = 0;
     }
 }
 
 void wifi_set_netmask(uint8 netmask) {
     if (netmask) {  /* manual */
         DEBUG_WIFI("netmask: using manual: %d", netmask);
-        wifi_static_netmask = netmask;
+        manual_netmask = netmask;
     }
     else {  /* DHCP */
         DEBUG_WIFI("netmask: using DHCP");
-        wifi_static_netmask = 0;
+        manual_netmask = 0;
     }
 }
 
 void wifi_set_gateway(ip_addr_t gateway) {
     if (gateway.addr) {  /* manual */
         DEBUG_WIFI("gateway: using manual: " IPSTR, IP2STR(&gateway.addr));
-        memcpy(&wifi_static_gateway, &gateway, sizeof(ip_addr_t));
+        memcpy(&manual_gateway, &gateway, sizeof(ip_addr_t));
     }
     else {  /* DHCP */
         DEBUG_WIFI("gateway: using DHCP");
-        wifi_static_gateway.addr = 0;
+        manual_gateway.addr = 0;
     }
 }
 
 void wifi_set_dns(ip_addr_t dns) {
     if (dns.addr) {  /* manual */
         DEBUG_WIFI("DNS: using manual: " IPSTR, IP2STR(&dns.addr));
-        memcpy(&wifi_static_dns, &dns, sizeof(ip_addr_t));
+        memcpy(&manual_dns, &dns, sizeof(ip_addr_t));
     }
     else {  /* DHCP */
         DEBUG_WIFI("DNS: using DHCP");
-        wifi_static_dns.addr = 0;
+        manual_dns.addr = 0;
     }
 }
 
-void wifi_set_station_mode(wifi_connect_callback_t callback, char *hostname) {
-    if (!wifi_set_opmode_current(STATION_MODE)) {
+void wifi_station_enable(char *hostname, wifi_connect_callback_t callback) {
+    if (station_enabled) {
+        DEBUG_WIFI("station already enabled");
+        return;
+    }
+
+    DEBUG_WIFI("enabling station");
+    station_enabled = TRUE;
+
+    if (!wifi_set_opmode_current(ap_enabled ? STATIONAP_MODE : STATION_MODE)) {
         DEBUG_WIFI("wifi_set_opmode_current() failed");
     }
+    if (!wifi_station_set_reconnect_policy(TRUE)) {
+        DEBUG_WIFI("wifi_station_set_reconnect_policy() failed");
+    }
+    if (!wifi_station_set_auto_connect(TRUE)) {
+        DEBUG_WIFI("wifi_station_set_auto_connect() failed");
+    }
+    DEBUG_WIFI("setting hostname to \"%s\"", hostname);
     if (!wifi_station_set_hostname(hostname)) {
         DEBUG_WIFI("wifi_station_set_hostname() failed");
     }
-    if (!wifi_set_sleep_type(NONE_SLEEP_T)) {
-        DEBUG_WIFI("wifi_set_sleep_type() failed");
+
+    ensure_station_config_read();
+    if (cached_station_config.ssid[0]) {
+        if (cached_station_config.bssid_set) {
+            DEBUG_WIFI("connecting to SSID=\"%s\", BSSID=" BSSID_FMT,
+                       (char *) cached_station_config.ssid, BSSID2STR(cached_station_config.bssid));
+        }
+        else {
+            DEBUG_WIFI("connecting to SSID=\"%s\", no particular BSSID", (char *) cached_station_config.ssid);
+        }
+
+        if (!wifi_station_connect()) {
+            DEBUG_WIFI("wifi_station_connect() failed");
+        }
     }
-    if (!wifi_station_set_reconnect_policy(FALSE)) {
-        DEBUG_WIFI("wifi_station_set_reconnect_policy() failed");
-    }
-    if (!wifi_station_set_auto_connect(FALSE)) {
-        DEBUG_WIFI("wifi_station_set_auto_connect() failed");
+    else {
+        DEBUG_WIFI("no configured SSID");
     }
 
-    wifi_set_event_handler_cb(on_wifi_event);
-
-    /* initialize watchdog timer */
-#ifdef _SLEEP
-    if (!sleep_is_short_wake()) {
-#endif
-        DEBUG_WIFI("initializing watchdog");
-        os_timer_disarm(&wifi_watchdog_timer);
-        os_timer_setfn(&wifi_watchdog_timer, on_wifi_watchdog, NULL);
-        os_timer_arm(&wifi_watchdog_timer, WIFI_WATCHDOG_INTERVAL * 1000, /* repeat = */ TRUE);
-#ifdef _SLEEP
-    }
-#endif
-
-    wifi_connect_callback = callback;
-}
-
-void wifi_connect(uint8 *bssid) {
-    struct station_config conf;
-
-    memset(&conf, 0, sizeof(struct station_config));
-
-    conf.bssid_set = 1;
-
-    memcpy(conf.ssid, wifi_ssid, WIFI_SSID_MAX_LEN);
-    memcpy(conf.bssid, bssid, WIFI_BSSID_LEN);
-    strncpy((char *) conf.password, wifi_psk, WIFI_PSK_MAX_LEN);
-
-    DEBUG_WIFI("connecting to ssid/bssid %s/" BSSID_FMT, wifi_ssid, BSSID2STR(bssid));
+    station_connect_callback = callback;
 
     /* set IP configuration */
-    if (wifi_static_ip_address.addr &&
-        wifi_static_netmask &&
-        wifi_static_gateway.addr &&
-        wifi_static_dns.addr) {  /* manual IP configuration */
+    if (manual_ip_address.addr &&
+        manual_netmask &&
+        manual_gateway.addr &&
+        manual_dns.addr) {  /* manual IP configuration */
 
         if (wifi_station_dhcpc_status() == DHCP_STARTED) {
             DEBUG_WIFI("stopping DHCP client");
@@ -264,10 +330,10 @@ void wifi_connect(uint8 *bssid) {
         }
 
         struct ip_info info;
-        info.ip = wifi_static_ip_address;
-        info.gw = wifi_static_gateway;
+        info.ip = manual_ip_address;
+        info.gw = manual_gateway;
 
-        int m = wifi_static_netmask;
+        int m = manual_netmask;
         info.netmask.addr = 1;
         while (--m) {
             info.netmask.addr = (info.netmask.addr << 1) + 1;
@@ -277,29 +343,47 @@ void wifi_connect(uint8 *bssid) {
             DEBUG_WIFI("wifi_set_ip_info() failed");
         }
 
-        espconn_dns_setserver(0, &wifi_static_dns);
+        espconn_dns_setserver(0, &manual_dns);
     }
-    else {  /* DHCP */
+    else { /* DHCP */
         if (wifi_station_dhcpc_status() == DHCP_STOPPED) {
             DEBUG_WIFI("starting DHCP client");
             wifi_station_dhcpc_start();
         }
     }
+}
 
-    if (!wifi_station_set_config_current(&conf)) {
-        DEBUG_WIFI("wifi_station_set_config_current() failed");
+void wifi_station_disable(void) {
+    if (!station_enabled) {
+        DEBUG_WIFI("station already disabled");
+        return;
     }
-    if (!wifi_station_connect()) {
-        DEBUG_WIFI("wifi_station_connect() failed");
+
+    DEBUG_WIFI("disabling station");
+    station_enabled = FALSE;
+    station_connect_callback = NULL;
+
+    if (!wifi_set_opmode_current(ap_enabled ? SOFTAP_MODE : NULL_MODE)) {
+        DEBUG_WIFI("wifi_set_opmode_current() failed");
     }
 }
 
-void wifi_set_ap_mode(char *hostname) {
-    if (!wifi_set_opmode_current(STATIONAP_MODE)) {
-        DEBUG_WIFI("wifi_set_opmode_current() failed");
+bool wifi_station_is_connected(void) {
+    return station_connected;
+}
+
+void wifi_ap_enable(char *ssid, char *psk) {
+    if (ap_enabled) {
+        DEBUG_WIFI("AP already enabled");
+        return;
     }
 
-    os_delay_us(65535);
+    DEBUG_WIFI("enabling AP");
+    ap_enabled = TRUE;
+
+    if (!wifi_set_opmode_current(station_enabled ? STATIONAP_MODE : SOFTAP_MODE)) {
+        DEBUG_WIFI("wifi_set_opmode_current() failed");
+    }
 
     if (!wifi_softap_dhcps_stop()) {
         DEBUG_WIFI("wifi_softap_dhcps_stop() failed");
@@ -313,18 +397,13 @@ void wifi_set_ap_mode(char *hostname) {
         DEBUG_WIFI("wifi_set_ip_info() failed");
     }
 
-    os_delay_us(65535);
-
-    char ssid[32];
-    snprintf(ssid, sizeof(ssid), hostname, system_get_chip_id());
-
     struct softap_config config;
 
     memset(&config, 0, sizeof(struct softap_config));
     strcpy((char *) config.ssid, ssid);
-    strcpy((char *) config.password, WIFI_AP_PSK ? WIFI_AP_PSK : "");
+    strcpy((char *) config.password, (psk && psk[0]) ? psk : "");
     config.ssid_len = strlen(ssid);
-    config.authmode = WIFI_AP_PSK ? AUTH_WPA2_PSK : AUTH_OPEN;
+    config.authmode = (psk && psk[0]) ? AUTH_WPA2_PSK : AUTH_OPEN;
     config.channel = 0;
     config.ssid_hidden = FALSE;
     config.max_connection = 4;
@@ -333,8 +412,6 @@ void wifi_set_ap_mode(char *hostname) {
     if (!wifi_softap_set_config_current(&config)) {
         DEBUG_WIFI("wifi_softap_set_config_current() failed");
     }
-
-    os_delay_us(65535);
 
     struct dhcps_lease lease;
     lease.enable = TRUE;
@@ -352,12 +429,27 @@ void wifi_set_ap_mode(char *hostname) {
     system_phy_set_max_tpw(82 /* 20.5 dBm * 4 */);
 }
 
-bool wifi_is_connected(void) {
-    return wifi_connected;
+void wifi_ap_disable(void) {
+    if (!ap_enabled) {
+        DEBUG_WIFI("AP already disabled");
+        return;
+    }
+
+    DEBUG_WIFI("disabling AP");
+    ap_enabled = FALSE;
+
+    if (!wifi_set_opmode_current(station_enabled ? STATION_MODE : NULL_MODE)) {
+        DEBUG_WIFI("wifi_set_opmode_current() failed");
+    }
 }
 
 bool wifi_scan(wifi_scan_callback_t callback) {
-    if (wifi_scanning) {
+    if (!station_enabled) {
+        DEBUG_WIFI("cannot scan when station disabled");
+        return FALSE;
+    }
+
+    if (scanning) {
         DEBUG_WIFI("attempt to scan while already scanning");
         return FALSE; /* already scanning */
     }
@@ -369,14 +461,14 @@ bool wifi_scan(wifi_scan_callback_t callback) {
     }
 #endif
 
-    DEBUG_WIFI("starting general ap scan");
+    DEBUG_WIFI("starting AP scan");
 
-    wifi_scanning = TRUE;
+    scanning = TRUE;
 
-    if (wifi_scan_callback) {
+    if (scan_callback) {
         DEBUG_WIFI("scan callback already set");
     }
-    wifi_scan_callback = callback;
+    scan_callback = callback;
 
     struct scan_config conf;
     memset(&conf, 0, sizeof(struct scan_config));
@@ -387,8 +479,46 @@ bool wifi_scan(wifi_scan_callback_t callback) {
     return TRUE;
 }
 
+void wifi_init(void) {
+    DEBUG_WIFI("initializing");
+
+    /* start with both AP and station modes disabled */
+    if (!wifi_set_opmode_current(NULL_MODE)) {
+        DEBUG_WIFI("wifi_set_opmode_current() failed");
+    }
+
+    /* disable sleep/power saving mode, as it is known to cause Wi-Fi connectivity issues */
+    if (!wifi_set_sleep_type(NONE_SLEEP_T)) {
+        DEBUG_WIFI("wifi_set_sleep_type() failed");
+    }
+
+    wifi_set_event_handler_cb(on_wifi_event);
+
+    /* initialize connected watchdog timer */
+#ifdef _SLEEP
+    if (!sleep_is_short_wake()) {
+#endif
+        DEBUG_WIFI("initializing connected watchdog");
+        os_timer_disarm(&connected_watchdog_timer);
+        os_timer_setfn(&connected_watchdog_timer, on_connected_watchdog, NULL);
+        os_timer_arm(&connected_watchdog_timer, CONNECTED_WATCHDOG_INTERVAL * 1000, /* repeat = */ TRUE);
+#ifdef _SLEEP
+    }
+#endif
+}
+
+void ensure_station_config_read(void) {
+    if (!cached_station_config_read) {
+        DEBUG_WIFI("loading configuration");
+
+        wifi_station_get_config_default(&cached_station_config);
+        cached_station_config_read = TRUE;
+        cached_station_config_changed = FALSE;
+    }
+}
+
 void on_wifi_event(System_Event_t *evt) {
-    char *event_name = "unknown";
+    char *event_name = NULL;
 
     switch (evt->event) {
         case EVENT_STAMODE_CONNECTED:
@@ -420,7 +550,8 @@ void on_wifi_event(System_Event_t *evt) {
             break;
 
         case EVENT_SOFTAPMODE_PROBEREQRECVED:
-            event_name = "softap_probe_req_recved";
+            /* this event is received too often and just floods the serial log */
+            /* event_name = "softap_probe_req_recved"; */
             break;
 
         case EVENT_OPMODE_CHANGED:
@@ -432,19 +563,21 @@ void on_wifi_event(System_Event_t *evt) {
             break;
     }
 
-    DEBUG_WIFI("got \"%s\" event", event_name);
+    if (event_name) {
+        DEBUG_WIFI("got \"%s\" event", event_name);
+    }
 
      switch (evt->event) {
          case EVENT_STAMODE_DISCONNECTED:
-             wifi_connected = FALSE;
+             station_connected = FALSE;
 
              DEBUG_WIFI("disconnected from ssid %s, bssid " BSSID_FMT ", reason %d",
                         evt->event_info.disconnected.ssid,
                         BSSID2STR(evt->event_info.disconnected.bssid),
                         evt->event_info.disconnected.reason);
 
-             if (wifi_connect_callback) {
-                 wifi_connect_callback(FALSE);
+             if (station_connect_callback) {
+                 station_connect_callback(FALSE);
              }
 
              break;
@@ -452,10 +585,10 @@ void on_wifi_event(System_Event_t *evt) {
          case EVENT_STAMODE_GOT_IP:
              DEBUG_WIFI("connected and ready at " IPSTR, IP2STR(&evt->event_info.got_ip.ip));
 
-             wifi_connected = TRUE;
+             station_connected = TRUE;
 
-             if (wifi_connect_callback) {
-                 wifi_connect_callback(TRUE);
+             if (station_connect_callback) {
+                 station_connect_callback(TRUE);
              }
 
              break;
@@ -463,10 +596,10 @@ void on_wifi_event(System_Event_t *evt) {
 }
 
 void on_wifi_scan_done(void *arg, STATUS status) {
-    wifi_scan_callback_t callback = wifi_scan_callback;
+    wifi_scan_callback_t callback = scan_callback;
 
-    wifi_scanning = FALSE;
-    wifi_scan_callback = NULL;
+    scanning = FALSE;
+    scan_callback = NULL;
 
     if (status != OK) {
         DEBUG_WIFI("scan failed");
@@ -476,6 +609,8 @@ void on_wifi_scan_done(void *arg, STATUS status) {
 
         return;
     }
+
+    DEBUG_WIFI("got scan results");
 
     wifi_scan_result_t *results = NULL;
     int len = 0;
@@ -504,8 +639,8 @@ void on_wifi_scan_done(void *arg, STATUS status) {
     callback(results, len);
 }
 
-void on_wifi_watchdog(void *arg) {
-    bool connected = wifi_connected && (wifi_station_get_connect_status() == STATION_GOT_IP);
+void on_connected_watchdog(void *arg) {
+    bool connected = station_connected && (wifi_station_get_connect_status() == STATION_GOT_IP);
     bool override = FALSE;
 
 #ifdef _OTA
@@ -518,17 +653,18 @@ void on_wifi_watchdog(void *arg) {
         override = TRUE;
     }
 
-    DEBUG_WIFI("watchdog: connected = %d, override = %d", connected, override);
+    DEBUG_WIFI("connected watchdog: connected = %d, override = %d", connected, override);
     if (connected || override) {
-        wifi_watchdog_counter = 0;
+        connected_watchdog_counter = 0;
     }
     else {
-        if (wifi_watchdog_counter < WIFI_WATCHDOG_MAX_COUNT) {
-            wifi_watchdog_counter++;
-            DEBUG_WIFI("watchdog: counter = %d", wifi_watchdog_counter);
+        if (connected_watchdog_counter < CONNECTED_WATCHDOG_COUNT) {
+            connected_watchdog_counter++;
+            DEBUG_WIFI("connected watchdog: counter = %d/%d", connected_watchdog_counter, CONNECTED_WATCHDOG_COUNT);
         }
         else {
-            DEBUG_WIFI("watchdog: counter = %d, resetting system", wifi_watchdog_counter);
+            DEBUG_WIFI("connected watchdog: counter = %d/%d, resetting system",
+                       connected_watchdog_counter, CONNECTED_WATCHDOG_COUNT);
             system_reset(/* delayed = */ FALSE);
         }
     }

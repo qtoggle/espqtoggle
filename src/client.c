@@ -510,7 +510,7 @@ void client_init(void) {
                     (tcp_disc_cb_t) on_tcp_disc);
 
     httpclient_set_user_agent("espQToggle " FW_VERSION);
-    httpserver_set_name(device_hostname);
+    httpserver_set_name(device_name);
     httpserver_set_request_timeout(HTTP_SERVER_REQUEST_TIMEOUT);
 }
 

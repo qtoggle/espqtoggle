@@ -127,7 +127,7 @@ void process_queue() {
     }
 #endif
 
-    if (!wifi_is_connected()) {
+    if (!wifi_station_is_connected()) {
         DEBUG_WEBHOOKS("not connected, retrying in 1 second");
 
         process_queue_later();

@@ -28,7 +28,6 @@
 #include "ota.h"
 #include "rtc.h"
 #include "tcpserver.h"
-//#include "utils.h" TODO
 #include "wifi.h"
 #include "system.h"
 
@@ -129,6 +128,9 @@ void system_reset(bool delayed) {
         reset_callback();
     }
 
+    /* this will save configuration only if changed */
+    wifi_save_config();
+
     if (delayed) {
         DEBUG_SYSTEM("will reset in %d seconds", RESET_DELAY / 1000);
 
@@ -159,7 +161,10 @@ void system_setup_mode_toggle(void) {
         setup_mode = TRUE;
 
         DEBUG_SYSTEM("entering setup mode");
-        wifi_set_ap_mode(DEFAULT_HOSTNAME);
+
+        char ssid[WIFI_SSID_MAX_LEN + 1];
+        snprintf(ssid, sizeof(ssid), DEFAULT_HOSTNAME, system_get_chip_id());
+        wifi_ap_enable(ssid, /* psk = */ NULL);
         dnsserver_start_captive();
     }
 }
@@ -223,7 +228,7 @@ void system_connected_led_update(void) {
 
     if (system_connected_led_gpio_no != -1) {
         /* blink the connected status led if not connected */
-        if (!wifi_is_connected()) {
+        if (!wifi_station_is_connected()) {
             bool new_led_level = (system_uptime_us() * 2 / 1000000) % 2;
             if (old_led_level != new_led_level) {
                 gpio_write_value(system_connected_led_gpio_no, new_led_level);

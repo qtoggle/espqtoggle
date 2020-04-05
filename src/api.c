@@ -584,7 +584,7 @@ json_t *device_to_json(void) {
     json_t *json = json_obj_new();
 
     /* common attributes */
-    json_obj_append(json, "name", json_str_new(device_hostname));
+    json_obj_append(json, "name", json_str_new(device_name));
     json_obj_append(json, "display_name", json_str_new(device_display_name));
     json_obj_append(json, "version", json_str_new(FW_VERSION));
     json_obj_append(json, "api_version", json_str_new(API_VERSION));
@@ -697,7 +697,7 @@ json_t *device_to_json(void) {
         json_obj_append(json, "wifi_key", json_str_new(""));
     }
 
-    if (bssid[0]) {
+    if (bssid) {
         snprintf(value, 256, "%02X:%02X:%02X:%02X:%02X:%02X", BSSID2STR(bssid));
         json_obj_append(json, "wifi_bssid", json_str_new(value));
     }
@@ -715,16 +715,14 @@ json_t *device_to_json(void) {
     }
 
     char current_bssid_str[18] = {0};
-    if (wifi_is_connected()) {
-        uint8 current_bssid[WIFI_BSSID_LEN];
-        wifi_get_bssid_current(current_bssid);
+    if (wifi_station_is_connected()) {
         snprintf(current_bssid_str, sizeof(current_bssid_str),
-                "%02X:%02X:%02X:%02X:%02X:%02X", BSSID2STR(current_bssid));
+                "%02X:%02X:%02X:%02X:%02X:%02X", BSSID2STR(wifi_get_bssid_current()));
     }
     json_obj_append(json, "wifi_bssid_current", json_str_new(current_bssid_str));
 
     int8  wifi_signal_strength = -1;
-    if (wifi_is_connected()) {
+    if (wifi_station_is_connected()) {
         if (rssi >= WIFI_RSSI_EXCELLENT) {
             wifi_signal_strength = 3;
         }
@@ -847,12 +845,12 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
                 return INVALID_FIELD_VALUE(key);
             }
             
-            strncpy(device_hostname, value, API_MAX_DEVICE_NAME_LEN);
-            device_hostname[API_MAX_DEVICE_NAME_LEN - 1] = 0;
+            strncpy(device_name, value, API_MAX_DEVICE_NAME_LEN);
+            device_name[API_MAX_DEVICE_NAME_LEN - 1] = 0;
             
-            DEBUG_DEVICE("name set to %s", device_hostname);
+            DEBUG_DEVICE("name set to %s", device_name);
 
-            httpserver_set_name(device_hostname);
+            httpserver_set_name(device_name);
         }
         else if (!strcmp(key, "display_name")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
@@ -1111,6 +1109,9 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
 
     config_mark_for_saving();
     
+    /* Wi-Fi configuration is persisted separately and saved only if changed */
+    wifi_save_config();
+
     if (needs_reset) {
         DEBUG_API("reset needed");
 

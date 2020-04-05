@@ -25,17 +25,13 @@
 
 #define CONFIG_PORT_SIZE                0x0080 /*  128 bytes for each port */
 
-#define CONFIG_OFFS_HOSTNAME            0x0000 /*  32 bytes */
-#define CONFIG_OFFS_DISP_NAME           0x0020 /*  64 bytes */
+#define CONFIG_OFFS_DEVICE_NAME         0x0000 /*  32 bytes */
+#define CONFIG_OFFS_DEVICE_DISP_NAME    0x0020 /*  64 bytes */
 
 #define CONFIG_OFFS_ADMIN_PASSWORD      0x0060 /*  32 bytes */
 #define CONFIG_OFFS_NORMAL_PASSWORD     0x0080 /*  32 bytes */
 #define CONFIG_OFFS_VIEWONLY_PASSWORD   0x00A0 /*  32 bytes */
-
-#define CONFIG_OFFS_SSID                0x00C0 /*  32 bytes */
-#define CONFIG_OFFS_BSSID               0x00E0 /*   6 bytes */
-                                               /* 0x00E6 - 0x00FF: reserved */
-#define CONFIG_OFFS_PSK                 0x0100 /*  64 bytes */
+                                               /* 0x00C0 - 0x13F: reserved */
 
 #define CONFIG_OFFS_TCP_PORT            0x0140 /*   2 bytes */
                                                /* 0x0142 - 0x0143: reserved */

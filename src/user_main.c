@@ -88,23 +88,16 @@ void main_init(void) {
     os_timer_disarm(&connect_timeout_timer);
     os_timer_setfn(&connect_timeout_timer, on_wifi_connect_timeout, NULL);
     os_timer_arm(&connect_timeout_timer, CONNECT_TIMEOUT, /* repeat = */ FALSE);
-
-    system_set_reset_callback(on_system_reset);
 }
 
 void on_system_ready(void) {
     DEBUG_SYSTEM("system initialization done");
 
-    if (wifi_get_ssid()[0]) {
-        if (wifi_get_bssid()[0]) { /* specific BSSID set, connect without scan */
-            wifi_connect(wifi_get_bssid());
-        }
-        else {
-            wifi_auto_scan();
-        }
-    }
-    else { /* no SSID set, no WiFi network configured */
-        DEBUG_SYSTEM("no SSID configured, switching to setup mode");
+    wifi_station_enable(device_name, on_wifi_connect);
+
+    /* if no SSID set (no Wi-Fi network configured), enter setup mode */
+    if (!wifi_get_ssid()) {
+        DEBUG_SYSTEM("no SSID configured, entering setup mode");
         if (!system_setup_mode_active()) {
             system_setup_mode_toggle();
         }
@@ -191,7 +184,7 @@ void on_wifi_connect(bool connected) {
 }
 
 void on_wifi_connect_timeout(void *arg) {
-    DEBUG_SYSTEM("timeout waiting for initial WiFi connection");
+    DEBUG_SYSTEM("timeout waiting for initial Wi-Fi connection");
     core_enable_polling();
 #ifdef _SLEEP
     sleep_reset();
@@ -236,6 +229,8 @@ DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
     system_set_os_print(0);
 #endif /* _DEBUG */
 
+    system_set_reset_callback(on_system_reset);
+
     rtc_init();
 #ifdef _SLEEP
     sleep_init();
@@ -247,7 +242,8 @@ DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
              /* beta_url = */        FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME FW_LATEST_BETA_FILE,
              /* url_template = */    FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME "/%s");
 #endif
-    wifi_set_station_mode(on_wifi_connect, device_hostname);
+
+    wifi_init();
     client_init();
     core_init();
     system_init();

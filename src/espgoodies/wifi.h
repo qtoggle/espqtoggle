@@ -73,10 +73,6 @@
 #define WIFI_AP_EI4                     150
 #endif
 
-#ifndef WIFI_AP_PSK
-#define WIFI_AP_PSK                     NULL
-#endif
-
 
 typedef struct {
 
@@ -97,11 +93,14 @@ typedef void (* wifi_connect_callback_t)(bool connected);
 ICACHE_FLASH_ATTR char                * wifi_get_ssid(void);
 ICACHE_FLASH_ATTR uint8               * wifi_get_bssid(void);
 ICACHE_FLASH_ATTR char                * wifi_get_psk(void);
-ICACHE_FLASH_ATTR void                  wifi_get_bssid_current(uint8 *bssid);
+
+ICACHE_FLASH_ATTR uint8               * wifi_get_bssid_current(void);
 
 ICACHE_FLASH_ATTR void                  wifi_set_ssid(char *ssid);
 ICACHE_FLASH_ATTR void                  wifi_set_psk(char *psk);
 ICACHE_FLASH_ATTR void                  wifi_set_bssid(uint8 *bssid);
+
+ICACHE_FLASH_ATTR void                  wifi_save_config(void);
 
 ICACHE_FLASH_ATTR ip_addr_t             wifi_get_ip_address(void);
 ICACHE_FLASH_ATTR uint8                 wifi_get_netmask(void);
@@ -118,12 +117,16 @@ ICACHE_FLASH_ATTR void                  wifi_set_netmask(uint8 netmask);
 ICACHE_FLASH_ATTR void                  wifi_set_gateway(ip_addr_t gateway);
 ICACHE_FLASH_ATTR void                  wifi_set_dns(ip_addr_t dns);
 
-ICACHE_FLASH_ATTR void                  wifi_set_station_mode(wifi_connect_callback_t callback, char *hostname);
-ICACHE_FLASH_ATTR void                  wifi_connect(uint8 *bssid);
-ICACHE_FLASH_ATTR void                  wifi_set_ap_mode(char *hostname);
-ICACHE_FLASH_ATTR bool                  wifi_is_connected(void);
+ICACHE_FLASH_ATTR void                  wifi_station_enable(char *hostname, wifi_connect_callback_t callback);
+ICACHE_FLASH_ATTR void                  wifi_station_disable(void);
+ICACHE_FLASH_ATTR bool                  wifi_station_is_connected(void);
+
+ICACHE_FLASH_ATTR void                  wifi_ap_enable(char *ssid, char *psk);
+ICACHE_FLASH_ATTR void                  wifi_ap_disable(void);
 
 ICACHE_FLASH_ATTR bool                  wifi_scan(wifi_scan_callback_t callback);
+
+ICACHE_FLASH_ATTR void                  wifi_init(void);
 
 
 #endif /* _ESPGOODIES_WIFI_H */
