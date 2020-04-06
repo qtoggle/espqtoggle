@@ -354,7 +354,8 @@ void ports_save(uint8 *data, uint32 *strings_offs) {
 void port_register(port_t *port) {
     if (port->slot == PORT_SLOT_AUTO) {
         if (next_extra_slot > PORT_SLOT_EXTRA_MAX) {
-            DEBUG("already reached max extra port slots");
+            DEBUG("reached max extra port slots, continuing from 0");
+            next_extra_slot = 0;
         }
 
         port->slot = next_extra_slot++;
