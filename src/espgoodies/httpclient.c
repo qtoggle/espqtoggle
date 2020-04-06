@@ -416,7 +416,7 @@ void ICACHE_FLASH_ATTR httpclient_set_user_agent(char *agent) {
 
     user_agent = strdup(agent);
 
-    DEBUG_HTTPCLIENT("user agent set to %s", agent);
+    DEBUG_HTTPCLIENT("user agent set to \"%s\"", agent);
 }
 
 void ICACHE_FLASH_ATTR httpclient_request(char *method, char *url, uint8 *body, int body_len,

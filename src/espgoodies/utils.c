@@ -20,12 +20,14 @@
 #include <string.h>
 #include <mem.h>
 #include <ctype.h>
+#include <c_types.h>
 #include <limits.h>
 #include <user_interface.h>
 #include <osapi.h>
 #include <espconn.h>
 
 #include "common.h"
+#include "rtc.h"
 #include "utils.h"
 
 
@@ -360,6 +362,44 @@ char *my_strndup(const char *s, int n) {
 
     return d;
 }
+
+void *my_malloc(size_t size) {
+    void *ptr = pvPortMalloc(size, "", 0);
+    if (!ptr && size) {
+        DEBUG_SYSTEM("malloc(%d) failed, resetting", size);
+        rtc_reset();
+        system_restart();
+    }
+
+    return ptr;
+}
+
+void *my_realloc(void *ptr, size_t size) {
+    ptr = pvPortRealloc(ptr, size, "", 0);
+    if (!ptr && size) {
+        DEBUG_SYSTEM("realloc(%x, %d) failed, resetting", (uint32) ptr, size);
+        rtc_reset();
+        system_restart();
+    }
+
+    return ptr;
+}
+
+void my_free(void *ptr) {
+    vPortFree(ptr, "", 0);
+}
+
+void *my_zalloc(size_t size) {
+    void *ptr = pvPortZalloc(size, "", 0);
+    if (!ptr && size) {
+        DEBUG_SYSTEM("zalloc(%d) failed, resetting", size);
+        rtc_reset();
+        system_restart();
+    }
+
+    return ptr;
+}
+
 
 #if defined(_DEBUG) && defined(_DEBUG_IP)
 
