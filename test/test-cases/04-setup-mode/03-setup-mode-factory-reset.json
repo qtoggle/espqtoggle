@@ -11,7 +11,7 @@
         {
             "name": "sleep",
             "params": {
-                "duration": 35000
+                "duration": 12500
             }
         },
         {
