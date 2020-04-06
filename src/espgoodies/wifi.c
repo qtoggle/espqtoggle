@@ -287,7 +287,9 @@ void wifi_station_enable(char *hostname, wifi_connect_callback_t callback) {
     if (!wifi_set_opmode_current(ap_enabled ? STATIONAP_MODE : STATION_MODE)) {
         DEBUG_WIFI("wifi_set_opmode_current() failed");
     }
-    if (!wifi_station_set_reconnect_policy(TRUE)) {
+
+    /* Automatically reconnect, but only when AP disabled */
+    if (!wifi_station_set_reconnect_policy(!ap_enabled)) {
         DEBUG_WIFI("wifi_station_set_reconnect_policy() failed");
     }
     if (!wifi_station_set_auto_connect(TRUE)) {
@@ -385,6 +387,13 @@ void wifi_ap_enable(char *ssid, char *psk) {
         DEBUG_WIFI("wifi_set_opmode_current() failed");
     }
 
+    /* Disable station automatic reconnection */
+    if (station_enabled) {
+        if (!wifi_station_set_reconnect_policy(FALSE)) {
+            DEBUG_WIFI("wifi_station_set_reconnect_policy() failed");
+        }
+    }
+
     if (!wifi_softap_dhcps_stop()) {
         DEBUG_WIFI("wifi_softap_dhcps_stop() failed");
     }
@@ -440,6 +449,13 @@ void wifi_ap_disable(void) {
 
     if (!wifi_set_opmode_current(station_enabled ? STATION_MODE : NULL_MODE)) {
         DEBUG_WIFI("wifi_set_opmode_current() failed");
+    }
+
+    if (station_enabled) {
+        /* Enable station automatic reconnection */
+        if (!wifi_station_set_reconnect_policy(TRUE)) {
+            DEBUG_WIFI("wifi_station_set_reconnect_policy() failed");
+        }
     }
 }
 
