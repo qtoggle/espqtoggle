@@ -88,10 +88,6 @@ void main_init(void) {
     os_timer_disarm(&connect_timeout_timer);
     os_timer_setfn(&connect_timeout_timer, on_wifi_connect_timeout, NULL);
     os_timer_arm(&connect_timeout_timer, CONNECT_TIMEOUT, /* repeat = */ FALSE);
-}
-
-void on_system_ready(void) {
-    DEBUG_SYSTEM("system initialization done");
 
     wifi_station_enable(device_name, on_wifi_connect);
 
@@ -102,6 +98,10 @@ void on_system_ready(void) {
             system_setup_mode_toggle();
         }
     }
+}
+
+void on_system_ready(void) {
+    DEBUG_SYSTEM("system initialization done");
 
     /* Generate a device-update event, mainly to be used with webhooks */
     event_push_device_update();

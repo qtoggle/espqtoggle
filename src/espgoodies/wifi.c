@@ -310,7 +310,7 @@ void wifi_station_enable(char *hostname, wifi_connect_callback_t callback) {
             DEBUG_WIFI("connecting to SSID=\"%s\", no particular BSSID", (char *) cached_station_config.ssid);
         }
 
-        if (!wifi_station_connect()) {
+        if (wifi_station_get_connect_status() == STATION_IDLE && !wifi_station_connect()) {
             DEBUG_WIFI("wifi_station_connect() failed");
         }
     }
