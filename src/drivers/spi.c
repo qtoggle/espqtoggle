@@ -159,7 +159,7 @@ void set_freq(uint32 freq) {
     if (freq >= ESP8266_CLOCK) {
         set_clock_divider(0x80000000);
         if (freq > ESP8266_CLOCK) {
-            DEBUG_SPI("limiting freq to max = %d Hz", ESP8266_CLOCK);
+            DEBUG_SPI("limiting freq to max = %ld Hz", ESP8266_CLOCK);
         }
         return;
     }
