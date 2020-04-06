@@ -446,7 +446,7 @@ bool read_status_if_needed(port_t *port) {
 
     uint64 now = system_uptime_ms();
     uint64 delta = now - extra_info->last_read_time;
-    if (delta > port->sampling_interval) {
+    if (delta >= port->sampling_interval - 10) { /* Allow 10 milliseconds of tolerance */
         DEBUG_V9821(port, "status needs new reading");
 
         /* Update last read time */
@@ -454,11 +454,11 @@ bool read_status_if_needed(port_t *port) {
 
         if (!read_status(port)) {
             DEBUG_V9821(port, "status reading failed");
-        }
 
-        /* Within up to twice the sampling interval, cached status can be used */
-        if (delta > port->sampling_interval * 2) {
-            return FALSE;
+            /* In case of error, cached status can be used within up to twice the sampling interval. */
+            if (delta > port->sampling_interval * 2) {
+                return FALSE;
+            }
         }
     }
 
