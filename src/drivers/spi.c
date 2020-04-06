@@ -86,10 +86,10 @@ void spi_setup(uint8 bit_order, bool cpol, bool cpha, uint32 freq) {
     PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTMS_U, 2); /* GPIO14 becomes SCLK */
     PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U, 2); /* GPIO15 becomes CS */
 
-    /* frequency */
+    /* Frequency */
     set_freq(freq);
 
-    /* bit order */
+    /* Bit order */
     SPI1C1 = 0;
     if (bit_order == SPI_BIT_ORDER_MSB_FIRST) {
         SPI1C = 0;
@@ -113,7 +113,7 @@ void spi_setup(uint8 bit_order, bool cpol, bool cpha, uint32 freq) {
         SPI1P |= SPIUDUMMY;
     }
 
-    /* set 8 data bits */
+    /* Set 8 data bits */
     SPI1U1 = (7 << SPILMOSI) | (7 << SPILMISO);
 
     DEBUG_SPI("bit_order=%c, cpol=%d, cpha=%d, freq=%dHz",
@@ -168,7 +168,7 @@ void set_freq(uint32 freq) {
 
     uint32 min_freq = clock_reg_to_freq(&min_freq_reg);
     if (freq < min_freq) {
-        /* use minimum possible clock */
+        /* Use minimum possible clock */
         DEBUG_SPI("limiting freq to min = %d Hz", min_freq_reg.reg_value);
         set_clock_divider(min_freq_reg.reg_value);
         return;
@@ -178,7 +178,7 @@ void set_freq(uint32 freq) {
     spi_clock_t best_reg = {0};
     int32 best_freq = 0;
 
-    /* find the best match */
+    /* Find the best match */
     while (cal_n <= 0x3F) { /* 0x3F is max for N */
         spi_clock_t reg = {0};
         int32 cal_freq;
@@ -187,7 +187,7 @@ void set_freq(uint32 freq) {
 
         reg.reg_n = cal_n;
 
-        /* test different variants for pre (we calculate in int so we miss the decimals, testing is the easiest and
+        /* Test different variants for pre (we calculate in int so we miss the decimals, testing is the easiest and
          * fastest way) */
         while (cal_pre_vari++ <= 1) {
             cal_pre = (((ESP8266_CLOCK / (reg.reg_n + 1)) / freq) - 1) + cal_pre_vari;
@@ -203,21 +203,21 @@ void set_freq(uint32 freq) {
 
             reg.reg_l = ((reg.reg_n + 1) / 2);
 
-            /* test calculation */
+            /* Test calculation */
             cal_freq = clock_reg_to_freq(&reg);
             if (cal_freq == freq) { /* exact match */
                 memcpy(&best_reg, &reg, sizeof(best_reg));
                 break;
             }
             else if (cal_freq < freq) {
-                /* never go above the requested frequency */
+                /* Never go above the requested frequency */
                 if (abs(freq - cal_freq) < abs(freq - best_freq)) {
                     best_freq = cal_freq;
                     memcpy(&best_reg, &reg, sizeof(best_reg));
                 }
             }
         }
-        if (cal_freq == freq) { /* exact match */
+        if (cal_freq == freq) { /* Exact match */
             break;
         }
 
@@ -275,8 +275,8 @@ void transfer_aligned(uint8 *in_buff, uint8 *out_buff, uint32 len) {
         uint32 *data_ptr = (uint32 *) in_buff;
         fifo_ptr = &SPI1W0;
         uint8 in_len = len;
-        /* unlike out_len above, in_len tracks *bytes* since we must transfer only the requested bytes to the app to
-         * avoid overwriting other vars */
+        /* Unlike out_len above, in_len tracks *bytes* since we must transfer only the requested bytes to avoid
+         * overwriting other vars */
         while (in_len >= 4) {
             *(data_ptr++) = *(fifo_ptr++);
             in_len -= 4;
@@ -292,7 +292,7 @@ void transfer_aligned(uint8 *in_buff, uint8 *out_buff, uint32 len) {
 
 void transfer_bytes(uint8 *in_buff, uint8 *out_buff, uint32 len) {
     if (!((uint32) out_buff & 3) && !((uint32)in_buff & 3)) {
-        /* input and output buffers are both 32 bit aligned or NULL */
+        /* Input and output buffers are both 32 bit aligned or NULL */
         transfer_aligned(out_buff, in_buff, len);
     }
     else {
@@ -301,7 +301,7 @@ void transfer_bytes(uint8 *in_buff, uint8 *out_buff, uint32 len) {
          * align everything. No need for separate out and in aligned copies, we can overwrite our out copy with the
          * input data safely */
 
-        uint8 aligned[64]; /* stack vars will be 32 bit aligned */
+        uint8 aligned[64]; /* Stack vars are always 32 bit aligned */
         if (out_buff) {
             memcpy(aligned, out_buff, len);
         }
