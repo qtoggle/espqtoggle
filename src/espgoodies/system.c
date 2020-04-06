@@ -128,9 +128,6 @@ void system_reset(bool delayed) {
         reset_callback();
     }
 
-    /* This will save configuration only if changed */
-    wifi_save_config();
-
     if (delayed) {
         DEBUG_SYSTEM("will reset in %d seconds", RESET_DELAY / 1000);
 
@@ -249,6 +246,9 @@ void system_connected_led_update(void) {
 
 void on_system_reset(void *arg) {
     DEBUG_SYSTEM("resetting");
+
+    /* This will save configuration only if changed */
+    wifi_save_config();
     rtc_reset();
     system_restart();
 }

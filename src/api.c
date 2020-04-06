@@ -1109,9 +1109,6 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
 
     config_mark_for_saving();
     
-    /* Wi-Fi configuration is persisted separately and saved only if changed */
-    wifi_save_config();
-
     if (needs_reset) {
         DEBUG_API("reset needed");
 
