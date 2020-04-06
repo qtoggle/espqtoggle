@@ -18,10 +18,7 @@
 #ifndef _EXTRA_V9821_H
 #define _EXTRA_V9821_H
 
-#include <ets_sys.h>
-
-#include "drivers/uart.h"
-#include "ports.h"
+#include <c_types.h>
 
 
 #ifdef _DEBUG_V9821
