@@ -68,7 +68,6 @@
                                         "frequency",
                                         "free_mem",
                                         "flash_size",
-                                        "network_scan",
                                         "firmware_auto_update",
                                         "flash_id",
                                         "chip_id",
@@ -156,9 +155,6 @@
                                         },
                                         "flash_size": {
                                             "type": "integer"
-                                        },
-                                        "network_scan": {
-                                            "type": "string"
                                         },
                                         "firmware_auto_update": {
                                             "type": "boolean"

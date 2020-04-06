@@ -83,7 +83,7 @@ bool one_wire_search(one_wire_t *one_wire, uint8 *addr) {
     bool id_bit, cmp_id_bit;
     bool search_result = FALSE;
 
-    /* if the last call was not the very last one */
+    /* If the last call was not the very last one */
     if (!one_wire->last_device_flag) {
         if (!one_wire_reset(one_wire)) {
             one_wire->last_discrepancy = 0;
@@ -95,18 +95,18 @@ bool one_wire_search(one_wire_t *one_wire, uint8 *addr) {
 
         one_wire_write(one_wire, ONE_WIRE_CMD_SEARCH_ROM, /* parasitic = */ FALSE);
 
-        /* search loop */
+        /* Search loop */
         do {
             id_bit = read_bit(one_wire);
             cmp_id_bit = read_bit(one_wire);
 
-            /* check for no devices on 1-wire */
+            /* Check for no devices on 1-wire */
             if (id_bit && cmp_id_bit) {
                 break;
             }
 
             if (id_bit != cmp_id_bit) {
-                search_direction = id_bit;  /* bit write value for search */
+                search_direction = id_bit;  /* Bit write value for search */
             }
             else {
                 if (id_bit_number < one_wire->last_discrepancy) {
@@ -119,14 +119,14 @@ bool one_wire_search(one_wire_t *one_wire, uint8 *addr) {
                 if (!search_direction) {
                     last_zero = id_bit_number;
 
-                    /* check for last discrepancy in family */
+                    /* Check for last discrepancy in family */
                     if (last_zero < 9) {
                         one_wire->last_family_discrepancy = last_zero;
                     }
                 }
             }
 
-            /* set or clear the bit in the ROM byte rom_byte_number with mask rom_byte_mask */
+            /* Set or clear the bit in the ROM byte rom_byte_number with mask rom_byte_mask */
             if (search_direction) {
                 one_wire->rom[rom_byte_number] |= rom_byte_mask;
             }
@@ -134,14 +134,14 @@ bool one_wire_search(one_wire_t *one_wire, uint8 *addr) {
                 one_wire->rom[rom_byte_number] &= ~rom_byte_mask;
             }
 
-            /* serial number search direction write bit */
+            /* Serial number search direction write bit */
             write_bit(one_wire, search_direction);
 
-            /* increment the byte counter id_bit_number and shift the mask rom_byte_mask */
+            /* Increment the byte counter id_bit_number and shift the mask rom_byte_mask */
             id_bit_number++;
             rom_byte_mask <<= 1;
 
-            /* if the mask is 0 then go to new SerialNum byte rom_byte_number and reset mask */
+            /* If the mask is 0 then go to new SerialNum byte rom_byte_number and reset mask */
             if (rom_byte_mask == 0) {
                 rom_byte_number++;
                 rom_byte_mask = 1;
@@ -149,12 +149,12 @@ bool one_wire_search(one_wire_t *one_wire, uint8 *addr) {
 
             system_soft_wdt_feed();
 
-        } while (rom_byte_number < 8);  /* loop through all ROM bytes */
+        } while (rom_byte_number < 8);  /* Loop through all ROM bytes */
 
-        if (id_bit_number >= 65) {  /* the search was successful */
+        if (id_bit_number >= 65) {  /* The search was successful */
             one_wire->last_discrepancy = last_zero;
 
-            /* check for last device */
+            /* Check for last device */
             if (one_wire->last_discrepancy == 0) {
                 one_wire->last_device_flag = TRUE;
             }
@@ -163,7 +163,7 @@ bool one_wire_search(one_wire_t *one_wire, uint8 *addr) {
         }
     }
 
-    /* if no device found, reset state so next search will be a first */
+    /* If no device found, reset state so next search will be a first */
     if (!search_result || !one_wire->rom[0]) {
         one_wire->last_discrepancy = 0;
         one_wire->last_family_discrepancy = 0;
@@ -216,7 +216,7 @@ void one_wire_write_bytes(one_wire_t *one_wire, uint8 *buf, uint16 len, bool par
 }
 
 void one_wire_parasitic_power_off(one_wire_t *one_wire) {
-    /* set input to floating */
+    /* Set input to floating */
     GPIO_DIS_OUTPUT(one_wire->gpio_no);
 }
 

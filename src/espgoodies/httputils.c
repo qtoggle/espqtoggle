@@ -43,11 +43,11 @@ json_t *http_parse_url_encoded(char *input) {
     int c, state = 0;
     while ((c = *s++)) {
         switch (state) {
-            case 0: { /* name */
-                if (c == '=') { /* value starts */
-                    state = 1; /* value */
+            case 0: { /* Name */
+                if (c == '=') { /* Value starts */
+                    state = 1; /* Value */
                 }
-                else if (c == '&') { /* field starts */
+                else if (c == '&') { /* Field starts */
                     json_obj_append(json, name, json_str_new(value));
 
                     name[0] = 0;
@@ -60,13 +60,13 @@ json_t *http_parse_url_encoded(char *input) {
                 break;
             }
 
-            case 1: { /* value */
-                if (c == '&') { /* field starts */
+            case 1: { /* Value */
+                if (c == '&') { /* Field starts */
                     unescape_url_encoded_value(value);
 
                     json_obj_append(json, name, json_str_new(value));
 
-                    state = 0; /* name */
+                    state = 0; /* Name */
                     name[0] = 0;
                     value[0] = 0;
                 }
@@ -79,7 +79,7 @@ json_t *http_parse_url_encoded(char *input) {
         }
     }
 
-    /* append the last value that hasn't yet been processed, if any */
+    /* Append the last value that hasn't yet been processed, if any */
     if (*name) {
         json_obj_append(json, name, json_str_new(value));
     }
@@ -88,7 +88,7 @@ json_t *http_parse_url_encoded(char *input) {
 }
 
 char *http_build_auth_token_header(char *token) {
-    int len = 8 + strlen(token); /* len("Bearer" + " " + token) */
+    int len = 8 + strlen(token); /* Len("Bearer" + " " + token) */
     char *header = malloc(len);
     snprintf(header, len, "Bearer %s", token);
 
@@ -96,33 +96,33 @@ char *http_build_auth_token_header(char *token) {
 }
 
 char *http_parse_auth_token_header(char *header) {
-    /* look for the first space */
+    /* Look for the first space */
     char *p = header;
     while (*p && *p != ' ') {
         p++;
     }
 
     if (!*p) {
-        /* no space found */
+        /* No space found */
         return NULL;
     }
 
     if (strncasecmp(header, "Bearer", p - header)) {
-        /* header does not start with "Bearer" */
+        /* Header does not start with "Bearer" */
         return NULL;
     }
 
-    /* skip all spaces */
+    /* Skip all spaces */
     while (*p && *p == ' ') {
         p++;
     }
 
     if (!*p) {
-        /* no token present */
+        /* No token present */
         return NULL;
     }
 
-    /* everything that's left is token */
+    /* Everything that's left is token */
     return strdup(p);
 }
 
@@ -136,9 +136,9 @@ void unescape_url_encoded_value(char *value) {
     
     while ((c = *s)) {
         switch (state) {
-            case 0: /* outside */
+            case 0: /* Outside */
                 if (c == '%') {
-                    state = 1; /* percent */
+                    state = 1; /* Percent */
                 }
                 else {
                     unescaped[p] = c;
@@ -147,25 +147,25 @@ void unescape_url_encoded_value(char *value) {
 
                 break;
 
-            case 1: /* percent */
-                if (c == '%') { /* escaped percent */
-                    state = 0; /* outside */
+            case 1: /* Percent */
+                if (c == '%') { /* Escaped percent */
+                    state = 0; /* Outside */
                     unescaped[p] = c;
                     unescaped[++p] = 0;
                 }
                 else if (IS_HEX(c)) {
-                    state = 2; /* hex */
+                    state = 2; /* Hex */
                     hex[0] = c;
                 }
                 else {
-                    state = 0; /* outside */
+                    state = 0; /* Outside */
                     unescaped[p] = c;
                     unescaped[++p] = 0;
                 }
 
                 break;
 
-            case 2: /* hex */
+            case 2: /* Hex */
                 if (IS_HEX(c)) {
                     hex[1] = c;
                     
@@ -178,7 +178,7 @@ void unescape_url_encoded_value(char *value) {
                     unescaped[++p] = 0;
                 }
 
-                state = 0; /* outside */
+                state = 0; /* Outside */
 
                 break;
         }

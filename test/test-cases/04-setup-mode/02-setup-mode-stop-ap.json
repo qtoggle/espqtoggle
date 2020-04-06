@@ -2,13 +2,23 @@
     "name": "setup-mode-stop-ap",
     "instructions": [
         {
-            "name": "wifi-station-disconnect"
+            "name": "device-write-gpio",
+            "params": {
+                "gpio": 12,
+                "value": 0
+            }
+        },
+        {
+            "name": "sleep",
+            "params": {
+                "duration": 7500
+            }
         },
         {
             "name": "device-write-gpio",
             "params": {
                 "gpio": 12,
-                "value": 0
+                "value": 1
             }
         },
         {
@@ -19,14 +29,6 @@
                 "wait_device_connect": true,
                 "timeout": 30
             }
-        },
-        {
-            "name": "device-write-gpio",
-            "params": {
-                "gpio": 12,
-                "value": 1
-            }
         }
     ]
 }
-

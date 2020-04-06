@@ -20,21 +20,40 @@
 #include <string.h>
 #include <mem.h>
 #include <ctype.h>
+#include <c_types.h>
 #include <limits.h>
 #include <user_interface.h>
+#include <osapi.h>
 #include <espconn.h>
 
 #include "common.h"
+#include "rtc.h"
 #include "utils.h"
 
 
 #define REALLOC_CHUNK_SIZE      8
 #define DTOSTR_BUF_LEN          32
+#define MAX_CALL_LATER_TIMERS   16
 
 #if defined(_DEBUG) && defined(_DEBUG_IP)
 static struct espconn         * debug_udp_conn = NULL;
 ICACHE_FLASH_ATTR static void   debug_udp_send(char *buf, int len);
 #endif
+
+static os_timer_t            ** call_later_timers = NULL;
+static uint8                    call_later_timers_count = 0;
+
+
+typedef struct {
+
+    os_timer_t                * timer;
+    call_later_callback_t       callback;
+    void                      * arg;
+
+} call_later_callback_wrapper_arg_t;
+
+
+ICACHE_FLASH_ATTR static void   call_later_callback_wrapper(call_later_callback_wrapper_arg_t *arg);
 
 
 void append_max_len(char *s, char c, int max_len) {
@@ -68,7 +87,7 @@ double strtod(const char *s, char **endptr) {
         s++;
     }
 
-    /* detect and skip sign */
+    /* Detect and skip sign */
     if (*s == '-') {
         sign = 1;
         s++;
@@ -115,27 +134,26 @@ char *dtostr(double d, int8 decimals) {
     char c;
     uint64 n;
 
-    /* define two reentrant buffers and use them in a round-robin manner, so that two dtostr() calls can be used in the
+    /* Define two reentrant buffers and use them in a round-robin manner, so that two dtostr() calls can be used in the
      * same expression or function call */
     static char dtostr_buf1[DTOSTR_BUF_LEN];
     static char dtostr_buf2[DTOSTR_BUF_LEN];
     static uint8 buf_sel = 0;
     char *dtostr_buf = buf_sel++ % 2 ? dtostr_buf1 : dtostr_buf2;
 
-    /* process the sign */
+    /* Process the sign */
     if (d < 0) {
         d = -d;
         sign = TRUE;
     }
 
     if (decimals < 0) {
-        decimals = 10; /* analyze up to 10 decimals */
+        decimals = 10; /* Analyze up to 10 decimals */
         auto_decimals = TRUE;
     }
 
     if (decimals >= 0) {
-        /* if the number of decimals is too big,
-         * we risk having an integer overflow here! */
+        /* If the number of decimals is too big, we risk having an integer overflow here! */
         for (i = 0; i < decimals; i++) {
             d *= 10;
         }
@@ -165,12 +183,12 @@ char *dtostr(double d, int8 decimals) {
         }
     }
 
-    /* add sign */
+    /* Add sign */
     if (sign && (len > 1 || dtostr_buf[0] != '0')) {
         dtostr_buf[len++] = '-';
     }
 
-    /* reverse the string  */
+    /* Reverse the string  */
     for (i = 0; i < len / 2; i++) {
         c = dtostr_buf[i];
         dtostr_buf[i] = dtostr_buf[len - i - 1];
@@ -224,6 +242,60 @@ int compare_double(const void *a, const void *b) {
     }
 }
 
+bool call_later(call_later_callback_t callback, void *arg, uint32 delay_ms) {
+    if (call_later_timers_count >= MAX_CALL_LATER_TIMERS) {
+        DEBUG("too many call-later timers");
+        return FALSE;
+    }
+
+    /* Allocate new timer */
+    call_later_timers = realloc(call_later_timers, sizeof(os_timer_t *) * call_later_timers_count + 1);
+    os_timer_t *timer = call_later_timers[call_later_timers_count++] = malloc(sizeof(os_timer_t));
+
+    /* Allocate new callback wrapper argument structure */
+    call_later_callback_wrapper_arg_t *wrapper_arg = malloc(sizeof(call_later_callback_wrapper_arg_t));
+    wrapper_arg->timer = timer;
+    wrapper_arg->callback = callback;
+    wrapper_arg->arg = arg;
+
+    /* Arm the timer */
+    os_timer_disarm(timer);
+    os_timer_setfn(timer, (os_timer_func_t *) call_later_callback_wrapper, wrapper_arg);
+    os_timer_arm(timer, delay_ms, /* repeat = */ FALSE);
+
+    return TRUE;
+}
+
+void call_later_callback_wrapper(call_later_callback_wrapper_arg_t *arg) {
+    /* Look-up timer in timers list */
+    int16 i, pos = -1;
+    for (i = 0; i < call_later_timers_count; i++) {
+        if (call_later_timers[i] == arg->timer) {
+            pos = i;
+            break;
+        }
+    }
+
+    if (pos < 0) {
+        DEBUG("call-later timer not found");
+        return;
+    }
+
+    /* Remove timer from timers list, by shifting back following timers */
+    for (i = pos; i < call_later_timers_count - 1; i++) {
+        call_later_timers[i] = call_later_timers[i + 1];
+    }
+    call_later_timers = realloc(call_later_timers, sizeof(os_timer_t *) * --call_later_timers_count);
+
+    /* Call the original callback */
+    arg->callback(arg->arg);
+
+    /* We must free the timer as well as the received argument */
+    free(arg->timer);
+    free(arg);
+}
+
+
 char *my_strtok(char *s, char *d) {
     static char *start = NULL;
     char *p;
@@ -243,7 +315,7 @@ char *my_strtok(char *s, char *d) {
         s++;
     }
 
-    if (*s == *d) { /* delimiter */
+    if (*s == *d) { /* Delimiter */
         while (*s == *d) {
             *s = 0;
             s++;
@@ -254,7 +326,7 @@ char *my_strtok(char *s, char *d) {
 
         return p;
     }
-    else { /* end of string */
+    else { /* End of string */
         if (s == start) {
             return NULL;
         }
@@ -291,6 +363,44 @@ char *my_strndup(const char *s, int n) {
     return d;
 }
 
+void *my_malloc(size_t size) {
+    void *ptr = pvPortMalloc(size, "", 0);
+    if (!ptr && size) {
+        DEBUG_SYSTEM("malloc(%d) failed, resetting", size);
+        rtc_reset();
+        system_restart();
+    }
+
+    return ptr;
+}
+
+void *my_realloc(void *ptr, size_t size) {
+    ptr = pvPortRealloc(ptr, size, "", 0);
+    if (!ptr && size) {
+        DEBUG_SYSTEM("realloc(%x, %d) failed, resetting", (uint32) ptr, size);
+        rtc_reset();
+        system_restart();
+    }
+
+    return ptr;
+}
+
+void my_free(void *ptr) {
+    vPortFree(ptr, "", 0);
+}
+
+void *my_zalloc(size_t size) {
+    void *ptr = pvPortZalloc(size, "", 0);
+    if (!ptr && size) {
+        DEBUG_SYSTEM("zalloc(%d) failed, resetting", size);
+        rtc_reset();
+        system_restart();
+    }
+
+    return ptr;
+}
+
+
 #if defined(_DEBUG) && defined(_DEBUG_IP)
 
 int udp_printf(const char *format, ...) {
@@ -311,7 +421,7 @@ void debug_udp_send(char *buf, int len) {
     int result;
 
     if (!debug_udp_conn) {
-        /* initialize the debug UDP connection */
+        /* Initialize the debug UDP connection */
         debug_udp_conn = zalloc(sizeof(struct espconn));
 
         debug_udp_conn->type = ESPCONN_UDP;

@@ -27,7 +27,7 @@
 
 #define DEBUG_PWM(fmt, ...)         DEBUG("[pwm           ] " fmt, ##__VA_ARGS__)
 
-/* no user serviceable parts beyond this point */
+/* No user serviceable parts beyond this point */
 
 #define PWM_MAX_TICKS 0x7fffff
 #if SDK_PWM_PERIOD_COMPAT_MODE
@@ -52,7 +52,7 @@
 #include "common.h"
 
 
-/* from SDK hw_timer.c */
+/* From SDK hw_timer.c */
 #define TIMER1_DIVIDE_BY_16             0x0004
 #define TIMER1_ENABLE_TIMER             0x0080
 
@@ -64,13 +64,9 @@ struct pwm_phase {
 
 };
 
-/* Three sets of PWM phases, the active one, the one used
- * starting with the next cycle, and the one updated
- * by pwm_start. After the update pwm_next_set
- * is set to the last updated set. pwm_current_set is set to
- * pwm_next_set from the interrupt routine during the first
- * pwm phase
- */
+/* Three sets of PWM phases, the active one, the one used starting with the next cycle, and the one updated by
+ * pwm_start. After the update pwm_next_set is set to the last updated set. pwm_current_set is set to pwm_next_set from
+ * the interrupt routine during the first pwm phase */
 typedef struct pwm_phase (pwm_phase_array)[PWM_MAX_CHANNELS + 2];
 static pwm_phase_array pwm_phases[3];
 

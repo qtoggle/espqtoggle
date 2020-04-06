@@ -50,7 +50,7 @@ session_t *session_find_by_id(char *id) {
         }
     }
 
-    DEBUG_SESSIONS("no %s found", id);
+    DEBUG_SESSIONS("no \"%s\" found", id);
 
     return NULL;
 }
@@ -84,7 +84,7 @@ session_t *session_create(char *id, struct espconn *conn, int timeout, int acces
         free_slot = 0;
     }
 
-    /* initialize the session */
+    /* Initialize the session */
     session_t *session = sessions + free_slot;
     strncpy(session->id, id, API_MAX_LISTEN_SESSION_ID_LEN);
     session->id[API_MAX_LISTEN_SESSION_ID_LEN] = 0;
@@ -94,7 +94,7 @@ session_t *session_create(char *id, struct espconn *conn, int timeout, int acces
     session->access_level = access_level;
     session->conn = conn;
 
-    DEBUG_SESSIONS("assigned id %s to slot %d", id, free_slot);
+    DEBUG_SESSIONS("assigned id \"%s\" to slot %d", id, free_slot);
 
     return session;
 }
@@ -138,17 +138,17 @@ void session_reset(session_t *session) {
 }
 
 void sessions_push_event(int type, char *port_id) {
-    /* push the event to each active session */
+    /* Push the event to each active session */
     int i;
     session_t *session;
     for (i = 0; i < SESSION_COUNT; i++) {
         session = sessions + i;
-        if (!session->id[0]) { /* not active */
+        if (!session->id[0]) { /* Not active */
             continue;
         }
 
         if (session->access_level < EVENT_ACCESS_LEVELS[type]) {
-            continue; /* not permitted for this access level */
+            continue; /* Not permitted for this access level */
         }
 
         session_push(session, type, port_id);
@@ -159,12 +159,12 @@ void sessions_push_event(int type, char *port_id) {
 }
 
 void sessions_respond_all(void) {
-    /* respond with "busy" to all active sessions */
+    /* Respond with "busy" to all active sessions */
     int i;
     session_t *session;
     for (i = 0; i < SESSION_COUNT; i++) {
         session = sessions + i;
-        if (!session->id[0]) { /* not active */
+        if (!session->id[0]) { /* Not active */
             continue;
         }
 
@@ -191,17 +191,17 @@ void session_push(session_t *session, int type, char *port_id) {
     
     session_queue_node_t *n, *pn;
 
-    /* deduplicate change & update events */
+    /* Deduplicate change & update events */
     if (type == EVENT_TYPE_PORT_UPDATE || type == EVENT_TYPE_DEVICE_UPDATE || type == EVENT_TYPE_VALUE_CHANGE) {
         n = session->queue;
         pn = NULL;
 
-        /* find the oldest (first pushed, last in queue) event */
+        /* Find the oldest (first pushed, last in queue) event */
         while (n) {
             if ((n->event->type == type) && (!port_id || !strcmp(port_id, n->event->port_id))) {
                 DEBUG_SESSION(session->id, "dropping similar %s event", EVENT_TYPES_STR[type]);
 
-                /* drop the event */
+                /* Drop the event */
                 if (pn) {
                     pn->next = n->next;
                 }
@@ -223,13 +223,13 @@ void session_push(session_t *session, int type, char *port_id) {
     
         n = pn = session->queue;
 
-        /* find the oldest (first pushed, last in queue) event */
+        /* Find the oldest (first pushed, last in queue) event */
         while (n && n->next) {
             pn = n;
             n = n->next;
         }
 
-        /* drop the event */
+        /* Drop the event */
         event_free(n->event);
         free(n);
         pn->next = NULL;
@@ -272,7 +272,7 @@ event_t **pop_all_events(session_t *session) {
     event_t **events = malloc(sizeof(event_t *) * (session->queue_len + 1));
     session_queue_node_t *n = session->queue, *pn;
     
-    /* place the events in reverse order into a list of pointers to events */
+    /* Place the events in reverse order into a list of pointers to events */
     int i = 0;
     while (n) {
         events[session->queue_len - i - 1] = n->event;
@@ -282,7 +282,7 @@ event_t **pop_all_events(session_t *session) {
         i++;
     }
 
-    /* set the NULL terminator */
+    /* Set the NULL terminator */
     events[session->queue_len] = NULL;
     
     session->queue = NULL;

@@ -47,7 +47,7 @@
 
 #define MAX_PARALLEL_HTTP_REQ       4
 #define HTTP_SERVER_REQUEST_TIMEOUT 4
-#define MIN_HTTP_FREE_MEM           8192  /* at least 8k of free heap to serve an HTTP request */
+#define MIN_HTTP_FREE_MEM           8192  /* At least 8k of free heap to serve an HTTP request */
 
 #define JSON_CONTENT_TYPE           "application/json; charset=utf-8"
 #define HTML_CONTENT_TYPE           "text/html; charset=utf-8"
@@ -74,7 +74,7 @@ ICACHE_FLASH_ATTR static void       on_http_request(struct espconn *conn, int me
 
 
 void *on_tcp_conn(struct espconn *conn) {
-    /* find first free http context slot */
+    /* Find first free http context slot */
     httpserver_context_t *hc = NULL;
     int i;
 
@@ -100,7 +100,7 @@ void *on_tcp_conn(struct espconn *conn) {
 
     hc->req_state = HTTP_STATE_NEW;
 
-    /* for debugging purposes */
+    /* For debugging purposes */
     memcpy(hc->ip, conn->proto.tcp->remote_ip, 4);
     hc->port = conn->proto.tcp->remote_port;
 
@@ -133,15 +133,15 @@ void on_tcp_disc(struct espconn *conn, httpserver_context_t *hc) {
         return;
     }
 
-    /* see if the connection corresponds to a listening session */
+    /* See if the connection corresponds to a listening session */
     session_t *session = session_find_by_conn(conn);
-    if (session) { /* a listen connection */
+    if (session) { /* A listen connection */
         DEBUG_ESPQTCLIENT_CONN(conn, "listen client unexpectedly disconnected");
         session->conn = NULL;
         session_reset(session);
     }
 
-    /* see if the connection is asynchronous and is currently waiting for a response */
+    /* See if the connection is asynchronous and is currently waiting for a response */
     if (api_conn_equal(conn)) {
         DEBUG_ESPQTCLIENT_CONN(conn, "canceling async response to closed connection");
         api_conn_reset();
@@ -151,7 +151,7 @@ void on_tcp_disc(struct espconn *conn, httpserver_context_t *hc) {
 }
 
 
-/* http request/response handling */
+/* HTTP request/response handling */
 
 void on_invalid_http_request(struct espconn *conn) {
     DEBUG_ESPQTCLIENT_CONN(conn, "ignoring invalid request");
@@ -194,7 +194,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         if (body) {
             request_json = json_parse(body);
             if (!request_json) {
-                /* invalid json */
+                /* Invalid JSON */
                 DEBUG_ESPQTCLIENT_CONN(conn, "invalid json");
                 respond_error(conn, 400, "malformed body");
                 goto done;
@@ -205,7 +205,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         }
     }
 
-    /* automatically grant admin access level in setup mode */
+    /* Automatically grant admin access level in setup mode */
     if (system_setup_mode_active()) {
         access_level = API_ACCESS_LEVEL_ADMIN;
         goto skip_auth;
@@ -220,7 +220,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         }
     }
 
-    /* look for Authorization header */
+    /* Look for Authorization header */
     char *authorization = NULL;
     for (i = 0; i < header_count; i++) {
         if (!strcasecmp(header_names[i], "Authorization")) {
@@ -245,7 +245,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         goto done;
     }
 
-    /* parse Authorization header */
+    /* Parse Authorization header */
     jwt_str = http_parse_auth_token_header(authorization);
     if (!jwt_str) {
         if (unprotected) {
@@ -257,7 +257,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         goto done;
     }
 
-    /* parse & validate JWT token */
+    /* Parse & validate JWT token */
     jwt = jwt_parse(jwt_str);
     if (!jwt) {
         if (unprotected) {
@@ -279,7 +279,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         goto done;
     }
 
-    /* retrieve & validate issuer claim */
+    /* Retrieve & validate issuer claim */
     json_t *issuer_json = json_obj_lookup_key(jwt->claims, "iss");
     if (!issuer_json || json_get_type(issuer_json) != JSON_TYPE_STR || strcmp(json_str_get(issuer_json), "qToggle")) {
         if (unprotected) {
@@ -291,7 +291,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         goto done;
     }
 
-    /* retrieve & validate origin claim */
+    /* Retrieve & validate origin claim */
     json_t *origin_json = json_obj_lookup_key(jwt->claims, "ori");
     if (!origin_json || json_get_type(origin_json) != JSON_TYPE_STR || strcmp(json_str_get(origin_json), "consumer")) {
         if (unprotected) {
@@ -305,7 +305,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
 
     // TODO validate iat claim - when we have real date/time support
 
-    /* retrieve username claim */
+    /* Retrieve username claim */
     json_t *username_json = json_obj_lookup_key(jwt->claims, "usr");
     if (!username_json || json_get_type(username_json) != JSON_TYPE_STR) {
         if (unprotected) {
@@ -317,7 +317,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         goto done;
     }
 
-    /* validate username */
+    /* Validate username */
     bool valid = FALSE;
     char *username = json_str_get(username_json);
     if (!strcmp(username, "admin")) {
@@ -364,7 +364,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
 
     skip_auth:
 
-    /* treat the listen API call separately */
+    /* Treat the listen API call separately */
     if (!strncmp(path, "/listen", 7) && method == HTTP_METHOD_GET) {
         DEBUG_ESPQTCLIENT_CONN(conn, "received listen request");
 
@@ -378,7 +378,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         }
 
 #ifdef _OTA
-        /* no listening while OTA active */
+        /* No listening while OTA active */
         if (ota_busy()) {
             DEBUG_ESPQTCLIENT_CONN(conn, "cannot accept listen requests while OTA active");
             respond_error(conn, 503, "busy");
@@ -407,14 +407,14 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
             goto done;
         }
 
-        /* timeout argument */
+        /* Timeout argument */
         json_t *timeout_json = json_obj_lookup_key(query_json, "timeout");
         int timeout = API_DEFAULT_LISTEN_TIMEOUT;
         if (timeout_json) {
             char *e;
             timeout = strtol(json_str_get(timeout_json), &e, 10);
 
-            if (*e) {  /* invalid integer */
+            if (*e) {  /* Invalid integer */
                 respond_error(conn, 400, "invalid field: timeout");
                 goto done;
             }
@@ -428,8 +428,8 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         DEBUG_ESPQTCLIENT_CONN(conn, "listen arguments: session id = %s, timeout = %d", session_id, timeout);
 
         session_t *session = session_find_by_id(session_id);
-        if (session) { /* existing session, continuing with new request */
-            if (session->conn) { /* a different listen request for this session already exists */
+        if (session) { /* Existing session, continuing with new request */
+            if (session->conn) { /* A different listen request for this session already exists */
                 DEBUG_ESPQTCLIENT_CONN(conn, "a listen request for session %s already exists", session_id);
                 session_respond(session);
             }
@@ -444,19 +444,19 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
                 session_respond(session);
             }
         }
-        else { /* new session */
+        else { /* New session */
             session = session_create(session_id, conn, timeout, access_level);
         }
 
         session_reset(session);
     }
-    else { /* regular API call */
+    else { /* Regular API call */
         api_conn_set(conn, access_level);
 
         int code;
         response_json = api_call_handle(method, path, query_json, request_json, &code);
 
-        /* serve the HTML page only in setup mode and on any 404 */
+        /* Serve the HTML page only in setup mode and on any 404 */
         if (code == 404 && system_setup_mode_active() && method == HTTP_METHOD_GET) {
             json_free(response_json);
             api_conn_reset();
@@ -510,7 +510,7 @@ void client_init(void) {
                     (tcp_disc_cb_t) on_tcp_disc);
 
     httpclient_set_user_agent("espQToggle " FW_VERSION);
-    httpserver_set_name(device_hostname);
+    httpserver_set_name(device_name);
     httpserver_set_request_timeout(HTTP_SERVER_REQUEST_TIMEOUT);
 }
 
@@ -553,7 +553,7 @@ void respond_json(struct espconn *conn, int status, json_t *json) {
 #if defined(_DEBUG) && defined(_DEBUG_ESPQTCLIENT)
     int free_mem_after_send = system_get_free_heap_size();
 
-    /* show free memory after sending the response */
+    /* Show free memory after sending the response */
     DEBUG_ESPQTCLIENT("free memory: before dump=%d, after dump=%d, after send=%d",
                       free_mem_before_dump, free_mem_after_dump, free_mem_after_send);
 #endif
@@ -585,12 +585,12 @@ void respond_html(struct espconn *conn, int status, uint8 *html, int len) {
 
     DEBUG_ESPQTCLIENT_CONN(conn, "responding with status %d", status);
 
-    tcp_send(conn, response, len, /* free on sent = */ TRUE);
+    tcp_send(conn, response, len, /* free_on_sent = */ TRUE);
 
 #if defined(_DEBUG) && defined(_DEBUG_ESPQTCLIENT)
     int free_mem_after_send = system_get_free_heap_size();
 
-    /* show free memory after sending the response */
+    /* Show free memory after sending the response */
     DEBUG_ESPQTCLIENT("free memory: before dump=%d, after dump=%d, after send=%d",
                       free_mem_before_dump, free_mem_after_dump, free_mem_after_send);
 #endif

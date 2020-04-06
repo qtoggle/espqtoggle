@@ -53,11 +53,11 @@
 #define RH_MIN                          0
 #define RH_MAX                          100
 
-#define MIN_SAMP_INT                    1000    /* milliseconds */
-#define DEF_SAMP_INT                    1000    /* milliseconds */
-#define MAX_SAMP_INT                    3600000 /* milliseconds */
+#define MIN_SAMP_INT                    1000    /* Milliseconds */
+#define DEF_SAMP_INT                    1000    /* Milliseconds */
+#define MAX_SAMP_INT                    3600000 /* Milliseconds */
 
-#define HEART_BEAT_INTERVAL             1000    /* milliseconds */
+#define HEART_BEAT_INTERVAL             1000    /* Milliseconds */
 
 #define MODEL_CONFIG_OFFS               0x00    /* 1 byte */
 #define GPIO_CONFIG_OFFS                0x01    /* 1 byte */
@@ -386,7 +386,7 @@ double read_temperature(port_t *port) {
 
         case MODEL_DHT22: {
             int temp = (last_data >> 8) & 0xFFFF;
-            if (temp & 0x8000) { /* sign bit */
+            if (temp & 0x8000) { /* Sign bit */
                 temp = -(temp & 0x7FFF);
             }
             return temp / 10.0;
@@ -403,7 +403,7 @@ void configure_temperature(port_t *port) {
     DEBUG_DHT(port, "using retries = %d", get_retries(port));
     DEBUG_DHT(port, "using gpio = %d", get_gpio(port));
 
-    /* temperature and humidity ports are always enabled or disabled together */
+    /* Temperature and humidity ports are always enabled or disabled together */
     if (IS_ENABLED(port) && !IS_ENABLED(get_humidity_port(port))) {
         port_enable(get_humidity_port(port));
         event_push_port_update(get_humidity_port(port));
@@ -451,7 +451,7 @@ double read_humidity(port_t *port) {
 }
 
 void configure_humidity(port_t *port) {
-    /* temperature and humidity ports are always enabled or disabled together */
+    /* Temperature and humidity ports are always enabled or disabled together */
     if (IS_ENABLED(port) && !IS_ENABLED(get_temperature_port(port))) {
         port_enable(get_temperature_port(port));
         event_push_port_update(get_temperature_port(port));
@@ -467,10 +467,10 @@ void configure_humidity(port_t *port) {
 int attr_get_model(port_t *port, attrdef_t *attrdef) {
     uint8 value;
 
-    /* read from persisted data */
+    /* Read from persisted data */
     memcpy(&value, port->extra_data + MODEL_CONFIG_OFFS, 1);
 
-    /* update cached value */
+    /* Update cached value */
     set_model(port, get_choice_value_num(attrdef->choices[value]));
 
     return value;
@@ -479,20 +479,20 @@ int attr_get_model(port_t *port, attrdef_t *attrdef) {
 void attr_set_model(port_t *port, attrdef_t *attrdef, int index) {
     uint8 value = index;
 
-    /* update cached value */
+    /* Update cached value */
     set_model(port, get_choice_value_num(attrdef->choices[value]));
 
-    /* write to persisted data */
+    /* Write to persisted data */
     memcpy(port->extra_data + MODEL_CONFIG_OFFS, &value, 1);
 }
 
 int attr_get_gpio(port_t *port, attrdef_t *attrdef) {
     uint8 value;
 
-    /* read from persisted data */
+    /* Read from persisted data */
     memcpy(&value, port->extra_data + GPIO_CONFIG_OFFS, 1);
 
-    /* update cached value */
+    /* Update cached value */
     set_gpio(port, get_choice_value_num(attrdef->choices[value]));
 
     return value;
@@ -501,30 +501,30 @@ int attr_get_gpio(port_t *port, attrdef_t *attrdef) {
 void attr_set_gpio(port_t *port, attrdef_t *attrdef, int index) {
     uint8 value = index;
 
-    /* update cached value */
+    /* Update cached value */
     set_gpio(port, get_choice_value_num(attrdef->choices[value]));
 
-    /* write to persisted data */
+    /* Write to persisted data */
     memcpy(port->extra_data + GPIO_CONFIG_OFFS, &value, 1);
 }
 
 int attr_get_retries(port_t *port, attrdef_t *attrdef) {
     uint8 value;
 
-    /* read from persisted data */
+    /* Read from persisted data */
     memcpy(&value, port->extra_data + RETRIES_CONFIG_OFFS, 1);
 
-    /* update cached value */
+    /* Update cached value */
     set_retries(port, value);
 
     return value;
 }
 
 void attr_set_retries(port_t *port, attrdef_t *attrdef, int value) {
-    /* update cached value */
+    /* Update cached value */
     set_retries(port, value);
 
-    /* write to persisted data */
+    /* Write to persisted data */
     memcpy(port->extra_data + RETRIES_CONFIG_OFFS, &value, 1);
 }
 
@@ -582,27 +582,27 @@ uint64 read_data(port_t *port) {
 
     DEBUG_DHT(port, "measurement started");
 
-    /* wait 10ms before starting the sequence */
+    /* Wait 10ms before starting the sequence */
     write_wire(port, 1);
     os_delay_us(10000);
 
-    /* temporarily disable interrupts */
+    /* Temporarily disable interrupts */
     ETS_INTR_LOCK();
     system_soft_wdt_feed();
 
-    /* hold the wire down for 20ms */
+    /* Hold the wire down for 20ms */
     write_wire(port, 0);
     os_delay_us(20000);
 
-    /* hold the wire up for 40us */
+    /* Hold the wire up for 40us */
     write_wire(port, 1);
     os_delay_us(40);
 
-    /* switch to reading mode */
+    /* Switch to reading mode */
     input_wire(port);
     os_delay_us(10);
 
-    /* sensor is expected to hold the line low by now */
+    /* Sensor is expected to hold the line low by now */
     if (read_wire(port)) {
         DEBUG_DHT(port, "timeout waiting for sensor low pulse start");
         ETS_INTR_UNLOCK();
@@ -621,8 +621,8 @@ uint64 read_data(port_t *port) {
         return -1;
     }
 
-    /* os_delay_us() is not as precise as we would need it to be;
-     * we compute a delay ratio based on the expected 80us initial sensor pulse */
+    /* os_delay_us() is not as precise as we would need it to be; we compute a delay ratio based on the expected 80us
+     * initial sensor pulse */
     int bit1_threshold = 60 * width / 80;
 
     for (data_bits = 0; data_bits < 40; data_bits++) {

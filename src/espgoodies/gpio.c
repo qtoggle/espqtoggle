@@ -120,7 +120,7 @@ int gpio_get_func(int gpio_no) {
 }
 
 void gpio_select_func(int gpio_no) {
-    /* special treatment for GPIO16 */
+    /* Special treatment for GPIO16 */
     if (gpio_no == 16) {
         WRITE_PERI_REG(PAD_XPD_DCDC_CONF, (READ_PERI_REG(PAD_XPD_DCDC_CONF) & 0xFFFFFFBC) | 0x1);
         WRITE_PERI_REG(RTC_GPIO_CONF, READ_PERI_REG(RTC_GPIO_CONF) & 0xFFFFFFFE);

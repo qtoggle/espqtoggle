@@ -305,7 +305,7 @@ double _timems_callback(expr_t *expr, int argc, double *args) {
 }
 
 double _delay_callback(expr_t *expr, int argc, double *args) {
-    if (argc < 1) { /* called from expr_free() */
+    if (argc < 1) { /* Called from expr_free() */
         if (expr->paux) {
             free(expr->paux);
             expr->paux = NULL;
@@ -321,16 +321,16 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
 
     value_hist_t *hist = expr->paux;
 
-    /* detect value transitions and push them to history */
+    /* Detect value transitions and push them to history */
     if (value != expr->value) {
         expr->value = value;
 
-        if (expr->len == MAX_HIST_LEN) { /* shift elements in queue to make place for new value */
+        if (expr->len == MAX_HIST_LEN) { /* Shift elements in queue to make place for new value */
             for (i = 0; i < expr->len - 1; i++) {
                 hist[i] = hist[i + 1];
             }
         }
-        else { /* grow history for another value */
+        else { /* Grow history for another value */
             expr->len++;
             expr->paux = hist = realloc(expr->paux, sizeof(value_hist_t) * expr->len);
         }
@@ -339,8 +339,8 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
         hist[expr->len - 1].time_ms = time_ms;
     }
 
-    /* go through history (forward) and find the first value that is newer than the delay; use it as a result;
-     * keep only newer values in history */
+    /* Go through history (forward) and find the first value that is newer than the delay; use it as a result; keep only
+     * newer values in history */
     bool resized = FALSE;
     while (expr->len && (time_ms - hist[0].time_ms > delay)) {
         result = hist[0].value;
@@ -371,15 +371,15 @@ double _held_callback(expr_t *expr, int argc, double *args) {
     int duration = args[2];
     bool result = FALSE;
 
-    if (!expr->aux) { /* very first expression eval call */
+    if (!expr->aux) { /* Very first expression eval call */
         /* aux flag is used as time counter, in milliseconds */
         expr->aux = time_ms;
     }
     else {
         uint64 delta = time_ms - expr->aux;
 
-        if ((expr->value != value) /* value changed */) {
-            /* reset held timer */
+        if ((expr->value != value) /* Value changed */) {
+            /* Reset held timer */
             expr->aux = time_ms;
         }
         else {
@@ -398,7 +398,7 @@ double _deriv_callback(expr_t *expr, int argc, double *args) {
     double sampling_interval = args[1];
     double result = 0;
 
-    if (expr->aux) { /* not the very first expression eval call */
+    if (expr->aux) { /* Not the very first expression eval call */
         uint32 delta_time_ms = time_ms - expr->aux;
         if (delta_time_ms < sampling_interval) {
             return UNDEFINED;
@@ -420,7 +420,7 @@ double _integ_callback(expr_t *expr, int argc, double *args) {
     double sampling_interval = args[2];
     double result = accumulator;
 
-    if (expr->aux) { /* not the very first expression eval call */
+    if (expr->aux) { /* Not the very first expression eval call */
         uint32 delta_time_ms = time_ms - expr->aux;
         if (delta_time_ms < sampling_interval) {
             return UNDEFINED;
@@ -436,7 +436,7 @@ double _integ_callback(expr_t *expr, int argc, double *args) {
 }
 
 bool _filter_callback(expr_t *expr, int argc, double *args) {
-    if (argc < 1) { /* called from expr_free() */
+    if (argc < 1) { /* Called from expr_free() */
         if (expr->paux) {
             free(expr->paux);
             expr->paux = NULL;
@@ -451,7 +451,7 @@ bool _filter_callback(expr_t *expr, int argc, double *args) {
     int width = (int) args[1];
     int sampling_interval = args[2];
 
-    /* limit width to reasonable values */
+    /* Limit width to reasonable values */
     if (width > MAX_HIST_LEN) {
         width = MAX_HIST_LEN;
     }
@@ -459,7 +459,7 @@ bool _filter_callback(expr_t *expr, int argc, double *args) {
         width = 1;
     }
 
-    /* very first expression eval call */
+    /* Very first expression eval call */
     if (!expr->paux) {
         expr->paux = values = malloc(sizeof(double));
         expr->len = 1;
@@ -469,7 +469,7 @@ bool _filter_callback(expr_t *expr, int argc, double *args) {
         return TRUE;
     }
 
-    /* don't evaluate if below sampling interval */
+    /* Don't evaluate if below sampling interval */
     int32 delta_ms = time_ms - expr->aux;
     if (delta_ms < sampling_interval) {
         return FALSE;
@@ -479,18 +479,18 @@ bool _filter_callback(expr_t *expr, int argc, double *args) {
 
     int extra = expr->len - width + 1;
     bool resized = FALSE;
-    if (extra > 0) { /* drop extra elements from queue */
+    if (extra > 0) { /* Drop extra elements from queue */
         for (i = 0; i < expr->len - extra; i++) {
             values[i] = values[i + extra];
         }
 
-        /* shrink history if width decreased */
+        /* Shrink history if width decreased */
         if (expr->len > width) {
             expr->len = width;
             resized = TRUE;
         }
     }
-    else { /* grow history for another element */
+    else { /* Grow history for another element */
         expr->len++;
         resized = TRUE;
     }
@@ -508,7 +508,7 @@ double _fmavg_callback(expr_t *expr, int argc, double *args) {
         return UNDEFINED;
     }
 
-    /* apply moving average filter */
+    /* Apply moving average filter */
     int i;
     double s = 0;
     double *values = expr->paux;
@@ -524,16 +524,16 @@ double _fmedian_callback(expr_t *expr, int argc, double *args) {
         return UNDEFINED;
     }
 
-    /* when dealing with less than 3 values, simply return the first one */
+    /* When dealing with less than 3 values, simply return the first one */
     if (expr->len < 3) {
         return ((double *) expr->paux)[0];
     }
 
-    /* copy the values to a temporary buffer, so that they can be sorted out-of-place */
+    /* Copy the values to a temporary buffer, so that they can be sorted out-of-place */
     double *values = malloc(sizeof(double) * expr->len);
     memcpy(values, expr->paux, sizeof(double) * expr->len);
 
-    /* apply median filter */
+    /* Apply median filter */
     qsort(values, expr->len, sizeof(double), compare_double);
     double result = values[expr->len / 2];
     free(values);
@@ -546,7 +546,7 @@ double _acc_callback(expr_t *expr, int argc, double *args) {
     double accumulator = args[1];
     double result = accumulator;
 
-    if (!IS_UNDEFINED(expr->value)) { /* not the very first expression eval call */
+    if (!IS_UNDEFINED(expr->value)) { /* Not the very first expression eval call */
         result += value - expr->value;
     }
 
@@ -562,7 +562,7 @@ double _hyst_callback(expr_t *expr, int argc, double *args) {
 
     /* expr->value is used as last value */
 
-    if (IS_UNDEFINED(expr->value)) { /* very first expression eval call */
+    if (IS_UNDEFINED(expr->value)) { /* Very first expression eval call */
         expr->value = 0;
     }
 
@@ -577,22 +577,22 @@ double _sequence_callback(expr_t *expr, int argc, double *args) {
     double result = args[0];
     int delta = time_ms - expr->aux;
 
-    if (!expr->aux || delta < 0) { /* very first expression eval call or system time overflow */
+    if (!expr->aux || delta < 0) { /* Very first expression eval call or system time overflow */
         /* aux flag is used to store the initial reference time, in milliseconds */
         expr->aux = time_ms;
     }
     else {
-        int num_values = argc / 2; /* we have pairs of values and delays */
+        int num_values = argc / 2; /* We have pairs of values and delays */
         int i, delay_so_far = 0, total_delay = 0;
 
-        /* compute the total delay */
+        /* Compute the total delay */
         for (i = 0; i < num_values; i++) {
             if (2 * i + 1 < argc) {
                 total_delay += args[2 * i + 1];
             }
         }
 
-        /* always work modulo total_delay, to create repeat effect */
+        /* Always work modulo total_delay, to create repeat effect */
         delta = delta % (int) total_delay;
 
         for (i = 0; i < num_values; i++) {
@@ -741,13 +741,13 @@ expr_t *parse_port_id_expr(char *port_id, char *input) {
     char *s = input;
     
     if (input[0] && !isalpha((int) input[0]) && input[0] != '_') {
-        DEBUG_EXPR("invalid port identifier %s", input);
+        DEBUG_EXPR("invalid port identifier \"%s\"", input);
         return NULL;
     }
 
     while ((c = *s++)) {
         if (!isalnum((int) c) && c != '_' && c != '-') {
-            DEBUG_EXPR("invalid port identifier %s", input);
+            DEBUG_EXPR("invalid port identifier \"%s\"", input);
             return NULL;
         }
     }
@@ -758,7 +758,7 @@ expr_t *parse_port_id_expr(char *port_id, char *input) {
     if (*input) {
         expr->port_id = strdup(input);
     }
-    else { /* reference to port itself */
+    else { /* Reference to port itself */
         expr->port_id = strdup(port_id);
     }
 
@@ -777,7 +777,7 @@ expr_t *parse_const_expr(char *input) {
         char *error;
         double value = strtod(input, &error);
         if (error[0]) {
-            DEBUG_EXPR("invalid token %s", input);
+            DEBUG_EXPR("invalid token \"%s\"", input);
             return NULL;
         }
 
@@ -794,13 +794,12 @@ int check_loops_rec(port_t *the_port, int level, expr_t *expr) {
 
     if (expr->port_id) {
         if ((port = port_find_by_id(expr->port_id))) {
-            /* a loop is detected when we stumble upon the initial port
-             * at a level deeper than 1 */
+            /* A loop is detected when we stumble upon the initial port at a level deeper than 1 */
             if (port == the_port && level > 1) {
                 return level;
             }
 
-            /* avoid visiting the same port twice */
+            /* Avoid visiting the same port twice */
             if (port->aux) {
                 return 0;
             }
@@ -842,7 +841,7 @@ expr_t *expr_parse(char *port_id, char *input, int len) {
     int i, argc = 0;
     char *argp[MAX_ARGS + 1];
 
-    /* skip leading whitespace */
+    /* Skip leading whitespace */
     while (*s && isspace((int) *s) && pos < len) {
         s++;
         pos++;
@@ -855,7 +854,7 @@ expr_t *expr_parse(char *port_id, char *input, int len) {
         pos++;
     }
 
-    /* find beginning and end of function arguments */
+    /* Find beginning and end of function arguments */
     while ((c = *s) && pos < len) {
         if (c == '(') {
             level++;
@@ -893,18 +892,18 @@ expr_t *expr_parse(char *port_id, char *input, int len) {
         pos++;
     }
 
-    if (b) { /* function call */
+    if (b) { /* Function call */
         if (!e) {
             DEBUG_EXPR("unexpected end of expression");
             return NULL;
         }
 
         if (!isalnum((int) name[0])) {
-            DEBUG_EXPR("invalid function name %s", name);
+            DEBUG_EXPR("invalid function name \"%s\"", name);
             return NULL;
         }
         
-        if (e < b) { /* special no arguments case */
+        if (e < b) { /* Special no arguments case */
             argc = 0;
         }
 
@@ -912,7 +911,7 @@ expr_t *expr_parse(char *port_id, char *input, int len) {
 
         for (i = 0; i < argc; i++) {
             if (!(args[i] = expr_parse(port_id, argp[i] + 1, argp[i + 1] - argp[i] - 1))) {
-                /* an error occurred, free everything and give up */
+                /* An error occurred, free everything and give up */
                 while (i > 0) expr_free(args[--i]);
                 return NULL;
             }
@@ -920,13 +919,13 @@ expr_t *expr_parse(char *port_id, char *input, int len) {
 
         func_t *func = find_func_by_name(name);
         if (!func) {
-            DEBUG_EXPR("no such function %s", name);
+            DEBUG_EXPR("no such function \"%s\"", name);
             while (argc > 0) expr_free(args[--argc]);
             return NULL;
         }
         
         if ((func->argc >= 0 && func->argc != argc) || (func->argc < 0 && -func->argc > argc)) {
-            DEBUG_EXPR("invalid number of arguments to function %s", name);
+            DEBUG_EXPR("invalid number of arguments to function \"%s\"", name);
             while (argc > 0) expr_free(args[--argc]);
             return NULL;
         }
@@ -945,29 +944,29 @@ expr_t *expr_parse(char *port_id, char *input, int len) {
         return expr;
     }
     else {
-        if (name[0] == '$') { /* port id */
+        if (name[0] == '$') { /* Port id */
             return parse_port_id_expr(port_id, name + 1);
         }
-        else { /* constant */
+        else { /* Constant */
             return parse_const_expr(name);
         }
     }
 }
 
 double expr_eval(expr_t *expr) {
-    if (expr->func) { /* function */
+    if (expr->func) { /* Function */
         int i;
         double eval_args[expr->argc];
         for (i = 0; i < expr->argc; i++) {
             if (IS_UNDEFINED(eval_args[i] = expr_eval(expr->args[i]))) {
-                /* if any of the inner expressions is undefined, the outer expression itself is undefined */
+                /* If any of the inner expressions is undefined, the outer expression itself is undefined */
                 return UNDEFINED;
             }
         }
 
         return ((func_t *) expr->func)->callback(expr, expr->argc, eval_args);
     }
-    else if (expr->port_id) { /* port value */
+    else if (expr->port_id) { /* Port value */
         port_t *port = port_find_by_id(expr->port_id);
         if (port && IS_ENABLED(port)) {
             return port->value;
@@ -976,7 +975,7 @@ double expr_eval(expr_t *expr) {
             return UNDEFINED;
         }
     }
-    else { /* assuming constant */
+    else { /* Assuming constant */
         return expr->value;
     }
 }
@@ -1001,7 +1000,7 @@ void expr_free(expr_t *expr) {
 int expr_check_loops(expr_t *expr, struct port *the_port) {
     port_t *p, **port = all_ports;
     
-    /* initialize aux (seen) flag */
+    /* Initialize aux (seen) flag */
     while ((p = *port++)) {
         p->aux = 0;
     }

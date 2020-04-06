@@ -34,7 +34,7 @@
 #define DEVICE_FLAG_CONFIGURED          0x00000008
 
 
-extern char                             device_hostname[];
+extern char                             device_name[];
 extern char                             device_admin_password_hash[];
 extern char                             device_normal_password_hash[];
 extern char                             device_viewonly_password_hash[];

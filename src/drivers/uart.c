@@ -53,24 +53,24 @@
 
 
 void uart_setup(uint8 uart_no, uint32 baud, uint8 parity, uint8 stop_bits) {
-    /* baud rate */
+    /* Baud rate */
     uart_div_modify(uart_no, UART_CLK_FREQ / baud);
 
-    /* parity */
+    /* Parity */
     CLEAR_PERI_REG_MASK(UART_CONF0(uart_no), UART_PARITY | UART_PARITY_EN);
     if (parity != UART_PARITY_NONE) {
         SET_PERI_REG_MASK(UART_CONF0(uart_no), parity | UART_PARITY_EN);
     }
 
-    /* stop bits */
+    /* Stop bits */
     SET_PERI_REG_BITS(UART_CONF0(uart_no), UART_STOP_BIT_NUM, stop_bits, UART_STOP_BIT_NUM_S);
 
-    /* set GPIO rx/tx functions */
+    /* Set GPIO rx/tx functions */
     if (uart_no == 0) {
         PIN_FUNC_SELECT(gpio_get_mux(1), FUNC_U0TXD);
         PIN_FUNC_SELECT(gpio_get_mux(3), FUNC_U0RXD);
     }
-    else { /* assuming uart == 1 */
+    else { /* Assuming uart == 1 */
         PIN_FUNC_SELECT(gpio_get_mux(2), FUNC_U1TXD_BK);
         /* UART1 has no rx pin */
     }
@@ -93,7 +93,7 @@ uint16 uart_read(uint8 uart_no, uint8 *buff, uint16 max_len, uint32 timeout_us) 
             if (got < max_len) {
                 buff[got++] = c;
             }
-            else { /* continue reading all available bytes, but discard them */
+            else { /* Continue reading all available bytes, but discard them */
                 discarded++;
             }
         }
@@ -104,7 +104,7 @@ uint16 uart_read(uint8 uart_no, uint8 *buff, uint16 max_len, uint32 timeout_us) 
 
 #if defined(_DEBUG_UART) && defined(_DEBUG)
     uint32 duration = system_uptime_us() - start;
-    char *buff_hex_str = malloc(got * 3 + 1); /* two digits + one space for each byte, plus one NULL terminator */
+    char *buff_hex_str = malloc(got * 3 + 1); /* Two digits + one space for each byte, plus one NULL terminator */
     char *p = buff_hex_str;
     uint16 i;
     buff_hex_str[0] = 0;
@@ -130,9 +130,9 @@ uint16 uart_write(uint8 uart_no, uint8 *buff, uint16 len, uint32 timeout_us) {
         while (TRUE) {
             fifo_count = READ_PERI_REG(UART_STATUS(uart_no)) & (UART_TXFIFO_CNT << UART_TXFIFO_CNT_S);
             if (fifo_count < 126) {
-                break; /* enough room for another byte */
+                break; /* Enough room for another byte */
             }
-            if (system_uptime_us() - start > timeout_us) { /* timeout */
+            if (system_uptime_us() - start > timeout_us) { /* Timeout */
                 timeout = TRUE;
                 break;
             }
@@ -144,7 +144,7 @@ uint16 uart_write(uint8 uart_no, uint8 *buff, uint16 len, uint32 timeout_us) {
 
 #if defined(_DEBUG_UART) && defined(_DEBUG)
     uint32 duration = system_uptime_us() - start;
-    char *buff_hex_str = malloc(written * 3 + 1); /* two digits + one space for each byte, plus one NULL terminator */
+    char *buff_hex_str = malloc(written * 3 + 1); /* Two digits + one space for each byte, plus one NULL terminator */
     char *p = buff_hex_str;
     buff_hex_str[0] = 0;
     for (i = 0; i < written; i++) {
@@ -164,7 +164,7 @@ void uart_write_char(uint8 uart_no, char c) {
     while (TRUE) {
         fifo_count = READ_PERI_REG(UART_STATUS(uart_no)) & (UART_TXFIFO_CNT << UART_TXFIFO_CNT_S);
         if (fifo_count < 126) {
-            break; /* enough room for another byte */
+            break; /* Enough room for another byte */
         }
     }
 

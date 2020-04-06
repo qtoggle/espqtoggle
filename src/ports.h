@@ -38,10 +38,10 @@
 #define PORT_MAX_DISP_NAME_LEN          64
 #define PORT_MAX_UNIT_LEN               16
 
-#define PORT_MAX_SAMP_INT               86400000    /* milliseconds */
-#define PORT_DEF_SAMP_INT               0           /* milliseconds */
+#define PORT_MAX_SAMP_INT               86400000    /* Milliseconds */
+#define PORT_DEF_SAMP_INT               0           /* Milliseconds */
 
-#define PORT_DEF_HEART_BEAT_INT         0           /* milliseconds */
+#define PORT_DEF_HEART_BEAT_INT         0           /* Milliseconds */
 
 #define PORT_TYPE_BOOLEAN               'B'
 #define PORT_TYPE_NUMBER                'N'
@@ -121,33 +121,33 @@ typedef struct attrdef {
 
 typedef struct port {
 
-    int8            slot;               /* slot number */
-    double          value;              /* current value */
+    int8            slot;               /* Slot number */
+    double          value;              /* Current value */
 
-    char            change_reason;      /* last value change reason */
-    uint64          change_dep_mask;    /* port change dependency mask */
-    uint32          mutual_excl_mask;   /* mask for ports that cannot be simultaneously enabled */
+    char            change_reason;      /* Last value change reason */
+    uint64          change_dep_mask;    /* Port change dependency mask */
+    uint32          mutual_excl_mask;   /* Mask for ports that cannot be simultaneously enabled */
 
-    int             aux;                /* flag used internally for dependency loops & more */
-    int8            mapped;             /* flag used for mapping (e.g. pwm channel) */
+    int             aux;                /* Flag used internally for dependency loops & more */
+    int8            mapped;             /* Flag used for mapping (e.g. pwm channel) */
     uint8           extra_data[PORT_PERSISTED_EXTRA_DATA_LEN];
-    void          * extra_info;         /* in-memory extra state */
+    void          * extra_info;         /* In-memory extra state */
 
-    /* sampling */
+    /* Sampling */
     uint32          sampling_interval;
-    int64           last_sample_time;   /* in milliseconds, since boot */
+    int64           last_sample_time;   /* In milliseconds, since boot */
     uint32          min_sampling_interval;
     uint32          max_sampling_interval;
     uint32          def_sampling_interval;
 
-    /* value constraints */
+    /* Value constraints */
     double          min;
     double          max;
     bool            integer;
     double          step;
     char         ** choices;
 
-    /* expressions */
+    /* Expressions */
     expr_t        * expr;
     char          * sexpr;
     expr_t        * transform_write;
@@ -155,7 +155,7 @@ typedef struct port {
     expr_t        * transform_read;
     char          * stransform_read;
     
-    /* sequence */
+    /* Sequence */
     os_timer_t      sequence_timer;
     int16           sequence_len;
     int16           sequence_pos;
@@ -163,24 +163,24 @@ typedef struct port {
     double        * sequence_values;
     int           * sequence_delays;
 
-    /* common attributes */
+    /* Common attributes */
     char            id[PORT_MAX_ID_LEN + 1];
     char          * display_name;
     char            type;
     char          * unit;
     int             flags;
     
-    /* heart beat */
+    /* Heart beat */
     int             heart_beat_interval;
-    long long       last_heart_beat_time;   /* in milliseconds, since boot */
+    long long       last_heart_beat_time;   /* In milliseconds, since boot */
 
-    /* callbacks */
+    /* Callbacks */
     double          (* read_value)(struct port *port);
     bool            (* write_value)(struct port *port, double value);
     void            (* configure)(struct port *port);
     void            (* heart_beat)(struct port *port);
 
-    /* extra attribute definitions */
+    /* Extra attribute definitions */
     attrdef_t    ** attrdefs;
 
 } port_t;

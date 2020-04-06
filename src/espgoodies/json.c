@@ -69,7 +69,7 @@ json_t *json_parse(char *input) {
     ctx_t *ctx = ctx_new(input);
     json_t *json, *root = NULL;
 
-    /* remove all whitespace at the end of input */
+    /* Remove all whitespace at the end of input */
     while (isspace((int) input[length - 1])) {
         length--;
     }
@@ -77,7 +77,7 @@ json_t *json_parse(char *input) {
     while (pos < length) {
         c = input[pos];
 
-        /* if root already popped, we don't expect any more characters */
+        /* If root already popped, we don't expect any more characters */
         if (root) {
             DEBUG("unexpected character %c at pos %d", c, pos);
             json_free(root);
@@ -95,7 +95,7 @@ json_t *json_parse(char *input) {
 
                 ctx_push(ctx, json_obj_new());
 
-                /* waiting for a key, not an element */
+                /* Waiting for a key, not an element */
                 waiting_elem = FALSE;
 
                 pos++;
@@ -176,12 +176,12 @@ json_t *json_parse(char *input) {
             case '\n':
             case '\r':
             case '\t':
-                /* skip whitespace */
+                /* Skip whitespace */
                 pos++;
                 break;
 
             case '"':
-                /* parse a string, which can be either a standalone string element or an object key */
+                /* Parse a string, which can be either a standalone string element or an object key */
 
                 json = ctx_get_current(ctx);
                 if (json && json_get_type(json) == JSON_TYPE_OBJ) {
@@ -191,7 +191,7 @@ json_t *json_parse(char *input) {
                         return NULL;
                     }
                 }
-                else { /* no parent or not an object */
+                else { /* No parent or not an object */
                     if (!waiting_elem) {
                         DEBUG("unexpected character %c at pos %d", c, pos);
                         ctx_free(ctx);
@@ -209,7 +209,7 @@ json_t *json_parse(char *input) {
                     c = input[i];
                     switch (c) {
                         case '\\':
-                            /* escape codes */
+                            /* Escape codes */
                             if (i < length - 1) {
                                 c2 = input[i + 1];
                                 i++;
@@ -269,7 +269,7 @@ json_t *json_parse(char *input) {
                                         }
                                 }
                             }
-                            else { /* the last char in input string is a backslash */
+                            else { /* The last char in input string is a backslash */
                                 if (sl < JSON_MAX_VALUE_LEN) {
                                     s[sl] = '\\'; s[++sl] = 0;
                                 }
@@ -278,13 +278,13 @@ json_t *json_parse(char *input) {
                             break;
 
                         case '"':
-                            /* string end */
+                            /* String end */
                             pos = i + 1;
                             end_found = TRUE;
                             break;
 
                         default:
-                            /* regular character inside string */
+                            /* Regular character inside string */
                             if (sl < JSON_MAX_VALUE_LEN) {
                                 s[sl] = c; s[++sl] = 0;
                             }
@@ -300,10 +300,10 @@ json_t *json_parse(char *input) {
                 json = ctx_get_current(ctx);
                 if (json) {
                     if (json_get_type(json) == JSON_TYPE_OBJ) {
-                        if (ctx_has_key(ctx)) { /* string is a value */
+                        if (ctx_has_key(ctx)) { /* String is a value */
                             ctx_add(ctx, json_str_new(s));
                         }
-                        else { /* string is a key */
+                        else { /* String is a key */
                             ctx_set_key(ctx, s);
                         }
                     }
@@ -316,7 +316,7 @@ json_t *json_parse(char *input) {
                         return NULL;
                     }
                 }
-                else { /* root element is a string */
+                else { /* Root element is a string */
                     ctx_add(ctx, json_str_new(s));
                 }
 
@@ -341,7 +341,7 @@ json_t *json_parse(char *input) {
                         i++;
                     }
 
-                    point_seen = FALSE; /* one single point allowed in numerals */
+                    point_seen = FALSE; /* One single point allowed in numerals */
                     while (i < length) {
                         c = input[i];
                         if (c == '.') {
@@ -404,7 +404,7 @@ json_t *json_parse(char *input) {
 
         root = ctx_pop(ctx);
         if (json_get_type(root) == JSON_TYPE_LIST || json_get_type(root) == JSON_TYPE_OBJ) {
-            /* list and object roots should have already been popped as soon as closing brackets were encountered */
+            /* List and object roots should have already been popped as soon as closing brackets were encountered */
             json_free(root);
             DEBUG("unbalanced brackets");
             ctx_free(ctx);
@@ -448,7 +448,7 @@ char *json_dump_r(json_t *json, uint8 free_mode) {
 
 void json_stringify(json_t *json) {
     if (json->type == JSON_TYPE_STRINGIFIED) {
-        return; /* already stringified */
+        return; /* Already stringified */
     }
 
     char *stringified = json_dump_r(json, /* free_mode = */ JSON_FREE_MEMBERS);
@@ -774,7 +774,7 @@ void json_dump_rec(json_t *json, char **output, int *len, int *size, uint8 free_
 
         case JSON_TYPE_STR:
             s2 = json_str_get(json);
-            l = 2; /* for the two quotes */
+            l = 2; /* For the two quotes */
             while ((c = *s2++)) {
                 if (c == '"' || c == '\\' || c == '\b' || c == '\f' || c == '\n' || c == '\r' || c == '\t') {
                     l += 2;
@@ -1003,21 +1003,21 @@ bool ctx_add(ctx_t *ctx, json_t *json) {
     json_t *current = ctx->stack[ctx->stack_size - 1].json;
     if (current->type == JSON_TYPE_LIST) {
         if (ctx_has_key(ctx)) {
-            return FALSE; /* refuse to add to list if key is set */
+            return FALSE; /* Refuse to add to list if key is set */
         }
 
         json_list_append(current, json);
     }
     else if (current->type == JSON_TYPE_OBJ) {
         if (!ctx_has_key(ctx)) {
-            return FALSE; /* refuse to add to object if key is unset */
+            return FALSE; /* Refuse to add to object if key is unset */
         }
 
         json_obj_append(current, ctx_get_key(ctx), json);
         ctx_clear_key(ctx);
     }
     else {
-        return FALSE; /* cannot add child to to primitive element */
+        return FALSE; /* Cannot add child to to primitive element */
     }
 
     return TRUE;
@@ -1031,11 +1031,11 @@ void ctx_push(ctx_t *ctx, json_t *json) {
 
 json_t *ctx_pop(ctx_t *ctx) {
     if (ctx->stack_size == 0) {
-        return NULL; /* shouldn't happen */
+        return NULL; /* Shouldn't happen */
     }
 
     if (ctx->stack_size == 1) {
-        /* when popping root element, return it */
+        /* When popping root element, return it */
         ctx->stack_size--;
         json_t *root = ctx->stack[0].json;
         if (ctx->stack[0].key) {
@@ -1050,24 +1050,24 @@ json_t *ctx_pop(ctx_t *ctx) {
     json_t *current = ctx->stack[ctx->stack_size - 1].json;
     ctx->stack = realloc(ctx->stack, sizeof(stack_t) * (--ctx->stack_size));
 
-    /* add popped element to parent */
+    /* Add popped element to parent */
     ctx_add(ctx, current);
 
-    /* return NULL to indicated that popped element has been added to parent */
+    /* Return NULL to indicated that popped element has been added to parent */
     return NULL;
 }
 
 void ctx_free(ctx_t *ctx) {
     if (ctx->stack_size) {
-        /* will free all JSON elements in hierarchy */
+        /* Will free all JSON elements in hierarchy */
         json_free(ctx->stack[0].json);
 
-        /* current element is not part of hierarchy */
+        /* Current element is not part of hierarchy */
         if (ctx->stack_size > 1) {
             json_free(ctx->stack[ctx->stack_size - 1].json);
         }
 
-        /* free keys */
+        /* Free keys */
         int i;
         for (i = 0; i < ctx->stack_size; i++) {
             if (ctx->stack[i].key) {

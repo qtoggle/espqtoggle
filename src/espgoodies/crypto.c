@@ -148,7 +148,7 @@ uint8 *hmac_sha256(uint8 *data, int data_len, uint8 *key, int key_len) {
 
     memset(buffer, 0, HMAC_SHA256_BLOCK_LEN);
 
-    /* if key is larger than a block, we have to hash it */
+    /* If key is larger than a block, we have to hash it */
     if (key_len > HMAC_SHA256_BLOCK_LEN) {
         digest = sha256(key, key_len);
         memcpy(buffer, digest, SHA256_LEN);
@@ -209,51 +209,51 @@ char *b64_encode(uint8 *data, int len, bool padding) {
     uint8 buf[4];
     uint8 tmp[3];
 
-    /* parse until end of source */
+    /* Parse until end of source */
     while (len--) {
-        /* read up to 3 bytes at a time into tmp */
+        /* Read up to 3 bytes at a time into tmp */
         tmp[i++] = *(data++);
 
-        /* if 3 bytes read then encode into but */
+        /* If 3 bytes read then encode into but */
         if (i == 3) {
             buf[0] = (tmp[0] & 0xfc) >> 2;
             buf[1] = ((tmp[0] & 0x03) << 4) + ((tmp[1] & 0xf0) >> 4);
             buf[2] = ((tmp[1] & 0x0f) << 2) + ((tmp[2] & 0xc0) >> 6);
             buf[3] = tmp[2] & 0x3f;
 
-            /* allocate 4 new bytes for enc and then translate each encoded buffer
-             * part by index from the base 64 index table into enc unsigned char array */
+            /* Allocate 4 new bytes for enc and then translate each encoded buffer part by index from the base 64 index
+             * table into enc unsigned char array */
             enc = realloc(enc, size + 4);
             for (i = 0; i < 4; i++) {
                 enc[size++] = b64_table[buf[i]];
             }
 
-            /*reset index */
+            /* Reset index */
             i = 0;
         }
     }
 
-    /* remainder */
+    /* Remainder */
     if (i > 0) {
-        /* fill tmp with 0 at most 3 times */
+        /* Fill tmp with 0 at most 3 times */
         for (j = i; j < 3; j++) {
             tmp[j] = 0;
         }
 
-        /* perform same codec as above */
+        /* Perform same codec as above */
         buf[0] = (tmp[0] & 0xfc) >> 2;
         buf[1] = ((tmp[0] & 0x03) << 4) + ((tmp[1] & 0xf0) >> 4);
         buf[2] = ((tmp[1] & 0x0f) << 2) + ((tmp[2] & 0xc0) >> 6);
         buf[3] = tmp[2] & 0x3f;
 
-        /* perform same write to enc with new allocation */
+        /* Perform same write to enc with new allocation */
         for (j = 0; (j < i + 1); j++) {
             enc = realloc(enc, size + 1);
             enc[size++] = b64_table[buf[j]];
         }
 
         if (padding) {
-            /* while there is still a remainder, append = to enc */
+            /* While there is still a remainder, append = to enc */
             while ((i++ < 3)) {
                 enc = realloc(enc, size + 1);
                 enc[size++] = '=';
@@ -261,7 +261,7 @@ char *b64_encode(uint8 *data, int len, bool padding) {
         }
     }
 
-    /* make sure we have enough space to add 0 character at end */
+    /* Make sure we have enough space to add 0 character at end */
     enc = realloc(enc, size + 1);
     enc[size] = '\0';
 
@@ -279,9 +279,9 @@ uint8 *b64_decode(char *s) {
 
   dec = malloc(1);
 
-    /* parse until end of source */
+    /* Parse until end of source */
     while (len--) {
-        /* break if char is = or not base64 char */
+        /* Break if char is = or not base64 char */
         if (s[j] == '=') {
             break;
         }
@@ -290,14 +290,14 @@ uint8 *b64_decode(char *s) {
             break;
         }
 
-        /* read up to 4 bytes at a time into tmp */
+        /* Read up to 4 bytes at a time into tmp */
         tmp[i++] = s[j++];
 
-        /* if 4 bytes read then decode into buf **/
+        /* If 4 bytes read then decode into buf **/
         if (i == 4) {
-            /* translate values in tmp from table */
+            /* Translate values in tmp from table */
             for (i = 0; i < 4; i++) {
-                /* find translation char in b64_table */
+                /* Find translation char in b64_table */
                 for (l = 0; l < 64; l++) {
                     if (tmp[i] == b64_table[l]) {
                         tmp[i] = l;
@@ -306,32 +306,32 @@ uint8 *b64_decode(char *s) {
                 }
             }
 
-            /* decode */
+            /* Decode */
             buf[0] = (tmp[0] << 2) + ((tmp[1] & 0x30) >> 4);
             buf[1] = ((tmp[1] & 0xf) << 4) + ((tmp[2] & 0x3c) >> 2);
             buf[2] = ((tmp[2] & 0x3) << 6) + tmp[3];
 
-            /* write decoded buffer to dec */
+            /* Write decoded buffer to dec */
             dec = realloc(dec, size + 3);
             for (i = 0; i < 3; i++) {
                 dec[size++] = buf[i];
             }
 
-            /* reset */
+            /* Reset */
             i = 0;
         }
     }
 
-    /* remainder */
+    /* Remainder */
     if (i > 0) {
-        /* fill tmp with 0 at most 4 times */
+        /* Fill tmp with 0 at most 4 times */
         for (j = i; j < 4; ++j) {
             tmp[j] = 0;
         }
 
-        /* translate remainder */
+        /* Translate remainder */
         for (j = 0; j < 4; j++) {
-            /* find translation char in b64_table */
+            /* Find translation char in b64_table */
             for (l = 0; l < 64; l++) {
                 if (tmp[j] == b64_table[l]) {
                     tmp[j] = l;
@@ -340,19 +340,19 @@ uint8 *b64_decode(char *s) {
             }
         }
 
-        /* decode remainder */
+        /* Decode remainder */
         buf[0] = (tmp[0] << 2) + ((tmp[1] & 0x30) >> 4);
         buf[1] = ((tmp[1] & 0xf) << 4) + ((tmp[2] & 0x3c) >> 2);
         buf[2] = ((tmp[2] & 0x3) << 6) + tmp[3];
 
-        /* write remainder decoded buffer to dec */
+        /* Write remainder decoded buffer to dec */
         dec = realloc(dec, size + (i - 1));
         for (j = 0; (j < i - 1); j++) {
             dec[size++] = buf[j];
         }
     }
 
-    /* make sure we have enough space to add 0 character at end */
+    /* Make sure we have enough space to add 0 character at end */
     dec = realloc(dec, size + 1);
     dec[size] = 0;
 
@@ -424,7 +424,7 @@ void sha1_transform(uint32 state[5], uint8 buffer[64]) {
     CHAR64LONG16 block[1];
     memcpy(block, buffer, 64);
 
-    /* copy state to working vars */
+    /* Copy state to working vars */
     a = state[0];
     b = state[1];
     c = state[2];
@@ -453,14 +453,14 @@ void sha1_transform(uint32 state[5], uint8 buffer[64]) {
     R4(d,e,a,b,c,72); R4(c,d,e,a,b,73); R4(b,c,d,e,a,74); R4(a,b,c,d,e,75);
     R4(e,a,b,c,d,76); R4(d,e,a,b,c,77); R4(c,d,e,a,b,78); R4(b,c,d,e,a,79);
 
-    /* add the working vars back into state */
+    /* Add the working vars back into state */
     state[0] += a;
     state[1] += b;
     state[2] += c;
     state[3] += d;
     state[4] += e;
 
-    /* wipe variables */
+    /* Wipe variables */
     a = b = c = d = e = 0;
 
     memset(block, 0, sizeof(block));
@@ -504,7 +504,7 @@ uint8 *sha1_final(uint32 state[5], uint8 buffer[64], uint32 count[2]) {
         c = 0000;
         sha1_update(state, buffer, count, &c, 1);
     }
-    sha1_update(state, buffer, count, final_count, 8);  /* should cause a sha1_transform() */
+    sha1_update(state, buffer, count, final_count, 8);  /* Should cause a sha1_transform() */
     for (i = 0; i < SHA1_LEN; i++) {
         digest[i] = (uint8) ((state[i >> 2] >> ((3 - (i & 3)) * 8) ) & 255);
     }
@@ -587,7 +587,7 @@ uint8 *sha256_final(sha256_ctx_t *ctx) {
 
     i = ctx->datalen;
 
-    /* pad whatever data is left in the buffer */
+    /* Pad whatever data is left in the buffer */
     if (ctx->datalen < 56) {
         ctx->data[i++] = 0x80;
         while (i < 56) {
@@ -603,7 +603,7 @@ uint8 *sha256_final(sha256_ctx_t *ctx) {
         memset(ctx->data, 0, 56);
     }
 
-    /* append to the padding the total message's length in bits and transform */
+    /* Append to the padding the total message's length in bits and transform */
     ctx->bitlen += ctx->datalen * 8;
     ctx->data[63] = ctx->bitlen;
     ctx->data[62] = ctx->bitlen >> 8;
@@ -615,8 +615,8 @@ uint8 *sha256_final(sha256_ctx_t *ctx) {
     ctx->data[56] = ctx->bitlen >> 56;
     sha256_transform(ctx, ctx->data);
 
-    /* since this implementation uses little endian byte ordering and SHA uses big endian,
-     * reverse all the bytes when copying the final state to the output hash */
+    /* Since this implementation uses little endian byte ordering and SHA uses big endian, reverse all the bytes when
+     * copying the final state to the output hash */
     for (i = 0; i < 4; i++) {
         digest[i]      = (ctx->state[0] >> (24 - i * 8)) & 0x000000ff;
         digest[i + 4]  = (ctx->state[1] >> (24 - i * 8)) & 0x000000ff;

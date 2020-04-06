@@ -20,11 +20,12 @@
 #include <user_interface.h>
 
 #include "espgoodies/common.h"
-#include "espgoodies/json.h"
+#include "espgoodies/crypto.h"
 #include "espgoodies/httpclient.h"
 #include "espgoodies/httputils.h"
-#include "espgoodies/crypto.h"
+#include "espgoodies/json.h"
 #include "espgoodies/jwt.h"
+#include "espgoodies/wifi.h"
 
 #ifdef _OTA
 #include "espgoodies/ota.h"
@@ -83,13 +84,13 @@ void webhooks_push_event(int type, char *port_id) {
 
         n = pn = queue;
 
-        /* find the oldest (first pushed, last in queue) event */
+        /* Find the oldest (first pushed, last in queue) event */
         while (n && n->next) {
             pn = n;
             n = n->next;
         }
 
-        /* drop the queued event */
+        /* Drop the queued event */
         event_free(n->event);
         free(n);
         pn->next = NULL;
@@ -106,8 +107,7 @@ void webhooks_push_event(int type, char *port_id) {
 
     DEBUG_WEBHOOKS("pushing event of type \"%s\" (queue size=%d)", EVENT_TYPES_STR[type], queue_len);
 
-    /* if this is the only item in queue,
-     * we need to start the processing */
+    /* If this is the only item in queue, we need to start the processing */
     if (queue_len == 1) {
         process_queue();
     }
@@ -119,15 +119,14 @@ void process_queue() {
         return;
     }
 
-    /* don't process webhooks queue while performing OTA */
+    /* Don't process webhooks queue while performing OTA */
 #ifdef _OTA
     if (ota_busy()) {
         return;
     }
 #endif
 
-    bool connected = wifi_station_get_connect_status() == STATION_GOT_IP;
-    if (!connected) {
+    if (!wifi_station_is_connected()) {
         DEBUG_WEBHOOKS("not connected, retrying in 1 second");
 
         process_queue_later();
@@ -136,7 +135,7 @@ void process_queue() {
 
     webhooks_queue_node_t *n = queue;
 
-    /* find the oldest (first pushed, last in queue) event */
+    /* Find the oldest (first pushed, last in queue) event */
     while (n && n->next) {
         n = n->next;
     }
@@ -157,11 +156,11 @@ void on_process_queue_later(void *arg) {
 }
 
 void do_webhook_request(event_t *event) {
-    /* make sure we have all the required parameters */
+    /* Make sure we have all the required parameters */
     if (!webhooks_host || !webhooks_path) {
         DEBUG_WEBHOOKS("some parameters are not configured");
 
-        /* manually call the callback */
+        /* Manually call the callback */
         on_webhook_response(/* body = */ NULL, /* body_len = */ 0, /* status = */ 200,
                             /* header_names = */ NULL, /* header_values = */ NULL, /* header_count = */ 0,
                             /* addr = */ NULL);
@@ -169,7 +168,7 @@ void do_webhook_request(event_t *event) {
         return;
     }
 
-    /* url */
+    /* URL */
     int url_len = 8; /* https:// */
     url_len += strlen(webhooks_host); /* www.example.com */
     url_len += 6; /* :65535 */
@@ -180,7 +179,7 @@ void do_webhook_request(event_t *event) {
              (device_flags & DEVICE_FLAG_WEBHOOKS_HTTPS) ? "https" : "http",
              webhooks_host, webhooks_port, webhooks_path);
 
-    /* add authorization header */
+    /* Add authorization header */
     json_t *claims = json_obj_new();
     json_obj_append(claims, "iss", json_str_new("qToggle"));
     json_obj_append(claims, "ori", json_str_new("device"));
@@ -200,14 +199,14 @@ void do_webhook_request(event_t *event) {
     json_refs_ctx_t json_refs_ctx;
     json_refs_ctx_init(&json_refs_ctx, JSON_REFS_TYPE_WEBHOOKS_EVENT);
 
-    /* body */
+    /* Body */
     json_t *event_json = event_to_json(event, &json_refs_ctx);
     if (event_json) {
         char *body = json_dump_r(event_json, /* free_mode = */ JSON_FREE_EVERYTHING);
 
         DEBUG_WEBHOOKS("request POST %s: %s", url, body);
 
-        /* actual request */
+        /* Actual request */
         httpclient_request("POST", url, (uint8 *) body, strlen(body), header_names, header_values, header_count,
                            on_webhook_response, webhooks_timeout);
     }
@@ -222,7 +221,7 @@ void on_webhook_response(char *body, int body_len, int status, char *header_name
 
     webhooks_queue_node_t *n = queue, *pn = NULL;
 
-    /* find the oldest (first pushed, last in queue) event */
+    /* Find the oldest (first pushed, last in queue) event */
     while (n && n->next) {
         pn = n;
         n = n->next;
@@ -233,17 +232,17 @@ void on_webhook_response(char *body, int body_len, int status, char *header_name
             DEBUG_WEBHOOKS("no more retries left");
         }
 
-        /* remove event from queue */
+        /* Remove event from queue */
         DEBUG_WEBHOOKS("removing event from queue");
 
-        /* free & remove the event */
+        /* Free & remove the event */
         event_free(n->event);
         free(n);
 
         if (pn) {
             pn->next = NULL;
         }
-        else {  /* last event in queue */
+        else {  /* Last event in queue */
             queue = NULL;
         }
 
@@ -253,7 +252,7 @@ void on_webhook_response(char *body, int body_len, int status, char *header_name
             process_queue();
         }
     }
-    else {  /* unsuccessful event, but retries left */
+    else {  /* Unsuccessful event, but retries left */
         DEBUG_WEBHOOKS("%d retries left, retrying (queue size=%d)", n->retries_left--, queue_len);
         process_queue_later();
     }

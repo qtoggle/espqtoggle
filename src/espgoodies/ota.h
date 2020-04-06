@@ -32,7 +32,7 @@
 #define OTA_STATE_RESTARTING    3
 
 
-/* version, date and url must be freed() by callback */
+/* Version, date and url must be freed() by callback */
 typedef void (*ota_latest_callback_t)(char *version, char *date, char *url);
 typedef void (*ota_perform_callback_t)(int code);
 

@@ -59,11 +59,7 @@ ICACHE_FLASH_ATTR void                  apply_port_provisioning_config(json_t *p
 
 void device_load(uint8 *data) {
     int frequency;
-    int wifi_scan_interval = 0, wifi_scan_threshold = 0;
     char *strings_ptr = (char *) data + CONFIG_OFFS_STR_BASE;
-    char wifi_ssid[WIFI_SSID_MAX_LEN];
-    uint8 wifi_bssid[WIFI_BSSID_LEN];
-    char wifi_psk[WIFI_PSK_MAX_LEN];
     ip_addr_t wifi_ip, wifi_gw, wifi_dns;
     uint8 wifi_netmask;
 
@@ -71,27 +67,27 @@ void device_load(uint8 *data) {
     uint16 wake_interval, wake_duration;
 #endif
 
-    /* device name */
-    memcpy(device_hostname, data + CONFIG_OFFS_HOSTNAME, API_MAX_DEVICE_NAME_LEN);
-    DEBUG_DEVICE("device hostname = \"%s\"", device_hostname);
+    /* Device name */
+    memcpy(device_name, data + CONFIG_OFFS_DEVICE_NAME, API_MAX_DEVICE_NAME_LEN);
+    DEBUG_DEVICE("device name = \"%s\"", device_name);
 
-    /* device display name */
-    memcpy(device_display_name, data + CONFIG_OFFS_DISP_NAME, API_MAX_DEVICE_DISP_NAME_LEN);
+    /* Device display_name */
+    memcpy(device_display_name, data + CONFIG_OFFS_DEVICE_DISP_NAME, API_MAX_DEVICE_DISP_NAME_LEN);
     DEBUG_DEVICE("device display_name = \"%s\"", device_display_name);
 
-    /* passwords */
+    /* Passwords */
     memcpy(device_admin_password_hash, data + CONFIG_OFFS_ADMIN_PASSWORD, SHA256_LEN);
     memcpy(device_normal_password_hash, data + CONFIG_OFFS_NORMAL_PASSWORD, SHA256_LEN);
     memcpy(device_viewonly_password_hash, data + CONFIG_OFFS_VIEWONLY_PASSWORD, SHA256_LEN);
 
-    /* transform default (null) password hashes into hashes of empty strings */
+    /* Transform default (null) password hashes into hashes of empty strings */
     char *hex_digest;
     if (!memcmp(device_admin_password_hash, NULL_HASH, SHA256_LEN)) {
         memcpy(device_admin_password_hash, EMPTY_SHA256_HEX, SHA256_HEX_LEN);
         DEBUG_DEVICE("empty admin password");
     }
     else {
-        /* passwords are stored as binary digest, must be converted to hex digest before use */
+        /* Passwords are stored as binary digest, must be converted to hex digest before use */
         hex_digest = bin2hex((uint8 *) device_admin_password_hash, SHA256_LEN);
         strncpy(device_admin_password_hash, hex_digest, SHA256_HEX_LEN + 1);
         free(hex_digest);
@@ -102,7 +98,7 @@ void device_load(uint8 *data) {
         DEBUG_DEVICE("empty normal password");
     }
     else {
-        /* passwords are stored as binary digest, must be converted to hex digest before use */
+        /* Passwords are stored as binary digest, must be converted to hex digest before use */
         hex_digest = bin2hex((uint8 *) device_normal_password_hash, SHA256_LEN);
         strncpy(device_normal_password_hash, hex_digest, SHA256_HEX_LEN + 1);
         free(hex_digest);
@@ -113,43 +109,24 @@ void device_load(uint8 *data) {
         DEBUG_DEVICE("empty viewonly password");
     }
     else {
-        /* passwords are stored as binary digest, must be converted to hex digest before use */
+        /* Passwords are stored as binary digest, must be converted to hex digest before use */
         hex_digest = bin2hex((uint8 *) device_viewonly_password_hash, SHA256_LEN);
         strncpy(device_viewonly_password_hash, hex_digest, SHA256_HEX_LEN + 1);
         free(hex_digest);
     }
 
-    /* wifi */
-    memcpy(wifi_ssid, data + CONFIG_OFFS_SSID, WIFI_SSID_MAX_LEN);
-    memcpy(wifi_bssid, data + CONFIG_OFFS_BSSID, WIFI_BSSID_LEN);
-    memcpy(wifi_psk, data + CONFIG_OFFS_PSK, WIFI_PSK_MAX_LEN);
-    memcpy(&wifi_scan_interval, data + CONFIG_OFFS_SCAN_INTERVAL, 2);
-    memcpy(&wifi_scan_threshold, data + CONFIG_OFFS_SCAN_THRESH, 1);
-
+    /* IP configuration */
     memcpy(&wifi_ip.addr, data + CONFIG_OFFS_IP_ADDRESS, 4);
     memcpy(&wifi_gw.addr, data + CONFIG_OFFS_GATEWAY, 4);
     memcpy(&wifi_dns.addr, data + CONFIG_OFFS_DNS, 4);
     memcpy(&wifi_netmask, data + CONFIG_OFFS_NETMASK, 1);
 
-    if (!wifi_scan_threshold) {
-        wifi_scan_threshold = WIFI_SCAN_THRESH_DEF;
-    }
+    wifi_set_ip_address(wifi_ip);
+    wifi_set_netmask(wifi_netmask);
+    wifi_set_gateway(wifi_gw);
+    wifi_set_dns(wifi_dns);
 
-    if (wifi_ssid[0] || wifi_bssid[0]) {
-        wifi_set_scan_threshold(wifi_scan_threshold);
-        wifi_set_scan_interval(wifi_scan_interval);
-
-        wifi_set_ssid(wifi_ssid);
-        wifi_set_psk(wifi_psk);
-        wifi_set_bssid(wifi_bssid);
-
-        wifi_set_ip_address(wifi_ip);
-        wifi_set_netmask(wifi_netmask);
-        wifi_set_gateway(wifi_gw);
-        wifi_set_dns(wifi_dns);
-    }
-
-    /* flags & others */
+    /* Flags & others */
     memcpy(&device_tcp_port, data + CONFIG_OFFS_TCP_PORT, 2);
     memcpy(&device_flags, data + CONFIG_OFFS_DEVICE_FLAGS, 4);
     DEBUG_DEVICE("flags = %08X", device_flags);
@@ -159,13 +136,13 @@ void device_load(uint8 *data) {
         system_update_cpu_freq(frequency);
     }
 
-    /* config model */
+    /* Config model */
     char *model = string_pool_read(strings_ptr, data + CONFIG_OFFS_MODEL);
     if (model) {
         strncpy(device_config_model, model, API_MAX_DEVICE_CONFIG_MODEL_LEN);
     }
 
-    /* webhooks */
+    /* Webhooks */
     if ((webhooks_host = string_pool_read_dup(strings_ptr, data + CONFIG_OFFS_WEBHOOKS_HOST))) {
         DEBUG_WEBHOOKS("webhooks host = \"%s\"", webhooks_host);
     }
@@ -187,7 +164,7 @@ void device_load(uint8 *data) {
     if (password_hash) {
         strncpy(webhooks_password_hash, password_hash, SHA256_HEX_LEN + 1);
     }
-    if (!webhooks_password_hash[0]) {  /* use hash of empty string, by default */
+    if (!webhooks_password_hash[0]) {  /* Use hash of empty string, by default */
         DEBUG_WEBHOOKS("webhooks password = \"\"");
 
         char *hex_digest = sha256_hex("");
@@ -208,7 +185,7 @@ void device_load(uint8 *data) {
     DEBUG_WEBHOOKS("webhooks timeout = %d", webhooks_timeout);
 
 #ifdef _SLEEP
-    /* sleep mode */
+    /* Sleep mode */
     memcpy(&wake_interval, data + CONFIG_OFFS_WAKE_INTERVAL, 2);
     memcpy(&wake_duration, data + CONFIG_OFFS_WAKE_DURATION, 2);
 
@@ -219,8 +196,6 @@ void device_load(uint8 *data) {
 
 void device_save(uint8 *data, uint32 *strings_offs) {
     int frequency = system_get_cpu_freq();
-    int wifi_scan_interval = wifi_get_scan_interval();
-    char wifi_scan_threshold = wifi_get_scan_threshold();
     char *strings_ptr = (char *) data + CONFIG_OFFS_STR_BASE;
     ip_addr_t wifi_ip_address, wifi_gateway, wifi_dns;
     uint8 wifi_netmask;
@@ -230,11 +205,11 @@ void device_save(uint8 *data, uint32 *strings_offs) {
     uint16 wake_duration = sleep_get_wake_duration();
 #endif
 
-    /* device name */
-    memcpy(data + CONFIG_OFFS_HOSTNAME, device_hostname, API_MAX_DEVICE_NAME_LEN);
-    memcpy(data + CONFIG_OFFS_DISP_NAME, device_display_name, API_MAX_DEVICE_DISP_NAME_LEN);
+    /* Device name */
+    memcpy(data + CONFIG_OFFS_DEVICE_NAME, device_name, API_MAX_DEVICE_NAME_LEN);
+    memcpy(data + CONFIG_OFFS_DEVICE_DISP_NAME, device_display_name, API_MAX_DEVICE_DISP_NAME_LEN);
 
-    /* passwords - stored as binary digests */
+    /* Passwords - stored as binary digests */
     uint8 *digest = hex2bin(device_admin_password_hash);
     memcpy(data + CONFIG_OFFS_ADMIN_PASSWORD, digest, SHA256_LEN);
     free(digest);
@@ -247,13 +222,7 @@ void device_save(uint8 *data, uint32 *strings_offs) {
     memcpy(data + CONFIG_OFFS_VIEWONLY_PASSWORD, digest, SHA256_LEN);
     free(digest);
 
-    /* wifi */
-    memcpy(data + CONFIG_OFFS_SSID, wifi_get_ssid(), WIFI_SSID_MAX_LEN);
-    memcpy(data + CONFIG_OFFS_BSSID, wifi_get_bssid(), WIFI_BSSID_LEN);
-    strncpy((char *) data + CONFIG_OFFS_PSK, wifi_get_psk() ? wifi_get_psk() : "", WIFI_PSK_MAX_LEN);
-    memcpy(data + CONFIG_OFFS_SCAN_INTERVAL, &wifi_scan_interval, 2);
-    memcpy(data + CONFIG_OFFS_SCAN_THRESH, &wifi_scan_threshold, 1);
-
+    /* IP configuration */
     wifi_ip_address = wifi_get_ip_address();
     wifi_netmask = wifi_get_netmask();
     wifi_gateway = wifi_get_gateway();
@@ -263,17 +232,17 @@ void device_save(uint8 *data, uint32 *strings_offs) {
     memcpy(data + CONFIG_OFFS_DNS, &wifi_dns, 4);
     memcpy(data + CONFIG_OFFS_NETMASK, &wifi_netmask, 1);
 
-    /* flags & others */
+    /* Flags & others */
     memcpy(data + CONFIG_OFFS_TCP_PORT, &device_tcp_port, 2);
     memcpy(data + CONFIG_OFFS_DEVICE_FLAGS, &device_flags, 4);
     memcpy(data + CONFIG_OFFS_CPU_FREQ, &frequency, 4);
 
-    /* config model */
+    /* Config model */
     if (!string_pool_write(strings_ptr, strings_offs, device_config_model, data + CONFIG_OFFS_MODEL)) {
         DEBUG_DEVICE("no more string space to save config model");
     }
 
-    /* webhooks */
+    /* Webhooks */
     if (!string_pool_write(strings_ptr, strings_offs, webhooks_host, data + CONFIG_OFFS_WEBHOOKS_HOST)) {
         DEBUG_WEBHOOKS("no more string space to save host");
     }
@@ -293,7 +262,7 @@ void device_save(uint8 *data, uint32 *strings_offs) {
     data[CONFIG_OFFS_WEBHOOKS_RETRIES] = webhooks_retries;
 
 #ifdef _SLEEP
-    /* sleep mode */
+    /* Sleep mode */
     memcpy(data + CONFIG_OFFS_WAKE_INTERVAL, &wake_interval, 2);
     memcpy(data + CONFIG_OFFS_WAKE_DURATION, &wake_duration, 2);
 #endif
@@ -306,13 +275,48 @@ void config_init(void) {
 
     device_load(config_data);
 
-    DEBUG_DEVICE("CPU frequency set to %d MHz", system_get_cpu_freq());
 
-    if (!device_hostname[0]) {
-        snprintf(device_hostname, API_MAX_DEVICE_NAME_LEN, DEFAULT_HOSTNAME, system_get_chip_id());
+    /* Backwards compatibility code */
+    /* TODO: remove this */
+
+    int legacy_ssid_offs = 0x00C0;
+    int legacy_psk_offs = 0x0100;
+
+    char legacy_ssid[WIFI_SSID_MAX_LEN + 1];
+    char legacy_psk[WIFI_PSK_MAX_LEN + 1];
+
+    memcpy(legacy_ssid, config_data + legacy_ssid_offs, WIFI_SSID_MAX_LEN);
+    memcpy(legacy_psk, config_data + legacy_psk_offs, WIFI_PSK_MAX_LEN);
+
+    legacy_ssid[WIFI_SSID_MAX_LEN] = 0;
+    legacy_psk[WIFI_PSK_MAX_LEN] = 0;
+
+    if (legacy_ssid[0]) {
+        DEBUG_WIFI("detected legacy configuration: SSID=\"%s\", PSK=\"%s\"", legacy_ssid, legacy_psk);
+
+        wifi_set_opmode_current(STATION_MODE);
+
+        wifi_set_ssid(legacy_ssid);
+        wifi_set_psk(legacy_psk);
+        wifi_save_config();
+
+        memset(config_data + legacy_ssid_offs, 0, WIFI_SSID_MAX_LEN);
+        memset(config_data + legacy_psk_offs, 0, WIFI_PSK_MAX_LEN);
+        flashcfg_save(config_data);
+
+        system_reset(/* delayed = */ FALSE);
     }
 
-    DEBUG_DEVICE("hostname is \"%s\"", device_hostname);
+    /* Backwards compatibility code ends */
+
+
+    DEBUG_DEVICE("CPU frequency set to %d MHz", system_get_cpu_freq());
+
+    if (!device_name[0]) {
+        snprintf(device_name, API_MAX_DEVICE_NAME_LEN, DEFAULT_HOSTNAME, system_get_chip_id());
+    }
+
+    DEBUG_DEVICE("hostname is \"%s\"", device_name);
 
     if (!device_tcp_port) {
         device_tcp_port = DEFAULT_TCP_PORT;
@@ -326,10 +330,10 @@ void config_init(void) {
 
     ports_init(config_data);
 
-    /* at this point we no longer need the config data */
+    /* At this point we no longer need the config data */
     free(config_data);
 
-    /* parse port value expressions */
+    /* Parse port value expressions */
     port_t *p, **port = all_ports;
     while ((p = *port++)) {
         if (!IS_ENABLED(p)) {
@@ -354,7 +358,7 @@ void config_init(void) {
 
 void config_save(void) {
     uint8 *config_data = zalloc(FLASH_CONFIG_SIZE);
-    uint32 strings_offs = 1; /* address 0 in strings pool represents an unset string, so it's left out */
+    uint32 strings_offs = 1; /* Address 0 in strings pool represents an unset string, so it's left out */
 
     flashcfg_load(config_data);
     ports_save(config_data, &strings_offs);
@@ -382,7 +386,7 @@ void config_start_provisioning(void) {
         snprintf(url, sizeof(url), "%s%s/%s.json", FW_BASE_URL, FW_BASE_CFG_PATH, FW_CONFIG_NAME);
     }
 
-    DEBUG_DEVICE("provisioning: fetching from %s", url);
+    DEBUG_DEVICE("provisioning: fetching from \"%s\"", url);
 
     httpclient_request("GET", url, /* body = */ NULL, /* body_len = */ 0,
                        /* header_names = */ NULL, /* header_values = */ NULL, /* header_count = */ 0,
@@ -404,7 +408,7 @@ void on_config_provisioning_response(char *body, int body_len, int status, char 
         if (json_get_type(config) == JSON_TYPE_OBJ) {
             DEBUG_DEVICE("provisioning: got config");
 
-            /* temporarily set API access level to admin */
+            /* Temporarily set API access level to admin */
             api_conn_save();
             api_conn_set((void *) 1, API_ACCESS_LEVEL_ADMIN);
 
@@ -434,13 +438,13 @@ void apply_device_provisioning_config(json_t *device_config) {
 
     DEBUG_DEVICE("provisioning: applying device config");
 
-    /* never update device name */
+    /* Never update device name */
     attr_json = json_obj_pop_key(device_config, "name");
     if (attr_json) {
         json_free(attr_json);
     }
 
-    /* don't overwrite display name */
+    /* Don't overwrite display name */
     if (device_display_name[0]) {
         attr_json = json_obj_pop_key(device_config, "display_name");
         if (attr_json) {
@@ -497,7 +501,7 @@ void apply_port_provisioning_config(json_t *port_config) {
             DEBUG_DEVICE("provisioning: applying port %s config", port_id);
             port = port_find_by_id(port_id);
 
-            /* virtual ports have to be added first */
+            /* Virtual ports have to be added first */
             if (virtual_json && json_get_type(virtual_json) == JSON_TYPE_BOOL && json_bool_get(virtual_json)) {
                 if (port) {
                     DEBUG_DEVICE("provisioning: virtual port %s exists, removing it first", port_id);
@@ -513,7 +517,7 @@ void apply_port_provisioning_config(json_t *port_config) {
                 request_json = json_obj_new();
                 json_obj_append(request_json, "id", json_str_new(port_id));
 
-                /* pass non-modifiable virtual port attributes from port_config to request_json */
+                /* Pass non-modifiable virtual port attributes from port_config to request_json */
                 attr_json = json_obj_pop_key(port_config, "type");
                 if (attr_json) {
                     json_obj_append(request_json, "type", attr_json);
@@ -547,7 +551,7 @@ void apply_port_provisioning_config(json_t *port_config) {
                 }
                 json_free(request_json);
 
-                /* lookup port reference after adding it */
+                /* Lookup port reference after adding it */
                 port = port_find_by_id(port_id);
             }
 
@@ -562,7 +566,7 @@ void apply_port_provisioning_config(json_t *port_config) {
                 DEBUG_DEVICE("provisioning: api_patch_port() failed with status code %d", code);
             }
 
-            if (value_json) { /* if value was also supplied with provisioning */
+            if (value_json) { /* If value was also supplied with provisioning */
                 DEBUG_DEVICE("provisioning: setting port %s value", port_id);
 
                 code = 200;

@@ -118,7 +118,7 @@ void tcp_send(struct espconn *conn, uint8 *data, int len, bool free_on_sent) {
         info = conn->reverse;
     }
 
-    /* connections w/o info are not handled by the tcp server
+    /* Connections w/o info are not handled by the tcp server
      * and have most likely been refused by conn_cb;
      * data to such connections is sent, in one shot,
      * assuming its length is not above 1k */

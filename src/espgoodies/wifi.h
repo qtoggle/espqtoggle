@@ -32,13 +32,6 @@
 #define BSSID_FMT                       "%02X:%02X:%02X:%02X:%02X:%02X"
 #define BSSID2STR(bssid)                (bssid[0]), (bssid[1]), (bssid[2]), (bssid[3]), (bssid[4]), (bssid[5])
 
-#define WIFI_SCAN_INTERVAL_MIN          1       /* seconds */
-#define WIFI_SCAN_INTERVAL_MAX          3600    /* seconds */
-
-#define WIFI_SCAN_THRESH_MIN            1       /* RSSI dBm */
-#define WIFI_SCAN_THRESH_MAX            50      /* RSSI dBm */
-#define WIFI_SCAN_THRESH_DEF            15      /* RSSI dBm */
-
 #define WIFI_EVENT_CONNECTED            1
 #define WIFI_EVENT_DISCONNECTED         2
 #define WIFI_EVENT_CONNECT_TIMEOUT      3
@@ -56,7 +49,7 @@
 #define WIFI_AP_IP4                     1
 #endif
 
-    /* netmask */
+    /* Netmask */
 #ifndef WIFI_AP_NM
 #define WIFI_AP_NM1                     255
 #define WIFI_AP_NM2                     255
@@ -64,7 +57,7 @@
 #define WIFI_AP_NM4                     0
 #endif
 
-    /* start DHCP IP address */
+    /* Start DHCP IP address */
 #ifndef WIFI_AP_SI1
 #define WIFI_AP_SI1                     192
 #define WIFI_AP_SI2                     168
@@ -72,16 +65,12 @@
 #define WIFI_AP_SI4                     100
 #endif
 
-    /* end DHCP IP address */
+    /* End DHCP IP address */
 #ifndef WIFI_AP_EI1
 #define WIFI_AP_EI1                     192
 #define WIFI_AP_EI2                     168
 #define WIFI_AP_EI3                     5
 #define WIFI_AP_EI4                     150
-#endif
-
-#ifndef WIFI_AP_PSK
-#define WIFI_AP_PSK                     NULL
 #endif
 
 
@@ -96,24 +85,22 @@ typedef struct {
 } wifi_scan_result_t;
 
 
-/* results is an array that must be freed() in callback! */
+/* Results is an array that must be freed() in callback! */
 typedef void (* wifi_scan_callback_t)(wifi_scan_result_t *results, int len);
 typedef void (* wifi_connect_callback_t)(bool connected);
 
 
-ICACHE_FLASH_ATTR int                   wifi_get_scan_interval(void);
-ICACHE_FLASH_ATTR void                  wifi_set_scan_interval(int interval);
-ICACHE_FLASH_ATTR char                  wifi_get_scan_threshold(void);
-ICACHE_FLASH_ATTR void                  wifi_set_scan_threshold(char threshold);
-
 ICACHE_FLASH_ATTR char                * wifi_get_ssid(void);
 ICACHE_FLASH_ATTR uint8               * wifi_get_bssid(void);
 ICACHE_FLASH_ATTR char                * wifi_get_psk(void);
-ICACHE_FLASH_ATTR void                  wifi_get_bssid_current(uint8 *bssid);
+
+ICACHE_FLASH_ATTR uint8               * wifi_get_bssid_current(void);
 
 ICACHE_FLASH_ATTR void                  wifi_set_ssid(char *ssid);
 ICACHE_FLASH_ATTR void                  wifi_set_psk(char *psk);
 ICACHE_FLASH_ATTR void                  wifi_set_bssid(uint8 *bssid);
+
+ICACHE_FLASH_ATTR void                  wifi_save_config(void);
 
 ICACHE_FLASH_ATTR ip_addr_t             wifi_get_ip_address(void);
 ICACHE_FLASH_ATTR uint8                 wifi_get_netmask(void);
@@ -130,13 +117,17 @@ ICACHE_FLASH_ATTR void                  wifi_set_netmask(uint8 netmask);
 ICACHE_FLASH_ATTR void                  wifi_set_gateway(ip_addr_t gateway);
 ICACHE_FLASH_ATTR void                  wifi_set_dns(ip_addr_t dns);
 
-ICACHE_FLASH_ATTR void                  wifi_set_station_mode(wifi_connect_callback_t callback, char *hostname);
-ICACHE_FLASH_ATTR void                  wifi_connect(uint8 *bssid);
-ICACHE_FLASH_ATTR void                  wifi_set_ap_mode(char *hostname);
-ICACHE_FLASH_ATTR bool                  wifi_is_connected(void);
+ICACHE_FLASH_ATTR void                  wifi_station_enable(char *hostname, wifi_connect_callback_t callback);
+ICACHE_FLASH_ATTR void                  wifi_station_disable(void);
+ICACHE_FLASH_ATTR bool                  wifi_station_is_connected(void);
+
+ICACHE_FLASH_ATTR void                  wifi_ap_enable(char *ssid, char *psk);
+ICACHE_FLASH_ATTR void                  wifi_ap_disable(void);
 
 ICACHE_FLASH_ATTR bool                  wifi_scan(wifi_scan_callback_t callback);
-ICACHE_FLASH_ATTR void                  wifi_auto_scan(void);
+
+ICACHE_FLASH_ATTR void                  wifi_init(void);
+ICACHE_FLASH_ATTR void                  wifi_reset(void);
 
 
 #endif /* _ESPGOODIES_WIFI_H */

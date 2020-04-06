@@ -29,7 +29,7 @@
 #endif
 
 
-/* result must be freed */
+/* Result must be freed */
 ICACHE_FLASH_ATTR uint8           * html_load(uint32 *len);
 
 

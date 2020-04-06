@@ -171,7 +171,7 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
         RESPOND_NO_SUCH_FUNCTION();
     }
 
-    /* remove the leading & trailing slashes */
+    /* Remove the leading & trailing slashes */
 
     while (path[0] == '/') {
         path++;
@@ -183,7 +183,7 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
         path_len--;
     }
 
-    /* split path */
+    /* Split path */
 
     token = strtok(path, "/");
     if (!token) {
@@ -207,7 +207,7 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
     }
 
 
-    /* determine the api call */
+    /* Determine the api call */
 
     if (!strcmp(part1, "device")) {
         if (part2) {
@@ -429,7 +429,7 @@ void api_conn_restore(void) {
 json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
     json_t *json = json_obj_new();
 
-    /* common to all ports */
+    /* Common to all ports */
 
     json_obj_append(json, "id", json_str_new(port->id));
     json_obj_append(json, "display_name", json_str_new(port->display_name ? port->display_name : ""));
@@ -451,7 +451,7 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
         json_obj_append(json, "transform_read", json_str_new(""));
     }
 
-    /* specific to numeric ports */
+    /* Specific to numeric ports */
     if (port->type == PORT_TYPE_NUMBER) {
         json_obj_append(json, "type", json_str_new(API_PORT_TYPE_NUMBER));
         json_obj_append(json, "unit", json_str_new(port->unit ? port->unit : ""));
@@ -472,7 +472,7 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
         if (port->choices) {
             int8 found_ref_index = -1;
             if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST) {
-                /* look through previous ports for same choices */
+                /* Look through previous ports for same choices */
                 port_t *p, **ports = all_ports;
                 uint8 i = 0;
                 while ((p = *ports++) && (p != port)) {
@@ -486,7 +486,7 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
             }
 
             if (found_ref_index >= 0) {
-                /* found equal choices at found_ref_index */
+                /* Found equal choices at found_ref_index */
                 json_t *ref = make_json_ref("#/%d/choices", found_ref_index);
 #if defined(_DEBUG) && defined(_DEBUG_API)
                 char *ref_str = json_str_get(json_obj_value_at(ref, 0));
@@ -506,12 +506,12 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
             }
         }
     }
-    /* specific to boolean ports */
-    else { /* assuming PORT_TYPE_BOOLEAN */
+    /* Specific to boolean ports */
+    else { /* Assuming PORT_TYPE_BOOLEAN */
         json_obj_append(json, "type", json_str_new(API_PORT_TYPE_BOOLEAN));
     }
 
-    /* specific to output ports */
+    /* Specific to output ports */
     if (IS_OUTPUT(port)) {
         if (port->sexpr) {
             json_obj_append(json, "expression", json_str_new(port->sexpr));
@@ -528,7 +528,7 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
         }
     }
 
-    /* extra attributes */
+    /* Extra attributes */
     if (port->attrdefs) {
         attrdef_t *a, **attrdefs = port->attrdefs;
         int index;
@@ -540,7 +540,7 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
 
                 case ATTR_TYPE_NUMBER:
                     if (a->choices) {
-                        /* when dealing with choices, the getter returns the index inside the choices array */
+                        /* When dealing with choices, the getter returns the index inside the choices array */
                         index = ((int_getter_t) a->get)(port, a);
                         json_obj_append(json, a->name, json_double_new(get_choice_value_num(a->choices[index])));
                     }
@@ -556,7 +556,7 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
 
                 case ATTR_TYPE_STRING:
                     if (a->choices) {
-                        /* when dealing with choices, the getter returns the index inside the choices array */
+                        /* When dealing with choices, the getter returns the index inside the choices array */
                         index = ((int_getter_t) a->get)(port, a);
                         json_obj_append(json, a->name, json_str_new(get_choice_value_str(a->choices[index])));
                     }
@@ -568,10 +568,10 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
         }
     }
 
-    /* port value */
+    /* Port value */
     json_obj_append(json, "value", port_get_json_value(port));
 
-    /* attribute definitions */
+    /* Attribute definitions */
     json_obj_append(json, "definitions", port_attrdefs_to_json(port, json_refs_ctx));
 
     json_stringify(json);
@@ -583,19 +583,19 @@ json_t *device_to_json(void) {
     char value[256];
     json_t *json = json_obj_new();
 
-    /* common attributes */
-    json_obj_append(json, "name", json_str_new(device_hostname));
+    /* Common attributes */
+    json_obj_append(json, "name", json_str_new(device_name));
     json_obj_append(json, "display_name", json_str_new(device_display_name));
     json_obj_append(json, "version", json_str_new(FW_VERSION));
     json_obj_append(json, "api_version", json_str_new(API_VERSION));
     json_obj_append(json, "vendor", json_str_new(VENDOR));
 
-    /* passwords - never reveal them */
+    /* Passwords - never reveal them */
     json_obj_append(json, "admin_password", json_str_new(""));
     json_obj_append(json, "normal_password", json_str_new(""));
     json_obj_append(json, "viewonly_password", json_str_new(""));
 
-    /* flags */
+    /* Flags */
     json_t *flags_json = json_list_new();
 
     json_list_append(flags_json, json_str_new("expressions"));
@@ -611,7 +611,7 @@ json_t *device_to_json(void) {
 
     json_obj_append(json, "flags", flags_json);
 
-    /* various optional attributes */
+    /* Various optional attributes */
     json_obj_append(json, "uptime", json_int_new(system_uptime()));
 
 #ifdef HAS_VIRTUAL
@@ -648,7 +648,7 @@ json_t *device_to_json(void) {
         json_obj_append(json, "ip_dns", json_str_new(""));
     }
 
-    /* current IP info */
+    /* Current IP info */
     ip = wifi_get_ip_address_current();
     if (ip.addr) {
         snprintf(value, 256, IPSTR, IP2STR(&ip));
@@ -697,7 +697,7 @@ json_t *device_to_json(void) {
         json_obj_append(json, "wifi_key", json_str_new(""));
     }
 
-    if (bssid[0]) {
+    if (bssid) {
         snprintf(value, 256, "%02X:%02X:%02X:%02X:%02X:%02X", BSSID2STR(bssid));
         json_obj_append(json, "wifi_bssid", json_str_new(value));
     }
@@ -705,7 +705,7 @@ json_t *device_to_json(void) {
         json_obj_append(json, "wifi_bssid", json_str_new(""));
     }
 
-    /* current Wi-Fi info */
+    /* Current Wi-Fi info */
     int rssi = wifi_station_get_rssi();
     if (rssi < -100) {
         rssi = -100;
@@ -715,16 +715,14 @@ json_t *device_to_json(void) {
     }
 
     char current_bssid_str[18] = {0};
-    if (wifi_is_connected()) {
-        uint8 current_bssid[WIFI_BSSID_LEN];
-        wifi_get_bssid_current(current_bssid);
+    if (wifi_station_is_connected()) {
         snprintf(current_bssid_str, sizeof(current_bssid_str),
-                "%02X:%02X:%02X:%02X:%02X:%02X", BSSID2STR(current_bssid));
+                "%02X:%02X:%02X:%02X:%02X:%02X", BSSID2STR(wifi_get_bssid_current()));
     }
     json_obj_append(json, "wifi_bssid_current", json_str_new(current_bssid_str));
 
     int8  wifi_signal_strength = -1;
-    if (wifi_is_connected()) {
+    if (wifi_station_is_connected()) {
         if (rssi >= WIFI_RSSI_EXCELLENT) {
             wifi_signal_strength = 3;
         }
@@ -744,31 +742,20 @@ json_t *device_to_json(void) {
     json_obj_append(json, "free_mem", json_int_new(system_get_free_heap_size() / 1024));
     json_obj_append(json, "flash_size", json_int_new(system_get_flash_size() / 1024));
 
-    /* network scan */
-    int wifi_scan_interval = wifi_get_scan_interval();
-    int wifi_scan_threshold = wifi_get_scan_threshold();
-
-    if (!wifi_scan_interval) {
-        json_obj_append(json, "network_scan", json_str_new(""));
-    }
-    else {
-        snprintf(value, 256, "%d:%d", wifi_scan_interval, wifi_scan_threshold);
-    }
-
 #ifdef _OTA
     json_obj_append(json, "firmware_auto_update", json_bool_new(device_flags & DEVICE_FLAG_OTA_AUTO_UPDATE));
 #endif
 
-    /* flash id */
+    /* Flash id */
     char id[10];
     snprintf(id, 10, "%08x", spi_flash_get_id());
     json_obj_append(json, "flash_id", json_str_new(id));
 
-    /* chip id */
+    /* Chip id */
     snprintf(id, 10, "%08x", system_get_chip_id());
     json_obj_append(json, "chip_id", json_str_new(id));
 
-    /* config name & model */
+    /* Config name & model */
     if (device_config_model_choices[0]) {
         char config_name[64];
         snprintf(config_name, 64, "%s/%s", FW_CONFIG_NAME, device_config_model);
@@ -783,7 +770,7 @@ json_t *device_to_json(void) {
     json_obj_append(json, "debug", json_bool_new(TRUE));
 #endif
 
-    /* sleep mode */
+    /* Sleep mode */
 #ifdef _SLEEP
     if (sleep_get_wake_interval()) {
         snprintf(value, 256, "%d:%d", sleep_get_wake_interval(), sleep_get_wake_duration());
@@ -794,13 +781,13 @@ json_t *device_to_json(void) {
     json_obj_append(json, "sleep_mode", json_str_new(value));
 #endif
 
-    /* battery */
+    /* Battery */
 #ifdef _BATTERY
     json_obj_append(json, "battery_level", json_int_new(battery_get_level()));
     json_obj_append(json, "battery_voltage", json_int_new(battery_get_voltage()));
 #endif
 
-    /* attribute definitions */
+    /* Attribute definitions */
     json_obj_append(json, "definitions", device_attrdefs_to_json());
 
     json_stringify(json);
@@ -858,12 +845,12 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
                 return INVALID_FIELD_VALUE(key);
             }
             
-            strncpy(device_hostname, value, API_MAX_DEVICE_NAME_LEN);
-            device_hostname[API_MAX_DEVICE_NAME_LEN - 1] = 0;
+            strncpy(device_name, value, API_MAX_DEVICE_NAME_LEN);
+            device_name[API_MAX_DEVICE_NAME_LEN - 1] = 0;
             
-            DEBUG_DEVICE("name set to %s", device_hostname);
+            DEBUG_DEVICE("name set to \"%s\"", device_name);
 
-            httpserver_set_name(device_hostname);
+            httpserver_set_name(device_name);
         }
         else if (!strcmp(key, "display_name")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
@@ -928,7 +915,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
 
             char *ip_address_str = json_str_get(child);
             ip_addr_t ip_address = {0};
-            if (ip_address_str[0]) { /* manual */
+            if (ip_address_str[0]) { /* Manual */
                 uint8 bytes[4];
                 if (!validate_ip_address(ip_address_str, bytes)) {
                     return INVALID_FIELD_VALUE(key);
@@ -960,7 +947,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
 
             char *gateway_str = json_str_get(child);
             ip_addr_t gateway = {0};
-            if (gateway_str[0]) { /* manual */
+            if (gateway_str[0]) { /* Manual */
                 uint8 bytes[4];
                 if (!validate_ip_address(gateway_str, bytes)) {
                     return INVALID_FIELD_VALUE(key);
@@ -979,7 +966,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
 
             char *dns_str = json_str_get(child);
             ip_addr_t dns = {0};
-            if (dns_str[0]) { /* manual */
+            if (dns_str[0]) { /* Manual */
                 uint8 bytes[4];
                 if (!validate_ip_address(dns_str, bytes)) {
                     return INVALID_FIELD_VALUE(key);
@@ -1030,36 +1017,6 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
 
             wifi_set_bssid(bssid);
             needs_reset = TRUE;
-        }
-        else if (!strcmp(key, "network_scan")) {
-            if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD_VALUE(key);
-            }
-
-            char *scan_str = json_str_get(child);
-            if (!scan_str[0]) {
-                wifi_set_scan_interval(0);
-                wifi_set_scan_threshold(0);
-            }
-            else {
-                int scan_interval, scan_threshold;
-                if (!validate_str_network_scan(scan_str, &scan_interval, &scan_threshold)) {
-                    return INVALID_FIELD_VALUE(key);
-                }
-
-                if (!validate_num(scan_interval, WIFI_SCAN_INTERVAL_MIN, WIFI_SCAN_INTERVAL_MAX, /* integer = */ TRUE,
-                                  /* step = */ 0, /* choices = */ NULL)) {
-                    return INVALID_FIELD_VALUE(key);
-                }
-
-                if (!validate_num(scan_threshold, WIFI_SCAN_THRESH_MIN, WIFI_SCAN_THRESH_MAX, /* integer = */ TRUE,
-                                  /* step = */ 0, /* choices = */ NULL)) {
-                    return INVALID_FIELD_VALUE(key);
-                }
-
-                wifi_set_scan_interval(scan_interval);
-                wifi_set_scan_threshold(scan_threshold);
-            }
         }
 #ifdef _SLEEP
         else if (!strcmp(key, "sleep_mode")) {
@@ -1115,7 +1072,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
             device_config_model[API_MAX_DEVICE_CONFIG_MODEL_LEN - 1] = 0;
 
             config_model_changed = TRUE;
-            DEBUG_DEVICE("config model set to %s", device_config_model);
+            DEBUG_DEVICE("config model set to \"%s\"", device_config_model);
         }
         else if (!strcmp(key, "version") ||
                  !strcmp(key, "api_version") ||
@@ -1143,7 +1100,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
     }
 
-    /* if the configuration model has changed, mark the device unconfigured so that it will automatically reconfigure */
+    /* If the configuration model has changed, mark the device unconfigured so that it will automatically reconfigure */
     if (config_model_changed) {
         DEBUG_DEVICE("marking device as unconfigured");
         device_flags &= ~DEVICE_FLAG_CONFIGURED;
@@ -1165,7 +1122,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
     
     *code = 204;
     
-    /* add a device change event */
+    /* Add a device change event */
     event_push_device_update();
 
     return response_json;
@@ -1193,6 +1150,7 @@ json_t *api_post_reset(json_t *query_json, json_t *request_json, int *code) {
 
     if (factory) {
         flashcfg_reset();
+        wifi_reset();
     }
 
     *code = 204;
@@ -1226,7 +1184,7 @@ json_t *api_get_firmware(json_t *query_json, int *code) {
             *code = 503;
         }
     }
-    else {  /* ota busy */
+    else {  /* OTA busy */
         char *ota_state_str = ota_states_str[ota_state];
 
         response_json = json_obj_new();
@@ -1261,7 +1219,7 @@ json_t *api_patch_firmware(json_t *query_json, json_t *request_json, int *code) 
 
         ota_perform_url(json_str_get(url_json), on_ota_perform);
     }
-    else { /* assuming version_json */
+    else { /* Assuming version_json */
         if (json_get_type(version_json) != JSON_TYPE_STR) {
             return INVALID_FIELD_VALUE("version");
         }
@@ -1342,7 +1300,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
     port_t *new_port = zalloc(sizeof(port_t));
     char *choice;
 
-    /* will automatically allocate slot */
+    /* Will automatically allocate slot */
     new_port->slot = -1;
 
     /* id */
@@ -1514,7 +1472,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
                 return INVALID_FIELD_VALUE("choices");
             }
 
-            /* display name */
+            /* display_name */
             c2 = json_obj_lookup_key(c, "display_name");
             if (c2) {
                 if (json_get_type(c2) != JSON_TYPE_STR) {
@@ -1537,14 +1495,14 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
         DEBUG_API("adding virtual port: %d choices", len);
     }
 
-    /* sequence */
+    /* Sequence */
     new_port->sequence_pos = -1;
 
     if (!virtual_port_register(new_port)) {
         return API_ERROR(500, "port registration failed");
     }
 
-    /* rebuild deps mask for all ports, as the new port might be among their deps */
+    /* Rebuild deps mask for all ports, as the new port might be among their deps */
     port_t *p, **ports = all_ports;
     while ((p = *ports++)) {
         port_rebuild_change_dep_mask(p);
@@ -1578,7 +1536,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
     char *key;
     json_t *child;
 
-    /* handle enabled attribute first */
+    /* Handle enabled attribute first */
     key = "enabled";
     child = json_obj_pop_key(request_json, key);
     if (child) {
@@ -1597,7 +1555,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
         json_free(child);
     }
 
-    /* then handle port-specific attributes */
+    /* Then handle port-specific attributes */
     if (port->attrdefs) {
         attrdef_t *a, **attrdefs = port->attrdefs;
         while ((a = *attrdefs++)) {
@@ -1688,7 +1646,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
         }
     }
 
-    /* finally, handle common attributes */
+    /* Finally, handle common attributes */
     for (i = 0; i < json_obj_get_len(request_json); i++) {
         key = json_obj_key_at(request_json, i);
         child = json_obj_value_at(request_json, i);
@@ -1737,7 +1695,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 sexpr++;
             }
             if (*sexpr) {
-                /* parse & validate expression */
+                /* Parse & validate expression */
                 if (strlen(sexpr) > API_MAX_EXPR_LEN) {
                     return INVALID_FIELD_VALUE(key);
                 }
@@ -1748,7 +1706,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 }
 
                 if (expr_check_loops(expr, port) > 1) {
-                    DEBUG_API("loop detected in expression %s", sexpr);
+                    DEBUG_API("loop detected in expression \"%s\"", sexpr);
                     expr_free(expr);
                     return INVALID_FIELD_VALUE(key);
                 }
@@ -1786,7 +1744,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 stransform_write++;
             }
             if (*stransform_write) {
-                /* parse & validate expression */
+                /* Parse & validate expression */
                 if (strlen(stransform_write) > API_MAX_EXPR_LEN) {
                     return INVALID_FIELD_VALUE(key);
                 }
@@ -1840,7 +1798,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 stransform_read++;
             }
             if (*stransform_read) {
-                /* parse & validate expression */
+                /* Parse & validate expression */
                 if (strlen(stransform_read) > API_MAX_EXPR_LEN) {
                     return INVALID_FIELD_VALUE(key);
                 }
@@ -1927,7 +1885,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
         port_configure(port);
     }
 
-    /* set device configured flag */
+    /* Set device configured flag */
     DEBUG_DEVICE("mark device as configured");
     device_flags |= DEVICE_FLAG_CONFIGURED;
 
@@ -1949,21 +1907,21 @@ json_t *api_delete_port(port_t *port, json_t *query_json, int *code) {
     }
 
     if (!IS_VIRTUAL(port)) {
-        return API_ERROR(400, "port not removable");  /* can't unregister a non-virtual port */
+        return API_ERROR(400, "port not removable");  /* Can't unregister a non-virtual port */
     }
 
     event_push_port_remove(port);
 
-    /* free choices */
+    /* Free choices */
     if (port->choices) {
         free_choices(port->choices);
         port->choices = NULL;
     }
 
-    /* removing virtual flag disables virtual port */
+    /* Removing virtual flag disables virtual port */
     port->flags &= ~PORT_FLAG_VIRTUAL_ACTIVE;
 
-    /* free display name & unit */
+    /* Free display name & unit */
     if (port->display_name) {
         free(port->display_name);
         port->display_name = NULL;
@@ -1973,12 +1931,12 @@ json_t *api_delete_port(port_t *port, json_t *query_json, int *code) {
         port->unit = NULL;
     }
 
-    /* destroy value expression */
+    /* Destroy value expression */
     if (port->expr) {
         port_expr_remove(port);
     }
 
-    /* destroy transform expressions */
+    /* Destroy transform expressions */
     if (port->transform_read) {
         expr_free(port->transform_read);
         port->transform_read = NULL;
@@ -1996,7 +1954,7 @@ json_t *api_delete_port(port_t *port, json_t *query_json, int *code) {
         port->stransform_write = NULL;
     }
 
-    /* cancel sequence */
+    /* Cancel sequence */
     if (port->sequence_pos >= 0) {
         port_sequence_cancel(port);
     }
@@ -2009,7 +1967,7 @@ json_t *api_delete_port(port_t *port, json_t *query_json, int *code) {
 
     free(port);
 
-    /* rebuild deps mask for all ports, as the former port might have been among their deps */
+    /* Rebuild deps mask for all ports, as the former port might have been among their deps */
     port_t *p, **ports = all_ports;
     while ((p = *ports++)) {
         port_rebuild_change_dep_mask(p);
@@ -2027,7 +1985,7 @@ json_t *api_get_port_value(port_t *port, json_t *query_json, int *code) {
         return FORBIDDEN(API_ACCESS_LEVEL_VIEWONLY);
     }
 
-    /* poll ports before retrieving current port value, ensuring value is as up-to-date as possible */
+    /* Poll ports before retrieving current port value, ensuring value is as up-to-date as possible */
     core_poll();
 
     response_json = port_get_json_value(port);
@@ -2078,10 +2036,6 @@ json_t *api_patch_port_value(port_t *port, json_t *query_json, json_t *request_j
         if (!port_set_value(port, value, CHANGE_REASON_API)) {
             return API_ERROR(400, "invalid value");
         }
-    }
-
-    if (IS_PERSISTED(port)) {
-        config_mark_for_saving();
     }
 
     *code = 204;
@@ -2152,7 +2106,7 @@ json_t *api_patch_port_sequence(port_t *port, json_t *query_json, json_t *reques
     port->sequence_values = malloc(sizeof(double) * port->sequence_len);
     port->sequence_delays = malloc(sizeof(int) * (port->sequence_len));
 
-    /* values */
+    /* Values */
     for (i = 0; i < json_list_get_len(values_json); i++) {
         j = json_list_value_at(values_json, i);
         if (port->type == PORT_TYPE_BOOLEAN) {
@@ -2178,7 +2132,7 @@ json_t *api_patch_port_sequence(port_t *port, json_t *query_json, json_t *reques
         }
     }
 
-    /* delays */
+    /* Delays */
     for (i = 0; i < json_list_get_len(delays_json); i++) {
         j = json_list_value_at(delays_json, i);
         if (json_get_type(j) != JSON_TYPE_INT) {
@@ -2192,7 +2146,7 @@ json_t *api_patch_port_sequence(port_t *port, json_t *query_json, json_t *reques
         }
     }
     
-    /* start sequence timer */
+    /* Start sequence timer */
     os_timer_disarm(&port->sequence_timer);
     os_timer_setfn(&port->sequence_timer, on_sequence_timer, port);
     os_timer_arm(&port->sequence_timer, 1, /* repeat = */ FALSE);
@@ -2250,7 +2204,7 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
         return API_ERROR(400, "invalid request");
     }
 
-    /* scheme */
+    /* Scheme */
     json_t *scheme_json = json_obj_lookup_key(request_json, "scheme");
     if (scheme_json) {
         if (json_get_type(scheme_json) != JSON_TYPE_STR) {
@@ -2260,12 +2214,12 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
 #ifdef _SSL
         if (!strcmp(json_str_get(scheme_json), "https")) {
             device_flags |= DEVICE_FLAG_WEBHOOKS_HTTPS;
-            DEBUG_WEBHOOKS("scheme set to https");
+            DEBUG_WEBHOOKS("scheme set to HTTPS");
         }
         else
 #endif
         if (!strcmp(json_str_get(scheme_json), "http")) {
-            DEBUG_WEBHOOKS("scheme set to http");
+            DEBUG_WEBHOOKS("scheme set to HTTP");
             device_flags &= ~DEVICE_FLAG_WEBHOOKS_HTTPS;
         }
         else {
@@ -2273,7 +2227,7 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
         }
     }
 
-    /* host */
+    /* Host */
     json_t *host_json = json_obj_lookup_key(request_json, "host");
     if (host_json) {
         if (json_get_type(host_json) != JSON_TYPE_STR) {
@@ -2291,7 +2245,7 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
         DEBUG_WEBHOOKS("host set to \"%s\"", webhooks_host);
     }
 
-    /* port */
+    /* Port */
     json_t *port_json = json_obj_lookup_key(request_json, "port");
     if (port_json) {
         if (json_get_type(port_json) != JSON_TYPE_INT) {
@@ -2306,7 +2260,7 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
         DEBUG_WEBHOOKS("port set to %d", webhooks_port);
     }
 
-    /* path */
+    /* Path */
     json_t *path_json = json_obj_lookup_key(request_json, "path");
     if (path_json) {
         if (json_get_type(path_json) != JSON_TYPE_STR) {
@@ -2324,7 +2278,7 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
         DEBUG_WEBHOOKS("path set to \"%s\"", webhooks_path);
     }
 
-    /* password */
+    /* Password */
     json_t *password_json = json_obj_lookup_key(request_json, "password");
     if (password_json) {
         if (json_get_type(password_json) != JSON_TYPE_STR) {
@@ -2338,7 +2292,7 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
         DEBUG_WEBHOOKS("password set");
     }
 
-    /* events */
+    /* Events */
     json_t *event_json, *events_json = json_obj_lookup_key(request_json, "events");
     if (events_json) {
         if (json_get_type(events_json) != JSON_TYPE_LIST) {
@@ -2370,7 +2324,7 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
         webhooks_events_mask = events_mask;
     }
 
-    /* timeout */
+    /* Timeout */
     json_t *timeout_json = json_obj_lookup_key(request_json, "timeout");
     if (timeout_json) {
         if (json_get_type(timeout_json) != JSON_TYPE_INT) {
@@ -2385,7 +2339,7 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
         DEBUG_WEBHOOKS("timeout set to %d", webhooks_timeout);
     }
 
-    /* retries */
+    /* Retries */
     json_t *retries_json = json_obj_lookup_key(request_json, "retries");
     if (retries_json) {
         if (json_get_type(retries_json) != JSON_TYPE_INT) {
@@ -2400,7 +2354,7 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
         DEBUG_WEBHOOKS("retries set to %d", webhooks_retries);
     }
 
-    /* enabled */
+    /* Enabled */
     json_t *enabled_json = json_obj_lookup_key(request_json, "enabled");
     if (enabled_json) {
         if (json_get_type(enabled_json) != JSON_TYPE_BOOL) {
@@ -2409,7 +2363,7 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
 
         bool enabled = json_bool_get(enabled_json);
         if (enabled) {
-            /* we can't enable webhooks unless we have a host and a path */
+            /* We can't enable webhooks unless we have a host and a path */
             if (!webhooks_host || !webhooks_host[0]) {
                 return MISSING_FIELD("host");
             }
@@ -2576,7 +2530,7 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
     if (port->attrdefs) {
         int8 found_port_index = -1;
         if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST) {
-            /* look through previous ports for ports having exact same attrdefs */
+            /* Look through previous ports for ports having exact same attrdefs */
             port_t *p, **ports = all_ports;
             uint8 i = 0;
             while ((p = *ports++) && (p != port)) {
@@ -2593,7 +2547,7 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
             }
         }
 
-        if (found_port_index >= 0) {  /* found a port with exact same attrdefs */
+        if (found_port_index >= 0) {  /* Found a port with exact same attrdefs */
             json_t *ref;
             ref = make_json_ref("#/%d/definitions", found_port_index);
 #if defined(_DEBUG) && defined(_DEBUG_API)
@@ -2612,10 +2566,10 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
             int8 found_port_index = -1;
 
             if (choices) {
-                /* look through previous ports (and current port as well) for attrdefs with same choices */
+                /* Look through previous ports (and current port as well) for attrdefs with same choices */
                 lookup_port_attrdef_choices(choices, port, a, &found_port_index, &found_attrdef_name, json_refs_ctx);
                 if (found_attrdef_name) {
-                    /* will be replaced by $ref */
+                    /* Will be replaced by $ref */
                     choices = NULL;
                 }
             }
@@ -2625,7 +2579,7 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
                                            a->unit, a->type, a->modifiable,
                                            a->min, a->max, a->integer, a->step, choices, a->reconnect);
 
-            /* if similar choices found, replace with $ref */
+            /* If similar choices found, replace with $ref */
             if (found_attrdef_name) {
                 json_t *ref = NULL;
                 switch (json_refs_ctx->type) {
@@ -2660,7 +2614,7 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
     }
 
     if (!IS_VIRTUAL(port)) {
-        /* sampling_interval attrdef */
+        /* Sampling_interval attrdef */
         if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST && json_refs_ctx->sampling_interval_port_index >= 0) {
             attrdef_json = make_json_ref("#/%d/definitions/sampling_interval",
                                          json_refs_ctx->sampling_interval_port_index);
@@ -2695,15 +2649,6 @@ json_t *device_attrdefs_to_json(void) {
                                    /* modifiable = */TRUE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
                                    /* integer = */ TRUE, /* step = */ 0, frequency_choices, /* reconnect = */ FALSE);
     json_obj_append(json, "frequency", attrdef_json);
-
-    attrdef_json = attrdef_to_json("Network Scan",
-                                   "Controls the WiFi scanning mode; format is <interval_seconds>:<threshold_dBm>. "
-                                   "Interval is between 1 and 3600 seconds; threshold is between 1 and 50 dBm. "
-                                   "Empty string disables scanning mode.", /* unit = */ NULL,
-                                   ATTR_TYPE_STRING, /* modifiable = */ TRUE, /* min = */ UNDEFINED,
-                                   /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
-                                   /* reconnect = */ FALSE);
-    json_obj_append(json, "network_scan", attrdef_json);
 
 #ifdef _SLEEP
     attrdef_json = attrdef_to_json("Sleep Mode",
@@ -2785,8 +2730,8 @@ void on_sequence_timer(void *arg) {
         os_timer_arm(&port->sequence_timer, port->sequence_delays[port->sequence_pos], /* repeat = */ FALSE);
         port->sequence_pos++;
     }
-    else { /* sequence ended */
-        if (port->sequence_repeat > 1 || port->sequence_repeat == 0) { /* must repeat */
+    else { /* Sequence ended */
+        if (port->sequence_repeat > 1 || port->sequence_repeat == 0) { /* Must repeat */
             if (port->sequence_repeat) {
                 port->sequence_repeat--;
             }
@@ -2796,7 +2741,7 @@ void on_sequence_timer(void *arg) {
             port->sequence_pos = 0;
             on_sequence_timer(arg);
         }
-        else { /* single iteration or repeat ended */
+        else { /* Single iteration or repeat ended */
             os_timer_disarm(&port->sequence_timer);
             free(port->sequence_values);
             free(port->sequence_delays);
@@ -2848,7 +2793,7 @@ void on_ota_perform(int code) {
 
         sessions_respond_all();
     }
-    else {  /* error */
+    else {  /* Error */
         json_t *response_json = json_obj_new();
         char error[] = "no such version";
         json_obj_append(response_json, "error", json_str_new(error));
@@ -2864,7 +2809,7 @@ void on_wifi_scan(wifi_scan_result_t *results, int len) {
     DEBUG_API("got wifi scan results");
 
     if (!api_conn) {
-        return;  /* such is life */
+        return;  /* Such is life */
     }
 
     json_t *response_json = json_list_new();

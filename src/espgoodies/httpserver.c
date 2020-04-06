@@ -199,7 +199,7 @@ void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
         }
 
         case HTTP_STATE_METHOD_READY: {
-            if (c == '/') { /* path starts */
+            if (c == '/') { /* Path starts */
                 hc->req_state = HTTP_STATE_PATH;
                 append_max_len(hc->path, c, HTTP_MAX_PATH_LEN);
             }
@@ -208,16 +208,16 @@ void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
         }
         
         case HTTP_STATE_PATH: {
-            if (c == '?') { /* query starts */
+            if (c == '?') { /* Query starts */
                 hc->req_state = HTTP_STATE_QUERY;
             }
-            else if (c == '#') { /* fragment starts */
+            else if (c == '#') { /* Fragment starts */
                 hc->req_state = HTTP_STATE_FRAGMENT;
             }
             else if (isspace(c)) { /* URI ends */
                 hc->req_state = HTTP_STATE_FRAGMENT_READY;
             }
-            else { /* still part of path */
+            else { /* Still part of path */
                 append_max_len(hc->path, c, HTTP_MAX_PATH_LEN);
                 break;
             }
@@ -228,13 +228,13 @@ void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
         }
 
         case HTTP_STATE_QUERY: {
-            if (c == '#') { /* fragment starts */
+            if (c == '#') { /* Fragment starts */
                 hc->req_state = HTTP_STATE_FRAGMENT;
             }
             else if (isspace(c)) { /* URI ends */
                 hc->req_state = HTTP_STATE_FRAGMENT_READY;
             }
-            else { /* still part of query */
+            else { /* Still part of query */
                 append_max_len(hc->query, c, HTTP_MAX_QUERY_LEN);
                 break;
             }
@@ -245,7 +245,7 @@ void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
         }
 
         case HTTP_STATE_FRAGMENT: {
-            /* fragment is ignored */
+            /* Fragment is ignored */
             if (isspace(c)) { /* URI ends */
                 hc->req_state = HTTP_STATE_FRAGMENT_READY;
             }
@@ -262,7 +262,7 @@ void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
         }
 
         case HTTP_STATE_PROTO: {
-            /* proto is ignored */
+            /* Proto is ignored */
             if (isspace(c)) {
                 hc->req_state = HTTP_STATE_PROTO_READY;
             }
@@ -280,10 +280,10 @@ void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
         }
 
         case HTTP_STATE_HEADER_NAME: {
-            if (c == ':' || isspace(c)) { /* header name value separator */
+            if (c == ':' || isspace(c)) { /* Header name value separator */
                 hc->req_state = HTTP_STATE_HEADER_NAME_READY;
             }
-            else { /* still part of header name */
+            else { /* Still part of header name */
                 append_max_len(hc->header_name, c, HTTP_MAX_HEADER_NAME_LEN);
             }
 
@@ -291,7 +291,7 @@ void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
         }
 
         case HTTP_STATE_HEADER_NAME_READY: {
-            if (!isspace(c)) { /* header value starts */
+            if (!isspace(c)) { /* Header value starts */
                 hc->req_state = HTTP_STATE_HEADER_VALUE;
                 append_max_len(hc->header_value, c, HTTP_MAX_HEADER_VALUE_LEN);
             }
@@ -312,7 +312,7 @@ void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
                 hc->header_name[0] = 0;
                 hc->header_value[0] = 0;
             }
-            else { /* still part of header value */
+            else { /* Still part of header value */
                 append_max_len(hc->header_value, c, HTTP_MAX_HEADER_VALUE_LEN);
             }
 
@@ -321,11 +321,11 @@ void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
 
         case HTTP_STATE_HEADER_VALUE_READY: {
             if (isspace(c)) {
-                if (c == '\n') { /* header line ready */
+                if (c == '\n') { /* Header line ready */
                     hc->req_state = HTTP_STATE_HEADER_VALUE_READY_NL;
                 }
             }
-            else { /* header name starts */
+            else { /* Header name starts */
                 hc->req_state = HTTP_STATE_HEADER_NAME;
                 append_max_len(hc->header_name, c, HTTP_MAX_HEADER_NAME_LEN);
             }
@@ -335,7 +335,7 @@ void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
 
         case HTTP_STATE_HEADER_VALUE_READY_NL: {
             if (isspace(c)) {
-                if (c == '\n') { /* header ready after second newline */
+                if (c == '\n') { /* Header ready after second newline */
                     if (!hc->content_length) {
                         hc->req_state = HTTP_STATE_HEADER_READY;
                         handle_request(hc);
@@ -348,7 +348,7 @@ void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
                     }
                 }
             }
-            else { /* header name starts */
+            else { /* Header name starts */
                 hc->req_state = HTTP_STATE_HEADER_NAME;
                 append_max_len(hc->header_name, c, HTTP_MAX_HEADER_NAME_LEN);
             }
@@ -363,7 +363,7 @@ void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
                 hc->body_len = 1;
                 hc->body[0] = c;
             }
-            else { /* body unexpected */
+            else { /* Body unexpected */
                 hc->req_state = HTTP_STATE_INVALID;
                 handle_invalid(hc, c);
             }
@@ -419,7 +419,7 @@ void httpserver_context_reset(httpserver_context_t *hc) {
 
     int slot_index = hc->slot_index;
     memset(hc, 0, sizeof(httpserver_context_t));
-    hc->slot_index = slot_index; /* restore slot index */
+    hc->slot_index = slot_index; /* Restore slot index */
 
     os_timer_disarm(&hc->timer);
 }
@@ -473,7 +473,7 @@ uint8 *httpserver_build_response(int status, char *content_type, char *header_na
             status_msg = STATUS_MSG_500;
     }
     
-    /* start with response template */
+    /* Start with response template */
     if (body && *len) {
         snprintf(h, 256, RESPONSE_TEMPLATE, status, status_msg, content_type, server_name, *len);
     }
@@ -486,7 +486,7 @@ uint8 *httpserver_build_response(int status, char *content_type, char *header_na
     response = malloc(response_len + 1);
     strcpy((char *) response, h);
 
-    /* add supplied headers */
+    /* Add supplied headers */
     for (i = 0; i < header_count; i++) {
         hl = snprintf(h, 256, "%s: %s\r\n", header_names[i], header_values[i]);
         h[sizeof(h) - 1] = 0;

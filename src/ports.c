@@ -68,7 +68,7 @@ void port_load(port_t *port, uint8 *data) {
 
     DEBUG_PORT(port, "slot = %d", port->slot);
 
-    /* display name */
+    /* display_name */
     port->display_name = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_DISP_NAME);
     DEBUG_PORT(port, "display_name = \"%s\"", port->display_name ? port->display_name : "");
 
@@ -87,7 +87,7 @@ void port_load(port_t *port, uint8 *data) {
     bool initially_output = port->flags & PORT_FLAG_OUTPUT;
     memcpy(&port->flags, base_ptr + CONFIG_OFFS_PORT_FLAGS, 4);
     if (initially_output) {
-        /* if port is defined as output, ignore persisted output flag */
+        /* If port is defined as output, ignore persisted output flag */
         port->flags |= PORT_FLAG_OUTPUT;
     }
 
@@ -110,7 +110,7 @@ void port_load(port_t *port, uint8 *data) {
         }
     }
 
-    /* sampling interval */
+    /* sampling_interval */
     memcpy(&port->sampling_interval, base_ptr + CONFIG_OFFS_PORT_SAMP_INT, 4);
     if (!port->def_sampling_interval) {
         port->def_sampling_interval = PORT_DEF_SAMP_INT;
@@ -125,7 +125,7 @@ void port_load(port_t *port, uint8 *data) {
 
     DEBUG_PORT(port, "sampling_interval = %d ms", port->sampling_interval);
 
-    /* heart beat */
+    /* Heart beat */
     if (!port->heart_beat_interval) {
         port->heart_beat_interval = PORT_DEF_HEART_BEAT_INT;
     }
@@ -133,7 +133,7 @@ void port_load(port_t *port, uint8 *data) {
 
     DEBUG_PORT(port, "heart_beat_interval = %d ms", port->heart_beat_interval);
 
-    /* custom data */
+    /* Custom data */
     memcpy(port->extra_data, base_ptr + CONFIG_OFFS_PORT_DATA, PORT_PERSISTED_EXTRA_DATA_LEN);
 
     port->sexpr = NULL;
@@ -144,12 +144,12 @@ void port_load(port_t *port, uint8 *data) {
     port->transform_read = NULL;
 
     if (IS_OUTPUT(port)) {
-        /* value expression */
+        /* Value expression */
         port->sexpr = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_EXPR);
         DEBUG_PORT(port, "expression = \"%s\"", port->sexpr ? port->sexpr : "");
-        /* the expression will be parsed later, in config_init() */
+        /* The expression will be parsed later, in config_init() */
 
-        /* write transform */
+        /* transform_write */
         port->stransform_write = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_TRANS_W);
         DEBUG_PORT(port, "transform_write = \"%s\"", port->stransform_write ? port->stransform_write : "");
 
@@ -166,7 +166,7 @@ void port_load(port_t *port, uint8 *data) {
         }
     }
 
-    /* read transform */
+    /* transform_read */
     port->stransform_read = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_TRANS_R);
     DEBUG_PORT(port, "transform_read = \"%s\"", port->stransform_read ? port->stransform_read : "");
 
@@ -182,23 +182,23 @@ void port_load(port_t *port, uint8 *data) {
         }
     }
 
-    /* sequence */
+    /* Sequence */
     port->sequence_pos = -1;
 
     if (IS_ENABLED(port)) {
         port_configure(port);
     }
 
-    /* initial port value */
+    /* Initial port value */
     port->value = UNDEFINED;
     if (IS_OUTPUT(port) && IS_ENABLED(port)) {
         if (IS_PERSISTED(port)) {
-            /* initial value is given by the persisted value */
+            /* Initial value is given by the persisted value */
             port->value = value;
             DEBUG_PORT(port, "setting persisted value %s", dtostr(port->value, -1));
         }
         else {
-            /* initial value is given by the read value */
+            /* Initial value is given by the read value */
             port->value = port->read_value(port);
             if (!IS_UNDEFINED(port->value)) {
                 if (port->transform_read) {
@@ -223,7 +223,7 @@ void port_save(port_t *port, uint8 *data, uint32 *strings_offs) {
 
     /* id */
     if (IS_VIRTUAL(port)) {
-        /* only virtual ports have custom ids */
+        /* Only virtual ports have custom ids */
         if (!string_pool_write(strings_ptr, strings_offs, port->id, base_ptr + CONFIG_OFFS_PORT_ID)) {
             DEBUG_PORT(port, "no more string space to save id");
         }
@@ -256,23 +256,23 @@ void port_save(port_t *port, uint8 *data, uint32 *strings_offs) {
     /* step */
     memcpy(base_ptr + CONFIG_OFFS_PORT_STEP, &port->step, sizeof(double));
 
-    /* sampling interval */
+    /* sampling_interval */
     memcpy(base_ptr + CONFIG_OFFS_PORT_SAMP_INT, &port->sampling_interval, 4);
 
-    /* custom data */
+    /* Custom data */
     memcpy(base_ptr + CONFIG_OFFS_PORT_DATA, port->extra_data, PORT_PERSISTED_EXTRA_DATA_LEN);
 
-    /* value expression */
+    /* Value expression */
     if (!string_pool_write(strings_ptr, strings_offs, port->sexpr, base_ptr + CONFIG_OFFS_PORT_EXPR)) {
         DEBUG_PORT(port, "no more string space to save expression");
     }
 
-    /* write transform */
+    /* transform_write */
     if (!string_pool_write(strings_ptr, strings_offs, port->stransform_write, base_ptr + CONFIG_OFFS_PORT_TRANS_W)) {
         DEBUG_PORT(port, "no more string space to save write transform");
     }
 
-    /* read transform */
+    /* transform_read */
     if (!string_pool_write(strings_ptr, strings_offs, port->stransform_read, base_ptr + CONFIG_OFFS_PORT_TRANS_R)) {
         DEBUG_PORT(port, "no more string space to save read transform");
     }
@@ -305,7 +305,7 @@ void port_save(port_t *port, uint8 *data, uint32 *strings_offs) {
 }
 
 void ports_init(uint8 *data) {
-    /* add the ports list null terminator */
+    /* Add the ports list null terminator */
     all_ports = malloc(sizeof(port_t *));
     all_ports[0] = NULL;
 
@@ -333,7 +333,7 @@ void ports_init(uint8 *data) {
     _INIT_EXTERNAL_PORT_DRIVERS
 #endif
 
-    /* load port data */
+    /* Load port data */
     port_t **p = all_ports;
     while (*p) {
         DEBUG_PORT(*p, "loading data");
@@ -354,7 +354,8 @@ void ports_save(uint8 *data, uint32 *strings_offs) {
 void port_register(port_t *port) {
     if (port->slot == PORT_SLOT_AUTO) {
         if (next_extra_slot > PORT_SLOT_EXTRA_MAX) {
-            DEBUG("already reached max extra port slots");
+            DEBUG("reached max extra port slots, continuing from 0");
+            next_extra_slot = 0;
         }
 
         port->slot = next_extra_slot++;
@@ -370,7 +371,7 @@ void port_register(port_t *port) {
     all_ports[all_ports_count++] = port;
     all_ports[all_ports_count] = NULL;
 
-    /* set min/max to UNDEFINED for all attrdefs */
+    /* Set min/max to UNDEFINED for all attrdefs */
     if (port->attrdefs) {
         attrdef_t *a, **attrdefs = port->attrdefs;
         while ((a = *attrdefs++)) {
@@ -394,10 +395,10 @@ bool port_unregister(port_t *port) {
 
     if (p == -1) {
         DEBUG_PORT(port, "not found in all ports list");
-        return FALSE;  /* port not found */
+        return FALSE;  /* Port not found */
     }
 
-    /* shift following ports back with 1 position */
+    /* Shift following ports back with 1 position */
     for (i = p; i < all_ports_count - 1; i++) {
         all_ports[i] = all_ports[i + 1];
     }
@@ -473,15 +474,14 @@ void port_expr_remove(port_t *port) {
 
 bool port_set_value(port_t *port, double value, char reason) {
     if (port->transform_write) {
-        /* temporarily set the port value to the new value,
-         * so that the write transform expression takes the new
-         * value into consideration when evaluating the result */
+        /* Temporarily set the port value to the new value, so that the write transform expression takes the new value
+         * into consideration when evaluating the result */
         double old_value = port->value;
         port->value = value;
         value = expr_eval(port->transform_write);
         port->value = old_value;
 
-        /* ignore invalid values yielded by transform expression */
+        /* Ignore invalid values yielded by transform expression */
         if (IS_UNDEFINED(value)) {
             return FALSE;
         }
@@ -534,7 +534,7 @@ void port_enable(port_t *port) {
         }
     }
 
-    /* rebuild expression */
+    /* Rebuild expression */
     if (port->expr) {
         expr_free(port->expr);
         port->expr = NULL;
@@ -560,13 +560,13 @@ void port_disable(port_t *port) {
     DEBUG_PORT(port, "disabling");
     port->flags &= ~PORT_FLAG_ENABLED;
 
-    /* destroy value expression */
+    /* Destroy value expression */
     if (port->expr) {
         expr_free(port->expr);
         port->expr = NULL;
     }
 
-    /* cancel sequence */
+    /* Cancel sequence */
     if (port->sequence_pos >= 0) {
         port_sequence_cancel(port);
     }
@@ -575,9 +575,8 @@ void port_disable(port_t *port) {
 void port_configure(port_t *port) {
     DEBUG_PORT(port, "configuring");
 
-    /* attribute getters may cache values inside port->extra_info;
-     * calling all attribute getters here ensures that this cached
-     * data is up-do-date with latest attribute values */
+    /* Attribute getters may cache values inside port->extra_info; calling all attribute getters here ensures that this
+     * cached data is up-do-date with latest attribute values */
     if (port->attrdefs) {
         attrdef_t *a, **attrdefs = port->attrdefs;
         while ((a = *attrdefs++)) {

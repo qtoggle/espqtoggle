@@ -58,7 +58,7 @@
 
 #define ADC_LUT_LEN             6
 
-static struct {  /* voltage vs. battery charge level lookup table */
+static struct {  /* Voltage vs. battery charge level lookup table */
 
     short voltage;
     short level;
@@ -82,7 +82,7 @@ int battery_get_voltage(void) {
 
     DEBUG_BATTERY("raw ADC value: %d", v);
 
-    v = v * adc_factor;  /* in millivolts */
+    v = v * adc_factor;  /* In millivolts */
 
     DEBUG_BATTERY("voltage: %d mV", v);
 

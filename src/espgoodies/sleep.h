@@ -30,10 +30,10 @@
 #endif
 
 #define SLEEP_WAKE_INTERVAL_MIN         0           /* 0 - sleep disabled */
-#define SLEEP_WAKE_INTERVAL_MAX         (7 * 1440)  /* minutes */
-#define SLEEP_WAKE_DURATION_MIN         1           /* seconds */
-#define SLEEP_WAKE_DURATION_MAX         3600        /* seconds */
-#define SLEEP_WAKE_CONNECT_TIMEOUT      20          /* seconds */
+#define SLEEP_WAKE_INTERVAL_MAX         (7 * 1440)  /* Minutes */
+#define SLEEP_WAKE_DURATION_MIN         1           /* Seconds */
+#define SLEEP_WAKE_DURATION_MAX         3600        /* Seconds */
+#define SLEEP_WAKE_CONNECT_TIMEOUT      20          /* Seconds */
 
 
 ICACHE_FLASH_ATTR void                  sleep_init(void);

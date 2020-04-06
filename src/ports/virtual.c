@@ -35,7 +35,7 @@
 #ifdef HAS_VIRTUAL
 
 
-#define SAMP_INT                        100  /* milliseconds */
+#define SAMP_INT                        100  /* Milliseconds */
 
 #define CONFIG_CUSTOM_DATA_OFFS_MIN     0x00 /* 4 bytes */
 #define RETRIES_DATA_OFFS               0x05 /* 1 bytes */
@@ -65,7 +65,7 @@ void init_virtual_port(uint8 *base_ptr, char *strings_ptr, uint32 flags, uint8 i
 
     port->slot = index + VIRTUAL0_SLOT;
 
-    /* virtual ports don't have an id before loading */
+    /* Virtual ports don't have an id before loading */
     snprintf(port->id, PORT_MAX_ID_LEN + 1, "virtual%d", index);
 
     char *id = string_pool_read(strings_ptr, base_ptr + CONFIG_OFFS_PORT_ID);
@@ -86,7 +86,7 @@ void init_virtual_port(uint8 *base_ptr, char *strings_ptr, uint32 flags, uint8 i
     DEBUG_PORT(port, "max = %s", IS_UNDEFINED(port->max) ? "unset" : dtostr(port->max, -1));
     DEBUG_PORT(port, "step = %s", IS_UNDEFINED(port->step) ? "unset" : dtostr(port->step, -1));
 
-    /* choices are stored in the strings pool */
+    /* Choices are stored in the strings pool */
     char *choices_str = string_pool_read(strings_ptr, base_ptr + CONFIG_OFFS_PORT_CHOICES);
     if (choices_str && port->type == PORT_TYPE_NUMBER) {
         char *choice;
@@ -100,7 +100,7 @@ void init_virtual_port(uint8 *base_ptr, char *strings_ptr, uint32 flags, uint8 i
             choice = strtok(NULL, "|");
         }
 
-        /* add terminating NULL */
+        /* Add terminating NULL */
         port->choices = realloc(port->choices, sizeof(char *) * ++n);
         port->choices[n - 1] = NULL;
     }
@@ -127,7 +127,7 @@ void virtual_init_ports(uint8 *data) {
 }
 
 int8 virtual_find_unused_slot(bool occupy) {
-    /* find next available slot */
+    /* Find next available slot */
     int i;
     for (i = 0; i < VIRTUAL_MAX_PORTS; i++) {
         if (!virtual_port_in_use[i]) {

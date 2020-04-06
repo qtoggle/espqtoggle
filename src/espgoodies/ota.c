@@ -29,7 +29,7 @@
 #include "ota.h"
 
 
-#define OTA_PERFORM_DELAY       2000  /* milliseconds */
+#define OTA_PERFORM_DELAY       2000  /* Milliseconds */
 
 
 static os_timer_t               ota_timer;
@@ -172,7 +172,7 @@ int ota_current_state(void) {
     else if (system_upgrade_flag_check() == UPGRADE_FLAG_START) {
         return OTA_STATE_DOWNLOADING;
     }
-    else  /* assuming (system_upgrade_flag_check() == UPGRADE_FLAG_FINISH) */ {
+    else  /* Assuming (system_upgrade_flag_check() == UPGRADE_FLAG_FINISH) */ {
         return OTA_STATE_RESTARTING;
     }
 }
@@ -207,7 +207,7 @@ void on_ota_start(void *arg) {
         host++;
     }
 
-    host += 3;  /* skip :// */
+    host += 3;  /* Skip :// */
     host = strdup(host);
     char *p = host;
     while (*p && *p != '/') {
@@ -272,23 +272,23 @@ void on_ota_latest_response(char *body, int body_len, int status, char *header_n
         bool in_name = TRUE;
 
         while ((c = *s++)) {
-            if (c == ':') {  /* name ends */
+            if (c == ':') {  /* Name ends */
                 pname = name;
-                while (*pname && isspace((int) *pname)) {  /* skip leading spaces */
+                while (*pname && isspace((int) *pname)) {  /* Skip leading spaces */
                     pname++;
                 }
-                while (*pname && isspace((int) pname[strlen(pname)])) {  /* remove trailing spaces */
+                while (*pname && isspace((int) pname[strlen(pname)])) {  /* Remove trailing spaces */
                     pname[strlen(pname) - 1] = 0;
                 }
 
                 in_name = FALSE;
             }
-            else if ((c == '\n') || (*s == 0)) {  /* value ends */
+            else if ((c == '\n') || (*s == 0)) {  /* Value ends */
                 pvalue = value;
-                while (*pvalue && isspace((int) *pvalue)) {  /* skip leading spaces */
+                while (*pvalue && isspace((int) *pvalue)) {  /* Skip leading spaces */
                     pvalue++;
                 }
-                while (*pvalue && isspace((int) pvalue[strlen(pvalue)])) {  /* remove trailing spaces */
+                while (*pvalue && isspace((int) pvalue[strlen(pvalue)])) {  /* Remove trailing spaces */
                     pvalue[strlen(pvalue) - 1] = 0;
                 }
 
@@ -301,7 +301,7 @@ void on_ota_latest_response(char *body, int body_len, int status, char *header_n
                     }
                 }
 
-                /* reset name and value */
+                /* Reset name and value */
                 name[0] = value[0] = 0;
                 pname = pvalue = NULL;
 
@@ -348,7 +348,7 @@ void on_ota_head_response(char *body, int body_len, int status, char *header_nam
         os_timer_setfn(&ota_timer, on_ota_start, NULL);
         os_timer_arm(&ota_timer, OTA_PERFORM_DELAY, /* repeat = */ FALSE);
 
-        /* remember resolved IP address, as we need it for actual OTA request */
+        /* Remember resolved IP address, as we need it for actual OTA request */
         memcpy(ota_ip_addr, addr, 4);
     }
     else {
@@ -373,7 +373,7 @@ void on_ota_auto_latest(char *version, char *date, char *url) {
         if (!strcmp(current_version, version)) {
             DEBUG_OTA("auto-update: already running latest version");
         }
-        else if (strncmp(current_version, version, 2)) {  /* major version differs */
+        else if (strncmp(current_version, version, 2)) {  /* Major version differs */
             DEBUG_OTA("auto-update: refusing to automatically update to different major version");
         }
         else {
@@ -386,7 +386,7 @@ void on_ota_auto_latest(char *version, char *date, char *url) {
         free(date);
         free(url);
     }
-    else {  /* error */
+    else {  /* Error */
         DEBUG_OTA("auto-update: failed to get latest version info");
     }
 }

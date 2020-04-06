@@ -38,7 +38,7 @@ double get_choice_value_num(char *choice) {
 }
 
 char *get_choice_value_str(char *choice) {
-    static char *value = NULL;  /* acts as a reentrant buffer */
+    static char *value = NULL;  /* Acts as a reentrant buffer */
     if (value) {
         free(value);
         value = NULL;
@@ -56,7 +56,7 @@ char *get_choice_value_str(char *choice) {
 }
 
 char *get_choice_display_name(char *choice) {
-    static char *display_name = NULL;  /* acts as a reentrant buffer */
+    static char *display_name = NULL;  /* Acts as a reentrant buffer */
     if (display_name) {
         free(display_name);
         display_name = NULL;
@@ -81,7 +81,7 @@ json_t *choice_to_json(char *choice, char type) {
         json_obj_append(choice_json, "display_name", json_str_new(display_name));
     }
 
-    if (type == ATTR_TYPE_NUMBER) /* also PORT_TYPE_NUMBER */ {
+    if (type == ATTR_TYPE_NUMBER) /* Also PORT_TYPE_NUMBER */ {
         json_obj_append(choice_json, "value", json_double_new(get_choice_value_num(choice)));
     }
     else {
@@ -105,7 +105,7 @@ bool choices_equal(char **choices1, char **choices2) {
         return TRUE;
     }
 
-    /* make sure both lists are available */
+    /* Make sure both lists are available */
     if (!choices1 || !choices2) {
         return FALSE;
     }
@@ -257,38 +257,6 @@ bool validate_wifi_bssid(char *bssid_str, uint8 *bssid) {
     return TRUE;
 }
 
-
-bool validate_str_network_scan(char *scan, int *scan_interval, int *scan_threshold) {
-    char c, *s = scan;
-    int pos = 0;
-    int no = 0;
-    while ((c = *s++)) {
-        if (c == ':') {
-            if (pos >= 1) {
-                return FALSE;
-            }
-
-            pos++;
-            *scan_interval = no;
-            no = 0;
-        }
-        else if (isdigit((int) c)) {
-            no = no * 10 + c - '0';
-        }
-        else {
-            return FALSE;
-        }
-    }
-
-    if (pos == 1) {
-        *scan_threshold = no;
-    }
-    else {
-        return FALSE;
-    }
-
-    return TRUE;
-}
 
 #ifdef _SLEEP
 

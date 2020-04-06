@@ -133,7 +133,7 @@ void event_free(event_t *event) {
 }
 
 void event_push(int type, char *port_id) {
-    /* don't push any event while performing OTA */
+    /* Don't push any event while performing OTA */
 #ifdef _OTA
     if (ota_busy()) {
         return;

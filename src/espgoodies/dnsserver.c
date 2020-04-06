@@ -67,12 +67,12 @@
 
 typedef struct {
 
-    uint16                              id;  /* identification number */
+    uint16                              id;  /* Identification number */
     uint16                              flags;
-    uint16                              qd_count;  /* number of question entries */
-    uint16                              an_count;  /* number of answer entries */
-    uint16                              ns_count;  /* number of authority entries */
-    uint16                              ar_count;  /* number of resource entries */
+    uint16                              qd_count;  /* Number of question entries */
+    uint16                              an_count;  /* Number of answer entries */
+    uint16                              ns_count;  /* Number of authority entries */
+    uint16                              ar_count;  /* Number of resource entries */
 
 } dns_header_t;
 
@@ -118,7 +118,7 @@ void dnsserver_stop(void) {
 
 
 void listen(void) {
-    /* initialize the connection */
+    /* Initialize the connection */
     conn = zalloc(sizeof(struct espconn));
 
     conn->type = ESPCONN_UDP;
@@ -159,7 +159,7 @@ void on_client_recv(void *arg, char *data, uint16 len) {
 }
 
 void process_request(uint8 *request, uint16 len, uint8 remote_ip[], uint16 remote_port) {
-    /* verify packet size */
+    /* Verify packet size */
     if (len > DNS_MAX_PACKET_SIZE || len < DNS_HEADER_SIZE) {
         DEBUG_DNSSERVER("received packet of invalid size %d", len);
         reset();
@@ -176,7 +176,7 @@ void process_request(uint8 *request, uint16 len, uint8 remote_ip[], uint16 remot
 
     DEBUG_DNSSERVER("responding to " IPSTR ":%d", IP2STR(remote_ip), remote_port);
 
-    /* we must close the incoming connection before being able to open the outgoing one */
+    /* We must close the incoming connection before being able to open the outgoing one */
     reset();
 
     struct espconn *response_conn = zalloc(sizeof(struct espconn));
@@ -198,7 +198,7 @@ void process_request(uint8 *request, uint16 len, uint8 remote_ip[], uint16 remot
     free(response_conn);
     free(response);
 
-    /* start listening for the next request */
+    /* Start listening for the next request */
     listen();
 }
 
@@ -208,20 +208,20 @@ uint8 *prepare_response(uint8 *request, uint16 *len) {
     uint16 qtype, qclass;
     dns_header_t *header = (dns_header_t *) request;
 
-    /* must be a query for us to do anything with it */
+    /* Must be a query for us to do anything with it */
     header->flags = ntohs(header->flags);
     if (((header->flags & DNS_FLAGS_TYPE_MASK) >> DNS_FLAGS_TYPE_SHIFT) != DNS_QR_QUERY) {
         DEBUG_DNSSERVER("ignoring invalid DNS request");
         return NULL;
     }
 
-    /* if operation is anything other than query, we don't do it */
+    /* If operation is anything other than query, we don't do it */
     if (((header->flags & DNS_FLAGS_OP_CODE_MASK) >> DNS_FLAGS_OP_CODE_SHIFT) != DNS_OP_CODE_QUERY) {
         DEBUG_DNSSERVER("responding with not implemented (not a query)");
         return prepare_error_response(header, DNS_REPLY_NOT_IMPLEMENTED, NULL, 0, len);
     }
 
-    /* only support requests containing single queries */
+    /* Only support requests containing single queries */
     if (header->qd_count != htons(1)) {
         DEBUG_DNSSERVER("responding with format error (more than one query)");
         return prepare_error_response(header, DNS_REPLY_FORMAT_ERROR, NULL, 0, len);
@@ -232,7 +232,7 @@ uint8 *prepare_response(uint8 *request, uint16 *len) {
         return prepare_error_response(header, DNS_REPLY_FORMAT_ERROR, NULL, 0, len);
     }
 
-    /* find the query */
+    /* Find the query */
     query = start = request + DNS_HEADER_SIZE;
     rem = *len - DNS_HEADER_SIZE;
     char query_str[256] = {0};
@@ -261,7 +261,7 @@ uint8 *prepare_response(uint8 *request, uint16 *len) {
         return prepare_error_response(header, DNS_REPLY_FORMAT_ERROR, NULL, 0, len);
     }
 
-    /* skip the 0 length label that we found above */
+    /* Skip the 0 length label that we found above */
     start += 1;
 
     memcpy(&qtype, start, sizeof(qtype));
@@ -280,7 +280,7 @@ uint8 *prepare_response(uint8 *request, uint16 *len) {
         return prepare_error_response(header, DNS_REPLY_NX_DOMAIN, query, query_len, len);
     }
 
-    /* being a simple captive DNS resolver, reply with our IP */
+    /* Being a simple captive DNS resolver, reply with our IP */
     struct ip_info ip_info;
     wifi_get_ip_info(SOFTAP_IF, &ip_info);
 
@@ -311,21 +311,21 @@ uint8 *prepare_ip_response(dns_header_t *request_header, ip_addr_t ip_addr,
     *len += query_len;
     response_p += query_len;
 
-    /* rather than restating the name here, we use a pointer to the name contained
-     * in the query section; pointers have the top two bits set */
+    /* Rather than restating the name here, we use a pointer to the name contained in the query section; pointers have
+     * the top two bits set */
     uint16 svalue = htons(0xC000 | DNS_HEADER_SIZE);
     uint32 lvalue;
     memcpy(response_p, &svalue, 2);
     *len += 2;
     response_p += 2;
 
-    /* answer is type A (an IPv4 address) */
+    /* Answer is type A (an IPv4 address) */
     svalue = htons(DNS_QTYPE_A);
     memcpy(response_p, &svalue, 2);
     *len += 2;
     response_p += 2;
 
-    /* answer is in the Internet Class */
+    /* Answer is in the Internet Class */
     svalue = htons(DNS_QCLASS_IN);
     memcpy(response_p, &svalue, 2);
     *len += 2;
@@ -337,7 +337,7 @@ uint8 *prepare_ip_response(dns_header_t *request_header, ip_addr_t ip_addr,
     *len += 4;
     response_p += 4;
 
-    /* length of RData is 4 bytes - IPv4 */
+    /* Length of RData is 4 bytes - IPv4 */
     svalue = htons(4);
     memcpy(response_p, &svalue, 2);
     *len += 2;
