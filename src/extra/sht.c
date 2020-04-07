@@ -24,6 +24,7 @@
 #include <gpio.h>
 
 #include "espgoodies/common.h"
+#include "espgoodies/gpio.h"
 #include "espgoodies/system.h"
 #include "espgoodies/utils.h"
 
@@ -63,6 +64,8 @@
 #define LED_STATUS_BLINK_SLOW           0x03
 #define LED_STATUS_BLINK_FAST           0x04
 
+#define RESET_GPIO                      5
+
 
 typedef struct {
 
@@ -70,6 +73,7 @@ typedef struct {
     double                              last_humidity;
     uint64                              last_read_time; /* Milliseconds */
     bool                                configured;
+    bool                                sleep_prevented;
 
 } extra_info_t;
 
@@ -88,12 +92,13 @@ ICACHE_FLASH_ATTR static double         read_humidity(port_t *port);
 ICACHE_FLASH_ATTR static bool           read_data_if_needed(port_t *port);
 ICACHE_FLASH_ATTR static bool           read_data(port_t *port);
 
-
 ICACHE_FLASH_ATTR static bool           send_cmd_read_measurements(void);
 ICACHE_FLASH_ATTR static bool           send_cmd_led(uint8 led_status);
-ICACHE_FLASH_ATTR static bool           send_cmd_configure(uint8 temp_thresh, uint8 hum_thresh,
-                                                           uint16 samp_period);
+/*
+ICACHE_FLASH_ATTR static bool           send_cmd_configure(uint8 temp_thresh, uint8 hum_thresh, uint16 samp_period);
+ */
 ICACHE_FLASH_ATTR static bool           send_cmd_prevent_sleep(void);
+
 ICACHE_FLASH_ATTR static bool           send_cmd_06(void);
 ICACHE_FLASH_ATTR static bool           send_cmd_07(void);
 
@@ -166,11 +171,26 @@ port_t *sht_humidity = &_sht_humidity;
 void configure(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
-    /* Prevent multiple SPI setups */
+    /* Prevent multiple setups */
     if (!extra_info->configured) {
         DEBUG_SHT("configuring SPI");
         spi_setup(SPI_BIT_ORDER, SPI_CPOL, SPI_CPHA, SPI_FREQ);
         extra_info->configured = TRUE;
+
+        /* Prevent sleep */
+        extra_info->sleep_prevented = send_cmd_prevent_sleep();
+        recv_dummy(3);
+
+        if (!send_cmd_led(LED_STATUS_BLINK_SLOW)) {
+            DEBUG_SHT("invalid SPI slave response");
+        }
+
+        /* GPIO5 is used to reset the low-power MCU */
+        gpio_configure_output(RESET_GPIO, /* initial = */ TRUE);
+
+        /* Set initial values to UNDEFINED */
+        extra_info->last_temperature = UNDEFINED;
+        extra_info->last_humidity = UNDEFINED;
     }
 }
 
@@ -205,6 +225,12 @@ double read_humidity(port_t *port) {
 bool read_data_if_needed(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
+    /* Prevent sleep mode, if not already prevented */
+    if (!extra_info->sleep_prevented) {
+        extra_info->sleep_prevented = send_cmd_prevent_sleep();
+        recv_dummy(3);
+    }
+
     uint64 now = system_uptime_ms();
     uint64 delta = now - extra_info->last_read_time;
     if (delta >= port->sampling_interval - 10) { /* Allow 10 milliseconds of tolerance */
@@ -213,13 +239,15 @@ bool read_data_if_needed(port_t *port) {
         /* Update last read time */
         extra_info->last_read_time = system_uptime_ms();
 
-        if (!read_data(port)) {
-            DEBUG_SHT("data reading failed");
+        if (read_data(port)) {
+            return TRUE;
+        }
 
-            /* In case of error, cached status can be used within up to twice the sampling interval. */
-            if (delta > port->sampling_interval * 2) {
-                return FALSE;
-            }
+        DEBUG_SHT("data reading failed");
+
+        /* In case of error, cached status can be used within up to twice the sampling interval. */
+        if (delta > port->sampling_interval * 2) {
+            return FALSE;
         }
     }
 
@@ -229,6 +257,19 @@ bool read_data_if_needed(port_t *port) {
 bool read_data(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
+    /* Reset low-power MCU, so that it reads new measurements from sensor */
+    DEBUG_SHT("resetting low-power MCU");
+    gpio_write_value(RESET_GPIO, FALSE);
+    os_delay_us(1000);
+    gpio_write_value(RESET_GPIO, TRUE);
+    os_delay_us(100000); /* Allow 100ms for the MCU to get ready */
+
+    /* Turn LED off */
+    if (!send_cmd_led(LED_STATUS_OFF)) {
+        DEBUG_SHT("invalid SPI slave response");
+    }
+
+    /* Read measurements */
     if (!send_cmd_read_measurements()) {
         return FALSE;
     }
@@ -243,11 +284,12 @@ bool read_data(port_t *port) {
     extra_info->last_temperature = temp;
     extra_info->last_humidity = hum;
 
+    /* Commands 06 and 07 re sent by the original FW, but effect/reason is unknown. */
     if (!send_cmd_06()) {
-        return FALSE;
+        return TRUE;
     }
     if (!send_cmd_07()) {
-        return FALSE;
+        return TRUE;
     }
 
     recv_dummy(5);
@@ -264,7 +306,7 @@ bool send_cmd_read_measurements(void) {
      *  AA AA : footer
      */
 
-    DEBUG_SHT("sending read measurements command");
+    DEBUG_SHT("sending read-measurements command");
 
     uint8 frame_len;
     uint8 *mosi_frame = make_mosi_frame(CMD_READ_MEASUREMENTS, /* data = */ NULL, /* data_len = */ 0, &frame_len);
@@ -310,37 +352,37 @@ bool send_cmd_led(uint8 led_status) {
     return TRUE;
 }
 
-bool send_cmd_configure(uint8 temp_thresh, uint8 hum_thresh, uint16 samp_period) {
-    /* Frame format:
-     *  AA 99 : header
-     *  03    : cmd
-     *  05    : len
-     *  00    : ?
-     *  XX    : temp_thresh * 8 (e.g. 14: 2.5C)
-     *  XX    : hum_thresh * 2 (e.g. 0A: 5%)
-     *  XX XX : samp_period [minutes] (e.g. 02 D0: 720 minutes)
-     *  XX    : checksum
-     *  AA AA : footer
-     */
-
-    DEBUG_SHT("sending configure command with temp_thresh=%d, hum_thresh=%d, samp_period=%d",
-              temp_thresh, hum_thresh, samp_period);
-
-    uint8 frame_len;
-    uint8 data[] = {0x00, temp_thresh * 8, hum_thresh * 2, (uint8) (samp_period >> 8), samp_period & 0xFF};
-    uint8 *mosi_frame = make_mosi_frame(CMD_CONFIGURE, data, sizeof(data), &frame_len);
-    uint8 miso_frame[frame_len];
-
-    spi_transfer(mosi_frame, miso_frame, frame_len);
-    free(mosi_frame);
-
-    if (!miso_frame_valid(miso_frame, frame_len)) {
-        DEBUG_SHT("invalid SPI slave response");
-        return FALSE;
-    }
-
-    return TRUE;
-}
+//bool send_cmd_configure(uint8 temp_thresh, uint8 hum_thresh, uint16 samp_period) {
+//    /* Frame format:
+//     *  AA 99 : header
+//     *  03    : cmd
+//     *  05    : len
+//     *  00    : ?
+//     *  XX    : temp_thresh * 8 (e.g. 14: 2.5C)
+//     *  XX    : hum_thresh * 2 (e.g. 0A: 5%)
+//     *  XX XX : samp_period [minutes] (e.g. 02 D0: 720 minutes)
+//     *  XX    : checksum
+//     *  AA AA : footer
+//     */
+//
+//    DEBUG_SHT("sending configure command with temp_thresh=%d, hum_thresh=%d, samp_period=%d",
+//              temp_thresh, hum_thresh, samp_period);
+//
+//    uint8 frame_len;
+//    uint8 data[] = {0x00, temp_thresh * 8, hum_thresh * 2, (uint8) (samp_period >> 8), samp_period & 0xFF};
+//    uint8 *mosi_frame = make_mosi_frame(CMD_CONFIGURE, data, sizeof(data), &frame_len);
+//    uint8 miso_frame[frame_len];
+//
+//    spi_transfer(mosi_frame, miso_frame, frame_len);
+//    free(mosi_frame);
+//
+//    if (!miso_frame_valid(miso_frame, frame_len)) {
+//        DEBUG_SHT("invalid SPI slave response");
+//        return FALSE;
+//    }
+//
+//    return TRUE;
+//}
 
 bool send_cmd_prevent_sleep(void) {
     /* Frame format:

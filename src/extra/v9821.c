@@ -342,6 +342,16 @@ void configure(port_t *port) {
         DEBUG_V9821(port, "configuring serial port");
         uart_setup(UART_NO, UART_BAUD, UART_PARITY, UART_STOP_BITS);
         extra_info->configured = TRUE;
+
+        /* Set initial values to UNDEFINED */
+        extra_info->last_energy = UNDEFINED;
+        extra_info->last_voltage = UNDEFINED;
+        extra_info->last_current = UNDEFINED;
+        extra_info->last_freq = UNDEFINED;
+        extra_info->last_active_power = UNDEFINED;
+        extra_info->last_reactive_power = UNDEFINED;
+        extra_info->last_apparent_power = UNDEFINED;
+        extra_info->last_power_factor = UNDEFINED;
     }
 }
 
