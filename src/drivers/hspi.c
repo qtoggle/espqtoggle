@@ -145,7 +145,9 @@ bool hspi_get_current_setup(uint8 *bit_order, bool *cpol, bool *cpha, uint32 *fr
 }
 
 void hspi_transfer(uint8 *out_buff, uint8 *in_buff, uint32 len) {
+#if defined(_DEBUG_HSPI) && defined(_DEBUG)
     uint32 orig_len = len;
+#endif
 
     /* out_buff may not be 32 bit-aligned */
     while ((((uint32) out_buff) & 3) && (len > 0)) {
