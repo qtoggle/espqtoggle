@@ -74,6 +74,12 @@ typedef union {
 } spi_clock_t;
 
 
+static uint8                    current_bit_order;
+static bool                     current_cpol;
+static bool                     current_cpha;
+static uint32                   current_freq;
+
+
 ICACHE_FLASH_ATTR static uint32 clock_reg_to_freq(spi_clock_t *reg);
 ICACHE_FLASH_ATTR static void   set_freq(uint32 freq);
 ICACHE_FLASH_ATTR static void   set_clock_divider(uint32 divider);
@@ -123,6 +129,20 @@ void spi_setup(uint8 bit_order, bool cpol, bool cpha, uint32 freq) {
 
     DEBUG_SPI("bit_order=%c, cpol=%d, cpha=%d, freq=%dHz",
               bit_order == SPI_BIT_ORDER_MSB_FIRST ? 'M' : 'L', cpol, cpha, freq);
+
+    current_bit_order = bit_order;
+    current_cpol = cpol;
+    current_cpha = cpha;
+    current_freq = freq;
+}
+
+bool spi_get_current_setup(uint8 *bit_order, bool *cpol, bool *cpha, uint32 *freq) {
+    *bit_order = current_bit_order;
+    *cpol = current_cpol;
+    *cpha = current_cpha;
+    *freq = current_freq;
+
+    return current_freq > 0;
 }
 
 void spi_transfer(uint8 *out_buff, uint8 *in_buff, uint32 len) {
