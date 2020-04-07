@@ -35,7 +35,7 @@
 
 
 ICACHE_FLASH_ATTR void              spi_setup(uint8 bit_order, bool cpol, bool cpha, uint32 freq);
-ICACHE_FLASH_ATTR void              spi_transfer(uint8 *in_buff, uint8 *out_buff, uint32 len);
+ICACHE_FLASH_ATTR void              spi_transfer(uint8 *out_buff, uint8 *in_buff, uint32 len);
 ICACHE_FLASH_ATTR uint8             spi_transfer_byte(uint8 byte);
 
 
