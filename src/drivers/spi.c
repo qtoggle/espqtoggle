@@ -47,8 +47,10 @@
 #define SPICRBO                 (1 << 25) /* SPI_RD_BIT_ODER */
 #define SPIBUSY                 (1 << 18) /* SPI_USR */
 #define SPIUSME                 (1 << 7)  /* SPI_CK_OUT_EDGE, SPI master edge (0: falling, 1: rising) */
+#define SPIUSSE                 (1 << 6)  /* SPI Slave Edge (0:falling, 1:rising), SPI_CK_I_EDGE */
+#define SPIUCSSETUP             (1 << 5)  /* SPI_CS_SETUP */
+#define SPIUCSHOLD              (1 << 4)  /* SPI_CS_HOLD */
 #define SPIUDUPLEX              (1 << 0)  /* SPI_DOUTDIN */
-
 
 #define SPILMISO                8
 #define SPILMOSI                17
@@ -76,8 +78,9 @@ ICACHE_FLASH_ATTR static uint32 clock_reg_to_freq(spi_clock_t *reg);
 ICACHE_FLASH_ATTR static void   set_freq(uint32 freq);
 ICACHE_FLASH_ATTR static void   set_clock_divider(uint32 divider);
 ICACHE_FLASH_ATTR static void   set_data_bits(uint16 bits);
-ICACHE_FLASH_ATTR static void   transfer_aligned(uint8 *in_buff, uint8 *out_buff, uint32 len);
-ICACHE_FLASH_ATTR static void   transfer_bytes(uint8 *in_buff, uint8 *out_buff, uint32 len);
+ICACHE_FLASH_ATTR static void   transfer_chunked(uint8 *out_buff, uint8 *in_buff, uint32 len);
+ICACHE_FLASH_ATTR static void   transfer_chunk64(uint8 *out_buff, uint8 *in_buff, uint8 len);
+ICACHE_FLASH_ATTR static void   transfer_aligned(uint8 *out_buff, uint8 *in_buff, uint8 len);
 
 
 void spi_setup(uint8 bit_order, bool cpol, bool cpha, uint32 freq) {
@@ -86,63 +89,71 @@ void spi_setup(uint8 bit_order, bool cpol, bool cpha, uint32 freq) {
     PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTMS_U, 2); /* GPIO14 becomes SCLK */
     PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U, 2); /* GPIO15 becomes CS */
 
+    SPI1C = 0;
+
     /* Frequency */
     set_freq(freq);
 
     /* Bit order */
     SPI1C1 = 0;
-    if (bit_order == SPI_BIT_ORDER_MSB_FIRST) {
-        SPI1C = 0;
-    }
-    else {
+    if (bit_order == SPI_BIT_ORDER_LSB_FIRST) {
         SPI1C = SPICWBO | SPICRBO;
     }
 
     /* CPOL/CPHA */
-    SPI1U = SPIUMOSI | SPIUDUPLEX;
+    SPI1U = SPIUMOSI | SPIUDUPLEX | SPIUCSSETUP | SPIUCSHOLD | SPIUSSE;
 
     if (cpol) {
-        cpha = !cpha;
+        cpha ^= 1;
     }
 
     if (cpha) {
         SPI1U |= SPIUSME;
     }
 
-    if(cpol) {
+    if (cpol) {
         SPI1P |= SPIUDUMMY;
     }
+    else {
+        SPI1P &= ~SPIUDUMMY;
+    }
 
-    /* Set 8 data bits */
-    SPI1U1 = (7 << SPILMOSI) | (7 << SPILMISO);
+    /* Data bits */
+    set_data_bits(8);
 
     DEBUG_SPI("bit_order=%c, cpol=%d, cpha=%d, freq=%dHz",
               bit_order == SPI_BIT_ORDER_MSB_FIRST ? 'M' : 'L', cpol, cpha, freq);
 }
 
-void spi_transfer(uint8 *in_buff, uint8 *out_buff, uint32 len) {
-    while (len) {
-        if (len > 64) {
-            transfer_bytes(out_buff, in_buff, 64);
-            len -= 64;
-            if (out_buff) {
-                out_buff += 64;
-            }
-            if (in_buff) {
-                in_buff += 64;
-            }
-        }
-        else {
-            transfer_bytes(out_buff, in_buff, len);
-            len = 0;
-        }
+void spi_transfer(uint8 *out_buff, uint8 *in_buff, uint32 len) {
+    uint32 orig_len = len;
+
+    /* out_buff may not be 32 bit-aligned */
+    while ((((uint32) out_buff) & 3) && (len > 0)) {
+        *(in_buff++) = spi_transfer_byte(*(out_buff++));
+        len--;
     }
 
-    DEBUG_SPI("transferred %d bytes", len);
+    /* len may not be a multiple of 4 */
+    uint32 len4 = len & ~3;
+    transfer_chunked(out_buff, in_buff, len4);
+
+    /* Finish the last <4 bytes */
+    out_buff += len4;
+    in_buff += len4;
+    len -= len4;
+
+    while (len > 0) {
+        *(in_buff++) = spi_transfer_byte(*(out_buff++));
+        len--;
+    }
+
+    DEBUG_SPI("transferred %d bytes", orig_len);
 }
 
 uint8 spi_transfer_byte(uint8 byte) {
     while (SPI1CMD & SPIBUSY) {}
+    set_data_bits(8);
     SPI1W0 = byte;
     SPI1CMD |= SPIBUSY;
     while (SPI1CMD & SPIBUSY) {}
@@ -246,7 +257,49 @@ void set_data_bits(uint16 bits) {
     SPI1U1 = ((SPI1U1 & mask) | ((bits << SPILMOSI) | (bits << SPILMISO)));
 }
 
-void transfer_aligned(uint8 *in_buff, uint8 *out_buff, uint32 len) {
+void transfer_chunked(uint8 *out_buff, uint8 *in_buff, uint32 len) {
+    /* Transfer data in chunks of 64 bytes */
+    while (len) {
+        if (len > 64) {
+            transfer_chunk64(out_buff, in_buff, 64);
+            len -= 64;
+            if (out_buff) {
+                out_buff += 64;
+            }
+            if (in_buff) {
+                in_buff += 64;
+            }
+        }
+        else {
+            transfer_chunk64(out_buff, in_buff, len);
+            len = 0;
+        }
+    }
+}
+
+void transfer_chunk64(uint8 *out_buff, uint8 *in_buff, uint8 len) {
+    if (!((uint32) out_buff & 3) && !((uint32) in_buff & 3)) {
+        /* Input and output buffers are both 32 bit aligned or NULL */
+        transfer_aligned(out_buff, in_buff, len);
+    }
+    else {
+        /* HW FIFO has 64 bytes limit and transfer_bytes breaks up large transfers into 64 byte chunks before calling
+         * this function. We know at this point that at least one direction is misaligned, so use temporary buffer to
+         * align everything. No need for separate out and in aligned copies, we can overwrite our out copy with the
+         * input data safely */
+
+        uint8 aligned[64]; /* Stack vars are always 32 bit aligned */
+        if (out_buff) {
+            memcpy(aligned, out_buff, len);
+        }
+        transfer_aligned(out_buff ? aligned : NULL, in_buff ? aligned : NULL, len);
+        if (in_buff) {
+            memcpy(in_buff, aligned, len);
+        }
+    }
+}
+
+void transfer_aligned(uint8 *out_buff, uint8 *in_buff, uint8 len) {
     while(SPI1CMD & SPIBUSY) {}
 
     set_data_bits(len * 8);
@@ -286,28 +339,6 @@ void transfer_aligned(uint8 *in_buff, uint8 *out_buff, uint32 len) {
         volatile uint8 *fifo_ptr_b = (volatile uint8 *) fifo_ptr;
         while (in_len--) {
             *(in_buff++) = *(fifo_ptr_b++);
-        }
-    }
-}
-
-void transfer_bytes(uint8 *in_buff, uint8 *out_buff, uint32 len) {
-    if (!((uint32) out_buff & 3) && !((uint32)in_buff & 3)) {
-        /* Input and output buffers are both 32 bit aligned or NULL */
-        transfer_aligned(out_buff, in_buff, len);
-    }
-    else {
-        /* HW FIFO has 64 bytes limit and transfer_bytes breaks up large transfers into 64 byte chunks before calling
-         * this function. We know at this point that at least one direction is misaligned, so use temporary buffer to
-         * align everything. No need for separate out and in aligned copies, we can overwrite our out copy with the
-         * input data safely */
-
-        uint8 aligned[64]; /* Stack vars are always 32 bit aligned */
-        if (out_buff) {
-            memcpy(aligned, out_buff, len);
-        }
-        transfer_aligned(out_buff ? aligned : NULL, in_buff ? aligned : NULL, len);
-        if (in_buff) {
-            memcpy(in_buff, aligned, len);
         }
     }
 }
