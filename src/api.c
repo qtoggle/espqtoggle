@@ -43,7 +43,7 @@
 #include "espgoodies/ota.h"
 #endif
 
-#include "drivers/spi.h"
+#include "drivers/hspi.h"
 #include "client.h"
 #include "common.h"
 #include "config.h"
@@ -2439,7 +2439,7 @@ json_t *api_get_raw_io(char *io, json_t *query_json, int *code) {
         bool cpol;
         bool cpha;
         uint32 freq;
-        bool configured = spi_get_current_setup(&bit_order, &cpol, &cpha, &freq);
+        bool configured = hspi_get_current_setup(&bit_order, &cpol, &cpha, &freq);
 
         json_obj_append(response_json, "bit_order", json_str_new(bit_order ? "lsb_first" : "msb_first"));
         json_obj_append(response_json, "cpol", json_bool_new(cpol));
@@ -2557,7 +2557,7 @@ json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int
                 }
             }
 
-            spi_transfer(out_frame, in_frame, len);
+            hspi_transfer(out_frame, in_frame, len);
 
             value_json = json_list_new();
             char hex_str[3];
@@ -2581,7 +2581,7 @@ json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int
         bool cpha;
         uint32 freq;
         bool reconfigured = FALSE;
-        spi_get_current_setup(&bit_order, &cpol, &cpha, &freq);
+        hspi_get_current_setup(&bit_order, &cpol, &cpha, &freq);
 
         param_json = json_obj_lookup_key(request_json, "freq");
         if (param_json) {
@@ -2624,7 +2624,7 @@ json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int
         }
 
         if (reconfigured) {
-            spi_setup(bit_order, cpol, cpha, freq);
+            hspi_setup(bit_order, cpol, cpha, freq);
         }
     }
     else {

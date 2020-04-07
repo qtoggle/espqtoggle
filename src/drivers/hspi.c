@@ -23,8 +23,7 @@
 #include <eagle_soc.h>
 
 #include "espgoodies/common.h"
-
-#include "spi.h"
+#include "drivers/hspi.h"
 
 
 #define ESP8266_REG(addr)     * ((volatile uint32 *)(0x60000000 + (addr)))
@@ -89,7 +88,7 @@ ICACHE_FLASH_ATTR static void   transfer_chunk64(uint8 *out_buff, uint8 *in_buff
 ICACHE_FLASH_ATTR static void   transfer_aligned(uint8 *out_buff, uint8 *in_buff, uint8 len);
 
 
-void spi_setup(uint8 bit_order, bool cpol, bool cpha, uint32 freq) {
+void hspi_setup(uint8 bit_order, bool cpol, bool cpha, uint32 freq) {
     PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDI_U, 2); /* GPIO12 becomes MISO */
     PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTCK_U, 2); /* GPIO13 becomes MOSI */
     PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTMS_U, 2); /* GPIO14 becomes SCLK */
@@ -102,7 +101,7 @@ void spi_setup(uint8 bit_order, bool cpol, bool cpha, uint32 freq) {
 
     /* Bit order */
     SPI1C1 = 0;
-    if (bit_order == SPI_BIT_ORDER_LSB_FIRST) {
+    if (bit_order == HSPI_BIT_ORDER_LSB_FIRST) {
         SPI1C = SPICWBO | SPICRBO;
     }
 
@@ -127,8 +126,8 @@ void spi_setup(uint8 bit_order, bool cpol, bool cpha, uint32 freq) {
     /* Data bits */
     set_data_bits(8);
 
-    DEBUG_SPI("bit_order=%c, cpol=%d, cpha=%d, freq=%dHz",
-              bit_order == SPI_BIT_ORDER_MSB_FIRST ? 'M' : 'L', cpol, cpha, freq);
+    DEBUG_HSPI("bit_order=%c, cpol=%d, cpha=%d, freq=%dHz",
+               bit_order == HSPI_BIT_ORDER_MSB_FIRST ? 'M' : 'L', cpol, cpha, freq);
 
     current_bit_order = bit_order;
     current_cpol = cpol;
@@ -136,7 +135,7 @@ void spi_setup(uint8 bit_order, bool cpol, bool cpha, uint32 freq) {
     current_freq = freq;
 }
 
-bool spi_get_current_setup(uint8 *bit_order, bool *cpol, bool *cpha, uint32 *freq) {
+bool hspi_get_current_setup(uint8 *bit_order, bool *cpol, bool *cpha, uint32 *freq) {
     *bit_order = current_bit_order;
     *cpol = current_cpol;
     *cpha = current_cpha;
@@ -145,12 +144,12 @@ bool spi_get_current_setup(uint8 *bit_order, bool *cpol, bool *cpha, uint32 *fre
     return current_freq > 0;
 }
 
-void spi_transfer(uint8 *out_buff, uint8 *in_buff, uint32 len) {
+void hspi_transfer(uint8 *out_buff, uint8 *in_buff, uint32 len) {
     uint32 orig_len = len;
 
     /* out_buff may not be 32 bit-aligned */
     while ((((uint32) out_buff) & 3) && (len > 0)) {
-        *(in_buff++) = spi_transfer_byte(*(out_buff++));
+        *(in_buff++) = hspi_transfer_byte(*(out_buff++));
         len--;
     }
 
@@ -164,14 +163,14 @@ void spi_transfer(uint8 *out_buff, uint8 *in_buff, uint32 len) {
     len -= len4;
 
     while (len > 0) {
-        *(in_buff++) = spi_transfer_byte(*(out_buff++));
+        *(in_buff++) = hspi_transfer_byte(*(out_buff++));
         len--;
     }
 
-    DEBUG_SPI("transferred %d bytes", orig_len);
+    DEBUG_HSPI("transferred %d bytes", orig_len);
 }
 
-uint8 spi_transfer_byte(uint8 byte) {
+uint8 hspi_transfer_byte(uint8 byte) {
     while (SPI1CMD & SPIBUSY) {}
     set_data_bits(8);
     SPI1W0 = byte;
@@ -190,7 +189,7 @@ void set_freq(uint32 freq) {
     if (freq >= ESP8266_CLOCK) {
         set_clock_divider(0x80000000);
         if (freq > ESP8266_CLOCK) {
-            DEBUG_SPI("limiting freq to max = %ld Hz", ESP8266_CLOCK);
+            DEBUG_HSPI("limiting freq to max = %ld Hz", ESP8266_CLOCK);
         }
         return;
     }
@@ -200,7 +199,7 @@ void set_freq(uint32 freq) {
     uint32 min_freq = clock_reg_to_freq(&min_freq_reg);
     if (freq < min_freq) {
         /* Use minimum possible clock */
-        DEBUG_SPI("limiting freq to min = %d Hz", min_freq_reg.reg_value);
+        DEBUG_HSPI("limiting freq to min = %d Hz", min_freq_reg.reg_value);
         set_clock_divider(min_freq_reg.reg_value);
         return;
     }
@@ -259,7 +258,7 @@ void set_freq(uint32 freq) {
 }
 
 void set_clock_divider(uint32 divider) {
-    DEBUG_SPI("setting clock divider = %d", divider);
+    DEBUG_HSPI("setting clock divider = %d", divider);
 
     if (divider == 0x80000000) {
         GPMUX |= (1 << 9);

@@ -28,17 +28,17 @@
 #include "espgoodies/system.h"
 #include "espgoodies/utils.h"
 
+#include "drivers/hspi.h"
 #include "api.h"
 #include "apiutils.h"
 #include "common.h"
-#include "drivers/spi.h"
 #include "ports.h"
 #include "extra/sht.h"
 
 
 #ifdef HAS_SHT
 
-#define SPI_BIT_ORDER                   SPI_BIT_ORDER_MSB_FIRST
+#define SPI_BIT_ORDER                   HSPI_BIT_ORDER_MSB_FIRST
 #define SPI_CPOL                        1
 #define SPI_CPHA                        1
 #define SPI_FREQ                        200 * 1000 /* Hz */
@@ -174,7 +174,7 @@ void configure(port_t *port) {
     /* Prevent multiple setups */
     if (!extra_info->configured) {
         DEBUG_SHT("configuring SPI");
-        spi_setup(SPI_BIT_ORDER, SPI_CPOL, SPI_CPHA, SPI_FREQ);
+        hspi_setup(SPI_BIT_ORDER, SPI_CPOL, SPI_CPHA, SPI_FREQ);
         extra_info->configured = TRUE;
 
         /* Prevent sleep */
@@ -312,7 +312,7 @@ bool send_cmd_read_measurements(void) {
     uint8 *mosi_frame = make_mosi_frame(CMD_READ_MEASUREMENTS, /* data = */ NULL, /* data_len = */ 0, &frame_len);
     uint8 miso_frame[frame_len];
 
-    spi_transfer(mosi_frame, miso_frame, frame_len);
+    hspi_transfer(mosi_frame, miso_frame, frame_len);
     free(mosi_frame);
 
     if (!miso_frame_valid(miso_frame, frame_len)) {
@@ -341,7 +341,7 @@ bool send_cmd_led(uint8 led_status) {
     uint8 *mosi_frame = make_mosi_frame(CMD_LED, data, sizeof(data), &frame_len);
     uint8 miso_frame[frame_len];
 
-    spi_transfer(mosi_frame, miso_frame, frame_len);
+    hspi_transfer(mosi_frame, miso_frame, frame_len);
     free(mosi_frame);
 
     if (!miso_frame_valid(miso_frame, frame_len)) {
@@ -399,7 +399,7 @@ bool send_cmd_prevent_sleep(void) {
     uint8 *mosi_frame = make_mosi_frame(CMD_PREVENT_SLEEP, /* data = */ NULL, /* data_len = */ 0, &frame_len);
     uint8 miso_frame[frame_len];
 
-    spi_transfer(mosi_frame, miso_frame, frame_len);
+    hspi_transfer(mosi_frame, miso_frame, frame_len);
     free(mosi_frame);
 
     if (!miso_frame_valid(miso_frame, frame_len)) {
@@ -425,7 +425,7 @@ bool send_cmd_06(void) {
     uint8 *mosi_frame = make_mosi_frame(0x06, /* data = */ NULL, /* data_len = */ 0, &frame_len);
     uint8 miso_frame[frame_len];
 
-    spi_transfer(mosi_frame, miso_frame, frame_len);
+    hspi_transfer(mosi_frame, miso_frame, frame_len);
     free(mosi_frame);
 
     if (!miso_frame_valid(miso_frame, frame_len)) {
@@ -457,7 +457,7 @@ bool send_cmd_07(void) {
     uint8 *mosi_frame = make_mosi_frame(0x06, data, /* data_len = */ 5, &frame_len);
     uint8 miso_frame[frame_len];
 
-    spi_transfer(mosi_frame, miso_frame, frame_len);
+    hspi_transfer(mosi_frame, miso_frame, frame_len);
     free(mosi_frame);
 
     if (!miso_frame_valid(miso_frame, frame_len)) {
@@ -490,7 +490,7 @@ bool recv_measurements(double *temp, double *hum) {
     uint8 miso_frame[12];
     uint8 i;
 
-    spi_transfer(mosi_frame, miso_frame, 12);
+    hspi_transfer(mosi_frame, miso_frame, 12);
     free(mosi_frame);
 
     *temp = miso_frame[8] / 8.0;
@@ -515,7 +515,7 @@ void recv_dummy(uint8 len) {
 
     uint8 *mosi_frame = make_mosi_fill_frame(len);
     uint8 miso_frame[len];
-    spi_transfer(mosi_frame, miso_frame, len);
+    hspi_transfer(mosi_frame, miso_frame, len);
     free(mosi_frame);
 }
 
