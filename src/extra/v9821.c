@@ -452,13 +452,15 @@ bool read_status_if_needed(port_t *port) {
         /* Update last read time */
         extra_info->last_read_time = system_uptime_ms();
 
-        if (!read_status(port)) {
-            DEBUG_V9821(port, "status reading failed");
+        if (read_status(port)) {
+            return TRUE;
+        }
 
-            /* In case of error, cached status can be used within up to twice the sampling interval. */
-            if (delta > port->sampling_interval * 2) {
-                return FALSE;
-            }
+        DEBUG_V9821(port, "status reading failed");
+
+        /* In case of error, cached status can be used within up to twice the sampling interval. */
+        if (delta > port->sampling_interval * 2) {
+            return FALSE;
         }
     }
 
