@@ -43,6 +43,7 @@
 #include "espgoodies/ota.h"
 #endif
 
+#include "drivers/hspi.h"
 #include "client.h"
 #include "common.h"
 #include "config.h"
@@ -2448,6 +2449,19 @@ json_t *api_get_raw_io(char *io, json_t *query_json, int *code) {
     else if (!strcmp(io, "adc0")) {
         json_obj_append(response_json, "value", json_int_new(system_adc_read()));
     }
+    else if (!strcmp(io, "hspi")) {
+        uint8 bit_order;
+        bool cpol;
+        bool cpha;
+        uint32 freq;
+        bool configured = hspi_get_current_setup(&bit_order, &cpol, &cpha, &freq);
+
+        json_obj_append(response_json, "bit_order", json_str_new(bit_order ? "lsb_first" : "msb_first"));
+        json_obj_append(response_json, "cpol", json_bool_new(cpol));
+        json_obj_append(response_json, "cpha", json_bool_new(cpha));
+        json_obj_append(response_json, "freq", json_int_new(freq));
+        json_obj_append(response_json, "configured", json_bool_new(configured));
+    }
     else {
         return API_ERROR(404, "no such io");
     }
@@ -2528,6 +2542,101 @@ json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int
     }
     else if (!strcmp(io, "adc0")) {
         return API_ERROR(400, "cannot set adc value");
+    }
+    else if (!strcmp(io, "hspi")) {
+        value_json = json_obj_lookup_key(request_json, "value");
+        if (value_json) {
+            if (json_get_type(value_json) != JSON_TYPE_LIST) {
+                return INVALID_FIELD_VALUE("value");
+            }
+
+            json_t *v_json;
+            len = json_list_get_len(value_json);
+            bool hex = FALSE;
+            uint8 out_frame[len], in_frame[len];
+            for (i = 0; i < len; i++) {
+                v_json = json_list_value_at(value_json, i);
+                if (json_get_type(v_json) == JSON_TYPE_INT) {
+                    out_frame[i] = json_int_get(v_json) & 0xFF;
+                }
+                else if (json_get_type(v_json) == JSON_TYPE_STR) {
+                    out_frame[i] = strtol(json_str_get(v_json), NULL, 16) & 0xFF;
+                    hex = TRUE;
+                }
+                else {
+                    return INVALID_FIELD_VALUE("value");
+                }
+            }
+
+            hspi_transfer(out_frame, in_frame, len);
+
+            value_json = json_list_new();
+            char hex_str[3];
+            for (i = 0; i < len; i++) {
+                if (hex) {
+                    snprintf(hex_str, sizeof(hex_str), "%02X", in_frame[i]);
+                    json_list_append(value_json, json_str_new(hex_str));
+                }
+                else {
+                    json_list_append(value_json, json_int_new(in_frame[i]));
+                }
+            }
+
+            json_obj_append(response_json, "value", value_json);
+
+            *code = 200;
+        }
+
+        uint8 bit_order;
+        bool cpol;
+        bool cpha;
+        uint32 freq;
+        bool reconfigured = FALSE;
+        hspi_get_current_setup(&bit_order, &cpol, &cpha, &freq);
+
+        param_json = json_obj_lookup_key(request_json, "freq");
+        if (param_json) {
+            if (json_get_type(param_json) != JSON_TYPE_INT) {
+                return INVALID_FIELD_VALUE("freq");
+            }
+
+            freq = json_int_get(param_json);
+            reconfigured = TRUE;
+        }
+
+        param_json = json_obj_lookup_key(request_json, "cpol");
+        if (param_json) {
+            if (json_get_type(param_json) != JSON_TYPE_BOOL) {
+                return INVALID_FIELD_VALUE("cpol");
+            }
+
+            cpol = json_bool_get(param_json);
+            reconfigured = TRUE;
+        }
+
+        param_json = json_obj_lookup_key(request_json, "cpha");
+        if (param_json) {
+            if (json_get_type(param_json) != JSON_TYPE_BOOL) {
+                return INVALID_FIELD_VALUE("cpha");
+            }
+
+            cpha = json_bool_get(param_json);
+            reconfigured = TRUE;
+        }
+
+        param_json = json_obj_lookup_key(request_json, "bit_order");
+        if (param_json) {
+            if (json_get_type(param_json) != JSON_TYPE_STR) {
+                return INVALID_FIELD_VALUE("bit_order");
+            }
+
+            bit_order = !strcmp(json_str_get(param_json), "lsb_first");
+            reconfigured = TRUE;
+        }
+
+        if (reconfigured) {
+            hspi_setup(bit_order, cpol, cpha, freq);
+        }
     }
     else {
         return API_ERROR(404, "no such io");
