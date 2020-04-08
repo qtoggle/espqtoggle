@@ -140,7 +140,7 @@
             "name": "check-serial",
             "params": {
                 "wait_duration": 1500,
-                "expected_content_hex": "FE 01 0F 08 00 00 00 1C"
+                "expected_content_hex": "FE 01 0F 08 00 00 00 1C*"
             }
         },
         {
