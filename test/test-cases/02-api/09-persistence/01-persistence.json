@@ -54,7 +54,7 @@
         {
             "name": "sleep",
             "params": {
-                "duration": 6000
+                "duration": 7000
             }
         },
         {
