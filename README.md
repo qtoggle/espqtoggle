@@ -1,7 +1,7 @@
 
 ## About
 
-**espQToggle** is a custom firmware for ESP8266/ESP8285 devices that implements the [qToggle API](https://github.com/qtoggle/docs/wiki/The-qToggle-API-1.0).
+**espQToggle** is a custom firmware for ESP8266/ESP8285 devices that implements the [qToggle API](https://github.com/qtoggle/docs/wiki/API-Specifications).
 
 
 ## Supported Devices
