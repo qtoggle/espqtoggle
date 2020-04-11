@@ -7,7 +7,7 @@
                 "method": "PATCH",
                 "path": "/ports/gpio4",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
                 },
                 "body": {
                     "display_name": "Already Provisioned"
@@ -22,7 +22,7 @@
                 "method": "DELETE",
                 "path": "/ports/virtual1",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
                 },
                 "expected_status": 204,
                 "expected_body": null
@@ -36,7 +36,7 @@
                 "method": "POST",
                 "path": "/reset",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
                 },
                 "expected_status": 204,
                 "expected_body": null
