@@ -170,7 +170,8 @@
                                 "free_mem",
                                 "flash_size",
                                 "flash_id",
-                                "chip_id"
+                                "chip_id",
+                                "config_model"
                             ],
                             "properties": {
                                 "frequency": {
