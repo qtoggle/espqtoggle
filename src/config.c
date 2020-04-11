@@ -33,6 +33,7 @@
 #include "api.h"
 #include "apiutils.h"
 #include "common.h"
+#include "core.h"
 #include "device.h"
 #include "ports.h"
 #include "stringpool.h"
@@ -322,7 +323,7 @@ void config_init(void) {
         device_tcp_port = DEFAULT_TCP_PORT;
     }
 
-    if (!device_config_model[0] && device_config_model_choices[0]) {
+    if (!device_config_model[0]) {
         strncpy(device_config_model, device_config_model_choices[0], API_MAX_DEVICE_CONFIG_MODEL_LEN);
     }
 
@@ -375,15 +376,28 @@ void config_start_provisioning(void) {
         return;
     }
 
+    if (!strcmp(device_config_model, "custom")) {
+        DEBUG_DEVICE("provisioning: custom configuration cannot be provisioned");
+
+        /* Set device configured flag */
+        DEBUG_DEVICE("mark device as configured");
+        device_flags |= DEVICE_FLAG_CONFIGURED;
+
+        config_mark_for_saving();
+
+        return;
+    }
+
     provisioning = TRUE;
 
     char url[256];
-    if (device_config_model_choices[0]) {
-        snprintf(url, sizeof(url), "%s%s/%s/%s.json",
-                 FW_BASE_URL, FW_BASE_CFG_PATH, FW_CONFIG_NAME, device_config_model);
+    if (!device_config_model[0] || !strcmp(device_config_model, "default")) {
+        /* Default configuration model has no specific file */
+        snprintf(url, sizeof(url), "%s%s/%s.json", FW_BASE_URL, FW_BASE_CFG_PATH, FW_CONFIG_NAME);
     }
     else {
-        snprintf(url, sizeof(url), "%s%s/%s.json", FW_BASE_URL, FW_BASE_CFG_PATH, FW_CONFIG_NAME);
+        snprintf(url, sizeof(url), "%s%s/%s/%s.json",
+                 FW_BASE_URL, FW_BASE_CFG_PATH, FW_CONFIG_NAME, device_config_model);
     }
 
     DEBUG_DEVICE("provisioning: fetching from \"%s\"", url);
@@ -476,6 +490,15 @@ void apply_ports_provisioning_config(json_t *ports_config) {
         for (i = 0; i < json_list_get_len(ports_config); i++) {
             port_config = json_list_value_at(ports_config, i);
             apply_port_provisioning_config(port_config);
+        }
+
+        /* No ports are supplied via provisioning, we have to manually set the device configured flag that would
+         * otherwise be set by api_patch_port() */
+        if (json_list_get_len(ports_config) == 0) {
+            DEBUG_DEVICE("mark device as configured");
+            device_flags |= DEVICE_FLAG_CONFIGURED;
+
+            config_mark_for_saving();
         }
     }
     else {

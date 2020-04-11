@@ -32,4 +32,4 @@ char                    device_config_model[API_MAX_DEVICE_CONFIG_MODEL_LEN + 1]
 uint32                  device_flags = 0;
 uint16                  device_tcp_port = 0;
 
-char                  * device_config_model_choices[] = {FW_CONFIG_MODELS NULL};
+char                  * device_config_model_choices[] = {FW_CONFIG_MODELS, "custom", NULL};
