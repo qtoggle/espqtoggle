@@ -171,6 +171,7 @@
                                 "flash_size",
                                 "flash_id",
                                 "chip_id",
+                                "debug",
                                 "config_model"
                             ],
                             "properties": {
@@ -384,7 +385,35 @@
                                             "enum": ["boolean"]
                                         }
                                     }
-                                }
+                                },
+                                "config_model": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "display_name",
+                                        "description",
+                                        "modifiable",
+                                        "type",
+                                        "choices"
+                                    ],
+                                    "properties": {
+                                        "display_name": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "modifiable": {
+                                            "enum": [true]
+                                        },
+                                        "type": {
+                                            "enum": ["string"]
+                                        },
+                                        "choices": {
+                                            "type": "array"
+                                        }
+                                    }
+                                },
                             }
                         }
                     }
