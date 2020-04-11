@@ -744,6 +744,7 @@ json_t *device_to_json(void) {
 
 #ifdef _OTA
     json_obj_append(json, "firmware_auto_update", json_bool_new(device_flags & DEVICE_FLAG_OTA_AUTO_UPDATE));
+    json_obj_append(json, "firmware_beta_enabled", json_bool_new(device_flags & DEVICE_FLAG_OTA_BETA_ENABLED));
 #endif
 
     /* Flash id */
@@ -1057,6 +1058,20 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
                 DEBUG_OTA("firmware auto update disabled");
             }
         }
+        else if (!strcmp(key, "firmware_beta_enabled")) {
+            if (json_get_type(child) != JSON_TYPE_BOOL) {
+                return INVALID_FIELD_VALUE(key);
+            }
+
+            if (json_bool_get(child)) {
+                device_flags |= DEVICE_FLAG_OTA_BETA_ENABLED;
+                DEBUG_OTA("firmware beta enabled");
+            }
+            else {
+                device_flags &= ~DEVICE_FLAG_OTA_BETA_ENABLED;
+                DEBUG_OTA("firmware beta disabled");
+            }
+        }
 #endif
         else if (!strcmp(key, "config_model") && device_config_model_choices[0]) {
             if (json_get_type(child) != JSON_TYPE_STR) {
@@ -1172,7 +1187,7 @@ json_t *api_get_firmware(json_t *query_json, int *code) {
     int ota_state = ota_current_state();
 
     if (ota_state == OTA_STATE_IDLE) {
-        bool beta = version_is_beta() || version_is_alpha();
+        bool beta = device_flags & DEVICE_FLAG_OTA_BETA_ENABLED;
         json_t *beta_json = json_obj_lookup_key(query_json, "beta");
         if (beta_json) {
             beta = !strcmp(json_str_get(beta_json), "true");
@@ -2668,6 +2683,14 @@ json_t *device_attrdefs_to_json(void) {
                                    /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
                                    /* reconnect = */ FALSE);
     json_obj_append(json, "firmware_auto_update", attrdef_json);
+
+    attrdef_json = attrdef_to_json("Firmware Beta Versions",
+                                   "Enables access to beta firmware releases. "
+                                   "Leave this disabled unless you know what you're doing.",
+                                   /* unit = */ NULL, ATTR_TYPE_BOOLEAN, /* modifiable = */ TRUE, /* min = */ UNDEFINED,
+                                   /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
+                                   /* reconnect = */ FALSE);
+    json_obj_append(json, "firmware_beta_enabled", attrdef_json);
 #endif
 
 #ifdef _BATTERY
