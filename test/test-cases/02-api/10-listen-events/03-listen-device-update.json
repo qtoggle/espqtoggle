@@ -72,6 +72,7 @@
                                         "flash_id",
                                         "chip_id",
                                         "config_name",
+                                        "config_model",
                                         "definitions"
                                     ],
                                     "properties": {
@@ -167,6 +168,9 @@
                                         },
                                         "config_name": {
                                             "type": "string"
+                                        },
+                                        "config_model": {
+                                            "enum": ["default"]
                                         },
                                         "debug": {
                                             "type": "boolean"
