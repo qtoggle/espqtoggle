@@ -128,9 +128,9 @@
     goto response;                                                                      \
 }
 
-#define WIFI_RSSI_EXCELLENT     -50
-#define WIFI_RSSI_GOOD          -60
-#define WIFI_RSSI_FAIR          -70
+#define WIFI_RSSI_EXCELLENT     -55
+#define WIFI_RSSI_GOOD          -65
+#define WIFI_RSSI_FAIR          -75
 
 
 static uint8                    api_access_level;
