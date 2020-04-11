@@ -322,7 +322,7 @@ void ports_init(uint8 *data) {
 #endif
 
 #ifdef HAS_VIRTUAL
-    virtual_init_ports(data);
+    virtual_ports_init(data);
 #endif
 
 #ifdef _INIT_EXTRA_PORT_DRIVERS
@@ -349,6 +349,8 @@ void ports_save(uint8 *data, uint32 *strings_offs) {
         port_save(*p, data, strings_offs);
         p++;
     }
+
+    virtual_ports_save(data, strings_offs);
 }
 
 void port_register(port_t *port) {

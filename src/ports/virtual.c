@@ -110,7 +110,7 @@ void init_virtual_port(uint8 *base_ptr, char *strings_ptr, uint32 flags, uint8 i
     virtual_port_in_use[index] = TRUE;
 }
 
-void virtual_init_ports(uint8 *data) {
+void virtual_ports_init(uint8 *data) {
     uint8 *base_ptr;
     uint32 flags;
     char *strings_ptr = (char *) data + CONFIG_OFFS_STR_BASE;
@@ -123,6 +123,27 @@ void virtual_init_ports(uint8 *data) {
         if (flags & PORT_FLAG_VIRTUAL_ACTIVE) {
             init_virtual_port(base_ptr, strings_ptr, flags, i);
         }
+    }
+}
+
+void virtual_ports_save(uint8 *data, uint32 *strings_offs) {
+    uint8 *base_ptr;
+    uint32 i, flags;
+    uint8 slot;
+
+    for (i = 0; i < VIRTUAL_MAX_PORTS; i++) {
+        slot = i + VIRTUAL0_SLOT;
+        base_ptr = data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * slot;
+        memcpy(&flags, base_ptr + CONFIG_OFFS_PORT_FLAGS, 4);
+        if (virtual_port_in_use[i]) {
+            flags |= PORT_FLAG_VIRTUAL_ACTIVE;
+            DEBUG_VIRTUAL("setting slot %d virtual flag", slot);
+        }
+        else {
+            flags &= ~PORT_FLAG_VIRTUAL_ACTIVE;
+            DEBUG_VIRTUAL("clearing slot %d virtual flag", slot);
+        }
+        memcpy(base_ptr + CONFIG_OFFS_PORT_FLAGS, &flags, 4);
     }
 }
 
