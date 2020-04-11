@@ -41,6 +41,7 @@ static ota_perform_callback_t   ota_auto_perform_callback = NULL;
 static bool                     ota_auto_update_checking = FALSE;
 
 static char                   * latest_url = NULL;
+static char                   * latest_stable_url = NULL;
 static char                   * latest_beta_url = NULL;
 static char                   * url_template = NULL;
 static char                   * current_version = NULL;
@@ -59,7 +60,7 @@ ICACHE_FLASH_ATTR static void   on_ota_auto_latest(char *version, char *date, ch
 
 
 
-void ota_init(char *cv, char *lu, char *lbu, char *ut) {
+void ota_init(char *cv, char *lu, char *lsu, char *lbu, char *ut) {
     if (current_version) {
         free(current_version);
     }
@@ -69,24 +70,27 @@ void ota_init(char *cv, char *lu, char *lbu, char *ut) {
     if (latest_url) {
         free(latest_url);
     }
-
     latest_url = strdup(lu);
+
+    if (latest_stable_url) {
+        free(latest_stable_url);
+    }
+    latest_stable_url = strdup(lsu);
 
     if (latest_beta_url) {
         free(latest_beta_url);
     }
-
     latest_beta_url = strdup(lbu);
 
     if (url_template) {
         free(url_template);
     }
-
     url_template = strdup(ut);
 
-    DEBUG_OTA("using latest URL %s", latest_url);
-    DEBUG_OTA("using latest beta URL %s", latest_beta_url);
-    DEBUG_OTA("using template URL %s", url_template);
+    DEBUG_OTA("using latest URL \"%s\"", latest_url);
+    DEBUG_OTA("using latest stable URL \"%s\"", latest_stable_url);
+    DEBUG_OTA("using latest beta URL \"%s\"", latest_beta_url);
+    DEBUG_OTA("using URL template \"%s\"", url_template);
 }
 
 bool ota_get_latest(bool beta, ota_latest_callback_t callback) {
@@ -97,9 +101,9 @@ bool ota_get_latest(bool beta, ota_latest_callback_t callback) {
 
     ota_latest_callback = callback;
 
-    char *url = beta ? latest_beta_url : latest_url;
+    char *url = beta ? latest_url : latest_stable_url;
 
-    DEBUG_OTA("fetching latest version from %s", url);
+    DEBUG_OTA("fetching latest version from \"%s\"", url);
 
     httpclient_request("GET", url, /* body = */ NULL, /* body_len = */ 0,
                        /* header_names = */ NULL, /* header_values = */ NULL, /* header_count = */ 0,

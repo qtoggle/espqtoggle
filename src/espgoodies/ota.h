@@ -37,7 +37,8 @@ typedef void (*ota_latest_callback_t)(char *version, char *date, char *url);
 typedef void (*ota_perform_callback_t)(int code);
 
 
-ICACHE_FLASH_ATTR void          ota_init(char *current_version,char *latest_url, char *latest_beta_url,
+ICACHE_FLASH_ATTR void          ota_init(char *current_version, char *latest_url,
+                                         char *latest_stable_url, char *latest_beta_url,
                                          char *url_template);
 
 ICACHE_FLASH_ATTR bool          ota_get_latest(bool beta, ota_latest_callback_t callback);

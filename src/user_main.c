@@ -53,6 +53,7 @@
 #define DEBUG_BAUD                  115200
 
 #define FW_LATEST_FILE              "/latest"
+#define FW_LATEST_STABLE_FILE       "/latest_stable"
 #define FW_LATEST_BETA_FILE         "/latest_beta"
 #define FW_AUTO_MIN_INTERVAL        24  /* Hours */
 
@@ -237,10 +238,11 @@ DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
 #endif
     config_init();
 #ifdef _OTA
-    ota_init(/* current_version = */ FW_VERSION,
-             /* url = */             FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME FW_LATEST_FILE,
-             /* beta_url = */        FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME FW_LATEST_BETA_FILE,
-             /* url_template = */    FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME "/%s");
+    ota_init(/* current_version = */   FW_VERSION,
+             /* latest_url = */        FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME FW_LATEST_FILE,
+             /* latest_stable_url = */ FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME FW_LATEST_STABLE_FILE,
+             /* latest_beta_url = */   FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME FW_LATEST_BETA_FILE,
+             /* url_template = */      FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME "/%s");
 #endif
 
     wifi_init();
