@@ -32,7 +32,6 @@
         {
             "name": "json-http-client",
             "params": {
-                "ip_address": "${TEST_NETWORK_DEVICE_IP}",
                 "method": "POST",
                 "path": "/reset",
                 "headers": {
