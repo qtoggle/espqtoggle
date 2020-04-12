@@ -2473,6 +2473,8 @@ json_t *api_get_raw_io(char *io, json_t *query_json, int *code) {
 
 json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = json_obj_new();
+    json_t *value_json, *param_json;
+    uint32 len, i;
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
         return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
