@@ -96,8 +96,8 @@
                 "expected_status": 200,
                 "expected_body_schema": {
                     "type": "number",
-                    "minimum": 18,
-                    "maximum": 22
+                    "minimum": 15,
+                    "maximum": 25
                 }
             }
         }

@@ -108,8 +108,8 @@
                 "expected_status": 200,
                 "expected_body_schema": {
                     "type": "number",
-                    "minimum": 38,
-                    "maximum": 42
+                    "minimum": 35,
+                    "maximum": 45
                 }
             }
         }
