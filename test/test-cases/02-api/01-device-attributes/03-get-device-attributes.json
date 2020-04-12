@@ -39,7 +39,7 @@
                         "wifi_bssid_current",
                         "wifi_signal_strength",
                         "frequency",
-                        "free_mem",
+                        "mem_usage",
                         "flash_size",
                         "firmware_auto_update",
                         "firmware_beta_enabled",
@@ -136,7 +136,7 @@
                         "frequency": {
                             "enum": [80]
                         },
-                        "free_mem": {
+                        "mem_usage": {
                             "type": "integer"
                         },
                         "flash_size": {
@@ -172,7 +172,6 @@
                                 "frequency",
                                 "firmware_auto_update",
                                 "firmware_beta_enabled",
-                                "free_mem",
                                 "flash_size",
                                 "flash_id",
                                 "chip_id",
@@ -276,38 +275,6 @@
                                         },
                                         "type": {
                                             "enum": ["boolean"]
-                                        }
-                                    }
-                                },
-                                "free_mem": {
-                                    "type": "object",
-                                    "additionalProperties": false,
-                                    "required": [
-                                        "display_name",
-                                        "description",
-                                        "unit",
-                                        "modifiable",
-                                        "type",
-                                        "integer"
-                                    ],
-                                    "properties": {
-                                        "display_name": {
-                                            "type": "string"
-                                        },
-                                        "description": {
-                                            "type": "string"
-                                        },
-                                        "unit": {
-                                            "enum": ["kB"]
-                                        },
-                                        "modifiable": {
-                                            "enum": [false]
-                                        },
-                                        "type": {
-                                            "enum": ["number"]
-                                        },
-                                        "integer": {
-                                            "enum": [true]
                                         }
                                     }
                                 },

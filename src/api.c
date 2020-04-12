@@ -740,7 +740,7 @@ json_t *device_to_json(void) {
     json_obj_append(json, "wifi_signal_strength", json_int_new(wifi_signal_strength));
 
     json_obj_append(json, "frequency", json_int_new(system_get_cpu_freq()));
-    json_obj_append(json, "free_mem", json_int_new(system_get_free_heap_size() / 1024));
+    json_obj_append(json, "mem_usage", json_int_new(100 - 100 * system_get_free_heap_size() / MAX_AVAILABLE_RAM));
     json_obj_append(json, "flash_size", json_int_new(system_get_flash_size() / 1024));
 
 #ifdef _OTA
@@ -1102,7 +1102,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
 #endif
                  !strcmp(key, "listen") ||
                  !strcmp(key, "uptime") ||
-                 !strcmp(key, "free_mem") ||
+                 !strcmp(key, "mem_usage") ||
                  !strcmp(key, "flash_size") ||
                  !strcmp(key, "debug") ||
                  !strcmp(key, "chip_id") ||
@@ -2811,11 +2811,6 @@ json_t *device_attrdefs_to_json(void) {
                                    /* reconnect = */ FALSE);
     json_obj_append(json, "battery_voltage", attrdef_json);
 #endif
-
-    attrdef_json = attrdef_to_json("Free Memory", "The current free heap memory.", "kB", ATTR_TYPE_NUMBER,
-                                   /* modifiable = */ FALSE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
-                                   /* integer = */ TRUE, /* step = */ 0, /* choices = */ NULL, /* reconnect = */ FALSE);
-    json_obj_append(json, "free_mem", attrdef_json);
 
     attrdef_json = attrdef_to_json("Flash Size", "Total flash memory size.", "kB", ATTR_TYPE_NUMBER,
                                    /* modifiable = */ FALSE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
