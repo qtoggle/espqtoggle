@@ -29,7 +29,9 @@
 #define DEBUG_SYSTEM(...)       {}
 #endif
 
-#define DEFAULT_HOSTNAME                "esp%08x"
+#define DEFAULT_HOSTNAME        "esp%08x"
+
+#define MAX_AVAILABLE_RAM       (40 * 1024) /* 40k is an upper limit to the available RAM */
 
 
 typedef void (*system_reset_callback_t)(void);

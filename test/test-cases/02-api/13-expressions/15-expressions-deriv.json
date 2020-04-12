@@ -50,7 +50,7 @@
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "body": {
-                    "expression": "DERIV(${DOLLAR}num_port, 1000)"
+                    "expression": "DERIV(${DOLLAR}num_port, 2000)"
                 },
                 "expected_status": 204
             }
@@ -82,7 +82,7 @@
         {
             "name": "sleep",
             "params": {
-                "duration": 1250
+                "duration": 2000
             }
         },
         {
@@ -96,8 +96,8 @@
                 "expected_status": 200,
                 "expected_body_schema": {
                     "type": "number",
-                    "minimum": 15,
-                    "maximum": 25
+                    "minimum": 5,
+                    "maximum": 15
                 }
             }
         }

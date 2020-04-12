@@ -66,7 +66,7 @@
                                         "wifi_bssid_current",
                                         "wifi_signal_strength",
                                         "frequency",
-                                        "free_mem",
+                                        "mem_usage",
                                         "flash_size",
                                         "firmware_auto_update",
                                         "firmware_beta_enabled",
@@ -152,7 +152,7 @@
                                         "frequency": {
                                             "type": "integer"
                                         },
-                                        "free_mem": {
+                                        "mem_usage": {
                                             "type": "integer"
                                         },
                                         "flash_size": {
