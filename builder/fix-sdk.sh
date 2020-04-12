@@ -82,4 +82,9 @@ if ! grep -qE "FUNC_U0RXD" ${SDK_BASE}/include/eagle_soc.h; then
     sed -ri 's/(#define FUNC_U0TXD\s+0)/\1\n#define FUNC_U0RXD 0/' ${SDK_BASE}/include/eagle_soc.h
 fi
 
+if ! [[ -f ${SDK_BASE}/.fixed ]]; then
+    echo "Marking SDK as fixed"
+    touch ${SDK_BASE}/.fixed
+fi
+
 echo "Done"

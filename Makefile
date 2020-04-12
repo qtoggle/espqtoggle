@@ -99,6 +99,21 @@ DD = dd status=none
 ESPTOOL ?= esptool
 APPGEN ?= $(PWD)/gen_appbin.py
 
+# ensure we have a toolchain
+ifeq ($(shell which $(CC) 2>/dev/null),)
+    $(error "No $(CC) found in $(PATH). Please install the ESP8266 toolchain")
+endif
+
+# ensure we have an SDK
+ifeq ($(SDK_BASE),)
+    $(error "Please set SDK_BASE to the installation dir of your ESP8266 non-OS SDK")
+endif
+
+# ensure the SDK has been fixed
+ifeq ($(wildcard $(SDK_BASE)/.fixed),)
+    $(error "Please run 'builder/fix-sdk.sh $(SDK_BASE)' to apply required fixes")
+endif
+
 APP = espqtoggle
 SRC_MAIN_DIR = src
 SRC_ESPGOODIES_DIR = src/espgoodies
