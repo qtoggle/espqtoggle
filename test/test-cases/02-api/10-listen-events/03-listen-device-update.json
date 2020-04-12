@@ -69,6 +69,7 @@
                                         "free_mem",
                                         "flash_size",
                                         "firmware_auto_update",
+                                        "firmware_beta_enabled",
                                         "flash_id",
                                         "chip_id",
                                         "config_name",
@@ -158,6 +159,9 @@
                                             "type": "integer"
                                         },
                                         "firmware_auto_update": {
+                                            "type": "boolean"
+                                        },
+                                        "firmware_beta_enabled": {
                                             "type": "boolean"
                                         },
                                         "flash_id": {

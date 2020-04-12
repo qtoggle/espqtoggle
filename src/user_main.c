@@ -53,6 +53,7 @@
 #define DEBUG_BAUD                  115200
 
 #define FW_LATEST_FILE              "/latest"
+#define FW_LATEST_STABLE_FILE       "/latest_stable"
 #define FW_LATEST_BETA_FILE         "/latest_beta"
 #define FW_AUTO_MIN_INTERVAL        24  /* Hours */
 
@@ -168,15 +169,15 @@ void on_wifi_connect(bool connected) {
                          sleep_boot_count % count_modulo);
 
             if (sleep_boot_count % count_modulo == 0) {
-                ota_auto_update_check(version_is_beta() || version_is_alpha(), on_ota_auto_perform);
+                ota_auto_update_check(/* beta = */ device_flags & DEVICE_FLAG_OTA_BETA_ENABLED, on_ota_auto_perform);
             }
         }
         else {  /* Sleep disabled, check for update at each boot */
-            ota_auto_update_check(version_is_beta() || version_is_alpha(), on_ota_auto_perform);
+            ota_auto_update_check(/* beta = */ device_flags & DEVICE_FLAG_OTA_BETA_ENABLED, on_ota_auto_perform);
         }
 
 #else  /* !_SLEEP */
-        ota_auto_update_check(version_is_beta() || version_is_alpha(), on_ota_auto_perform);
+        ota_auto_update_check(/* beta = */ device_flags & DEVICE_FLAG_OTA_BETA_ENABLED, on_ota_auto_perform);
 #endif
     }
 
@@ -237,10 +238,11 @@ DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
 #endif
     config_init();
 #ifdef _OTA
-    ota_init(/* current_version = */ FW_VERSION,
-             /* url = */             FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME FW_LATEST_FILE,
-             /* beta_url = */        FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME FW_LATEST_BETA_FILE,
-             /* url_template = */    FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME "/%s");
+    ota_init(/* current_version = */   FW_VERSION,
+             /* latest_url = */        FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME FW_LATEST_FILE,
+             /* latest_stable_url = */ FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME FW_LATEST_STABLE_FILE,
+             /* latest_beta_url = */   FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME FW_LATEST_BETA_FILE,
+             /* url_template = */      FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME "/%s");
 #endif
 
     wifi_init();

@@ -32,6 +32,7 @@
 #define DEVICE_FLAG_WEBHOOKS_HTTPS      0x00000002
 #define DEVICE_FLAG_OTA_AUTO_UPDATE     0x00000004
 #define DEVICE_FLAG_CONFIGURED          0x00000008
+#define DEVICE_FLAG_OTA_BETA_ENABLED    0x00000010
 
 
 extern char                             device_name[];

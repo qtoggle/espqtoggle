@@ -42,6 +42,7 @@
                         "free_mem",
                         "flash_size",
                         "firmware_auto_update",
+                        "firmware_beta_enabled",
                         "flash_id",
                         "chip_id",
                         "config_name",
@@ -144,6 +145,9 @@
                         "firmware_auto_update": {
                             "enum": [false]
                         },
+                        "firmware_beta_enabled": {
+                            "enum": [false]
+                        },
                         "flash_id": {
                             "type": "string",
                             "pattern": "^[a-f0-9]{8}$"
@@ -167,6 +171,7 @@
                             "required": [
                                 "frequency",
                                 "firmware_auto_update",
+                                "firmware_beta_enabled",
                                 "free_mem",
                                 "flash_size",
                                 "flash_id",
@@ -227,6 +232,30 @@
                                     }
                                 },
                                 "firmware_auto_update": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "display_name",
+                                        "description",
+                                        "modifiable",
+                                        "type"
+                                    ],
+                                    "properties": {
+                                        "display_name": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "modifiable": {
+                                            "enum": [true]
+                                        },
+                                        "type": {
+                                            "enum": ["boolean"]
+                                        }
+                                    }
+                                },
+                                "firmware_beta_enabled": {
                                     "type": "object",
                                     "additionalProperties": false,
                                     "required": [

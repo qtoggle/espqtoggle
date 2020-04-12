@@ -54,12 +54,14 @@ function release() {
     elif [[ "${EB_VERSION}" =~ alpha.[0-9]+$ ]]; then  # alpha version
         latest_file="latest_alpha"
     else  # stable version
-        latest_file="latest"
+        latest_file="latest_stable"
     fi
     
     echo "Version: ${EB_VERSION}" > ${RELEASE_DIR}/${latest_file}
     echo -n "Date: " >> ${RELEASE_DIR}/${latest_file}
     date "+%Y-%m-%d" >> ${RELEASE_DIR}/${latest_file}
+    
+    cp ${RELEASE_DIR}/${latest_file} ${RELEASE_DIR}/latest
 
     s3cmd put -P --guess-mime-type ${RELEASE_DIR}/${CONFIG_NAME}/user1.bin \
                                    s3://${AWS_BUCKET}/${AWS_FOLDER}/${CONFIG_NAME}/${EB_VERSION}/user1.bin
@@ -69,6 +71,8 @@ function release() {
                                    s3://${AWS_BUCKET}/${AWS_FOLDER}/${CONFIG_NAME}/${EB_VERSION}/firmware.bin
     s3cmd put -P --guess-mime-type ${RELEASE_DIR}/${latest_file} \
                                    s3://${AWS_BUCKET}/${AWS_FOLDER}/${CONFIG_NAME}/${latest_file}
+    s3cmd put -P --guess-mime-type ${RELEASE_DIR}/latest \
+                                   s3://${AWS_BUCKET}/${AWS_FOLDER}/${CONFIG_NAME}/latest
 }
 
 function clean() {
