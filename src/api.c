@@ -65,6 +65,14 @@
     response_json;                                                                      \
 })
 
+#define API_ERROR_DETAILS(c, error, details) ({                                         \
+    if (response_json) json_free(response_json);                                        \
+    json_obj_append(response_json = json_obj_new(), "error", json_str_new(error));      \
+    json_obj_append(response_json, "details", details);                                 \
+    *code = c;                                                                          \
+    response_json;                                                                      \
+})
+
 #define FORBIDDEN(level) ({                                                             \
     if (response_json) json_free(response_json);                                        \
     json_obj_append(response_json = json_obj_new(), "error",                            \
@@ -96,6 +104,27 @@
     char error[API_MAX_FIELD_VALUE_LEN];                                                \
     snprintf(error, API_MAX_FIELD_VALUE_LEN, "invalid field: %s", field);               \
     API_ERROR(400, error);                                                              \
+})
+
+#define INVALID_EXPRESSION_VALUE(reason, token, pos) ({                                 \
+    char error[API_MAX_FIELD_VALUE_LEN];                                                \
+    snprintf(error, API_MAX_FIELD_VALUE_LEN, "invalid field: expression");              \
+    json_t *details_json = json_obj_new();                                              \
+    json_obj_append(details_json, "reason", json_str_new(reason));                      \
+    if (token) {                                                                        \
+        json_obj_append(details_json, "token", json_str_new(token));                    \
+    }                                                                                   \
+    if (pos >= 1) {                                                                     \
+        json_obj_append(details_json, "pos", json_int_new(pos));                        \
+    }                                                                                   \
+    API_ERROR_DETAILS(400, error, details_json);                                        \
+})
+
+#define INVALID_EXPRESSION_VALUE_FROM_ERROR() ({                                        \
+    expr_parse_error_t *parse_error = expr_parse_get_error();                           \
+    INVALID_EXPRESSION_VALUE(parse_error->reason,                                       \
+                             parse_error->token,                                        \
+                             parse_error->pos);                                         \
 })
 
 #define MISSING_FIELD(field) ({                                                         \
@@ -1707,24 +1736,28 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
             }
 
             char *sexpr = json_str_get(child);
-            while (isspace((int) *sexpr)) {
-                sexpr++;
+
+            /* Use auxiliary s to check if expression is not empty (contains non-space characters) */
+            char *s = sexpr;
+            while (isspace((int) *s)) {
+                s++;
             }
-            if (*sexpr) {
+            if (*s) {
                 /* Parse & validate expression */
                 if (strlen(sexpr) > API_MAX_EXPR_LEN) {
-                    return INVALID_FIELD_VALUE(key);
+                    DEBUG_PORT(port, "expression is too long");
+                    return INVALID_EXPRESSION_VALUE("too-long", /* token = */ NULL, /* pos = */ - 1);
                 }
 
                 expr_t *expr = expr_parse(port->id, sexpr, strlen(sexpr));
                 if (!expr) {
-                    return INVALID_FIELD_VALUE(key);
+                    return INVALID_EXPRESSION_VALUE_FROM_ERROR();
                 }
 
                 if (expr_check_loops(expr, port) > 1) {
                     DEBUG_API("loop detected in expression \"%s\"", sexpr);
                     expr_free(expr);
-                    return INVALID_FIELD_VALUE(key);
+                    return INVALID_EXPRESSION_VALUE("circular-dependency", /* token = */ NULL, /* pos = */ -1);
                 }
 
                 port->sexpr = strdup(sexpr);
@@ -1736,7 +1769,6 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 else {
                     expr_free(expr);
                 }
-
             }
 
             DEBUG_PORT(port, "expression set to \"%s\"", port->sexpr ? port->sexpr : "");
@@ -1756,38 +1788,43 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
             }
 
             char *stransform_write = json_str_get(child);
-            while (isspace((int) *stransform_write)) {
-                stransform_write++;
+
+            /* Use auxiliary s to check if expression is not empty (contains non-space characters) */
+            char *s = stransform_write;
+            while (isspace((int) *s)) {
+                s++;
             }
-            if (*stransform_write) {
+            if (*s) {
                 /* Parse & validate expression */
                 if (strlen(stransform_write) > API_MAX_EXPR_LEN) {
-                    return INVALID_FIELD_VALUE(key);
+                    DEBUG_PORT(port, "expression is too long");
+                    return INVALID_EXPRESSION_VALUE("too-long", /* token = */ NULL, /* pos = */ - 1);
                 }
 
                 expr_t *transform_write = expr_parse(port->id, stransform_write, strlen(stransform_write));
                 if (!transform_write) {
-                    return INVALID_FIELD_VALUE(key);
+                    return INVALID_EXPRESSION_VALUE_FROM_ERROR();
                 }
 
                 port_t **_ports, **ports, *p;
-                bool other_deps = FALSE;
+                port_t *other_dep = NULL;
                 _ports = ports = expr_port_deps(transform_write);
                 if (ports) {
                     while ((p = *ports++)) {
                         if (p == port) {
                             continue;
                         }
-                        other_deps = TRUE;
+                        other_dep = p;
                         break;
                     }
                     free(_ports);
                 }
 
-                if (other_deps) {
-                    DEBUG_PORT(port, "transform expression depends on other ports");
+                if (other_dep) {
+                    DEBUG_PORT(port, "transform expression depends on external port \"%s\"", other_dep->id);
                     expr_free(transform_write);
-                    return INVALID_FIELD_VALUE(key);
+                    return INVALID_EXPRESSION_VALUE("external-dependency",
+                                                    /* token = */ other_dep->id, /* pos = */ - 1);
                 }
 
                 port->stransform_write = strdup(stransform_write);
@@ -1810,38 +1847,43 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
             }
 
             char *stransform_read = json_str_get(child);
-            while (isspace((int) *stransform_read)) {
-                stransform_read++;
+
+            /* Use auxiliary s to check if expression is not empty (contains non-space characters) */
+            char *s = stransform_read;
+            while (isspace((int) *s)) {
+                s++;
             }
-            if (*stransform_read) {
+            if (*s) {
                 /* Parse & validate expression */
                 if (strlen(stransform_read) > API_MAX_EXPR_LEN) {
-                    return INVALID_FIELD_VALUE(key);
+                    DEBUG_PORT(port, "expression is too long");
+                    return INVALID_EXPRESSION_VALUE("too-long", /* token = */ NULL, /* pos = */ - 1);
                 }
 
                 expr_t *transform_read = expr_parse(port->id, stransform_read, strlen(stransform_read));
                 if (!transform_read) {
-                    return INVALID_FIELD_VALUE(key);
+                    return INVALID_EXPRESSION_VALUE_FROM_ERROR();
                 }
 
                 port_t **_ports, **ports, *p;
-                bool other_deps = FALSE;
+                port_t *other_dep = NULL;
                 _ports = ports = expr_port_deps(transform_read);
                 if (ports) {
                     while ((p = *ports++)) {
                         if (p == port) {
                             continue;
                         }
-                        other_deps = TRUE;
+                        other_dep = p;
                         break;
                     }
                     free(_ports);
                 }
 
-                if (other_deps) {
-                    DEBUG_PORT(port, "transform expression depends on other ports");
+                if (other_dep) {
+                    DEBUG_PORT(port, "transform expression depends on external port \"%s\"", other_dep->id);
                     expr_free(transform_read);
-                    return INVALID_FIELD_VALUE(key);
+                    return INVALID_EXPRESSION_VALUE("external-dependency",
+                                                    /* token = */ other_dep->id, /* pos = */ - 1);
                 }
 
                 port->stransform_read = strdup(stransform_read);

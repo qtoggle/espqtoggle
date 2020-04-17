@@ -35,8 +35,6 @@
 #define MAX_ARGS        16
 #define MAX_HIST_LEN    32
 
-#define isidornum(c) (isalnum(c) || c == '.' || c == '_' || c == '$' || c == '-' || c == '+')
-
 
 typedef struct {
 
@@ -97,22 +95,26 @@ ICACHE_FLASH_ATTR static double     _acc_callback(expr_t *expr, int argc, double
 ICACHE_FLASH_ATTR static double     _hyst_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _sequence_callback(expr_t *expr, int argc, double *args);
 
+ICACHE_FLASH_ATTR expr_t          * parse_rec(char *port_id, char *input, int len, int abs_pos);
+ICACHE_FLASH_ATTR static expr_t   * parse_port_id_expr(char *port_id, char *input, int abs_pos);
+ICACHE_FLASH_ATTR static expr_t   * parse_const_expr(char *input, int abs_pos);
+ICACHE_FLASH_ATTR static void       set_parse_error(char *reason, char *token, int32 pos);
 ICACHE_FLASH_ATTR static const_t  * find_const_by_name(char *name);
 ICACHE_FLASH_ATTR static func_t   * find_func_by_name(char *name);
-ICACHE_FLASH_ATTR static expr_t   * parse_port_id_expr(char *port_id, char *input);
-ICACHE_FLASH_ATTR static expr_t   * parse_const_expr(char *input);
 ICACHE_FLASH_ATTR static int        check_loops_rec(port_t *the_port, int level, expr_t *expr);
-ICACHE_FLASH_ATTR static bool       expr_func_needs_free(expr_t *expr);
+ICACHE_FLASH_ATTR static bool       func_needs_free(expr_t *expr);
 
 
-const_t _false = {.name = "false", .value = 0};
-const_t _true =  {.name = "true",  .value = 1};
+static const_t _false = {.name = "false", .value = 0};
+static const_t _true =  {.name = "true",  .value = 1};
 
-const_t *constants[] = {
+static const_t *constants[] = {
     &_false,
     &_true,
     NULL
 };
+
+static expr_parse_error_t           parse_error;
 
 
 double _add_callback(expr_t *expr, int argc, double *args) {
@@ -713,41 +715,163 @@ func_t *funcs[] = {
 };
 
 
-const_t *find_const_by_name(char *name) {
-    const_t **constant = constants, *c;
-    while ((c = *constant++)) {
-        if (!strcmp(c->name, name)) {
-            return c;
-        }
+expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
+    if (!len) {
+        DEBUG_EXPR("empty expression");
+        set_parse_error("empty-expression", /* token = */ NULL, /* pos = */ -1);
+        return NULL;
     }
 
-    return NULL;    
-}
+    int level = 0, pos = 0, skip_pos = 0, c, l;
+    char *b = NULL, *e = NULL, *s = input;
+    int i, argc = 0;
+    char *argp[MAX_ARGS];
+    uint32 arg_pos[MAX_ARGS];
 
-func_t *find_func_by_name(char *name) {
-    func_t **func = funcs, *f;
-    while ((f = *func++)) {
-        if (!strcmp(f->name, name)) {
-            return f;
-        }
+    /* Skip leading whitespace */
+    while (*s && isspace((int) *s) && pos < len) {
+        s++;
+        pos++;
+        skip_pos++;
     }
 
-    return NULL;    
+    char name[MAX_NAME_LEN] = {0};
+    while ((c = *s) && (c != '(') && (pos < len)) {
+        append_max_len(name, c, MAX_NAME_LEN);
+        s++;
+        pos++;
+    }
+
+    /* Find beginning and end of function arguments */
+    while ((c = *s) && pos < len) {
+        if (c == '(') {
+            level++;
+
+            if (level == 1) {
+                if (b) {
+                    DEBUG_EXPR("unexpected \"%c\" at position %d", c, abs_pos + pos);
+                    set_parse_error("unexpected-character", /* token = */ NULL, abs_pos + pos);
+                    return NULL;
+                }
+
+                argp[0] = s;
+                arg_pos[0] = pos;
+                b = s + 1;
+                argc = 1;
+            }
+        }
+        else if (c == ')') {
+            if (level <= 0) {
+                DEBUG_EXPR("unexpected \"%c\" at position %d", c, abs_pos + pos);
+                set_parse_error("unexpected-character", /* token = */ NULL, abs_pos + pos);
+                return NULL;
+            }
+            else if (level == 1) {
+                argp[argc] = s;
+                arg_pos[argc] = pos;
+                e = s - 1;
+            }
+
+            level--;
+        }
+        else if (c == ',' && level == 1) {
+            if (argc < MAX_ARGS) {
+                arg_pos[argc] = pos;
+                argp[argc++] = s;
+            }
+        }
+
+        s++;
+        pos++;
+    }
+
+    if (b) { /* We have parentheses => function call */
+        if (!e) {
+            DEBUG_EXPR("unexpected end of expression");
+            set_parse_error("unexpected-end", /* token = */ NULL, /* pos = */ -1);
+            return NULL;
+        }
+
+        if (!isalnum((int) name[0])) {
+            DEBUG_EXPR("invalid function name \"%s\"", name);
+            set_parse_error("unexpected-character", /* token = */ NULL, abs_pos + skip_pos);
+            return NULL;
+        }
+
+        if (e < b) { /* Special no arguments case */
+            argc = 0;
+        }
+
+        expr_t *args[argc];
+
+        for (i = 0; i < argc; i++) {
+            l = argp[i + 1] - argp[i] - 1;
+            if (l == 0) {
+                DEBUG_EXPR("empty argument");
+                /* When encountering empty argument expression, following character is unexpected */
+                set_parse_error("unexpected-character", /* token = */ NULL, abs_pos + arg_pos[i] + 1);
+                while (i > 0) expr_free(args[--i]);
+                return NULL;
+            }
+            if (!(args[i] = parse_rec(port_id, argp[i] + 1, l, abs_pos + arg_pos[i] + 1))) {
+                /* An error occurred, free everything and give up */
+                while (i > 0) expr_free(args[--i]);
+                return NULL;
+            }
+        }
+
+        func_t *func = find_func_by_name(name);
+        if (!func) {
+            DEBUG_EXPR("no such function \"%s\"", name);
+            set_parse_error("unknown-function", /* token = */ name, abs_pos + skip_pos);
+            while (argc > 0) expr_free(args[--argc]);
+            return NULL;
+        }
+
+        if ((func->argc >= 0 && func->argc != argc) || (func->argc < 0 && -func->argc > argc)) {
+            DEBUG_EXPR("invalid number of arguments to function \"%s\"", name);
+            set_parse_error("invalid-number-of-arguments", /* token = */ NULL, abs_pos + skip_pos);
+            while (argc > 0) expr_free(args[--argc]);
+            return NULL;
+        }
+
+        expr_t *expr = zalloc(sizeof(expr_t));
+        expr->value = UNDEFINED;
+        expr->func = func;
+        expr->argc = argc;
+        if (argc) {
+            expr->args = malloc(sizeof(expr_t *) * argc);
+            for (i = 0; i < argc; i++) {
+                expr->args[i] = args[i];
+            }
+        }
+
+        return expr;
+    }
+    else {
+        if (name[0] == '$') { /* Port id */
+            return parse_port_id_expr(port_id, name + 1, abs_pos + skip_pos);
+        }
+        else { /* Constant */
+            return parse_const_expr(name, abs_pos + skip_pos);
+        }
+    }
 }
 
-
-expr_t *parse_port_id_expr(char *port_id, char *input) {
+expr_t *parse_port_id_expr(char *port_id, char *input, int abs_pos) {
     int c;
     char *s = input;
     
     if (input[0] && !isalpha((int) input[0]) && input[0] != '_') {
         DEBUG_EXPR("invalid port identifier \"%s\"", input);
+        set_parse_error("unexpected-character", /* token = */ NULL, abs_pos);
         return NULL;
     }
 
     while ((c = *s++)) {
         if (!isalnum((int) c) && c != '_' && c != '-') {
             DEBUG_EXPR("invalid port identifier \"%s\"", input);
+            set_parse_error("unexpected-character", /* token = */ NULL, abs_pos + s - input);
             return NULL;
         }
     }
@@ -765,7 +889,7 @@ expr_t *parse_port_id_expr(char *port_id, char *input) {
     return expr;
 }
 
-expr_t *parse_const_expr(char *input) {
+expr_t *parse_const_expr(char *input, int abs_pos) {
     const_t *constant = find_const_by_name(input);
     if (constant) {
         expr_t *expr = zalloc(sizeof(expr_t));
@@ -778,6 +902,7 @@ expr_t *parse_const_expr(char *input) {
         double value = strtod(input, &error);
         if (error[0]) {
             DEBUG_EXPR("invalid token \"%s\"", input);
+            set_parse_error("unexpected-character", /* token = */ NULL, abs_pos + error - input);
             return NULL;
         }
 
@@ -787,6 +912,43 @@ expr_t *parse_const_expr(char *input) {
         return expr;
     }
 }
+
+void set_parse_error(char *reason, char *token, int32 pos) {
+    if (parse_error.token) {
+        free(parse_error.token);
+        parse_error.token = NULL;
+    }
+
+    if (token) {
+        parse_error.token = strdup(token);
+    }
+
+    parse_error.reason = reason;
+    parse_error.pos = pos;
+}
+
+const_t *find_const_by_name(char *name) {
+    const_t **constant = constants, *c;
+    while ((c = *constant++)) {
+        if (!strcmp(c->name, name)) {
+            return c;
+        }
+    }
+
+    return NULL;
+}
+
+func_t *find_func_by_name(char *name) {
+    func_t **func = funcs, *f;
+    while ((f = *func++)) {
+        if (!strcmp(f->name, name)) {
+            return f;
+        }
+    }
+
+    return NULL;
+}
+
 
 int check_loops_rec(port_t *the_port, int level, expr_t *expr) {
     int i, l;
@@ -823,7 +985,7 @@ int check_loops_rec(port_t *the_port, int level, expr_t *expr) {
     return 0;
 }
 
-bool expr_func_needs_free(expr_t *expr) {
+bool func_needs_free(expr_t *expr) {
     return (expr->func == &_fmavg ||
             expr->func == &_fmedian ||
             expr->func == &_delay);
@@ -831,126 +993,11 @@ bool expr_func_needs_free(expr_t *expr) {
 
 
 expr_t *expr_parse(char *port_id, char *input, int len) {
-    if (!len) {
-        DEBUG_EXPR("empty expression");
-        return NULL;
-    }
+    return parse_rec(port_id, input, len, /* abs_pos = */ 1);
+}
 
-    int level = 0, pos = 0, c;
-    char *b = NULL, *e = NULL, *s = input;
-    int i, argc = 0;
-    char *argp[MAX_ARGS + 1];
-
-    /* Skip leading whitespace */
-    while (*s && isspace((int) *s) && pos < len) {
-        s++;
-        pos++;
-    }
-
-    char name[MAX_NAME_LEN] = {0};
-    while ((c = *s) && isidornum(c) && pos < len) {
-        append_max_len(name, c, MAX_NAME_LEN);
-        s++;
-        pos++;
-    }
-
-    /* Find beginning and end of function arguments */
-    while ((c = *s) && pos < len) {
-        if (c == '(') {
-            level++;
-            
-            if (level == 1) {
-                if (b) {
-                    DEBUG_EXPR("unexpected '%c' at position %d", c, (int) (s - input) + 1);
-                    return NULL;
-                }
-
-                argp[0] = s;
-                b = s + 1;
-                argc = 1;
-            }
-        }
-        else if (c == ')') {
-            if (level <= 0) {
-                DEBUG_EXPR("unexpected '%c' at position %d", c, (int) (s - input) + 1);
-                return NULL;
-            }
-            else if (level == 1) {
-                argp[argc] = s;
-                e = s - 1;
-            }
-
-            level--;
-        }
-        else if (c == ',' && level == 1) {
-            if (argc < MAX_ARGS) {
-                argp[argc++] = s;
-            }
-        }
-
-        s++;
-        pos++;
-    }
-
-    if (b) { /* Function call */
-        if (!e) {
-            DEBUG_EXPR("unexpected end of expression");
-            return NULL;
-        }
-
-        if (!isalnum((int) name[0])) {
-            DEBUG_EXPR("invalid function name \"%s\"", name);
-            return NULL;
-        }
-        
-        if (e < b) { /* Special no arguments case */
-            argc = 0;
-        }
-
-        expr_t *args[argc];
-
-        for (i = 0; i < argc; i++) {
-            if (!(args[i] = expr_parse(port_id, argp[i] + 1, argp[i + 1] - argp[i] - 1))) {
-                /* An error occurred, free everything and give up */
-                while (i > 0) expr_free(args[--i]);
-                return NULL;
-            }
-        }
-
-        func_t *func = find_func_by_name(name);
-        if (!func) {
-            DEBUG_EXPR("no such function \"%s\"", name);
-            while (argc > 0) expr_free(args[--argc]);
-            return NULL;
-        }
-        
-        if ((func->argc >= 0 && func->argc != argc) || (func->argc < 0 && -func->argc > argc)) {
-            DEBUG_EXPR("invalid number of arguments to function \"%s\"", name);
-            while (argc > 0) expr_free(args[--argc]);
-            return NULL;
-        }
-        
-        expr_t *expr = zalloc(sizeof(expr_t));
-        expr->value = UNDEFINED;
-        expr->func = func;
-        expr->argc = argc;
-        if (argc) {
-            expr->args = malloc(sizeof(expr_t *) * argc);
-            for (i = 0; i < argc; i++) {
-                expr->args[i] = args[i];
-            }
-        }
-
-        return expr;
-    }
-    else {
-        if (name[0] == '$') { /* Port id */
-            return parse_port_id_expr(port_id, name + 1);
-        }
-        else { /* Constant */
-            return parse_const_expr(name);
-        }
-    }
+expr_parse_error_t *expr_parse_get_error(void) {
+    return &parse_error;
 }
 
 double expr_eval(expr_t *expr) {
@@ -985,7 +1032,7 @@ void expr_free(expr_t *expr) {
     for (i = 0; i < expr->argc; i++) {
         expr_free(expr->args[i]);
     }
-    if (expr_func_needs_free(expr)) {
+    if (func_needs_free(expr)) {
         ((func_t *) expr->func)->callback(expr, -1, NULL);
     }
     if (expr->args) {
