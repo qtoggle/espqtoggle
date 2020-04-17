@@ -757,7 +757,7 @@ expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
             if (level == 1) {
                 if (b) {
                     DEBUG_EXPR("unexpected \"%c\" at position %d", c, abs_pos + pos);
-                    set_parse_error("unexpected-character", /* token = */ NULL, abs_pos + pos);
+                    set_parse_error("unexpected-character", s, abs_pos + pos);
                     return NULL;
                 }
 
@@ -770,7 +770,7 @@ expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
         else if (c == ')') {
             if (level <= 0) {
                 DEBUG_EXPR("unexpected \"%c\" at position %d", c, abs_pos + pos);
-                set_parse_error("unbalanced-parentheses", /* token = */ NULL, abs_pos + pos);
+                set_parse_error("unbalanced-parentheses", s, abs_pos + pos);
                 return NULL;
             }
             else if (level == 1) {
@@ -801,7 +801,7 @@ expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
 
         if (!isalnum((int) name[0])) {
             DEBUG_EXPR("invalid function name \"%s\"", name);
-            set_parse_error("unexpected-character", /* token = */ NULL, abs_pos + skip_pos);
+            set_parse_error("unexpected-character", name, abs_pos + skip_pos);
             return NULL;
         }
 
@@ -816,7 +816,7 @@ expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
             if (l == 0) {
                 DEBUG_EXPR("empty argument");
                 /* When encountering empty argument expression, following character is unexpected */
-                set_parse_error("unexpected-character", /* token = */ NULL, abs_pos + arg_pos[i] + 1);
+                set_parse_error("unexpected-character", argp[i + 1], abs_pos + arg_pos[i] + 1);
                 while (i > 0) expr_free(args[--i]);
                 return NULL;
             }
@@ -871,16 +871,18 @@ expr_t *parse_port_id_expr(char *port_id, char *input, int abs_pos) {
     
     if (input[0] && !isalpha((int) input[0]) && input[0] != '_') {
         DEBUG_EXPR("invalid port identifier \"%s\"", input);
-        set_parse_error("unexpected-character", /* token = */ NULL, abs_pos);
+        set_parse_error("unexpected-character", input, abs_pos);
         return NULL;
     }
 
-    while ((c = *s++)) {
+    while ((c = *s)) {
         if (!isalnum((int) c) && c != '_' && c != '-') {
             DEBUG_EXPR("invalid port identifier \"%s\"", input);
-            set_parse_error("unexpected-character", /* token = */ NULL, abs_pos + s - input);
+            set_parse_error("unexpected-character", s, abs_pos + s - input);
             return NULL;
         }
+
+        s++;
     }
     
     expr_t *expr = zalloc(sizeof(expr_t));
@@ -909,7 +911,7 @@ expr_t *parse_literal_expr(char *input, int abs_pos) {
         double value = strtod(input, &error);
         if (error[0]) {
             DEBUG_EXPR("invalid token \"%s\"", input);
-            set_parse_error("unexpected-character", /* token = */ NULL, abs_pos + error - input);
+            set_parse_error("unexpected-character", error, abs_pos + error - input);
             return NULL;
         }
 
@@ -927,7 +929,12 @@ void set_parse_error(char *reason, char *token, int32 pos) {
     }
 
     if (token) {
-        parse_error.token = strdup(token);
+        if (!strcmp(reason, "unexpected-character")) {
+            parse_error.token = strndup(token, 1);
+        }
+        else {
+            parse_error.token = strdup(token);
+        }
     }
 
     parse_error.reason = reason;

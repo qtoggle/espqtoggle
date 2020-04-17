@@ -17,6 +17,7 @@
                     "error": "invalid field: expression",
                     "details": {
                         "reason": "unexpected-character",
+                        "token": "s",
                         "pos": 3
                     }
                 }
@@ -38,6 +39,7 @@
                     "error": "invalid field: expression",
                     "details": {
                         "reason": "unexpected-character",
+                        "token": "i",
                         "pos": 11
                     }
                 }
@@ -59,6 +61,7 @@
                     "error": "invalid field: expression",
                     "details": {
                         "reason": "unexpected-character",
+                        "token": "f",
                         "pos": 11
                     }
                 }
@@ -80,6 +83,7 @@
                     "error": "invalid field: expression",
                     "details": {
                         "reason": "unexpected-character",
+                        "token": ".",
                         "pos": 15
                     }
                 }
@@ -101,6 +105,7 @@
                     "error": "invalid field: expression",
                     "details": {
                         "reason": "unexpected-character",
+                        "token": ",",
                         "pos": 10
                     }
                 }
@@ -122,6 +127,7 @@
                     "error": "invalid field: expression",
                     "details": {
                         "reason": "unexpected-character",
+                        "token": "#",
                         "pos": 7
                     }
                 }
