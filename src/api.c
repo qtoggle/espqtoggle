@@ -1820,6 +1820,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                     free(_ports);
                 }
 
+                // FIXME: if referenced port is unavailable, external dependency is not detected
                 if (other_dep) {
                     DEBUG_PORT(port, "transform expression depends on external port \"%s\"", other_dep->id);
                     expr_free(transform_write);

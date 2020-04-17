@@ -1,0 +1,39 @@
+{
+    "name": "expressions-circular-dependency",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port2",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "${DOLLAR}num_port"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "${DOLLAR}num_port2"
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: expression",
+                    "details": {
+                        "reason": "circular-dependency"
+                    }
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,25 @@
+{
+    "name": "expressions-unexpected-end",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "  ADD(${DOLLAR}unterminated, ${DOLLAR}expression"
+                },
+                "expected_status": 400,
+                    "expected_body": {
+                    "error": "invalid field: expression",
+                    "details": {
+                        "reason": "unexpected-end"
+                    }
+                }
+            }
+        }
+    ]
+}

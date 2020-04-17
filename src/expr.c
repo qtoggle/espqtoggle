@@ -837,7 +837,7 @@ expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
 
         if ((func->argc >= 0 && func->argc != argc) || (func->argc < 0 && -func->argc > argc)) {
             DEBUG_EXPR("invalid number of arguments to function \"%s\"", name);
-            set_parse_error("invalid-number-of-arguments", /* token = */ NULL, abs_pos + skip_pos);
+            set_parse_error("invalid-number-of-arguments", /* token = */ name, abs_pos + skip_pos);
             while (argc > 0) expr_free(args[--argc]);
             return NULL;
         }
@@ -1066,7 +1066,7 @@ int expr_check_loops(expr_t *expr, struct port *the_port) {
 struct port **expr_port_deps(expr_t *expr) { // TODO this should return a bitmask of port_ids
     port_t **ports = NULL, **subports, **port, *p;
     int i, size = 0;
-    
+
     if (expr->func) {
         for (i = 0; i < expr->argc; i++) {
             subports = expr_port_deps(expr->args[i]);
