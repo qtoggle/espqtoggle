@@ -1,0 +1,27 @@
+{
+    "name": "expressions-unknown-function",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "expression": "  UNKNOWN_FUNC(${DOLLAR}gpio0, ${DOLLAR}gpio1)"
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid field: expression",
+                    "details": {
+                        "reason": "unknown-function",
+                        "token": "UNKNOWN_FUNC",
+                        "pos": 3
+                    }
+                }
+            }
+        }
+    ]
+}
