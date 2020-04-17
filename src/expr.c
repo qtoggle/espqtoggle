@@ -770,7 +770,7 @@ expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
         else if (c == ')') {
             if (level <= 0) {
                 DEBUG_EXPR("unexpected \"%c\" at position %d", c, abs_pos + pos);
-                set_parse_error("unexpected-character", /* token = */ NULL, abs_pos + pos);
+                set_parse_error("unbalanced-parentheses", /* token = */ NULL, abs_pos + pos);
                 return NULL;
             }
             else if (level == 1) {
