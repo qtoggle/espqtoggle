@@ -1746,7 +1746,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 /* Parse & validate expression */
                 if (strlen(sexpr) > API_MAX_EXPR_LEN) {
                     DEBUG_PORT(port, "expression is too long");
-                    return INVALID_EXPRESSION_VALUE("too-long", /* token = */ NULL, /* pos = */ - 1);
+                    return INVALID_EXPRESSION_VALUE("too-long", /* token = */ NULL, /* pos = */ -1);
                 }
 
                 expr_t *expr = expr_parse(port->id, sexpr, strlen(sexpr));
@@ -1798,7 +1798,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 /* Parse & validate expression */
                 if (strlen(stransform_write) > API_MAX_EXPR_LEN) {
                     DEBUG_PORT(port, "expression is too long");
-                    return INVALID_EXPRESSION_VALUE("too-long", /* token = */ NULL, /* pos = */ - 1);
+                    return INVALID_EXPRESSION_VALUE("too-long", /* token = */ NULL, /* pos = */ -1);
                 }
 
                 expr_t *transform_write = expr_parse(port->id, stransform_write, strlen(stransform_write));
@@ -1821,11 +1821,13 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 }
 
                 // FIXME: if referenced port is unavailable, external dependency is not detected
+                // FIXME: using strstr() to find reference position may lead to erroneous results when a port id is a
+                //        substring of another
                 if (other_dep) {
                     DEBUG_PORT(port, "transform expression depends on external port \"%s\"", other_dep->id);
                     expr_free(transform_write);
-                    return INVALID_EXPRESSION_VALUE("external-dependency",
-                                                    /* token = */ other_dep->id, /* pos = */ - 1);
+                    int32 pos = strstr(stransform_write, other_dep->id) - stransform_write;
+                    return INVALID_EXPRESSION_VALUE("external-dependency", other_dep->id, pos);
                 }
 
                 port->stransform_write = strdup(stransform_write);
@@ -1858,7 +1860,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 /* Parse & validate expression */
                 if (strlen(stransform_read) > API_MAX_EXPR_LEN) {
                     DEBUG_PORT(port, "expression is too long");
-                    return INVALID_EXPRESSION_VALUE("too-long", /* token = */ NULL, /* pos = */ - 1);
+                    return INVALID_EXPRESSION_VALUE("too-long", /* token = */ NULL, /* pos = */ -1);
                 }
 
                 expr_t *transform_read = expr_parse(port->id, stransform_read, strlen(stransform_read));
@@ -1880,11 +1882,14 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                     free(_ports);
                 }
 
+                // FIXME: if referenced port is unavailable, external dependency is not detected
+                // FIXME: using strstr() to find reference position may lead to erroneous results when a port id is a
+                //        substring of another
                 if (other_dep) {
                     DEBUG_PORT(port, "transform expression depends on external port \"%s\"", other_dep->id);
                     expr_free(transform_read);
-                    return INVALID_EXPRESSION_VALUE("external-dependency",
-                                                    /* token = */ other_dep->id, /* pos = */ - 1);
+                    int32 pos = strstr(stransform_read, other_dep->id) - stransform_read;
+                    return INVALID_EXPRESSION_VALUE("external-dependency", other_dep->id, pos);
                 }
 
                 port->stransform_read = strdup(stransform_read);
