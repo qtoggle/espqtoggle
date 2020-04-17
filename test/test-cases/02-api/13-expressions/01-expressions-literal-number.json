@@ -1,5 +1,5 @@
 {
-    "name": "expressions-constants-literal-number",
+    "name": "expressions-literal-number",
     "instructions": [
         {
             "name": "json-http-client",

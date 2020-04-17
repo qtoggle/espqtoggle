@@ -43,6 +43,13 @@ typedef struct {
 
 } value_hist_t;
 
+typedef struct {
+
+    char          * name;
+    double          value;
+
+} literal_t;
+
 
 ICACHE_FLASH_ATTR static double     _add_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _sub_callback(expr_t *expr, int argc, double *args);
@@ -97,18 +104,18 @@ ICACHE_FLASH_ATTR static double     _sequence_callback(expr_t *expr, int argc, d
 
 ICACHE_FLASH_ATTR expr_t          * parse_rec(char *port_id, char *input, int len, int abs_pos);
 ICACHE_FLASH_ATTR static expr_t   * parse_port_id_expr(char *port_id, char *input, int abs_pos);
-ICACHE_FLASH_ATTR static expr_t   * parse_const_expr(char *input, int abs_pos);
+ICACHE_FLASH_ATTR static expr_t   * parse_literal_expr(char *input, int abs_pos);
 ICACHE_FLASH_ATTR static void       set_parse_error(char *reason, char *token, int32 pos);
-ICACHE_FLASH_ATTR static const_t  * find_const_by_name(char *name);
+ICACHE_FLASH_ATTR static literal_t* find_literal_by_name(char *name);
 ICACHE_FLASH_ATTR static func_t   * find_func_by_name(char *name);
 ICACHE_FLASH_ATTR static int        check_loops_rec(port_t *the_port, int level, expr_t *expr);
 ICACHE_FLASH_ATTR static bool       func_needs_free(expr_t *expr);
 
 
-static const_t _false = {.name = "false", .value = 0};
-static const_t _true =  {.name = "true",  .value = 1};
+static literal_t _false = {.name = "false", .value = 0};
+static literal_t _true =  {.name = "true",  .value = 1};
 
-static const_t *constants[] = {
+static literal_t *literals[] = {
     &_false,
     &_true,
     NULL
@@ -852,8 +859,8 @@ expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
         if (name[0] == '$') { /* Port id */
             return parse_port_id_expr(port_id, name + 1, abs_pos + skip_pos);
         }
-        else { /* Constant */
-            return parse_const_expr(name, abs_pos + skip_pos);
+        else { /* Literal value */
+            return parse_literal_expr(name, abs_pos + skip_pos);
         }
     }
 }
@@ -889,11 +896,11 @@ expr_t *parse_port_id_expr(char *port_id, char *input, int abs_pos) {
     return expr;
 }
 
-expr_t *parse_const_expr(char *input, int abs_pos) {
-    const_t *constant = find_const_by_name(input);
-    if (constant) {
+expr_t *parse_literal_expr(char *input, int abs_pos) {
+    literal_t *literal = find_literal_by_name(input);
+    if (literal) {
         expr_t *expr = zalloc(sizeof(expr_t));
-        expr->value = constant->value;
+        expr->value = literal->value;
         
         return expr;
     }
@@ -927,9 +934,9 @@ void set_parse_error(char *reason, char *token, int32 pos) {
     parse_error.pos = pos;
 }
 
-const_t *find_const_by_name(char *name) {
-    const_t **constant = constants, *c;
-    while ((c = *constant++)) {
+literal_t *find_literal_by_name(char *name) {
+    literal_t **literal = literals, *c;
+    while ((c = *literal++)) {
         if (!strcmp(c->name, name)) {
             return c;
         }
@@ -1022,7 +1029,7 @@ double expr_eval(expr_t *expr) {
             return UNDEFINED;
         }
     }
-    else { /* Assuming constant */
+    else { /* Assuming literal value */
         return expr->value;
     }
 }

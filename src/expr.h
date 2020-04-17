@@ -32,7 +32,7 @@
 
 typedef struct expr {
 
-    double          value;          /* Used for constant expressions, value change detection and caching purposes */
+    double          value;          /* Used for literal expressions, value change detection and caching purposes */
 
     int64           aux;            /* Auxiliary flag */
     void          * paux;           /* Auxiliary pointer */
@@ -45,13 +45,6 @@ typedef struct expr {
     struct expr  ** args;
 
 } expr_t;
-
-typedef struct {
-
-    char          * name;
-    double          value;
-
-} const_t;
 
 typedef struct {
 

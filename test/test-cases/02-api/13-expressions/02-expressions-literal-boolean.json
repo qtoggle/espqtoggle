@@ -1,5 +1,5 @@
 {
-    "name": "expressions-constants-literal-boolean",
+    "name": "expressions-literal-boolean",
     "instructions": [
         {
             "name": "json-http-client",
