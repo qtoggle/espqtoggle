@@ -79,7 +79,7 @@ json_t *json_parse(char *input) {
 
         /* If root already popped, we don't expect any more characters */
         if (root) {
-            DEBUG("unexpected character %c at pos %d", c, pos);
+            DEBUG("unexpected character \"%c\" at pos %d", c, pos);
             json_free(root);
             ctx_free(ctx);
             return NULL;
@@ -88,7 +88,7 @@ json_t *json_parse(char *input) {
         switch (c) {
             case '{':
                 if (!waiting_elem) {
-                    DEBUG("unexpected character %c at pos %d", c, pos);
+                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -106,7 +106,7 @@ json_t *json_parse(char *input) {
                 if (!json || json_get_type(json) != JSON_TYPE_OBJ ||
                     (waiting_elem && json_obj_get_len(json) > 0) || ctx_has_key(ctx)) {
 
-                    DEBUG("unexpected character %c at pos %d", c, pos);
+                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -118,7 +118,7 @@ json_t *json_parse(char *input) {
 
             case '[':
                 if (!waiting_elem) {
-                    DEBUG("unexpected character %c at pos %d", c, pos);
+                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -132,7 +132,7 @@ json_t *json_parse(char *input) {
                 if (!json || json_get_type(json) != JSON_TYPE_LIST ||
                     (waiting_elem && json_list_get_len(json) > 0)) {
 
-                    DEBUG("unexpected character %c at pos %d", c, pos);
+                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -145,7 +145,7 @@ json_t *json_parse(char *input) {
             case ',':
                 json = ctx_get_current(ctx);
                 if (!json || waiting_elem) {
-                    DEBUG("unexpected character %c at pos %d", c, pos);
+                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -160,7 +160,7 @@ json_t *json_parse(char *input) {
             case ':':
                 json = ctx_get_current(ctx);
                 if (!json || json_get_type(json) != JSON_TYPE_OBJ || !ctx_has_key(ctx) || waiting_elem) {
-                    DEBUG("unexpected character %c at pos %d", c, pos);
+                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -186,14 +186,14 @@ json_t *json_parse(char *input) {
                 json = ctx_get_current(ctx);
                 if (json && json_get_type(json) == JSON_TYPE_OBJ) {
                     if (ctx_has_key(ctx) != waiting_elem) {
-                        DEBUG("unexpected character %c at pos %d", c, pos);
+                        DEBUG("unexpected character \"%c\" at pos %d", c, pos);
                         ctx_free(ctx);
                         return NULL;
                     }
                 }
                 else { /* No parent or not an object */
                     if (!waiting_elem) {
-                        DEBUG("unexpected character %c at pos %d", c, pos);
+                        DEBUG("unexpected character \"%c\" at pos %d", c, pos);
                         ctx_free(ctx);
                         return NULL;
                     }
@@ -327,7 +327,7 @@ json_t *json_parse(char *input) {
 
                 json = ctx_get_current(ctx);
                 if ((json && json_get_type(json) == JSON_TYPE_OBJ && !ctx_has_key(ctx)) || !waiting_elem) {
-                    DEBUG("unexpected character %c at pos %d", c, pos);
+                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -382,7 +382,7 @@ json_t *json_parse(char *input) {
                     pos += 4;
                 }
                 else {
-                    DEBUG("unexpected character %c at pos %d", c, pos);
+                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
