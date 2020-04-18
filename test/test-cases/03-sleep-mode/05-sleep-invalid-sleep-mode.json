@@ -14,7 +14,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: sleep_mode"
+                    "error": "invalid-field",
+                    "field": "sleep_mode"
                 }
             }
         },
@@ -31,7 +32,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: sleep_mode"
+                    "error": "invalid-field",
+                    "field": "sleep_mode"
                 }
             }
         },
@@ -48,7 +50,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: sleep_mode"
+                    "error": "invalid-field",
+                    "field": "sleep_mode"
                 }
             }
         },
@@ -65,7 +68,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: sleep_mode"
+                    "error": "invalid-field",
+                    "field": "sleep_mode"
                 }
             }
         }

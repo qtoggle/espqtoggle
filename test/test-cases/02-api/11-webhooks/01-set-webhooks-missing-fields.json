@@ -14,7 +14,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "missing field: host"
+                    "error": "missing-field",
+                    "field": "host"
                 }
             }
         },
@@ -45,7 +46,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "missing field: path"
+                    "error": "missing-field",
+                    "field": "path"
                 }
             }
         }

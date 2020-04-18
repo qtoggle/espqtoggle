@@ -15,7 +15,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "missing field: values"
+                    "error": "missing-field",
+                    "field": "values"
                 }
             }
         },
@@ -33,7 +34,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "missing field: delays"
+                    "error": "missing-field",
+                    "field": "delays"
                 }
             }
         },
@@ -51,7 +53,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "missing field: repeat"
+                    "error": "missing-field",
+                    "field": "repeat"
                 }
             }
         }

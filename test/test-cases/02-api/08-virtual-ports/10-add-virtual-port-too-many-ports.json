@@ -135,7 +135,7 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "too many ports"
+                    "error": "too-many-ports"
                 }
             }
         },

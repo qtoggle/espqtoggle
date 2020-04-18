@@ -46,7 +46,7 @@
                 "body": 10,
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid value"
+                    "error": "invalid-value"
                 }
             }
         },
@@ -61,7 +61,7 @@
                 "body": true,
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid value"
+                    "error": "invalid-value"
                 }
             }
         },
@@ -76,7 +76,7 @@
                 "body": -12,
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid value"
+                    "error": "invalid-value"
                 }
             }
         },
@@ -91,7 +91,7 @@
                 "body": 12,
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid value"
+                    "error": "invalid-value"
                 }
             }
         },
@@ -106,7 +106,7 @@
                 "body": 1,
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid value"
+                    "error": "invalid-value"
                 }
             }
         },

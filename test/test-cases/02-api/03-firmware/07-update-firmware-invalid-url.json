@@ -14,7 +14,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: url"
+                    "error": "invalid-field",
+                    "field": "url"
                 }
             }
         }

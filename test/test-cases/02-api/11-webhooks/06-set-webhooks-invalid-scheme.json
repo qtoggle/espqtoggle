@@ -22,7 +22,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: scheme"
+                    "error": "invalid-field",
+                    "field": "scheme"
                 }
             }
         }

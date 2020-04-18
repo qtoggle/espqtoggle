@@ -13,7 +13,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "missing field: version"
+                    "error": "missing-field",
+                    "field": "version"
                 }
             }
         }

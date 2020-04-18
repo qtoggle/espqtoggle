@@ -14,7 +14,7 @@
                 },
                 "expected_status": 404,
                 "expected_body": {
-                    "error": "no such version"
+                    "error": "no-such-version"
                 }
             }
         }

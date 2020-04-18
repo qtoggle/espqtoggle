@@ -14,7 +14,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "no such attribute: inexistent"
+                    "error": "no-such-attribute",
+                    "attribute": "inexistent"
                 }
             }
         }

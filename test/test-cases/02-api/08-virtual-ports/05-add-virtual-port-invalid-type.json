@@ -19,7 +19,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: type"
+                    "error": "invalid-field",
+                    "field": "type"
                 }
             }
         }

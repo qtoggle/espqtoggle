@@ -11,7 +11,7 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "port not removable"
+                    "error": "port-not-removable"
                 }
             }
         }

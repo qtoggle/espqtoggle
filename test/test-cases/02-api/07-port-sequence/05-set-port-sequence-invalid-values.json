@@ -16,7 +16,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: values"
+                    "error": "invalid-field",
+                    "field": "values"
                 }
             }
         },
@@ -35,7 +36,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: values"
+                    "error": "invalid-field",
+                    "field": "values"
                 }
             }
         },
@@ -54,7 +56,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: values"
+                    "error": "invalid-field",
+                    "field": "values"
                 }
             }
         },
@@ -73,7 +76,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: values"
+                    "error": "invalid-field",
+                    "field": "values"
                 }
             }
         }
