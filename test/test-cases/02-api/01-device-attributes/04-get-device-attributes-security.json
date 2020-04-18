@@ -11,7 +11,7 @@
                 },
                 "expected_status": 401,
                 "expected_body": {
-                    "error": "authentication required" 
+                    "error": "authentication-required" 
                 }
             }
         },

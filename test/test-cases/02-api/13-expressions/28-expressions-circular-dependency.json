@@ -28,7 +28,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: expression",
+                    "error": "invalid-field",
+                    "field": "expression",
                     "details": {
                         "reason": "circular-dependency"
                     }

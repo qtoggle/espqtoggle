@@ -52,7 +52,7 @@
 #define JSON_CONTENT_TYPE           "application/json; charset=utf-8"
 #define HTML_CONTENT_TYPE           "text/html; charset=utf-8"
 
-#define RESPOND_UNAUTHENTICATED()   respond_error(conn, 401, "authentication required");
+#define RESPOND_UNAUTHENTICATED()   respond_error(conn, 401, "authentication-required");
 
 
 static httpserver_context_t         http_contexts[MAX_PARALLEL_HTTP_REQ];
@@ -71,6 +71,8 @@ ICACHE_FLASH_ATTR static void       on_http_request_timeout(struct espconn *conn
 ICACHE_FLASH_ATTR static void       on_http_request(struct espconn *conn, int method, char *path, char *query,
                                                     char *header_names[], char *header_values[], int header_count,
                                                     char *body);
+
+ICACHE_FLASH_ATTR static void       respond_error_field(struct espconn *conn, int status, char *error, char *field);
 
 
 void *on_tcp_conn(struct espconn *conn) {
@@ -156,7 +158,7 @@ void on_tcp_disc(struct espconn *conn, httpserver_context_t *hc) {
 void on_invalid_http_request(struct espconn *conn) {
     DEBUG_ESPQTCLIENT_CONN(conn, "ignoring invalid request");
 
-    respond_error(conn, 400, "malformed request");
+    respond_error(conn, 400, "malformed-request");
 }
 
 void on_http_request_timeout(struct espconn *conn) {
@@ -196,7 +198,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
             if (!request_json) {
                 /* Invalid JSON */
                 DEBUG_ESPQTCLIENT_CONN(conn, "invalid json");
-                respond_error(conn, 400, "malformed body");
+                respond_error(conn, 400, "malformed-body");
                 goto done;
             }
         }
@@ -389,7 +391,7 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         /* session_id argument */
         json_t *session_id_json = json_obj_lookup_key(query_json, "session_id");
         if (!session_id_json) {
-            respond_error(conn, 400, "missing field: session_id");
+            respond_error_field(conn, 400, "missing-field", "session_id");
             goto done;
         }
         char *session_id = json_str_get(session_id_json);
@@ -397,13 +399,13 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         char c, *s = session_id;
         while ((c = *s++)) {
             if (!isalnum((int) c) && (c != '-')) {
-                respond_error(conn, 400, "invalid field: session_id");
+                respond_error_field(conn, 400, "invalid-field", "session_id");
                 goto done;
             }
         }
 
         if (strlen(session_id) > API_MAX_LISTEN_SESSION_ID_LEN) {
-            respond_error(conn, 400, "invalid field: session_id");
+            respond_error_field(conn, 400, "invalid-field", "session_id");
             goto done;
         }
 
@@ -415,12 +417,12 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
             timeout = strtol(json_str_get(timeout_json), &e, 10);
 
             if (*e) {  /* Invalid integer */
-                respond_error(conn, 400, "invalid field: timeout");
+                respond_error_field(conn, 400, "invalid-field", "timeout");
                 goto done;
             }
 
             if (timeout < API_MIN_LISTEN_TIMEOUT || timeout > API_MAX_LISTEN_TIMEOUT) {
-                respond_error(conn, 400, "invalid field: timeout");
+                respond_error_field(conn, 400, "invalid-field", "timeout");
                 goto done;
             }
         }
@@ -491,6 +493,14 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
     if (request_json) {
         json_free(request_json);
     }
+}
+
+void respond_error_field(struct espconn *conn, int status, char *error, char *field) {
+    json_t *json = json_obj_new();
+    json_obj_append(json, "error", json_str_new(error));
+    json_obj_append(json, "field", json_str_new(field));
+
+    respond_json(conn, status, json);
 }
 
 

@@ -22,7 +22,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: events"
+                    "error": "invalid-field",
+                    "field": "events"
                 }
             }
         },
@@ -47,7 +48,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: events"
+                    "error": "invalid-field",
+                    "field": "events"
                 }
             }
         }

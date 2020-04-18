@@ -19,7 +19,7 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "duplicate port"
+                    "error": "duplicate-port"
                 }
             }
         }

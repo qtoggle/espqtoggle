@@ -14,10 +14,10 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "attribute not modifiable: id"
+                    "error": "attribute-not-modifiable",
+                    "attribute": "id"
                 }
             }
         }
     ]
 }
-

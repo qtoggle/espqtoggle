@@ -14,7 +14,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "attribute not modifiable: version"
+                    "error": "attribute-not-modifiable",
+                    "attribute": "version"
                 }
             }
         }

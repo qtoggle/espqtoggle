@@ -11,7 +11,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: timeout"
+                    "error": "invalid-field",
+                    "field": "timeout"
                 }
             }
         },
@@ -25,7 +26,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: timeout"
+                    "error": "invalid-field",
+                    "field": "timeout"
                 }
             }
         },
@@ -39,7 +41,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: timeout"
+                    "error": "invalid-field",
+                    "field": "timeout"
                 }
             }
         }

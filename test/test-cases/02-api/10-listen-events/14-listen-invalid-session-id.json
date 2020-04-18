@@ -11,7 +11,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: session_id"
+                    "error": "invalid-field",
+                    "field": "session_id"
                 }
             }
         },
@@ -25,7 +26,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: session_id"
+                    "error": "invalid-field",
+                    "field": "session_id"
                 }
             }
         }

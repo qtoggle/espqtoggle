@@ -16,7 +16,7 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "read-only port"
+                    "error": "read-only-port"
                 }
             }
         },

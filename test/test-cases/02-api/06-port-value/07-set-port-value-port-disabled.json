@@ -12,7 +12,7 @@
                 "body": true,
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "port disabled"
+                    "error": "port-disabled"
                 }
             }
         }

@@ -14,7 +14,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: expression",
+                    "error": "invalid-field",
+                    "field": "expression",
                     "details": {
                         "reason": "unexpected-character",
                         "token": "s",
@@ -36,7 +37,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: expression",
+                    "error": "invalid-field",
+                    "field": "expression",
                     "details": {
                         "reason": "unexpected-character",
                         "token": "i",
@@ -58,7 +60,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: expression",
+                    "error": "invalid-field",
+                    "field": "expression",
                     "details": {
                         "reason": "unexpected-character",
                         "token": "f",
@@ -80,7 +83,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: expression",
+                    "error": "invalid-field",
+                    "field": "expression",
                     "details": {
                         "reason": "unexpected-character",
                         "token": ".",
@@ -102,7 +106,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: expression",
+                    "error": "invalid-field",
+                    "field": "expression",
                     "details": {
                         "reason": "unexpected-character",
                         "token": ",",
@@ -124,7 +129,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid field: expression",
+                    "error": "invalid-field",
+                    "field": "expression",
                     "details": {
                         "reason": "unexpected-character",
                         "token": "#",
