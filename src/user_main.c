@@ -60,6 +60,8 @@
 
 static bool                         wifi_first_time_connected = FALSE;
 static os_timer_t                   connect_timeout_timer;
+static os_timer_t                   ota_auto_timer;
+static uint32                       ota_auto_counter = 1;
 
 
 ICACHE_FLASH_ATTR static void       main_init(void);
@@ -74,6 +76,7 @@ ICACHE_FLASH_ATTR static void       on_system_ready(void);
 ICACHE_FLASH_ATTR static void       on_system_reset(void);
 
 #ifdef _OTA
+ICACHE_FLASH_ATTR static void       on_ota_auto_timer(void *arg);
 ICACHE_FLASH_ATTR static void       on_ota_auto_perform(int code);
 #endif
 
@@ -117,11 +120,24 @@ void on_system_reset(void) {
 }
 
 #ifdef _OTA
+
+void on_ota_auto_timer(void *arg) {
+    if (!(device_flags & DEVICE_FLAG_OTA_AUTO_UPDATE)) {
+        return;
+    }
+
+    if (system_uptime() > ota_auto_counter * FW_AUTO_MIN_INTERVAL * 3600) {
+        ota_auto_counter++;
+        ota_auto_update_check(/* beta = */ device_flags & DEVICE_FLAG_OTA_BETA_ENABLED, on_ota_auto_perform);
+    }
+}
+
 void on_ota_auto_perform(int code) {
     config_ensure_saved();
     sessions_respond_all();
 }
-#endif
+
+#endif /* _OTA */
 
 void on_wifi_connect(bool connected) {
     if (wifi_first_time_connected) {
@@ -243,6 +259,10 @@ DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
              /* latest_stable_url = */ FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME FW_LATEST_STABLE_FILE,
              /* latest_beta_url = */   FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME FW_LATEST_BETA_FILE,
              /* url_template = */      FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME "/%s");
+
+    os_timer_disarm(&ota_auto_timer);
+    os_timer_setfn(&ota_auto_timer, on_ota_auto_timer, NULL);
+    os_timer_arm(&ota_auto_timer, 60 * 1000, /* repeat = */ TRUE);
 #endif
 
     wifi_init();
