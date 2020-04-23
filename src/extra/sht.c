@@ -124,6 +124,9 @@ static port_t _sht_temperature = {
     .min = UNDEFINED,
     .max = UNDEFINED,
     .step = UNDEFINED,
+    /* We need to enable the port by default, so that it starts feeding the MCU upon read, or otherwise it goes into
+     * sleep mode within a few minutes */
+    .flags = PORT_FLAG_ENABLED,
 
     .extra_info = &sht_extra_info,
 
