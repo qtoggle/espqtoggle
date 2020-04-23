@@ -84,12 +84,9 @@ void port_load(port_t *port, uint8 *data) {
     }
 
     /* flags */
-    bool initially_output = port->flags & PORT_FLAG_OUTPUT;
-    memcpy(&port->flags, base_ptr + CONFIG_OFFS_PORT_FLAGS, 4);
-    if (initially_output) {
-        /* If port is defined as output, ignore persisted output flag */
-        port->flags |= PORT_FLAG_OUTPUT;
-    }
+    uint32 flags = 0;
+    memcpy(&flags, base_ptr + CONFIG_OFFS_PORT_FLAGS, 4);
+    port->flags |= flags; /* any initially set flag remains set */
 
     DEBUG_PORT(port, "enabled = %s", IS_ENABLED(port) ? "true" : "false");
     DEBUG_PORT(port, "output = %s", IS_OUTPUT(port) ? "true" : "false");

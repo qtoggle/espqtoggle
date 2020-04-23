@@ -168,7 +168,7 @@ typedef struct port {
     char          * display_name;
     char            type;
     char          * unit;
-    int             flags;
+    uint32          flags;
     
     /* Heart beat */
     int             heart_beat_interval;
