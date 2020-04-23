@@ -146,7 +146,14 @@ bool hspi_get_current_setup(uint8 *bit_order, bool *cpol, bool *cpha, uint32 *fr
 
 void hspi_transfer(uint8 *out_buff, uint8 *in_buff, uint32 len) {
 #if defined(_DEBUG_HSPI) && defined(_DEBUG)
-    uint32 orig_len = len;
+    uint32 i, orig_len = len;
+
+    char out_hex[len * 3 + 1];
+    for (i = 0; i < len; i++) {
+        sprintf(out_hex + 3 * i, "%02X ", out_buff[i]);
+    }
+
+    DEBUG_HSPI("writing %s", out_hex);
 #endif
 
     /* out_buff may not be 32 bit-aligned */
@@ -169,7 +176,14 @@ void hspi_transfer(uint8 *out_buff, uint8 *in_buff, uint32 len) {
         len--;
     }
 
-    DEBUG_HSPI("transferred %d bytes", orig_len);
+#if defined(_DEBUG_HSPI) && defined(_DEBUG)
+    char in_hex[orig_len * 3 + 1];
+    for (i = 0; i < orig_len; i++) {
+        sprintf(in_hex + 3 * i, "%02X ", in_buff[i]);
+    }
+
+    DEBUG_HSPI("read %s", in_hex);
+#endif
 }
 
 uint8 hspi_transfer_byte(uint8 byte) {
@@ -179,7 +193,7 @@ uint8 hspi_transfer_byte(uint8 byte) {
     SPI1CMD |= SPIBUSY;
     while (SPI1CMD & SPIBUSY) {}
 
-    return (uint8) (SPI1W0 & 0xFF);
+    return SPI1W0 & 0xFF;
 }
 
 
