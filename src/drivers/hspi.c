@@ -147,6 +147,7 @@ bool hspi_get_current_setup(uint8 *bit_order, bool *cpol, bool *cpha, uint32 *fr
 void hspi_transfer(uint8 *out_buff, uint8 *in_buff, uint32 len) {
 #if defined(_DEBUG_HSPI) && defined(_DEBUG)
     uint32 i, orig_len = len;
+    uint8 *orig_in_buff = in_buff;
 
     char out_hex[len * 3 + 1];
     for (i = 0; i < len; i++) {
@@ -179,7 +180,7 @@ void hspi_transfer(uint8 *out_buff, uint8 *in_buff, uint32 len) {
 #if defined(_DEBUG_HSPI) && defined(_DEBUG)
     char in_hex[orig_len * 3 + 1];
     for (i = 0; i < orig_len; i++) {
-        sprintf(in_hex + 3 * i, "%02X ", in_buff[i]);
+        sprintf(in_hex + 3 * i, "%02X ", orig_in_buff[i]);
     }
 
     DEBUG_HSPI("read %s", in_hex);
