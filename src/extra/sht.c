@@ -480,8 +480,8 @@ bool recv_measurements(double *temp, double *hum) {
      *  XX : ?
      *  XX : ?
      *  XX : ?
-     *  XX : ?
-     *  XX : temp * 8 (e.g. E4: 28.5C)
+     *  XX : temp_high * 8
+     *  XX : temp_low * 8
      *  XX : ?
      *  XX : hum * 2 (e.g. 60: 48%)
      *  XX : checksum
@@ -496,7 +496,8 @@ bool recv_measurements(double *temp, double *hum) {
     hspi_transfer(mosi_frame, miso_frame, 12);
     free(mosi_frame);
 
-    *temp = miso_frame[8] / 8.0;
+    int16 temp8 = (miso_frame[7] << 8) + miso_frame[8];
+    *temp = temp8 / 8.0;
     *hum = miso_frame[10] / 2.0;
 
     /* Verify checksum */
