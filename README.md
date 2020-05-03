@@ -1,4 +1,11 @@
 
+[![Join us on https://gitter.im/qtoggle/community](https://badges.gitter.im/qtoggle/community.png)](https://gitter.im/qtoggle/community?utm_source=badge&utm_medium=badge&utm_content=badge)
+
+Join us on [Facebook](http://facebook.com/qtoggle).
+
+---
+
+
 ## About
 
 **espQToggle** is a custom firmware for ESP8266/ESP8285 devices that implements the [qToggle API](https://github.com/qtoggle/docs/wiki/API-Specifications).
