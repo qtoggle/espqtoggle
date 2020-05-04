@@ -27,7 +27,7 @@
 #ifdef _DEBUG_GPIO
 #define DEBUG_GPIO(fmt, ...)    DEBUG("[gpio          ] " fmt, ##__VA_ARGS__)
 #else
-#define DEBUG_GPIO(...)             {}
+#define DEBUG_GPIO(...)         {}
 #endif
 
 
