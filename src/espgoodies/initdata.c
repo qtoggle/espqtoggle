@@ -33,6 +33,7 @@ void init_data_ensure(void) {
     uint32 rf_cal_data;
 
     if (sizeof(esp_init_data_default) > 0) {
+        ETS_INTR_LOCK();
         spi_flash_read(addr, &rf_cal_data, 4);
         if (rf_cal_data != esp_init_data_default[0]) {
             DEBUG("flashing esp_init_data_default");
@@ -42,6 +43,7 @@ void init_data_ensure(void) {
         else {
             DEBUG("esp_init_data_default is up-to-date");
         }
+        ETS_INTR_UNLOCK();
         os_delay_us(10000); /* Helps printing debug message */
     }
 }

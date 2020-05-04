@@ -33,10 +33,13 @@
 uint8 *html_load(uint32 *len) {
     uint32 flash_html_addr = system_upgrade_userbin_check() ? USER2_FLASH_HTML_ADDR : USER1_FLASH_HTML_ADDR;
 
+    ETS_INTR_LOCK();
     if (spi_flash_read(flash_html_addr, len, 4) != SPI_FLASH_RESULT_OK) {
+        ETS_INTR_UNLOCK();
         DEBUG_HTML("failed to read HTML length from flash at 0x%05X", flash_html_addr);
         return NULL;
     }
+    ETS_INTR_UNLOCK();
 
     DEBUG_HTML("HTML length is %d bytes", *len);
     if (*len > MAX_HTML_LEN) {
@@ -52,11 +55,14 @@ uint8 *html_load(uint32 *len) {
 
     uint8 *data = malloc(*len);
     uint32 addr = flash_html_addr + 4;
+    ETS_INTR_LOCK();
     if (spi_flash_read(addr, (uint32 *) data, *len) != SPI_FLASH_RESULT_OK) {
+        ETS_INTR_UNLOCK();
         DEBUG_HTML("failed to read %d bytes from flash at 0x%05X", *len, addr);
         free(data);
         return NULL;
     }
+    ETS_INTR_UNLOCK();
 
     DEBUG_HTML("successfully read %d bytes from flash at 0x%05X", *len, flash_html_addr);
 
