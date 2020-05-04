@@ -93,7 +93,7 @@ void system_init(void) {
 
 uint32 system_uptime(void) {
     uint32 time = system_get_time();
-    if (time < last_time) { /* Time overflow */
+    if (last_time - time > 1e6) { /* Time overflow */
         uptime += time + UINT_MAX - last_time;
     }
     else {
