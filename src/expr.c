@@ -99,6 +99,7 @@ ICACHE_FLASH_ATTR static double     _fmavg_callback(expr_t *expr, int argc, doub
 ICACHE_FLASH_ATTR static double     _fmedian_callback(expr_t *expr, int argc, double *args);
 
 ICACHE_FLASH_ATTR static double     _acc_callback(expr_t *expr, int argc, double *args);
+ICACHE_FLASH_ATTR static double     _accinc_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _hyst_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _sequence_callback(expr_t *expr, int argc, double *args);
 
@@ -564,6 +565,22 @@ double _acc_callback(expr_t *expr, int argc, double *args) {
     return result;
 }
 
+double _accinc_callback(expr_t *expr, int argc, double *args) {
+    double value = args[0];
+    double accumulator = args[1];
+    double result = accumulator;
+
+    if (!IS_UNDEFINED(expr->value)) { /* Not the very first expression eval call */
+        if (value > expr->value) {
+            result += value - expr->value;
+        }
+    }
+
+    expr->value = value;
+
+    return result;
+}
+
 double _hyst_callback(expr_t *expr, int argc, double *args) {
     double value = args[0];
     double threshold1 = args[1];
@@ -664,6 +681,7 @@ func_t _fmavg =    {.name = "FMAVG",    .argc = 3,  .callback = _fmavg_callback}
 func_t _fmedian =  {.name = "FMEDIAN",  .argc = 3,  .callback = _fmedian_callback};
 
 func_t _acc =      {.name = "ACC",      .argc = 2,  .callback = _acc_callback};
+func_t _accinc =   {.name = "ACCINC",   .argc = 2,  .callback = _accinc_callback};
 func_t _hyst =     {.name = "HYST",     .argc = 3,  .callback = _hyst_callback};
 func_t _sequence = {.name = "SEQUENCE", .argc = -2, .callback = _sequence_callback};
 
@@ -715,6 +733,7 @@ func_t *funcs[] = {
     &_fmedian,
 
     &_acc,
+    &_accinc,
     &_hyst,
     &_sequence,
 
