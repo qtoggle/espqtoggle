@@ -41,7 +41,7 @@
 #ifdef HAS_HLW8012
 
 #define MIN_SAMP_INT                    1000    /* Milliseconds */
-#define DEF_SAMP_INT                    5000    /* Milliseconds */
+#define DEF_SAMP_INT                    1000    /* Milliseconds */
 #define MAX_SAMP_INT                    3600000 /* Milliseconds */
 
 /* Maximum pulse with, in microseconds. Longer pulse widths will result in a reset to 0. Higher values allow for a
