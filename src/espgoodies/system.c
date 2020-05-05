@@ -107,7 +107,7 @@ uint64 system_uptime_ms(void) {
 
 uint64 system_uptime_us(void) {
     uint32 time = system_get_time();
-    if (last_time - time > 1000000) { /* Time overflow */
+    if (last_time > time) { /* Time overflow */
         uptime += time + UINT_MAX - last_time;
     }
     else {
