@@ -50,6 +50,7 @@ static uint32                       last_expr_time = 0;
 static uint32                       last_config_save_time = 0;
 static uint32                       now;
 static uint64                       now_ms;
+static uint64                       now_us;
 
 static uint32                       force_eval_expressions_mask = 0;
 static bool                         config_needs_saving = FALSE;
@@ -108,8 +109,9 @@ void core_poll(void) {
     uint32 change_reasons_expression_mask = 0;
 
     double value;
-    now = system_uptime();
-    now_ms = system_uptime_ms();
+    now_us = system_uptime_us();
+    now_ms = now_us / 1000;
+    now = now_ms / 1000;
 
     /* Add time dependency masks */
     if (now != last_expr_time) {

@@ -475,8 +475,8 @@ bool attr_get_current_mode_sel(port_t *port, attrdef_t *attrdef) {
 bool read_status_if_needed(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
-    uint64 now = system_uptime_ms();
-    uint64 delta = now - extra_info->last_read_time;
+    uint64 now_ms = system_uptime_ms();
+    uint64 delta = now_ms - extra_info->last_read_time;
     if (delta >= port->sampling_interval - 10) { /* Allow 10 milliseconds of tolerance */
         DEBUG_HLW8012("status needs new reading");
         if (get_cf1_gpio(port) >= 0) {
@@ -484,7 +484,7 @@ bool read_status_if_needed(port_t *port) {
         }
 
         /* Update last read time */
-        extra_info->last_read_time = system_uptime_ms();
+        extra_info->last_read_time = now_ms;
 
         if (read_status(port)) {
             return TRUE;
@@ -507,7 +507,7 @@ bool read_status(port_t *port) {
     extra_info->last_active_power = (extra_info->power_pulse_width > 0) ? 1e6F / extra_info->power_pulse_width : 0;
     DEBUG_HLW8012("read active power = %s", dtostr(extra_info->last_active_power, -1));
 
-    extra_info->last_energy = extra_info->power_pulse_count;
+    extra_info->last_energy = extra_info->power_pulse_count / 1000.0;
     DEBUG_HLW8012("read energy = %s", dtostr(extra_info->last_energy, -1));
 
     extra_info->last_voltage = (extra_info->voltage_pulse_width > 0) ? 1e6F / extra_info->voltage_pulse_width : 0;
@@ -534,15 +534,15 @@ void gpio_interrupt_handler(void *arg) {
     port_t *port = arg;
     extra_info_t *extra_info = port->extra_info;
 
-    uint64 now = system_uptime_us();
+    uint64 now_us = system_uptime_us();
     int8 cf_gpio = get_cf_gpio(port);
     int8 cf1_gpio = get_cf1_gpio(port);
     uint32 gpio_status = GPIO_REG_READ(GPIO_STATUS_ADDRESS);
 
     if ((cf_gpio >= 0) && (gpio_status & BIT(cf_gpio))) {
-        extra_info->power_pulse_width = now - extra_info->last_cf_interrupt_time;
+        extra_info->power_pulse_width = now_us - extra_info->last_cf_interrupt_time;
         extra_info->power_pulse_count++;
-        extra_info->last_cf_interrupt_time = now;
+        extra_info->last_cf_interrupt_time = now_us;
 
         /* Disable interrupt */
         gpio_pin_intr_state_set(GPIO_ID_PIN(cf_gpio), GPIO_PIN_INTR_DISABLE);
@@ -555,14 +555,14 @@ void gpio_interrupt_handler(void *arg) {
     }
 
     if ((cf1_gpio >= 0) && (gpio_status & BIT(cf1_gpio))) {
-        if ((now - extra_info->first_cf1_interrupt_time) > PULSE_TIMEOUT) {
+        if ((now_us - extra_info->first_cf1_interrupt_time) > PULSE_TIMEOUT) {
             uint32 pulse_width;
 
             if (extra_info->last_cf1_interrupt_time == extra_info->first_cf1_interrupt_time) {
                 pulse_width = 0;
             }
             else {
-                pulse_width = now - extra_info->last_cf1_interrupt_time;
+                pulse_width = now_us - extra_info->last_cf1_interrupt_time;
             }
 
             /* Consider current mode and switch it */
@@ -579,10 +579,10 @@ void gpio_interrupt_handler(void *arg) {
                 gpio_write_value(get_sel_gpio(port), extra_info->mode);
             }
 
-            extra_info->first_cf1_interrupt_time = now;
+            extra_info->first_cf1_interrupt_time = now_us;
         }
 
-        extra_info->last_cf1_interrupt_time = now;
+        extra_info->last_cf1_interrupt_time = now_us;
 
         /* Disable interrupt */
         gpio_pin_intr_state_set(GPIO_ID_PIN(cf1_gpio), GPIO_PIN_INTR_DISABLE);
@@ -597,9 +597,9 @@ void gpio_interrupt_handler(void *arg) {
 
 void check_cf1_toggle_mode(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
-    uint64 now = system_uptime_us();
+    uint64 now_us = system_uptime_us();
 
-    if ((now - extra_info->last_cf1_interrupt_time) <= PULSE_TIMEOUT) {
+    if ((now_us - extra_info->last_cf1_interrupt_time) <= PULSE_TIMEOUT) {
         return;
     }
 
@@ -611,7 +611,7 @@ void check_cf1_toggle_mode(port_t *port) {
     }
 
     extra_info->mode = 1 - extra_info->mode;
-    extra_info->last_cf1_interrupt_time = extra_info->first_cf1_interrupt_time = now;
+    extra_info->last_cf1_interrupt_time = extra_info->first_cf1_interrupt_time = now_us;
 
     if (get_sel_gpio(port) >= 0) {
         gpio_write_value(get_sel_gpio(port), extra_info->mode);

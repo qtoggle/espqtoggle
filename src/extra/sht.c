@@ -234,13 +234,13 @@ bool read_data_if_needed(port_t *port) {
         recv_dummy(3);
     }
 
-    uint64 now = system_uptime_ms();
-    uint64 delta = now - extra_info->last_read_time;
+    uint64 now_ms = system_uptime_ms();
+    uint64 delta = now_ms - extra_info->last_read_time;
     if (delta >= port->sampling_interval - 10) { /* Allow 10 milliseconds of tolerance */
         DEBUG_SHT("data needs new reading");
 
         /* Update last read time */
-        extra_info->last_read_time = system_uptime_ms();
+        extra_info->last_read_time = now_ms;
 
         if (read_data(port)) {
             return TRUE;

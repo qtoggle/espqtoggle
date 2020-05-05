@@ -92,8 +92,22 @@ void system_init(void) {
 }
 
 uint32 system_uptime(void) {
+    /* Call system_uptime_us() to update the internal uptime value */
+    system_uptime_us();
+
+    return uptime / 1000000;
+}
+
+uint64 system_uptime_ms(void) {
+    /* Call system_uptime_us() to update the internal uptime value */
+    system_uptime_us();
+
+    return uptime / 1000;
+}
+
+uint64 system_uptime_us(void) {
     uint32 time = system_get_time();
-    if (last_time - time > 1e6) { /* Time overflow */
+    if (last_time - time > 1000000) { /* Time overflow */
         uptime += time + UINT_MAX - last_time;
     }
     else {
@@ -101,20 +115,6 @@ uint32 system_uptime(void) {
     }
 
     last_time = time;
-
-    return uptime / 1000000;
-}
-
-uint64 system_uptime_ms(void) {
-    /* Call system_uptime() to update the internal uptime value */
-    system_uptime();
-
-    return uptime / 1000;
-}
-
-uint64 system_uptime_us(void) {
-    /* Call system_uptime() to update the internal uptime value */
-    system_uptime();
 
     return uptime;
 }
@@ -167,7 +167,8 @@ void system_setup_mode_toggle(void) {
 }
 
 void system_setup_mode_update(void) {
-    uint32 now = system_uptime();
+    uint64 now_us = system_uptime_us();
+    uint32 now = now_us / 1000000;
 
 #ifdef SETUP_MODE_PORT
     if (system_setup_mode_gpio_no != -1) {
@@ -208,7 +209,7 @@ void system_setup_mode_update(void) {
         int ota_state = ota_current_state();
         if (setup_mode || ota_state == OTA_STATE_DOWNLOADING || ota_state == OTA_STATE_RESTARTING) {
             bool old_blink_value = gpio_read_value(system_setup_mode_led_gpio_no);
-            bool new_blink_value = (system_uptime_us() * 6 / 1000000) % 2;
+            bool new_blink_value = (now_us * 6 / 1000000) % 2;
             if (old_blink_value != new_blink_value) {
                 gpio_write_value(system_setup_mode_led_gpio_no, new_blink_value);
             }

@@ -46,9 +46,9 @@ extern int8                     system_connected_led_gpio_no;
 
 ICACHE_FLASH_ATTR void          system_init(void);
 
-ICACHE_FLASH_ATTR uint32        system_uptime(void); /* Needs to be called at least once every half an hour */
+ICACHE_FLASH_ATTR uint32        system_uptime(void);
 ICACHE_FLASH_ATTR uint64        system_uptime_ms(void);
-ICACHE_FLASH_ATTR uint64        system_uptime_us(void);
+uint64                          system_uptime_us(void); /* Needs to be called at least once every hour */
 
 ICACHE_FLASH_ATTR int           system_get_flash_size(void);
 
