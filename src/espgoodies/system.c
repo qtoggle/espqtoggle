@@ -48,8 +48,8 @@ int32                               system_setup_mode_int = 10;
 int32                               system_setup_mode_reset_int = 20;
 int8                                system_connected_led_gpio_no = -1;
 
-static uint32                       last_time = 0;
-static uint64                       uptime = 0;
+static uint32                       last_time_us = 0;
+static uint64                       uptime_us = 0;
 static os_timer_t                   reset_timer;
 static bool                         setup_mode = FALSE;
 static system_reset_callback_t      reset_callback = NULL;
@@ -95,28 +95,28 @@ uint32 system_uptime(void) {
     /* Call system_uptime_us() to update the internal uptime value */
     system_uptime_us();
 
-    return uptime / 1000000;
+    return uptime_us / 1000000;
 }
 
 uint64 system_uptime_ms(void) {
     /* Call system_uptime_us() to update the internal uptime value */
     system_uptime_us();
 
-    return uptime / 1000;
+    return uptime_us / 1000;
 }
 
 uint64 system_uptime_us(void) {
-    uint32 time = system_get_time();
-    if (last_time > time) { /* Time overflow */
-        uptime += time + UINT_MAX - last_time;
+    int64 time = system_get_time();
+    if (time - last_time_us < -1000000) { /* Time overflow */
+        uptime_us += time + UINT_MAX - last_time_us;
     }
     else {
-        uptime += time - last_time;
+        uptime_us += time - last_time_us;
     }
 
-    last_time = time;
+    last_time_us = time;
 
-    return uptime;
+    return uptime_us;
 }
 
 int system_get_flash_size(void) {
