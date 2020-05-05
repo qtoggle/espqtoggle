@@ -519,13 +519,11 @@ bool read_status(port_t *port) {
         extra_info->last_current = 0;
     }
     else {
-        extra_info->last_current = (extra_info->current_pulse_width > 0) ? 1e6F / extra_info->current_pulse_width : 0;
+        extra_info->last_current = (extra_info->current_pulse_width > 0) ? 1e3F / extra_info->current_pulse_width : 0;
     }
     DEBUG_HLW8012("read current = %s", dtostr(extra_info->last_current, -1));
 
     extra_info->power_pulse_width = 0;
-    extra_info->voltage_pulse_width = 0;
-    extra_info->current_pulse_width = 0;
 
     return TRUE;
 }
