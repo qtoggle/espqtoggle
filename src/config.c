@@ -422,6 +422,12 @@ void on_config_provisioning_response(char *body, int body_len, int status, char 
         if (json_get_type(config) == JSON_TYPE_OBJ) {
             DEBUG_DEVICE("provisioning: got config");
 
+            /* Set device configured flag before actual provisioning to prevent endless reboot loops in case of
+             * device crash during provisioning */
+            DEBUG_DEVICE("mark device as configured");
+            device_flags |= DEVICE_FLAG_CONFIGURED;
+            config_save();
+
             /* Temporarily set API access level to admin */
             api_conn_save();
             api_conn_set((void *) 1, API_ACCESS_LEVEL_ADMIN);
