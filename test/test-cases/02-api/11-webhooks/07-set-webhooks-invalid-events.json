@@ -16,7 +16,14 @@
                     "port": 8080,
                     "path": "/webhooks",
                     "password": "${TEST_PASSWORD}_webhooks",
-                    "events": ["invalid", "port-update", "port-add", "port-remove", "device-update"],
+                    "events": [
+                        "value-change",
+                        "port-update",
+                        "port-add",
+                        "port-remove",
+                        "device-update",
+                        "full-update"
+                    ],
                     "timeout": 2,
                     "retries": 0
                 },
