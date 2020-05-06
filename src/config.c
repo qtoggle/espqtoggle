@@ -275,6 +275,23 @@ void config_init(void) {
     uint8 *config_data = zalloc(FLASH_CONFIG_SIZE);
     flashcfg_load(config_data);
 
+    /* If config data is full of 0xFF, that usually indicates erased flash. Fill it with 0s in that case, which is what
+     * we use for default config. */
+    uint16 i;
+    bool erased = TRUE;
+    for (i = 0; i < 32; i++) {
+        if (config_data[i] != 0xFF) {
+            erased = FALSE;
+            break;
+        }
+    }
+
+    if (erased) {
+        DEBUG("detected erased flash config");
+        memset(config_data, 0, FLASH_CONFIG_SIZE);
+        flashcfg_save(config_data);
+    }
+
     device_load(config_data);
 
 

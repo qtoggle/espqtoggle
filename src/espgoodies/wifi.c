@@ -536,6 +536,11 @@ void ensure_station_config_read(void) {
         wifi_station_get_config_default(&cached_station_config);
         cached_station_config_read = TRUE;
         cached_station_config_changed = FALSE;
+
+        /* Check if SSID has fields starting with many 0xFF - that normally indicates flash erased */
+        if (!memcmp(cached_station_config.ssid, "\xFF\xFF\xFF\xFF", 4)) {
+            cached_station_config.ssid[0] = 0;
+        }
     }
 }
 
