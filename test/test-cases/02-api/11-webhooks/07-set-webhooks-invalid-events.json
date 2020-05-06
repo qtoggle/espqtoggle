@@ -17,7 +17,7 @@
                     "path": "/webhooks",
                     "password": "${TEST_PASSWORD}_webhooks",
                     "events": [
-                        "value-change",
+                        "invalid",
                         "port-update",
                         "port-add",
                         "port-remove",
