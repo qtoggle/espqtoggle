@@ -69,6 +69,7 @@
 ICACHE_FLASH_ATTR void                  config_init(void);
 ICACHE_FLASH_ATTR void                  config_save(void);
 ICACHE_FLASH_ATTR void                  config_start_provisioning(void);
+ICACHE_FLASH_ATTR bool                  config_is_provisioning(void);
 
 
 #endif /* _CONFIG_H */

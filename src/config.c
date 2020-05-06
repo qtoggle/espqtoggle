@@ -35,6 +35,7 @@
 #include "common.h"
 #include "core.h"
 #include "device.h"
+#include "events.h"
 #include "ports.h"
 #include "stringpool.h"
 #include "webhooks.h"
@@ -407,15 +408,18 @@ void config_start_provisioning(void) {
                        on_config_provisioning_response, HTTP_DEF_TIMEOUT);
 }
 
+bool config_is_provisioning(void) {
+    return provisioning;
+}
+
+
 void on_config_provisioning_response(char *body, int body_len, int status, char *header_names[], char *header_values[],
                                      int header_count, uint8 addr[]) {
-
-    provisioning = FALSE;
-
     if (status == 200) {
         json_t *config = json_parse(body);
         if (!config) {
             DEBUG_DEVICE("provisioning: invalid json");
+            provisioning = FALSE;
             return;
         }
 
@@ -439,8 +443,8 @@ void on_config_provisioning_response(char *body, int body_len, int status, char 
             apply_ports_provisioning_config(ports_config);
 
             api_conn_restore();
-
             json_free(config);
+
         }
         else {
             DEBUG_DEVICE("provisioning: invalid config");
@@ -449,6 +453,9 @@ void on_config_provisioning_response(char *body, int body_len, int status, char 
     else {
         DEBUG_DEVICE("provisioning: got status %d", status);
     }
+
+    provisioning = FALSE;
+    event_push_full_update();
 }
 
 void apply_device_provisioning_config(json_t *device_config) {
@@ -496,15 +503,6 @@ void apply_ports_provisioning_config(json_t *ports_config) {
         for (i = 0; i < json_list_get_len(ports_config); i++) {
             port_config = json_list_value_at(ports_config, i);
             apply_port_provisioning_config(port_config);
-        }
-
-        /* No ports are supplied via provisioning, we have to manually set the device configured flag that would
-         * otherwise be set by api_patch_port() */
-        if (json_list_get_len(ports_config) == 0) {
-            DEBUG_DEVICE("mark device as configured");
-            device_flags |= DEVICE_FLAG_CONFIGURED;
-
-            config_mark_for_saving();
         }
     }
     else {
