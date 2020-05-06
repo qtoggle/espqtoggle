@@ -9,6 +9,7 @@ jobs:
       - run: |
           cd ${CIRCLE_WORKING_DIRECTORY}
           export SRC_DIR="$(pwd)"
+          export CFLAGS=-Werror
           export EB_CONF_FILES=${SRC_DIR}/test/configurations/*.conf
           /opt/builder.sh
 
