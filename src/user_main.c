@@ -60,8 +60,10 @@
 
 static bool                         wifi_first_time_connected = FALSE;
 static os_timer_t                   connect_timeout_timer;
+#ifdef _OTA
 static os_timer_t                   ota_auto_timer;
 static uint32                       ota_auto_counter = 1;
+#endif
 
 
 ICACHE_FLASH_ATTR static void       main_init(void);
