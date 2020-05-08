@@ -70,6 +70,7 @@
                         "writable": false,
                         "enabled": true,
                         "persisted": false,
+                        "internal": false,
                         "sampling_interval": 10,
                         "transform_read": "NOT(${DOLLAR})",
                         "type": "boolean",

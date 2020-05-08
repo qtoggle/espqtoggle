@@ -49,6 +49,7 @@
                                 "writable",
                                 "enabled",
                                 "persisted",
+                                "internal",
                                 "virtual",
                                 "transform_read",
                                 "type",
@@ -78,6 +79,9 @@
                                     "enum": [true]
                                 },
                                 "persisted": {
+                                    "enum": [false]
+                                },
+                                "internal": {
                                     "enum": [false]
                                 },
                                 "virtual": {

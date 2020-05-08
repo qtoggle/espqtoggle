@@ -42,6 +42,7 @@
                                 "writable",
                                 "enabled",
                                 "persisted",
+                                "internal",
                                 "sampling_interval",
                                 "transform_read",
                                 "type",
@@ -62,6 +63,9 @@
                                     "type": "boolean"
                                 },
                                 "persisted": {
+                                    "type": "boolean"
+                                },
+                                "internal": {
                                     "type": "boolean"
                                 },
                                 "sampling_interval": {

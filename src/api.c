@@ -450,6 +450,7 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
     json_obj_append(json, "writable", json_bool_new(IS_OUTPUT(port)));
     json_obj_append(json, "enabled", json_bool_new(IS_ENABLED(port)));
     json_obj_append(json, "persisted", json_bool_new(IS_PERSISTED(port)));
+    json_obj_append(json, "internal", json_bool_new(IS_INTERNAL(port)));
 
     if (IS_VIRTUAL(port)) {
         json_obj_append(json, "virtual", json_bool_new(TRUE));
@@ -1894,6 +1895,20 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
             else {
                 port->flags &= ~PORT_FLAG_PERSISTED;
                 DEBUG_PORT(port, "persist disabled");
+            }
+        }
+        else if (!strcmp(key, "internal")) {
+            if (json_get_type(child) != JSON_TYPE_BOOL) {
+                return INVALID_FIELD(key);
+            }
+
+            if (json_bool_get(child)) {
+                port->flags |= PORT_FLAG_INTERNAL;
+                DEBUG_PORT(port, "internal enabled");
+            }
+            else {
+                port->flags &= ~PORT_FLAG_INTERNAL;
+                DEBUG_PORT(port, "internal disabled");
             }
         }
         else if (!IS_VIRTUAL(port) && !strcmp(key, "sampling_interval")) {
