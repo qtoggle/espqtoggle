@@ -55,7 +55,8 @@
 #define PORT_FLAG_ENABLED               0x00000001
 #define PORT_FLAG_OUTPUT                0x00000002
 #define PORT_FLAG_PULL_UP               0x00000004
-#define PORT_FLAG_PERSISTED             0x00000008  /* 0x00000010, 0x00000020: reserved */
+#define PORT_FLAG_PERSISTED             0x00000008
+#define PORT_FLAG_INTERNAL              0x00000010  /* 0x00000020: reserved */
 #define PORT_FLAG_PULL_DOWN             0x00000040
 #define PORT_FLAG_VIRTUAL_INTEGER       0x00002000
 #define PORT_FLAG_VIRTUAL_TYPE          0x00004000  /* 0x00008000: reserved */
@@ -75,6 +76,7 @@
 #define IS_PULL_UP(port)                ((port)->flags & PORT_FLAG_PULL_UP)
 #define IS_PULL_DOWN(port)              ((port)->flags & PORT_FLAG_PULL_DOWN)
 #define IS_PERSISTED(port)              ((port)->flags & PORT_FLAG_PERSISTED)
+#define IS_INTERNAL(port)               ((port)->flags & PORT_FLAG_INTERNAL)
 #define IS_VIRTUAL(port)                ((port)->flags & PORT_FLAG_VIRTUAL_ACTIVE)
 
 #define CONFIG_OFFS_PORT_ID             0x00    /*   4 bytes */

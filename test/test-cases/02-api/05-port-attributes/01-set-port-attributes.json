@@ -13,6 +13,7 @@
                     "display_name": "test display name",
                     "enabled": true,
                     "persisted": true,
+                    "internal": true,
                     "sampling_interval": 10,
                     "transform_read": "NOT(${DOLLAR}gpio0)",
                     "pull_up": true,
@@ -43,6 +44,7 @@
                                 "writable",
                                 "enabled",
                                 "persisted",
+                                "internal",
                                 "sampling_interval",
                                 "transform_read",
                                 "pull_up",
@@ -62,6 +64,9 @@
                                     "enum": [true]
                                 },
                                 "persisted": {
+                                    "enum": [true]
+                                },
+                                "internal": {
                                     "enum": [true]
                                 },
                                 "sampling_interval": {
@@ -92,7 +97,8 @@
                 },
                 "body": {
                     "transform_read": "",
-                    "persisted": false
+                    "persisted": false,
+                    "internal": false
                 },
                 "expected_status": 204,
                 "expected_body": null

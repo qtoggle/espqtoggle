@@ -92,6 +92,7 @@ void port_load(port_t *port, uint8 *data) {
     DEBUG_PORT(port, "output = %s", IS_OUTPUT(port) ? "true" : "false");
     DEBUG_PORT(port, "pull_up = %s", IS_PULL_UP(port) ? "true" : "false");
     DEBUG_PORT(port, "persisted = %s", IS_PERSISTED(port) ? "true" : "false");
+    DEBUG_PORT(port, "internal = %s", IS_INTERNAL(port) ? "true" : "false");
     DEBUG_PORT(port, "virtual = %s", IS_VIRTUAL(port) ? "true" : "false");
 
     /* value */

@@ -269,20 +269,22 @@ void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_m
             continue;
         }
 
-        /* Add a value change event */
+        /* Add a value-change event, but only for non-internal ports */
+        if (!IS_INTERNAL(p)) {
 #ifdef _SLEEP
-        if (sleep_is_short_wake()) {
-            if (!(value_change_trigger_mask & (1UL << p->slot))) {
-                value_change_trigger_mask |= 1UL << p->slot;
-                event_push_value_change(p);
+            if (sleep_is_short_wake()) {
+                if (!(value_change_trigger_mask & (1UL << p->slot))) {
+                    value_change_trigger_mask |= 1UL << p->slot;
+                    event_push_value_change(p);
+                }
+                else {
+                    DEBUG_PORT(p, "skipping value-change event due to short wake");
+                }
             }
-            else {
-                DEBUG_PORT(p, "skipping value-change event due to short wake");
-            }
-        }
 #else
-        event_push_value_change(p);
+            event_push_value_change(p);
 #endif
+        }
 
         if (IS_PERSISTED(p) && (now_ms - poll_started_time_ms > 2000)) {
             /* Don't save config during the first few seconds since polling starts; this avoids saving at each boot due
