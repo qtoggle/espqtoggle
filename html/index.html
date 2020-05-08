@@ -154,6 +154,16 @@
                 outline: 0;
             }
             
+            input[type=checkbox] {
+                vertical-align: middle;
+                margin-left: 5%;
+                margin-right: 0.5em;
+            }
+            
+            label {
+                vertical-align: middle;
+            }
+
             div.button {
                 transition: all .3s ease;
                 line-height: 2.5em;
@@ -179,7 +189,6 @@
             }
             
             div.info {
-                text-align: justify;
                 line-height: 1.2em;
                 transition: height .3s ease;
                 height: 0;
@@ -213,6 +222,7 @@
                 var infoDiv = document.getElementsByClassName('info')[0];
                 var progress = false;
                 var okButton, selectedItem, ssidInput, pskInput, ipInput, nmInput, gwInput, dnsInput;
+                var clearPasswordInput, clearPasswordLabel;
                 
                 function fetchWiFiList(callback) {
                     var request = new XMLHttpRequest();
@@ -250,6 +260,10 @@
                         'ip_gateway': gwInput.value,
                         'ip_dns': dnsInput.value
                     };
+                    
+                    if (clearPasswordInput.checked) {
+                        attrs['admin_password'] = ''
+                    }
 
                     var request = new XMLHttpRequest();
                     setProgress();
@@ -350,6 +364,17 @@
                     dnsInput.setAttribute('type', 'text');
                     dnsInput.setAttribute('placeholder', '(optional) DNS server (e.g. 8.8.8.8)');
                     this.append(dnsInput);
+                    
+                    clearPasswordInput = document.createElement('input');
+                    clearPasswordInput.setAttribute('type', 'checkbox');
+                    clearPasswordInput.setAttribute('id', 'clearPasswordInput');
+                    this.append(clearPasswordInput);
+                    
+                    clearPasswordLabel = document.createElement('label');
+                    clearPasswordLabel.setAttribute('for', 'clearPasswordInput');
+                    clearPasswordLabel.innerText = 'Clear admin password';
+                    clearPasswordLabel.classList.add('clear-password');
+                    this.append(clearPasswordLabel);
                     
                     okButton = document.createElement('div');
                     okButton.innerText = 'OK';
