@@ -95,14 +95,8 @@ void main_init(void) {
     os_timer_setfn(&connect_timeout_timer, on_wifi_connect_timeout, NULL);
     os_timer_arm(&connect_timeout_timer, CONNECT_TIMEOUT, /* repeat = */ FALSE);
 
-    wifi_station_enable(device_name, on_wifi_connect);
-
-    /* If no SSID set (no Wi-Fi network configured), enter setup mode */
-    if (!wifi_get_ssid()) {
-        DEBUG_SYSTEM("no SSID configured, entering setup mode");
-        if (!system_setup_mode_active()) {
-            system_setup_mode_toggle();
-        }
+    if (wifi_get_ssid()) {
+        wifi_station_enable(device_name, on_wifi_connect);
     }
 }
 
@@ -111,6 +105,18 @@ void on_system_ready(void) {
 
     /* Generate a device-update event, mainly to be used with webhooks */
     event_push_device_update();
+
+    if (!wifi_get_ssid()) {
+        /* If no SSID set (no Wi-Fi network configured), attempt to connect to default SSID and enter setup mode */
+        DEBUG_SYSTEM("no SSID configured");
+        if (!system_setup_mode_active()) {
+            system_setup_mode_toggle();
+        }
+        if (strlen(DEFAULT_SSID)) {
+            wifi_station_temporary_enable(DEFAULT_SSID, /* psk = */ NULL, /* bssid = */ NULL,
+                                          /* hostname = */ device_name, /* callback = */ NULL);
+        }
+    }
 }
 
 void on_system_reset(void) {

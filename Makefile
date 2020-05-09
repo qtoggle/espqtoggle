@@ -48,6 +48,9 @@ FW_BASE_URL  ?= http://provisioning.qtoggle.io
 FW_BASE_OTA_PATH ?= /firmware/espqtoggle
 FW_BASE_CFG_PATH ?= /config
 
+# SSID to connect to when unconfigured
+DEFAULT_SSID ?= qToggleSetup
+
 # ---- configurable stuff ends here ---- #
 
 SHELL = /bin/bash  # other shells will probably fail
@@ -277,6 +280,7 @@ CFLAGS += -DFW_CONFIG_MODELS=$(FW_CONFIG_MODELS_PREPARED)
 CFLAGS += -DFW_BASE_URL=\"$(FW_BASE_URL)\"
 CFLAGS += -DFW_BASE_OTA_PATH=\"$(FW_BASE_OTA_PATH)\"
 CFLAGS += -DFW_BASE_CFG_PATH=\"$(FW_BASE_CFG_PATH)\"
+CFLAGS += -DDEFAULT_SSID=\"$(DEFAULT_SSID)\"
 
 LDSCRIPT = $(SDK_BASE)/ld/eagle.app.v6.new.$(FLASH_SIZE).app$(1).ld
 
@@ -332,6 +336,7 @@ buildinfo:
 	$(vecho) " *" FW_BASE_URL = "$(FW_BASE_URL)"
 	$(vecho) " *" FW_BASE_OTA_PATH = "$(FW_BASE_OTA_PATH)"
 	$(vecho) " *" FW_BASE_CFG_PATH = "$(FW_BASE_CFG_PATH)"
+	$(vecho) " *" DEFAULT_SSID = "$(DEFAULT_SSID)"
 	$(vecho) " *" CFLAGS = $(CFLAGS)
 	$(vecho) "-------------------------------"
 

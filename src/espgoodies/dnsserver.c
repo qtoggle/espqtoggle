@@ -152,7 +152,7 @@ void on_client_recv(void *arg, char *data, uint16 len) {
     remot_info *remote_info;
 
     espconn_get_connection_info(conn, &remote_info, 0);
-    DEBUG_DNSSERVER("received %d bytes from " IPSTR ":%d", len,
+    DEBUG_DNSSERVER("received %d bytes from " IP_FMT ":%d", len,
                     IP2STR(remote_info->remote_ip), remote_info->remote_port);
 
     process_request((uint8 *) data, len, remote_info->remote_ip, remote_info->remote_port);
@@ -166,7 +166,7 @@ void process_request(uint8 *request, uint16 len, uint8 remote_ip[], uint16 remot
         return;
     }
 
-    DEBUG_DNSSERVER("parsing request from " IPSTR ":%d", IP2STR(remote_ip), remote_port);
+    DEBUG_DNSSERVER("parsing request from " IP_FMT ":%d", IP2STR(remote_ip), remote_port);
 
     uint8 *response = prepare_response(request, &len);
     if (!response) {
@@ -174,7 +174,7 @@ void process_request(uint8 *request, uint16 len, uint8 remote_ip[], uint16 remot
         return;
     }
 
-    DEBUG_DNSSERVER("responding to " IPSTR ":%d", IP2STR(remote_ip), remote_port);
+    DEBUG_DNSSERVER("responding to " IP_FMT ":%d", IP2STR(remote_ip), remote_port);
 
     /* We must close the incoming connection before being able to open the outgoing one */
     reset();

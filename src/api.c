@@ -636,7 +636,7 @@ json_t *device_to_json(void) {
     /* IP configuration */
     ip_addr_t ip = wifi_get_ip_address();
     if (ip.addr) {
-        snprintf(value, 256, IPSTR, IP2STR(&ip));
+        snprintf(value, 256, IP_FMT, IP2STR(&ip));
         json_obj_append(json, "ip_address", json_str_new(value));
     }
     else {
@@ -647,7 +647,7 @@ json_t *device_to_json(void) {
 
     ip = wifi_get_gateway();
     if (ip.addr) {
-        snprintf(value, 256, IPSTR, IP2STR(&ip));
+        snprintf(value, 256, IP_FMT, IP2STR(&ip));
         json_obj_append(json, "ip_gateway", json_str_new(value));
     }
     else {
@@ -656,7 +656,7 @@ json_t *device_to_json(void) {
 
     ip = wifi_get_dns();
     if (ip.addr) {
-        snprintf(value, 256, IPSTR, IP2STR(&ip));
+        snprintf(value, 256, IP_FMT, IP2STR(&ip));
         json_obj_append(json, "ip_dns", json_str_new(value));
     }
     else {
@@ -666,7 +666,7 @@ json_t *device_to_json(void) {
     /* Current IP info */
     ip = wifi_get_ip_address_current();
     if (ip.addr) {
-        snprintf(value, 256, IPSTR, IP2STR(&ip));
+        snprintf(value, 256, IP_FMT, IP2STR(&ip));
         json_obj_append(json, "ip_address_current", json_str_new(value));
     }
     else {
@@ -677,7 +677,7 @@ json_t *device_to_json(void) {
 
     ip = wifi_get_gateway_current();
     if (ip.addr) {
-        snprintf(value, 256, IPSTR, IP2STR(&ip));
+        snprintf(value, 256, IP_FMT, IP2STR(&ip));
         json_obj_append(json, "ip_gateway_current", json_str_new(value));
     }
     else {
@@ -686,7 +686,7 @@ json_t *device_to_json(void) {
 
     ip = wifi_get_dns_current();
     if (ip.addr) {
-        snprintf(value, 256, IPSTR, IP2STR(&ip));
+        snprintf(value, 256, IP_FMT, IP2STR(&ip));
         json_obj_append(json, "ip_dns_current", json_str_new(value));
     }
     else {
