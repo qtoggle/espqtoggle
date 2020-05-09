@@ -19,7 +19,7 @@
                     ],
                     "properties": {
                         "name": {
-                            "enum": ["esp{{DEVICE_SERIAL_NUMBER}}"]
+                            "enum": ["esp-{{DEVICE_SERIAL_NUMBER}}"]
                         },
                         "display_name": {
                             "enum": ["Test"]

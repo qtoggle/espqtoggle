@@ -23,7 +23,7 @@
         {
             "name": "wifi-station-connect",
             "params": {
-                "ssid": "esp{{DEVICE_SERIAL_NUMBER}}"
+                "ssid": "esp-{{DEVICE_SERIAL_NUMBER}}"
             }
         },
         {
@@ -70,7 +70,7 @@
                     ],
                     "properties": {
                         "name": {
-                            "enum": ["esp{{DEVICE_SERIAL_NUMBER}}"]
+                            "enum": ["esp-{{DEVICE_SERIAL_NUMBER}}"]
                         }
                     }
                 }
