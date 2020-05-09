@@ -30,7 +30,9 @@
 #endif
 
 #define BSSID_FMT                       "%02X:%02X:%02X:%02X:%02X:%02X"
-#define BSSID2STR(bssid)                (bssid[0]), (bssid[1]), (bssid[2]), (bssid[3]), (bssid[4]), (bssid[5])
+#define BSSID2STR(bssid)                MAC2STR(bssid)
+#define MAC_FMT                         BSSID_FMT
+#define IP_FMT                          "%d.%d.%d.%d"
 
 #define WIFI_EVENT_CONNECTED            1
 #define WIFI_EVENT_DISCONNECTED         2
@@ -88,6 +90,7 @@ typedef struct {
 /* Results is an array that must be freed() in callback! */
 typedef void (* wifi_scan_callback_t)(wifi_scan_result_t *results, int len);
 typedef void (* wifi_connect_callback_t)(bool connected);
+typedef void (* wifi_ap_client_callback_t)(bool connected, ip_addr_t ip_address, uint8 *mac);
 
 
 ICACHE_FLASH_ATTR char                * wifi_get_ssid(void);
@@ -120,8 +123,11 @@ ICACHE_FLASH_ATTR void                  wifi_set_dns(ip_addr_t dns);
 ICACHE_FLASH_ATTR void                  wifi_station_enable(char *hostname, wifi_connect_callback_t callback);
 ICACHE_FLASH_ATTR void                  wifi_station_disable(void);
 ICACHE_FLASH_ATTR bool                  wifi_station_is_connected(void);
+ICACHE_FLASH_ATTR void                  wifi_station_temporary_enable(char *ssid, char *psk, uint8 *bssid,
+                                                                      char *hostname, wifi_connect_callback_t callback);
+ICACHE_FLASH_ATTR void                  wifi_station_temporary_disable(void);
 
-ICACHE_FLASH_ATTR void                  wifi_ap_enable(char *ssid, char *psk);
+ICACHE_FLASH_ATTR void                  wifi_ap_enable(char *ssid, char *psk, wifi_ap_client_callback_t callback);
 ICACHE_FLASH_ATTR void                  wifi_ap_disable(void);
 
 ICACHE_FLASH_ATTR bool                  wifi_scan(wifi_scan_callback_t callback);

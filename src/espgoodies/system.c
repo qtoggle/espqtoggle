@@ -161,7 +161,7 @@ void system_setup_mode_toggle(void) {
 
         char ssid[WIFI_SSID_MAX_LEN + 1];
         snprintf(ssid, sizeof(ssid), DEFAULT_HOSTNAME, system_get_chip_id());
-        wifi_ap_enable(ssid, /* psk = */ NULL);
+        wifi_ap_enable(ssid, /* psk = */ NULL, NULL);
         dnsserver_start_captive();
     }
 }
