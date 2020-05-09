@@ -74,8 +74,8 @@ jobs:
             --flash-image-file user1.bin 0x01000 ${SRC_DIR}/build/user1.bin \
             --flash-image-file user2.bin 0x81000 ${SRC_DIR}/build/user2.bin \
             --flash-image-fill config.bin 0x7C000 0 8192 \
-            --test-case ${SRC_DIR}/test/test-cases/01-wifi/01-default-ap-mode.json \
-            --test-case ${SRC_DIR}/test/test-cases/01-wifi/02-connect-wifi.json \
+            --test-case ${SRC_DIR}/test/test-cases/01-wifi/02-default-ap-mode.json \
+            --test-case ${SRC_DIR}/test/test-cases/01-wifi/03-connect-wifi.json \
             --test-cases ${SRC_DIR}/test/test-cases/03-sleep-mode/*.json
 
           # setup mode
@@ -94,8 +94,8 @@ jobs:
             --flash-image-file user2.bin 0x81000 ${SRC_DIR}/build/user2.bin \
             --flash-image-fill config.bin 0x7C000 0 8192 \
             --test-case ${SRC_DIR}/test/test-cases/04-setup-mode/ensure-gpio.json \
-            --test-case ${SRC_DIR}/test/test-cases/01-wifi/01-default-ap-mode.json \
-            --test-case ${SRC_DIR}/test/test-cases/01-wifi/02-connect-wifi.json \
+            --test-case ${SRC_DIR}/test/test-cases/01-wifi/02-default-ap-mode.json \
+            --test-case ${SRC_DIR}/test/test-cases/01-wifi/03-connect-wifi.json \
             --test-cases ${SRC_DIR}/test/test-cases/04-setup-mode/??-*.json
 
           # provisioning
@@ -113,8 +113,8 @@ jobs:
             --flash-image-file user1.bin 0x01000 ${SRC_DIR}/build/user1.bin \
             --flash-image-file user2.bin 0x81000 ${SRC_DIR}/build/user2.bin \
             --flash-image-fill config.bin 0x7C000 0 8192 \
-            --test-case ${SRC_DIR}/test/test-cases/01-wifi/01-default-ap-mode.json \
-            --test-case ${SRC_DIR}/test/test-cases/01-wifi/02-connect-wifi.json \
+            --test-case ${SRC_DIR}/test/test-cases/01-wifi/02-default-ap-mode.json \
+            --test-case ${SRC_DIR}/test/test-cases/01-wifi/03-connect-wifi.json \
             --test-cases ${SRC_DIR}/test/test-cases/05-provisioning/*.json
 
           # gpio
@@ -132,8 +132,8 @@ jobs:
             --flash-image-file user1.bin 0x01000 ${SRC_DIR}/build/user1.bin \
             --flash-image-file user2.bin 0x81000 ${SRC_DIR}/build/user2.bin \
             --flash-image-fill config.bin 0x7C000 0 8192 \
-            --test-case ${SRC_DIR}/test/test-cases/01-wifi/01-default-ap-mode.json \
-            --test-case ${SRC_DIR}/test/test-cases/01-wifi/02-connect-wifi.json \
+            --test-case ${SRC_DIR}/test/test-cases/01-wifi/02-default-ap-mode.json \
+            --test-case ${SRC_DIR}/test/test-cases/01-wifi/03-connect-wifi.json \
             --test-cases ${SRC_DIR}/test/test-cases/06-gpio/*.json
 
           # extra/v9821
@@ -151,8 +151,8 @@ jobs:
             --flash-image-file user1.bin 0x01000 ${SRC_DIR}/build/user1.bin \
             --flash-image-file user2.bin 0x81000 ${SRC_DIR}/build/user2.bin \
             --flash-image-fill config.bin 0x7C000 0 8192 \
-            --test-case ${SRC_DIR}/test/test-cases/01-wifi/01-default-ap-mode.json \
-            --test-case ${SRC_DIR}/test/test-cases/01-wifi/02-connect-wifi.json \
+            --test-case ${SRC_DIR}/test/test-cases/01-wifi/02-default-ap-mode.json \
+            --test-case ${SRC_DIR}/test/test-cases/01-wifi/03-connect-wifi.json \
             --test-cases ${SRC_DIR}/test/test-cases/07-extra/01-v9821.json
 
   release:
