@@ -19,12 +19,6 @@
             }
         },
         {
-            "name": "sleep",
-            "params": {
-                "duration": 250
-            }
-        },
-        {
             "name": "json-http-client",
             "params": {
                 "method": "GET",
