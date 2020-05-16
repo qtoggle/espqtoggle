@@ -193,7 +193,6 @@ void session_push(session_t *session, int type, char *port_id) {
 
     /* Deduplicate change & update events */
     if (type == EVENT_TYPE_PORT_UPDATE ||
-        type == EVENT_TYPE_VALUE_CHANGE ||
         type == EVENT_TYPE_DEVICE_UPDATE ||
         type == EVENT_TYPE_FULL_UPDATE) {
 
