@@ -125,7 +125,7 @@ bool choices_equal(char **choices1, char **choices2) {
     return TRUE;
 }
 
-bool validate_num(double value, double min, double max, bool integer, double step, char **choices) {
+int validate_num(double value, double min, double max, bool integer, double step, char **choices) {
     if ((min != max) && ((!IS_UNDEFINED(min) && value < min) || (!IS_UNDEFINED(max) && value > max))) {
         return FALSE;
     }
@@ -160,7 +160,7 @@ bool validate_num(double value, double min, double max, bool integer, double ste
     return TRUE;
 }
 
-bool validate_str(char *value, char **choices) {
+int validate_str(char *value, char **choices) {
     if (choices) {
         char *c;
         int i = 0;

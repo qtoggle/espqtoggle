@@ -24,9 +24,13 @@
 #include "flashcfg.h"
 
 
-bool flashcfg_load(uint8 *data) {
+bool flashcfg_load(uint8 *data, uint32 offs, uint32 size) {
+    if (size == 0) {
+        size = FLASH_CONFIG_SIZE;
+    }
+
     ETS_INTR_LOCK();
-    if (spi_flash_read(FLASH_CONFIG_ADDR, (uint32 *) data, FLASH_CONFIG_SIZE) != SPI_FLASH_RESULT_OK) {
+    if (spi_flash_read(FLASH_CONFIG_ADDR + offs, (uint32 *) data, size) != SPI_FLASH_RESULT_OK) {
         ETS_INTR_UNLOCK();
         DEBUG_FLASHCFG("failed to read %d bytes from flash config at 0x%05X",
                        FLASH_CONFIG_SIZE, FLASH_CONFIG_ADDR);
@@ -44,17 +48,17 @@ bool flashcfg_load(uint8 *data) {
 bool flashcfg_save(uint8 *data) {
     int i, sector;
     ETS_INTR_LOCK();
-    for (i = 0; i < FLASH_CONFIG_SIZE / FLASH_CONFIG_SECTOR_SIZE; i++) {
-        sector = (FLASH_CONFIG_ADDR + FLASH_CONFIG_SECTOR_SIZE * i) / 0x1000;
+    for (i = 0; i < FLASH_CONFIG_SIZE / SPI_FLASH_SEC_SIZE; i++) {
+        sector = (FLASH_CONFIG_ADDR + SPI_FLASH_SEC_SIZE * i) / SPI_FLASH_SEC_SIZE;
         if (spi_flash_erase_sector(sector) != SPI_FLASH_RESULT_OK) {
             ETS_INTR_UNLOCK();
             DEBUG_FLASHCFG("failed to erase flash sector at 0x%05X",
-                           FLASH_CONFIG_ADDR + FLASH_CONFIG_SECTOR_SIZE * i);
+                           FLASH_CONFIG_ADDR + SPI_FLASH_SEC_SIZE * i);
             return FALSE;
         }
         else {
             DEBUG_FLASHCFG("flash sector at 0x%05X erased",
-                           FLASH_CONFIG_ADDR + FLASH_CONFIG_SECTOR_SIZE * i);
+                           FLASH_CONFIG_ADDR + SPI_FLASH_SEC_SIZE * i);
         }
     }
 

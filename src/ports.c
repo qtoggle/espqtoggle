@@ -24,18 +24,16 @@
 #include <pwm.h>
 
 #include "espgoodies/common.h"
+#include "espgoodies/flashcfg.h"
 #include "espgoodies/utils.h"
 
+#include "apiutils.h"
 #include "common.h"
 #include "config.h"
 #include "core.h"
 #include "events.h"
 #include "ports.h"
 #include "stringpool.h"
-
-
-ICACHE_FLASH_ATTR static void       port_load(port_t *port, uint8 *data);
-ICACHE_FLASH_ATTR static void       port_save(port_t *port, uint8 *data, uint32 *strings_offs);
 
 
 port_t                           ** all_ports = NULL;
@@ -45,21 +43,315 @@ char                              * all_gpio_choices[] = {"0:GPIO0", "1:GPIO1", 
                                                           "14:GPIO14", "15:GPIO15", "16:GPIO16", NULL};
 
 char                              * all_gpio_none_choices[] = {"0:GPIO0", "1:GPIO1", "2:GPIO2", "3:GPIO3", "4:GPIO4",
-                                                              "5:GPIO5", "6:GPIO6", "7:GPIO7", "8:GPIO8", "9:GPIO9",
-                                                              "10:GPIO10", "11:GPIO11", "12:GPIO12", "13:GPIO13",
-                                                              "14:GPIO14", "15:GPIO15", "16:GPIO16", "-1:none", NULL};
+                                                               "5:GPIO5", "6:GPIO6", "7:GPIO7", "8:GPIO8", "9:GPIO9",
+                                                               "10:GPIO10", "11:GPIO11", "12:GPIO12", "13:GPIO13",
+                                                               "14:GPIO14", "15:GPIO15", "16:GPIO16", "-1:none", NULL};
 
 char                              * esp8266_gpio_choices[] = {"0:GPIO0", "1:GPIO1", "2:GPIO2", "3:GPIO3", "4:GPIO4",
                                                               "5:GPIO5", "12:GPIO12", "13:GPIO13", "14:GPIO14",
                                                               "15:GPIO15", "16:GPIO16", NULL};
 
 char                              * esp8266_gpio_none_choices[] = {"0:GPIO0", "1:GPIO1", "2:GPIO2", "3:GPIO3",
-                                                                  "4:GPIO4", "5:GPIO5", "12:GPIO12", "13:GPIO13",
-                                                                  "14:GPIO14", "15:GPIO15", "16:GPIO16", "-1:none",
-                                                                  NULL};
+                                                                   "4:GPIO4", "5:GPIO5", "12:GPIO12", "13:GPIO13",
+                                                                   "14:GPIO14", "15:GPIO15", "16:GPIO16", "-1:none",
+                                                                   NULL};
 
 static int                          all_ports_count = 0;
 static uint8                        next_extra_slot = PORT_SLOT_EXTRA0;
+
+
+ICACHE_FLASH_ATTR static int        attr_get_extra_data_1bu(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_extra_data_1bu(port_t *port, attrdef_t *attrdef, int value);
+
+ICACHE_FLASH_ATTR static int        attr_get_extra_data_1bs(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_extra_data_1bs(port_t *port, attrdef_t *attrdef, int value);
+
+ICACHE_FLASH_ATTR static int        attr_get_extra_data_2bu(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_extra_data_2bu(port_t *port, attrdef_t *attrdef, int value);
+
+ICACHE_FLASH_ATTR static int        attr_get_extra_data_2bs(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_extra_data_2bs(port_t *port, attrdef_t *attrdef, int value);
+
+ICACHE_FLASH_ATTR static int        attr_get_extra_data_4bs(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_extra_data_4bs(port_t *port, attrdef_t *attrdef, int value);
+
+ICACHE_FLASH_ATTR static double     attr_get_extra_data_double(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_extra_data_double(port_t *port, attrdef_t *attrdef, double value);
+
+ICACHE_FLASH_ATTR static int        attr_get_flag(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_flag(port_t *port, attrdef_t *attrdef, int value);
+
+ICACHE_FLASH_ATTR static int        attr_get_extra_data_num_choices(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_extra_data_num_choices(port_t *port, attrdef_t *attrdef, int index);
+
+ICACHE_FLASH_ATTR static void       attr_set_extra_info_cache(port_t *port, attrdef_t *attrdef, void *value);
+
+ICACHE_FLASH_ATTR static void       port_load(port_t *port, uint8 *data);
+ICACHE_FLASH_ATTR static void       port_save(port_t *port, uint8 *data, uint32 *strings_offs);
+
+
+int attr_get_extra_data_1bu(port_t *port, attrdef_t *attrdef) {
+    uint8 v = port->extra_data[attrdef->gs_extra_data_offs];
+
+    if (attrdef->extra_info_cache_offs) {
+        attr_set_extra_info_cache(port, attrdef, &v);
+    }
+
+    return v;
+}
+
+void attr_set_extra_data_1bu(port_t *port, attrdef_t *attrdef, int value) {
+    uint8 v = value;
+
+    if (attrdef->extra_info_cache_offs) {
+        attr_set_extra_info_cache(port, attrdef, &v);
+    }
+
+    port->extra_data[attrdef->gs_extra_data_offs] = v;
+}
+
+int attr_get_extra_data_1bs(port_t *port, attrdef_t *attrdef) {
+    int8 v = port->extra_data[attrdef->gs_extra_data_offs];
+
+    if (attrdef->extra_info_cache_offs) {
+        attr_set_extra_info_cache(port, attrdef, &v);
+    }
+
+    return v;
+}
+
+void attr_set_extra_data_1bs(port_t *port, attrdef_t *attrdef, int value) {
+    int8 v = value;
+
+    if (attrdef->extra_info_cache_offs) {
+        attr_set_extra_info_cache(port, attrdef, &v);
+    }
+
+    port->extra_data[attrdef->gs_extra_data_offs] = v;
+}
+
+int attr_get_extra_data_2bu(port_t *port, attrdef_t *attrdef) {
+    uint16 *pv = ((uint16 *) (port->extra_data + attrdef->gs_extra_data_offs));
+
+    if (attrdef->extra_info_cache_offs) {
+        attr_set_extra_info_cache(port, attrdef, pv);
+    }
+
+    return *pv;
+}
+
+void attr_set_extra_data_2bu(port_t *port, attrdef_t *attrdef, int value) {
+    uint16 v = value;
+
+    if (attrdef->extra_info_cache_offs) {
+        attr_set_extra_info_cache(port, attrdef, &v);
+    }
+
+    uint16 *pv = ((uint16 *) (port->extra_data + attrdef->gs_extra_data_offs));
+    *pv = v;
+}
+
+int attr_get_extra_data_2bs(port_t *port, attrdef_t *attrdef) {
+    int16 *pv = ((int16 *) (port->extra_data + attrdef->gs_extra_data_offs));
+
+    if (attrdef->extra_info_cache_offs) {
+        attr_set_extra_info_cache(port, attrdef, pv);
+    }
+
+    return *pv;
+}
+
+void attr_set_extra_data_2bs(port_t *port, attrdef_t *attrdef, int value) {
+    int16 v = value;
+
+    if (attrdef->extra_info_cache_offs) {
+        attr_set_extra_info_cache(port, attrdef, &v);
+    }
+
+    int16 *pv = ((int16 *) (port->extra_data + attrdef->gs_extra_data_offs));
+    *pv = v;
+}
+
+int attr_get_extra_data_4bs(port_t *port, attrdef_t *attrdef) {
+    int32 *pv = ((int32 *) (port->extra_data + attrdef->gs_extra_data_offs));
+
+    if (attrdef->extra_info_cache_offs) {
+        attr_set_extra_info_cache(port, attrdef, pv);
+    }
+
+    return *pv;
+}
+
+void attr_set_extra_data_4bs(port_t *port, attrdef_t *attrdef, int value) {
+    int32 v = value;
+
+    if (attrdef->extra_info_cache_offs) {
+        attr_set_extra_info_cache(port, attrdef, &v);
+    }
+
+    int32 *pv = ((int32 *) (port->extra_data + attrdef->gs_extra_data_offs));
+    *pv = v;
+}
+
+double attr_get_extra_data_double(port_t *port, attrdef_t *attrdef) {
+    double *pv = ((double *) (port->extra_data + attrdef->gs_extra_data_offs));
+
+    if (attrdef->extra_info_cache_offs) {
+        attr_set_extra_info_cache(port, attrdef, pv);
+    }
+
+    return *pv;
+}
+
+void attr_set_extra_data_double(port_t *port, attrdef_t *attrdef, double value) {
+    if (attrdef->extra_info_cache_offs) {
+        attr_set_extra_info_cache(port, attrdef, &value);
+    }
+
+    double *pv = ((double *) (port->extra_data + attrdef->gs_extra_data_offs));
+    *pv = value;
+}
+
+int attr_get_flag(port_t *port, attrdef_t *attrdef) {
+    bool v = !!(port->flags & (1 << attrdef->gs_flag_bit));
+
+    if (attrdef->extra_info_cache_offs) {
+        attr_set_extra_info_cache(port, attrdef, &v);
+    }
+
+    return v;
+}
+
+void attr_set_flag(port_t *port, attrdef_t *attrdef, int value) {
+    bool v = value;
+
+    if (attrdef->extra_info_cache_offs) {
+        attr_set_extra_info_cache(port, attrdef, &v);
+    }
+
+    if (v) {
+        port->flags |= 1 << attrdef->gs_flag_bit;
+    }
+    else {
+        port->flags &= ~(1 << attrdef->gs_flag_bit);
+    }
+}
+
+int attr_get_extra_data_num_choices(port_t *port, attrdef_t *attrdef) {
+    uint8 index = port->extra_data[attrdef->gs_extra_data_offs];
+
+    if (attrdef->extra_info_cache_offs) {
+        double dv = get_choice_value_num(attrdef->choices[index]);
+
+        switch (attrdef->gs_type) {
+            case ATTRDEF_GS_TYPE_EXTRA_DATA_1BU: {
+                uint8 v = dv;
+                attr_set_extra_info_cache(port, attrdef, &v);
+                break;
+            }
+
+            case ATTRDEF_GS_TYPE_EXTRA_DATA_1BS: {
+                int8 v = dv;
+                attr_set_extra_info_cache(port, attrdef, &v);
+                break;
+            }
+
+            case ATTRDEF_GS_TYPE_EXTRA_DATA_2BU: {
+                uint16 v = dv;
+                attr_set_extra_info_cache(port, attrdef, &v);
+                break;
+            }
+
+            case ATTRDEF_GS_TYPE_EXTRA_DATA_2BS: {
+                int16 v = dv;
+                attr_set_extra_info_cache(port, attrdef, &v);
+                break;
+            }
+
+            case ATTRDEF_GS_TYPE_EXTRA_DATA_4BS: {
+                int32 v = dv;
+                attr_set_extra_info_cache(port, attrdef, &v);
+                break;
+            }
+
+            case ATTRDEF_GS_TYPE_EXTRA_DATA_DOUBLE:
+                attr_set_extra_info_cache(port, attrdef, &dv);
+                break;
+        }
+    }
+
+    return index;
+}
+
+void attr_set_extra_data_num_choices(port_t *port, attrdef_t *attrdef, int index) {
+    port->extra_data[attrdef->gs_extra_data_offs] = index;
+
+    if (attrdef->extra_info_cache_offs) {
+        double dv = get_choice_value_num(attrdef->choices[index]);
+
+        switch (attrdef->gs_type) {
+            case ATTRDEF_GS_TYPE_EXTRA_DATA_1BU: {
+                uint8 v = dv;
+                attr_set_extra_info_cache(port, attrdef, &v);
+                break;
+            }
+
+            case ATTRDEF_GS_TYPE_EXTRA_DATA_1BS: {
+                int8 v = dv;
+                attr_set_extra_info_cache(port, attrdef, &v);
+                break;
+            }
+
+            case ATTRDEF_GS_TYPE_EXTRA_DATA_2BU: {
+                uint16 v = dv;
+                attr_set_extra_info_cache(port, attrdef, &v);
+                break;
+            }
+
+            case ATTRDEF_GS_TYPE_EXTRA_DATA_2BS: {
+                int16 v = dv;
+                attr_set_extra_info_cache(port, attrdef, &v);
+                break;
+            }
+
+            case ATTRDEF_GS_TYPE_EXTRA_DATA_4BS: {
+                int32 v = dv;
+                attr_set_extra_info_cache(port, attrdef, &v);
+                break;
+            }
+
+            case ATTRDEF_GS_TYPE_EXTRA_DATA_DOUBLE:
+                attr_set_extra_info_cache(port, attrdef, &dv);
+                break;
+        }
+    }
+}
+
+void attr_set_extra_info_cache(port_t *port, attrdef_t *attrdef, void *value) {
+    uint8 size = 1;
+    switch (attrdef->gs_type) {
+        case ATTRDEF_GS_TYPE_EXTRA_DATA_1BU:
+        case ATTRDEF_GS_TYPE_EXTRA_DATA_1BS:
+        case ATTRDEF_GS_TYPE_EXTRA_DATA_BOOL:
+            size = 1;
+            break;
+
+        case ATTRDEF_GS_TYPE_EXTRA_DATA_2BU:
+        case ATTRDEF_GS_TYPE_EXTRA_DATA_2BS:
+            size = 2;
+            break;
+
+        case ATTRDEF_GS_TYPE_EXTRA_DATA_4BS:
+            size = 4;
+            break;
+
+        case ATTRDEF_GS_TYPE_EXTRA_DATA_DOUBLE:
+            size = sizeof(double);
+            break;
+    }
+
+    memcpy(((uint8 *) port->extra_info) + attrdef->extra_info_cache_offs - 1 /* common offset */, value, size);
+}
 
 
 void port_load(port_t *port, uint8 *data) {
@@ -93,6 +385,7 @@ void port_load(port_t *port, uint8 *data) {
     DEBUG_PORT(port, "pull_up = %s", IS_PULL_UP(port) ? "true" : "false");
     DEBUG_PORT(port, "persisted = %s", IS_PERSISTED(port) ? "true" : "false");
     DEBUG_PORT(port, "internal = %s", IS_INTERNAL(port) ? "true" : "false");
+    DEBUG_PORT(port, "setup = %s", IS_SET(port) ? "true" : "false");
     DEBUG_PORT(port, "virtual = %s", IS_VIRTUAL(port) ? "true" : "false");
 
     /* value */
@@ -119,7 +412,7 @@ void port_load(port_t *port, uint8 *data) {
     if (!port->max_sampling_interval) {
         port->max_sampling_interval = PORT_MAX_SAMP_INT;
     }
-    port->last_sample_time = -INT_MAX;
+    port->last_sample_time = -LONG_LONG_MAX;
 
     DEBUG_PORT(port, "sampling_interval = %d ms", port->sampling_interval);
 
@@ -127,13 +420,14 @@ void port_load(port_t *port, uint8 *data) {
     if (!port->heart_beat_interval) {
         port->heart_beat_interval = PORT_DEF_HEART_BEAT_INT;
     }
-    port->last_heart_beat_time = -INT_MAX;
+    port->last_heart_beat_time = -LONG_LONG_MAX;
 
     DEBUG_PORT(port, "heart_beat_interval = %d ms", port->heart_beat_interval);
 
-    /* Custom data */
+    /* Extra data */
     memcpy(port->extra_data, base_ptr + CONFIG_OFFS_PORT_DATA, PORT_PERSISTED_EXTRA_DATA_LEN);
 
+    /* Expressions */
     port->sexpr = NULL;
     port->expr = NULL;
     port->stransform_write = NULL;
@@ -183,6 +477,65 @@ void port_load(port_t *port, uint8 *data) {
     /* Sequence */
     port->sequence_pos = -1;
 
+    /* Prepare custom attributes */
+    if (port->attrdefs) {
+        attrdef_t *a, **attrdefs = port->attrdefs;
+        while ((a = *attrdefs++)) {
+            if (!IS_SET(port)) {
+                DEBUG_PORT(port, "setting default attribute values");
+
+                switch (a->type) {
+                    case ATTR_TYPE_BOOLEAN: {
+                        bool value = (bool) a->def;
+                        ((int_setter_t) a->set)(port, a, value);
+
+                        DEBUG_PORT(port, "%s set to %d", a->name, value);
+
+                        break;
+                    }
+
+                    case ATTR_TYPE_NUMBER: {
+                        if (a->choices) {
+                            ((int_setter_t) a->set)(port, a, (int) a->def);
+                            DEBUG_PORT(port, "%s set to choice %d", a->name, (int) a->def);
+                        }
+                        else {
+                            if (a->integer) {
+                                ((int_setter_t) a->set)(port, a, (int) a->def);
+                                DEBUG_PORT(port, "%s set to %d", a->name, (int) a->def);
+                            }
+                            else { /* float */
+                                ((float_setter_t) a->set)(port, a, a->def);
+                                DEBUG_PORT(port, "%s set to choice %s", a->name, dtostr(a->def, -1));
+                            }
+                        }
+
+                        break;
+                    }
+
+                    case ATTR_TYPE_STRING: {
+                        if (a->choices) {
+                            ((int_setter_t) a->set)(port, a, (int) a->def);
+                            DEBUG_PORT(port, "%s set to choice %d", a->name, (int) a->def);
+                        }
+                        else if (a->def_str) {
+                            ((str_setter_t) a->set)(port, a, a->def_str);
+                            DEBUG_PORT(port, "%s set to %s", a->name, a->def_str);
+                        }
+
+                        break;
+                    }
+                }
+            }
+
+            /* Calling getter will load value into cache */
+            if (a->extra_info_cache_offs) {
+                ((int_getter_t) a->get)(port, a);
+            }
+        }
+    }
+
+    /* Port can now be configured */
     if (IS_ENABLED(port)) {
         port_configure(port);
     }
@@ -213,6 +566,9 @@ void port_load(port_t *port, uint8 *data) {
     }
 
     port->change_reason = CHANGE_REASON_NATIVE;
+
+    /* From now on, consider port configured */
+    port->flags |= PORT_FLAG_SET;
 }
 
 void port_save(port_t *port, uint8 *data, uint32 *strings_offs) {
@@ -371,12 +727,63 @@ void port_register(port_t *port) {
     all_ports[all_ports_count++] = port;
     all_ports[all_ports_count] = NULL;
 
-    /* Set min/max to UNDEFINED for all attrdefs */
+    /* Prepare custom port attrdefs */
     if (port->attrdefs) {
         attrdef_t *a, **attrdefs = port->attrdefs;
         while ((a = *attrdefs++)) {
+            /* Set min/max to UNDEFINED, by default */
             if (a->min == 0 && a->max == 0) {
                 a->min = a->max = UNDEFINED;
+            }
+
+            /* Set default getter/setter */
+            /* TODO: add support for default setters/getters for string attributes */
+            if ((!a->get || !a->set) && (a->gs_type != ATTRDEF_GS_TYPE_CUSTOM)) {
+                if (a->choices) {
+                    if (a->type == ATTR_TYPE_NUMBER) {
+                        a->get = attr_get_extra_data_num_choices;
+                        a->set = attr_set_extra_data_num_choices;
+                    }
+                }
+                else {
+                    switch (a->gs_type) {
+                        case ATTRDEF_GS_TYPE_EXTRA_DATA_1BS:
+                        case ATTRDEF_GS_TYPE_EXTRA_DATA_BOOL:
+                            a->get = attr_get_extra_data_1bs;
+                            a->set = attr_set_extra_data_1bs;
+                            break;
+
+                        case ATTRDEF_GS_TYPE_EXTRA_DATA_1BU:
+                            a->get = attr_get_extra_data_1bu;
+                            a->set = attr_set_extra_data_1bu;
+                            break;
+
+                        case ATTRDEF_GS_TYPE_EXTRA_DATA_2BS:
+                            a->get = attr_get_extra_data_2bs;
+                            a->set = attr_set_extra_data_2bs;
+                            break;
+
+                        case ATTRDEF_GS_TYPE_EXTRA_DATA_2BU:
+                            a->get = attr_get_extra_data_2bu;
+                            a->set = attr_set_extra_data_2bu;
+                            break;
+
+                        case ATTRDEF_GS_TYPE_EXTRA_DATA_4BS:
+                            a->get = attr_get_extra_data_4bs;
+                            a->set = attr_set_extra_data_4bs;
+                            break;
+
+                        case ATTRDEF_GS_TYPE_EXTRA_DATA_DOUBLE:
+                            a->get = attr_get_extra_data_double;
+                            a->set = attr_set_extra_data_double;
+                            break;
+
+                        case ATTRDEF_GS_TYPE_FLAG:
+                            a->get = attr_get_flag;
+                            a->set = attr_set_flag;
+                            break;
+                    }
+                }
             }
         }
     }

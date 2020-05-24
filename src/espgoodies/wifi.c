@@ -38,7 +38,7 @@
 
 #define CONNECTED_WATCHDOG_INTERVAL 10      /* Seconds */
 #define CONNECTED_WATCHDOG_COUNT    3       /* Disconnected times, in a row, that trigger a reset */
-#define TEMPORARY_CONNECT_INTERVAL  5000    /* How often to attempt to connect, in temporary station mode */
+#define TEMPORARY_CONNECT_INTERVAL  10000    /* How often to attempt to connect, in temporary station mode */
 
 
 static bool                         station_connected = FALSE;
@@ -433,7 +433,7 @@ void wifi_station_temporary_enable(char *ssid, char *psk, uint8 *bssid,
     }
 
     os_timer_setfn(&temporary_connect_timer, on_temporary_connect, NULL);
-    os_timer_arm(&temporary_connect_timer, 5000, /* repeat = */ TRUE);
+    os_timer_arm(&temporary_connect_timer, TEMPORARY_CONNECT_INTERVAL, /* repeat = */ TRUE);
 
     station_connect_callback = callback;
 

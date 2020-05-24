@@ -2798,7 +2798,7 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
         }
         else {
             attrdef_json = attrdef_to_json("Sampling Interval", "Indicates how often to read the port value.",
-                                           "milliseconds", ATTR_TYPE_NUMBER, /* modifiable = */ TRUE,
+                                           "ms", ATTR_TYPE_NUMBER, /* modifiable = */ TRUE,
                                            port->min_sampling_interval, port->max_sampling_interval,
                                            /* integer = */ TRUE , /* step = */ 0, /* choices = */ NULL,
                                            /* reconnect = */ FALSE);
