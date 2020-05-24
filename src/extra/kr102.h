@@ -16,22 +16,19 @@
  *
  */
 
-#ifndef _ESPGOODIES_FLASHCFG_H
-#define _ESPGOODIES_FLASHCFG_H
+#ifndef _EXTRA_KR102_H
+#define _EXTRA_KR102_H
+
+#include <c_types.h>
 
 
-#ifdef _DEBUG_FLASHCFG
-#define DEBUG_FLASHCFG(fmt, ...)        DEBUG("[flashcfg      ] " fmt, ##__VA_ARGS__)
+#ifdef _DEBUG_KR102
+#define DEBUG_KR102(f, ...)                 DEBUG("[kr102         ] " f, ##__VA_ARGS__)
 #else
-#define DEBUG_FLASHCFG(...)             {}
+#define DEBUG_KR102(...)                    {}
 #endif
 
-#define FLASH_CONFIG_SIZE               0x2000 /*  8k bytes */
+ICACHE_FLASH_ATTR void                      kr102_init_ports(void);
 
 
-ICACHE_FLASH_ATTR bool                  flashcfg_load(uint8 *data, uint32 offs, uint32 size);
-ICACHE_FLASH_ATTR bool                  flashcfg_save(uint8 *data);
-ICACHE_FLASH_ATTR bool                  flashcfg_reset(void);
-
-
-#endif /* _ESPGOODIES_FLASHCFG_H */
+#endif /* _EXTRA_KR102_H */

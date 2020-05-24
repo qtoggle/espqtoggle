@@ -39,9 +39,9 @@ ICACHE_FLASH_ATTR json_t                  * choice_to_json(char *choice, char ty
 ICACHE_FLASH_ATTR void                      free_choices(char **choices);
 ICACHE_FLASH_ATTR bool                      choices_equal(char **choices1, char **choices2);
 
-ICACHE_FLASH_ATTR bool                      validate_num(double value, double min, double max, bool integer,
+ICACHE_FLASH_ATTR int                       validate_num(double value, double min, double max, bool integer,
                                                          double step, char **choices);
-ICACHE_FLASH_ATTR bool                      validate_str(char *value, char **choices);
+ICACHE_FLASH_ATTR int                       validate_str(char *value, char **choices);
 ICACHE_FLASH_ATTR bool                      validate_id(char *id);
 ICACHE_FLASH_ATTR bool                      validate_ip_address(char *ip, uint8 *a);
 ICACHE_FLASH_ATTR bool                      validate_wifi_ssid(char *ssid);

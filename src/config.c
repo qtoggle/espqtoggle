@@ -273,7 +273,7 @@ void device_save(uint8 *data, uint32 *strings_offs) {
 
 void config_init(void) {
     uint8 *config_data = zalloc(FLASH_CONFIG_SIZE);
-    flashcfg_load(config_data);
+    flashcfg_load(config_data, 0, 0);
 
     /* If config data is full of 0xFF, that usually indicates erased flash. Fill it with 0s in that case, which is what
      * we use for default config. */
@@ -379,7 +379,7 @@ void config_save(void) {
     uint8 *config_data = zalloc(FLASH_CONFIG_SIZE);
     uint32 strings_offs = 1; /* Address 0 in strings pool represents an unset string, so it's left out */
 
-    flashcfg_load(config_data);
+    flashcfg_load(config_data, 0, 0);
     ports_save(config_data, &strings_offs);
     device_save(config_data, &strings_offs);
     flashcfg_save(config_data);

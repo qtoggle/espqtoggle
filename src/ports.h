@@ -20,6 +20,7 @@
 #define _PORTS_H
 
 
+#include <sys/cdefs.h>
 #include <os_type.h>
 
 #include "espgoodies/common.h"
@@ -29,77 +30,92 @@
 
 
 #ifdef _DEBUG_PORTS
-#define DEBUG_PORT(port, fmt, ...)      DEBUG("[%-14s] " fmt, (port)->id, ##__VA_ARGS__)
+#define DEBUG_PORT(port, fmt, ...)          DEBUG("[%-14s] " fmt, (port)->id, ##__VA_ARGS__)
 #else
-#define DEBUG_PORT(...)                 {}
+#define DEBUG_PORT(...)                     {}
 #endif
 
-#define PORT_MAX_ID_LEN                 64
-#define PORT_MAX_DISP_NAME_LEN          64
-#define PORT_MAX_UNIT_LEN               16
+#define PORT_MAX_ID_LEN                     64
+#define PORT_MAX_DISP_NAME_LEN              64
+#define PORT_MAX_UNIT_LEN                   16
 
-#define PORT_MAX_SAMP_INT               86400000    /* Milliseconds */
-#define PORT_DEF_SAMP_INT               0           /* Milliseconds */
+#define PORT_MAX_SAMP_INT                   86400000    /* Milliseconds */
+#define PORT_DEF_SAMP_INT                   0           /* Milliseconds */
 
-#define PORT_DEF_HEART_BEAT_INT         0           /* Milliseconds */
+#define PORT_DEF_HEART_BEAT_INT             0           /* Milliseconds */
 
-#define PORT_TYPE_BOOLEAN               'B'
-#define PORT_TYPE_NUMBER                'N'
+#define PORT_TYPE_BOOLEAN                   'B'
+#define PORT_TYPE_NUMBER                    'N'
 
-#define ATTR_TYPE_BOOLEAN               'B'
-#define ATTR_TYPE_NUMBER                'N'
-#define ATTR_TYPE_STRING                'S'
+#define ATTR_TYPE_BOOLEAN                   'B'
+#define ATTR_TYPE_NUMBER                    'N'
+#define ATTR_TYPE_STRING                    'S'
 
-#define PORT_PERSISTED_EXTRA_DATA_LEN   16
+#define ATTRDEF_GS_TYPE_CUSTOM              0
+#define ATTRDEF_GS_TYPE_EXTRA_DATA_1BU      1
+#define ATTRDEF_GS_TYPE_EXTRA_DATA_1BS      2
+#define ATTRDEF_GS_TYPE_EXTRA_DATA_2BU      3
+#define ATTRDEF_GS_TYPE_EXTRA_DATA_2BS      4
+#define ATTRDEF_GS_TYPE_EXTRA_DATA_4BS      5
+#define ATTRDEF_GS_TYPE_EXTRA_DATA_BOOL     6
+#define ATTRDEF_GS_TYPE_EXTRA_DATA_DOUBLE   7
+#define ATTRDEF_GS_TYPE_FLAG                8
 
-#define PORT_FLAG_ENABLED               0x00000001
-#define PORT_FLAG_OUTPUT                0x00000002
-#define PORT_FLAG_PULL_UP               0x00000004
-#define PORT_FLAG_PERSISTED             0x00000008
-#define PORT_FLAG_INTERNAL              0x00000010  /* 0x00000020: reserved */
-#define PORT_FLAG_PULL_DOWN             0x00000040
-#define PORT_FLAG_VIRTUAL_INTEGER       0x00002000
-#define PORT_FLAG_VIRTUAL_TYPE          0x00004000  /* 0x00008000: reserved */
-#define PORT_FLAG_VIRTUAL_ACTIVE        0x00010000
+#define ATTRDEF_CACHE_EXTRA_INFO_FIELD(e, f) (offsetof(e, f) + 1 /* +1 is a common offset */)
 
-#define PORT_SLOT_AUTO                  -1
-#define PORT_SLOT_EXTRA0                18
-#define PORT_SLOT_EXTRA1                19
-#define PORT_SLOT_EXTRA2                20
-#define PORT_SLOT_EXTRA3                21
-#define PORT_SLOT_EXTRA4                22
-#define PORT_SLOT_EXTRA5                23
-#define PORT_SLOT_EXTRA_MAX             PORT_SLOT_EXTRA5
+#define PORT_PERSISTED_EXTRA_DATA_LEN       16
 
-#define IS_ENABLED(port)                ((port)->flags & PORT_FLAG_ENABLED)
-#define IS_OUTPUT(port)                 ((port)->flags & PORT_FLAG_OUTPUT)
-#define IS_PULL_UP(port)                ((port)->flags & PORT_FLAG_PULL_UP)
-#define IS_PULL_DOWN(port)              ((port)->flags & PORT_FLAG_PULL_DOWN)
-#define IS_PERSISTED(port)              ((port)->flags & PORT_FLAG_PERSISTED)
-#define IS_INTERNAL(port)               ((port)->flags & PORT_FLAG_INTERNAL)
-#define IS_VIRTUAL(port)                ((port)->flags & PORT_FLAG_VIRTUAL_ACTIVE)
+#define PORT_FLAG_ENABLED                   0x00000001
+#define PORT_FLAG_OUTPUT                    0x00000002
+#define PORT_FLAG_PULL_UP                   0x00000004
+#define PORT_FLAG_PERSISTED                 0x00000008
+#define PORT_FLAG_INTERNAL                  0x00000010
+#define PORT_FLAG_SET                       0x00000020
+#define PORT_FLAG_PULL_DOWN                 0x00000040
 
-#define CONFIG_OFFS_PORT_ID             0x00    /*   4 bytes */
-#define CONFIG_OFFS_PORT_DISP_NAME      0x04    /*   4 bytes */
-#define CONFIG_OFFS_PORT_UNIT           0x08    /*   4 bytes */
-#define CONFIG_OFFS_PORT_MIN            0x0C    /*   8 bytes */
-#define CONFIG_OFFS_PORT_MAX            0x14    /*   8 bytes */
-#define CONFIG_OFFS_PORT_STEP           0x1C    /*   8 bytes */
-#define CONFIG_OFFS_PORT_CHOICES        0x24    /*   4 bytes */
+#define PORT_FLAG_VIRTUAL_INTEGER           0x00002000
+#define PORT_FLAG_VIRTUAL_TYPE              0x00004000  /* 0x00008000: reserved */
+#define PORT_FLAG_VIRTUAL_ACTIVE            0x00010000
+
+#define PORT_SLOT_AUTO                      -1
+#define PORT_SLOT_EXTRA0                    18
+#define PORT_SLOT_EXTRA1                    19
+#define PORT_SLOT_EXTRA2                    20
+#define PORT_SLOT_EXTRA3                    21
+#define PORT_SLOT_EXTRA4                    22
+#define PORT_SLOT_EXTRA5                    23
+#define PORT_SLOT_EXTRA_MAX                 PORT_SLOT_EXTRA5
+
+#define IS_ENABLED(port)                    ((port)->flags & PORT_FLAG_ENABLED)
+#define IS_OUTPUT(port)                     ((port)->flags & PORT_FLAG_OUTPUT)
+#define IS_PULL_UP(port)                    ((port)->flags & PORT_FLAG_PULL_UP)
+#define IS_PULL_DOWN(port)                  ((port)->flags & PORT_FLAG_PULL_DOWN)
+#define IS_PERSISTED(port)                  ((port)->flags & PORT_FLAG_PERSISTED)
+#define IS_INTERNAL(port)                   ((port)->flags & PORT_FLAG_INTERNAL)
+#define IS_SET(port)                        ((port)->flags & PORT_FLAG_SET)
+#define IS_VIRTUAL(port)                    ((port)->flags & PORT_FLAG_VIRTUAL_ACTIVE)
+
+#define CONFIG_OFFS_PORT_ID                 0x00    /*   4 bytes */
+#define CONFIG_OFFS_PORT_DISP_NAME          0x04    /*   4 bytes */
+#define CONFIG_OFFS_PORT_UNIT               0x08    /*   4 bytes */
+#define CONFIG_OFFS_PORT_MIN                0x0C    /*   8 bytes */
+#define CONFIG_OFFS_PORT_MAX                0x14    /*   8 bytes */
+#define CONFIG_OFFS_PORT_STEP               0x1C    /*   8 bytes */
+#define CONFIG_OFFS_PORT_CHOICES            0x24    /*   4 bytes */
                                                 /*  40 bytes reserved: 0x28 - 0x4F */
-#define CONFIG_OFFS_PORT_FLAGS          0x50    /*   4 bytes */
-#define CONFIG_OFFS_PORT_VALUE          0x54    /*   8 bytes */
-#define CONFIG_OFFS_PORT_FWIDTH         0x5C    /*   4 bytes */
-#define CONFIG_OFFS_PORT_EXPR           0x60    /*   4 bytes */
-#define CONFIG_OFFS_PORT_TRANS_W        0x64    /*   4 bytes */
-#define CONFIG_OFFS_PORT_TRANS_R        0x68    /*   4 bytes */
-#define CONFIG_OFFS_PORT_SAMP_INT       0x6C    /*   4 bytes */
-#define CONFIG_OFFS_PORT_DATA           0x70    /*  16 bytes for custom data */
+#define CONFIG_OFFS_PORT_FLAGS              0x50    /*   4 bytes */
+#define CONFIG_OFFS_PORT_VALUE              0x54    /*   8 bytes */
+#define CONFIG_OFFS_PORT_FWIDTH             0x5C    /*   4 bytes */
+#define CONFIG_OFFS_PORT_EXPR               0x60    /*   4 bytes */
+#define CONFIG_OFFS_PORT_TRANS_W            0x64    /*   4 bytes */
+#define CONFIG_OFFS_PORT_TRANS_R            0x68    /*   4 bytes */
+#define CONFIG_OFFS_PORT_SAMP_INT           0x6C    /*   4 bytes */
+#define CONFIG_OFFS_PORT_DATA               0x70    /*  16 bytes for custom data */
 
-#define CHANGE_REASON_NATIVE            'N'
-#define CHANGE_REASON_API               'A'
-#define CHANGE_REASON_SEQUENCE          'S'
-#define CHANGE_REASON_EXPRESSION        'E'
+#define CHANGE_REASON_NATIVE                'N'
+#define CHANGE_REASON_API                   'A'
+#define CHANGE_REASON_SEQUENCE              'S'
+#define CHANGE_REASON_EXPRESSION            'E'
 
 
 typedef struct attrdef {
@@ -112,12 +128,23 @@ typedef struct attrdef {
     bool            modifiable;
     double          min;
     double          max;
+    union {
+        double      def;
+        char      * def_str;
+    };
     bool            integer;
     double          step;
     bool            reconnect;
     char         ** choices;
+
     void          * get;
     void          * set;
+    uint8           gs_type;
+    union {
+        uint8       gs_extra_data_offs;
+        uint8       gs_flag_bit;
+    };
+    uint16          extra_info_cache_offs;
 
 } attrdef_t;
 
@@ -174,7 +201,7 @@ typedef struct port {
     
     /* Heart beat */
     int             heart_beat_interval;
-    long long       last_heart_beat_time;   /* In milliseconds, since boot */
+    uint64          last_heart_beat_time;   /* In milliseconds, since boot */
 
     /* Callbacks */
     double          (* read_value)(struct port *port);
@@ -187,14 +214,15 @@ typedef struct port {
 
 } port_t;
 
-typedef int    (* int_getter_t)(struct port *port, attrdef_t *attrdef);
-typedef void   (* int_setter_t)(struct port *port, attrdef_t *attrdef, int value);
 
-typedef char * (* str_getter_t)(struct port *port, attrdef_t *attrdef);
-typedef void   (* str_setter_t)(struct port *port, attrdef_t *attrdef, char *value);
+typedef int         (* int_getter_t)(struct port *port, attrdef_t *attrdef);
+typedef void        (* int_setter_t)(struct port *port, attrdef_t *attrdef, int value);
 
-typedef double (* float_getter_t)(struct port *port, attrdef_t *attrdef);
-typedef void   (* float_setter_t)(struct port *port, attrdef_t *attrdef, double value);
+typedef char      * (* str_getter_t)(struct port *port, attrdef_t *attrdef);
+typedef void        (* str_setter_t)(struct port *port, attrdef_t *attrdef, char *value);
+
+typedef double      (* float_getter_t)(struct port *port, attrdef_t *attrdef);
+typedef void        (* float_setter_t)(struct port *port, attrdef_t *attrdef, double value);
 
 
 extern port_t    ** all_ports;

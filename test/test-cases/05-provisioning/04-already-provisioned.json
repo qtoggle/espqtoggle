@@ -93,7 +93,7 @@
                             "sampling_interval": {
                                 "display_name": "Sampling Interval",
                                 "description": "Indicates how often to read the port value.",
-                                "unit": "milliseconds",
+                                "unit": "ms",
                                 "modifiable": true,
                                 "type": "number",
                                 "min": 0,
