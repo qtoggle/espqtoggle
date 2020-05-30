@@ -77,6 +77,8 @@ ICACHE_FLASH_ATTR int               user_rf_cal_sector_set(void);
 ICACHE_FLASH_ATTR static void       on_system_ready(void);
 ICACHE_FLASH_ATTR static void       on_system_reset(void);
 
+ICACHE_FLASH_ATTR static void       on_setup_mode(bool active);
+
 #ifdef _OTA
 ICACHE_FLASH_ATTR static void       on_ota_auto_timer(void *arg);
 ICACHE_FLASH_ATTR static void       on_ota_auto_perform(int code);
@@ -107,14 +109,10 @@ void on_system_ready(void) {
     event_push_device_update();
 
     if (!wifi_get_ssid()) {
-        /* If no SSID set (no Wi-Fi network configured), attempt to connect to default SSID and enter setup mode */
+        /* If no SSID set (no Wi-Fi network configured), enter setup mode */
         DEBUG_SYSTEM("no SSID configured");
         if (!system_setup_mode_active()) {
             system_setup_mode_toggle();
-        }
-        if (strlen(DEFAULT_SSID)) {
-            wifi_station_temporary_enable(DEFAULT_SSID, /* psk = */ NULL, /* bssid = */ NULL,
-                                          /* hostname = */ device_name, /* callback = */ NULL);
         }
     }
 }
@@ -125,6 +123,15 @@ void on_system_reset(void) {
     config_ensure_saved();
     sessions_respond_all();
     tcp_server_stop();
+}
+
+void on_setup_mode(bool active) {
+    if (active && strlen(DEFAULT_SSID)) {
+        DEBUG_SYSTEM("enabling connection to default SSID");
+        wifi_station_disable();
+        wifi_station_temporary_enable(DEFAULT_SSID, /* psk = */ NULL, /* bssid = */ NULL,
+                                      /* hostname = */ device_name, /* callback = */ NULL);
+    }
 }
 
 #ifdef _OTA
@@ -254,7 +261,8 @@ DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
     system_set_os_print(0);
 #endif /* _DEBUG */
 
-    system_set_reset_callback(on_system_reset);
+    system_reset_set_callback(on_system_reset);
+    system_setup_mode_set_callback(on_setup_mode);
 
     rtc_init();
 #ifdef _SLEEP

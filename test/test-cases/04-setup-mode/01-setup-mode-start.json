@@ -1,6 +1,9 @@
 {
-    "name": "setup-mode-start-ap",
+    "name": "setup-mode-start",
     "instructions": [
+        {
+            "name": "wifi-ap-stop"
+        },
         {
             "name": "device-write-gpio",
             "params": {
@@ -20,18 +23,6 @@
                 "gpio": 12,
                 "value": 1
             }
-        },
-        {
-            "name": "wifi-ap-stop"
-        },
-        {
-            "name": "wifi-station-connect",
-            "params": {
-                "ssid": "esp-{{DEVICE_SERIAL_NUMBER}}"
-            }
-        },
-        {
-            "name": "wifi-station-disconnect"
         }
     ]
 }
