@@ -606,9 +606,27 @@ json_t *device_to_json(void) {
     json_obj_append(json, "vendor", json_str_new(VENDOR));
 
     /* Passwords - never reveal them */
-    json_obj_append(json, "admin_password", json_str_new(""));
-    json_obj_append(json, "normal_password", json_str_new(""));
-    json_obj_append(json, "viewonly_password", json_str_new(""));
+
+    if (!strncmp(device_admin_password_hash, EMPTY_SHA256_HEX, SHA256_HEX_LEN)) {
+        json_obj_append(json, "admin_password", json_str_new(""));
+    }
+    else {
+        json_obj_append(json, "admin_password", json_str_new("set"));
+    }
+
+    if (!strncmp(device_normal_password_hash, EMPTY_SHA256_HEX, SHA256_HEX_LEN)) {
+        json_obj_append(json, "normal_password", json_str_new(""));
+    }
+    else {
+        json_obj_append(json, "normal_password", json_str_new("set"));
+    }
+
+    if (!strncmp(device_viewonly_password_hash, EMPTY_SHA256_HEX, SHA256_HEX_LEN)) {
+        json_obj_append(json, "viewonly_password", json_str_new(""));
+    }
+    else {
+        json_obj_append(json, "viewonly_password", json_str_new("set"));
+    }
 
     /* Flags */
     json_t *flags_json = json_list_new();
