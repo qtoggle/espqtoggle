@@ -1,0 +1,16 @@
+{
+    "name": "setup-mode-default-ssid",
+    "instructions": [
+        {
+            "name": "wifi-ap-start",
+            "params": {
+                "ssid": "qToggleSetup",
+                "wait_device_connect": true,
+                "timeout": 30
+            }
+        },
+        {
+            "name": "wifi-ap-stop"
+        }
+    ]
+}

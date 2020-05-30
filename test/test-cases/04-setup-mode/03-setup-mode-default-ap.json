@@ -1,0 +1,14 @@
+{
+    "name": "setup-mode-default-ap",
+    "instructions": [
+        {
+            "name": "wifi-station-connect",
+            "params": {
+                "ssid": "esp-{{DEVICE_SERIAL_NUMBER}}"
+            }
+        },
+        {
+            "name": "wifi-station-disconnect"
+        }
+    ]
+}

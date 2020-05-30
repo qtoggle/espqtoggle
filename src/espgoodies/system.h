@@ -35,6 +35,7 @@
 
 
 typedef void (*system_reset_callback_t)(void);
+typedef void (*system_setup_mode_callback_t)(bool active);
 
 
 extern int8                     system_setup_mode_gpio_no;
@@ -53,8 +54,9 @@ uint64                          system_uptime_us(void); /* Needs to be called at
 ICACHE_FLASH_ATTR int           system_get_flash_size(void);
 
 ICACHE_FLASH_ATTR void          system_reset(bool delayed);
-ICACHE_FLASH_ATTR void          system_set_reset_callback(system_reset_callback_t callback);
+ICACHE_FLASH_ATTR void          system_reset_set_callback(system_reset_callback_t callback);
 
+ICACHE_FLASH_ATTR void          system_setup_mode_set_callback(system_setup_mode_callback_t callback);
 ICACHE_FLASH_ATTR bool          system_setup_mode_active(void);
 ICACHE_FLASH_ATTR void          system_setup_mode_toggle(void);
 ICACHE_FLASH_ATTR void          system_setup_mode_update(void);

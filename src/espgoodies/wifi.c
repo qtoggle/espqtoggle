@@ -38,7 +38,7 @@
 
 #define CONNECTED_WATCHDOG_INTERVAL 10      /* Seconds */
 #define CONNECTED_WATCHDOG_COUNT    3       /* Disconnected times, in a row, that trigger a reset */
-#define TEMPORARY_CONNECT_INTERVAL  10000    /* How often to attempt to connect, in temporary station mode */
+#define TEMPORARY_CONNECT_INTERVAL  10000   /* How often to attempt to connect, in temporary station mode */
 
 
 static bool                         station_connected = FALSE;
@@ -64,6 +64,7 @@ static struct ip_info               cached_ip_info;
 static bool                         ap_enabled = FALSE;
 static bool                         station_enabled = FALSE;
 static bool                         temporary_station_enabled = FALSE;
+static bool                         temporary_connect_timer_armed = FALSE;
 
 
 ICACHE_FLASH_ATTR static void       ensure_station_config_read(void);
@@ -374,6 +375,10 @@ void wifi_station_disable(void) {
     station_enabled = FALSE;
     station_connect_callback = NULL;
 
+    if (!wifi_station_disconnect()) {
+        DEBUG_WIFI("wifi_station_disconnect() failed");
+    }
+
     if (!wifi_set_opmode_current(ap_enabled ? SOFTAP_MODE : NULL_MODE)) {
         DEBUG_WIFI("wifi_set_opmode_current() failed");
     }
@@ -388,7 +393,7 @@ void wifi_station_temporary_enable(char *ssid, char *psk, uint8 *bssid,
     }
 
     DEBUG_WIFI("enabling temporary station");
-    station_enabled = TRUE;
+    temporary_station_enabled = TRUE;
 
     if (!wifi_set_opmode_current(ap_enabled ? STATIONAP_MODE : STATION_MODE)) {
         DEBUG_WIFI("wifi_set_opmode_current() failed");
@@ -434,6 +439,7 @@ void wifi_station_temporary_enable(char *ssid, char *psk, uint8 *bssid,
 
     os_timer_setfn(&temporary_connect_timer, on_temporary_connect, NULL);
     os_timer_arm(&temporary_connect_timer, TEMPORARY_CONNECT_INTERVAL, /* repeat = */ TRUE);
+    temporary_connect_timer_armed = TRUE;
 
     station_connect_callback = callback;
 
@@ -463,6 +469,7 @@ void wifi_station_temporary_disable(void) {
     }
 
     os_timer_disarm(&temporary_connect_timer);
+    temporary_connect_timer_armed = FALSE;
 }
 
 bool wifi_station_is_connected(void) {
@@ -481,12 +488,12 @@ void wifi_ap_enable(char *ssid, char *psk, wifi_ap_client_callback_t callback) {
 
     ap_client_callback = callback;
 
-    if (!wifi_set_opmode_current(station_enabled ? STATIONAP_MODE : SOFTAP_MODE)) {
+    if (!wifi_set_opmode_current((station_enabled || temporary_station_enabled) ? STATIONAP_MODE : SOFTAP_MODE)) {
         DEBUG_WIFI("wifi_set_opmode_current() failed");
     }
 
     /* Disable station automatic reconnection */
-    if (station_enabled) {
+    if (station_enabled || temporary_station_enabled) {
         if (!wifi_station_set_reconnect_policy(FALSE)) {
             DEBUG_WIFI("wifi_station_set_reconnect_policy() failed");
         }
@@ -545,7 +552,7 @@ void wifi_ap_disable(void) {
     DEBUG_WIFI("disabling AP");
     ap_enabled = FALSE;
 
-    if (!wifi_set_opmode_current(station_enabled ? STATION_MODE : NULL_MODE)) {
+    if (!wifi_set_opmode_current((station_enabled || temporary_station_enabled) ? STATION_MODE : NULL_MODE)) {
         DEBUG_WIFI("wifi_set_opmode_current() failed");
     }
 
@@ -558,7 +565,7 @@ void wifi_ap_disable(void) {
 }
 
 bool wifi_scan(wifi_scan_callback_t callback) {
-    if (!station_enabled) {
+    if (!station_enabled && !temporary_station_enabled) {
         DEBUG_WIFI("cannot scan when station disabled");
         return FALSE;
     }
@@ -705,6 +712,21 @@ void on_wifi_event(System_Event_t *evt) {
                  station_connect_callback(FALSE);
              }
 
+             /* Reconnect to temporary station */
+             if (temporary_station_enabled) {
+
+                 /* Ensure reconnect timer is armed */
+                 if (!temporary_connect_timer_armed) {
+                     os_timer_arm(&temporary_connect_timer, TEMPORARY_CONNECT_INTERVAL, /* repeat = */ TRUE);
+                     temporary_connect_timer_armed = TRUE;
+                 }
+
+                 /* If auth expired, try to reconnect right away */
+                 if (evt->event_info.disconnected.reason == REASON_AUTH_EXPIRE) {
+                     on_temporary_connect(NULL);
+                 }
+             }
+
              break;
 
          case EVENT_STAMODE_GOT_IP:
@@ -718,6 +740,7 @@ void on_wifi_event(System_Event_t *evt) {
 
              /* In case temporary connection is enabled, stop attempting to connect as soon as connected */
              os_timer_disarm(&temporary_connect_timer);
+             temporary_connect_timer_armed = FALSE;
 
               break;
 
@@ -728,6 +751,7 @@ void on_wifi_event(System_Event_t *evt) {
               * connects. Continuously attempting to connect breaks the communication with the new AP client, probably
               * due to channel hopping during scanning. However, if we're already connected, don't disconnect. */
              os_timer_disarm(&temporary_connect_timer);
+             temporary_connect_timer_armed = FALSE;
 
              break;
 

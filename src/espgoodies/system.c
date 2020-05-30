@@ -53,6 +53,7 @@ static uint64                       uptime_us = 0;
 static os_timer_t                   reset_timer;
 static bool                         setup_mode = FALSE;
 static system_reset_callback_t      reset_callback = NULL;
+static system_setup_mode_callback_t setup_mode_callback;
 
 static int                          setup_mode_timer = 0;
 static int                          setup_mode_state = SETUP_MODE_IDLE;
@@ -140,8 +141,12 @@ void system_reset(bool delayed) {
     }
 }
 
-void system_set_reset_callback(system_reset_callback_t callback) {
+void system_reset_set_callback(system_reset_callback_t callback) {
     reset_callback = callback;
+}
+
+void system_setup_mode_set_callback(system_setup_mode_callback_t callback) {
+    setup_mode_callback = callback;
 }
 
 bool system_setup_mode_active(void) {
@@ -151,6 +156,10 @@ bool system_setup_mode_active(void) {
 void system_setup_mode_toggle(void) {
     if (setup_mode) {
         DEBUG_SYSTEM("exiting setup mode");
+
+        if (setup_mode_callback) {
+            setup_mode_callback(FALSE);
+        }
 
         system_reset(/* delayed = */ FALSE);
     }
@@ -163,6 +172,10 @@ void system_setup_mode_toggle(void) {
         snprintf(ssid, sizeof(ssid), DEFAULT_HOSTNAME, system_get_chip_id());
         wifi_ap_enable(ssid, /* psk = */ NULL, NULL);
         dnsserver_start_captive();
+
+        if (setup_mode_callback) {
+            setup_mode_callback(TRUE);
+        }
     }
 }
 
