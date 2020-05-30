@@ -378,14 +378,19 @@ void port_load(port_t *port, uint8 *data) {
     /* flags */
     uint32 flags = 0;
     memcpy(&flags, base_ptr + CONFIG_OFFS_PORT_FLAGS, 4);
-    port->flags |= flags; /* any initially set flag remains set */
+    port->flags |= flags; /* Flags that are set by initialization remain set */
+
+    /* All enabled ports are automatically considered as set */
+    if (IS_ENABLED(port)) {
+        port->flags |= PORT_FLAG_SET;
+    }
 
     DEBUG_PORT(port, "enabled = %s", IS_ENABLED(port) ? "true" : "false");
     DEBUG_PORT(port, "output = %s", IS_OUTPUT(port) ? "true" : "false");
     DEBUG_PORT(port, "pull_up = %s", IS_PULL_UP(port) ? "true" : "false");
     DEBUG_PORT(port, "persisted = %s", IS_PERSISTED(port) ? "true" : "false");
     DEBUG_PORT(port, "internal = %s", IS_INTERNAL(port) ? "true" : "false");
-    DEBUG_PORT(port, "setup = %s", IS_SET(port) ? "true" : "false");
+    DEBUG_PORT(port, "set = %s", IS_SET(port) ? "true" : "false");
     DEBUG_PORT(port, "virtual = %s", IS_VIRTUAL(port) ? "true" : "false");
 
     /* value */
@@ -482,11 +487,11 @@ void port_load(port_t *port, uint8 *data) {
         attrdef_t *a, **attrdefs = port->attrdefs;
         while ((a = *attrdefs++)) {
             if (!IS_SET(port)) {
-                DEBUG_PORT(port, "setting default attribute values");
+                DEBUG_PORT(port, "setting default value for attribute %s", a->name);
 
                 switch (a->type) {
                     case ATTR_TYPE_BOOLEAN: {
-                        bool value = (bool) a->def;
+                        bool value = a->def_bool;
                         ((int_setter_t) a->set)(port, a, value);
 
                         DEBUG_PORT(port, "%s set to %d", a->name, value);

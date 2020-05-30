@@ -130,6 +130,7 @@ typedef struct attrdef {
     double          max;
     union {
         double      def;
+        bool        def_bool;
         char      * def_str;
     };
     bool            integer;
