@@ -66,13 +66,13 @@
                             "enum": ["qtoggle/espqtoggle"]
                         },
                         "admin_password": {
-                            "enum": [""]
+                            "enum": ["set"]
                         },
                         "normal_password": {
-                            "enum": [""]
+                            "enum": ["set"]
                         },
                         "viewonly_password": {
-                            "enum": [""]
+                            "enum": ["set"]
                         },
                         "flags": {
                             "type": "array",

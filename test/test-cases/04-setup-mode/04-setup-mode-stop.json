@@ -1,5 +1,5 @@
 {
-    "name": "setup-mode-stop-ap",
+    "name": "setup-mode-stop",
     "instructions": [
         {
             "name": "device-write-gpio",
