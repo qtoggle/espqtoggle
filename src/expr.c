@@ -21,6 +21,7 @@
 #include <limits.h>
 #include <ctype.h>
 #include <mem.h>
+#include <math.h>
 
 #include "espgoodies/common.h"
 #include "espgoodies/system.h"
@@ -56,6 +57,7 @@ ICACHE_FLASH_ATTR static double     _sub_callback(expr_t *expr, int argc, double
 ICACHE_FLASH_ATTR static double     _mul_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _div_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _mod_callback(expr_t *expr, int argc, double *args);
+ICACHE_FLASH_ATTR static double     _pow_callback(expr_t *expr, int argc, double *args);
 
 ICACHE_FLASH_ATTR static double     _and_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _or_callback(expr_t *expr, int argc, double *args);
@@ -155,6 +157,31 @@ double _div_callback(expr_t *expr, int argc, double *args) {
 
 double _mod_callback(expr_t *expr, int argc, double *args) {
     return (int) args[0] % (int) args[1];
+}
+
+double _pow_callback(expr_t *expr, int argc, double *args) {
+    double base = args[0];
+    double exp = args[1];
+
+    /* Implement only common cases and round exponents. This can be done without the use of pow(), which saves about
+     * 4k of program flash. */
+
+    if (exp == 0) {
+        return 1;
+    }
+    if (exp == 1) {
+        return base;
+    }
+    if (exp == 0.5) {
+        return sqrt(base);
+    }
+
+    double result = 1;
+    while (exp-- > 0) {
+        result *= base;
+    }
+
+    return result;
 }
 
 double _and_callback(expr_t *expr, int argc, double *args) {
@@ -639,6 +666,7 @@ func_t _sub =      {.name = "SUB",      .argc = 2,  .callback = _sub_callback};
 func_t _mul =      {.name = "MUL",      .argc = -2, .callback = _mul_callback};
 func_t _div =      {.name = "DIV",      .argc = 2,  .callback = _div_callback};
 func_t _mod =      {.name = "MOD",      .argc = 2,  .callback = _mod_callback};
+func_t _pow =      {.name = "POW",      .argc = 2,  .callback = _pow_callback};
 
 func_t _and =      {.name = "AND",      .argc = -2, .callback = _and_callback};
 func_t _or =       {.name = "OR",       .argc = -2, .callback = _or_callback};
@@ -691,6 +719,7 @@ func_t *funcs[] = {
     &_mul,
     &_div,
     &_mod,
+    &_pow,
 
     &_and,
     &_or,
