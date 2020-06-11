@@ -47,7 +47,7 @@
 
 #define MAX_PARALLEL_HTTP_REQ       4
 #define HTTP_SERVER_REQUEST_TIMEOUT 4
-#define MIN_HTTP_FREE_MEM           8192  /* At least 8k of free heap to serve an HTTP request */
+#define MIN_HTTP_FREE_MEM           4096  /* At least 4k of free heap to serve an HTTP request */
 
 #define JSON_CONTENT_TYPE           "application/json; charset=utf-8"
 #define HTML_CONTENT_TYPE           "text/html; charset=utf-8"

@@ -41,13 +41,8 @@
 #ifdef HAS_HLW8012
 
 #define MIN_SAMP_INT                    1000    /* Milliseconds */
-#define DEF_SAMP_INT                    1000    /* Milliseconds */
+#define DEF_SAMP_INT                    5000    /* Milliseconds */
 #define MAX_SAMP_INT                    3600000 /* Milliseconds */
-
-/* Maximum pulse with, in microseconds. Longer pulse widths will result in a reset to 0. Higher values allow for a
- * better precision but reduce sampling rate. Values below 0.5s are not recommended since current and voltage output
- * won't stabilize. */
-#define PULSE_TIMEOUT                   2000000L
 
 #define CF_GPIO_CONFIG_OFFS             0x00 /* 1 byte */
 #define CF1_GPIO_CONFIG_OFFS            0x01 /* 1 byte */
@@ -68,14 +63,17 @@ typedef struct {
     double                              last_energy;
 
     uint64                              last_read_time; /* Milliseconds */
+    uint64                              last_cf1_switch_time; /* Microseconds*/
     uint64                              last_cf1_interrupt_time; /* Microseconds */
     uint64                              last_cf_interrupt_time; /* Microseconds */
-    uint64                              first_cf1_interrupt_time; /* Microseconds */
 
-    uint32                              power_pulse_width;
-    uint64                              power_pulse_count;
-    uint32                              current_pulse_width;
-    uint32                              voltage_pulse_width;
+    uint64                              power_pulse_width_sum;
+    uint32                              power_pulse_count;
+    uint64                              total_power_pulse_count;
+    uint64                              current_pulse_width_sum;
+    uint32                              current_pulse_count;
+    uint64                              voltage_pulse_width_sum;
+    uint32                              voltage_pulse_count;
 
     uint8                               mode;
 
@@ -125,11 +123,10 @@ ICACHE_FLASH_ATTR static void           attr_set_sel_gpio(port_t *port, attrdef_
 ICACHE_FLASH_ATTR static bool           attr_get_current_mode_sel(port_t *port, attrdef_t *attrdef);
 ICACHE_FLASH_ATTR static void           attr_set_current_mode_sel(port_t *port, attrdef_t *attrdef, bool value);
 
-ICACHE_FLASH_ATTR static bool           read_status_if_needed(port_t *port);
-ICACHE_FLASH_ATTR static bool           read_status(port_t *port);
+ICACHE_FLASH_ATTR static void           read_status_if_needed(port_t *port);
+ICACHE_FLASH_ATTR static void           read_status(port_t *port);
 
 static void                             gpio_interrupt_handler(void *arg);
-ICACHE_FLASH_ATTR  static void          check_cf1_toggle_mode(port_t *port);
 
 
 static attrdef_t cf_gpio_attrdef = {
@@ -353,10 +350,7 @@ void configure(port_t *port) {
 double read_voltage(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
-    if (!read_status_if_needed(port)) {
-        return UNDEFINED;
-    }
-
+    read_status_if_needed(port);
     return extra_info->last_voltage;
 }
 #endif
@@ -365,10 +359,7 @@ double read_voltage(port_t *port) {
 double read_current(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
-    if (!read_status_if_needed(port)) {
-        return UNDEFINED;
-    }
-
+    read_status_if_needed(port);
     return extra_info->last_current;
 }
 #endif
@@ -377,10 +368,7 @@ double read_current(port_t *port) {
 double read_act_pow(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
-    if (!read_status_if_needed(port)) {
-        return UNDEFINED;
-    }
-
+    read_status_if_needed(port);
     return extra_info->last_active_power;
 }
 #endif
@@ -389,10 +377,7 @@ double read_act_pow(port_t *port) {
 double read_energy(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
-    if (!read_status_if_needed(port)) {
-        return UNDEFINED;
-    }
-
+    read_status_if_needed(port);
     return extra_info->last_energy;
 }
 #endif
@@ -472,60 +457,64 @@ bool attr_get_current_mode_sel(port_t *port, attrdef_t *attrdef) {
     return get_current_mode_sel(port);
 }
 
-bool read_status_if_needed(port_t *port) {
+void read_status_if_needed(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
     uint64 now_ms = system_uptime_ms();
     uint64 delta = now_ms - extra_info->last_read_time;
-    if (delta >= port->sampling_interval - 10) { /* Allow 10 milliseconds of tolerance */
+    if (delta >= port->sampling_interval - 100) { /* Allow 100 milliseconds of tolerance */
         DEBUG_HLW8012("status needs new reading");
-        if (get_cf1_gpio(port) >= 0) {
-            check_cf1_toggle_mode(port);
-        }
-
         /* Update last read time */
         extra_info->last_read_time = now_ms;
-
-        if (read_status(port)) {
-            return TRUE;
-        }
-
-        DEBUG_HLW8012("status reading failed");
-
-        /* In case of error, cached status can be used within up to twice the sampling interval. */
-        if (delta > port->sampling_interval * 2) {
-            return FALSE;
-        }
+        read_status(port);
     }
-
-    return TRUE;
 }
 
-bool read_status(port_t *port) {
+void read_status(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
-    extra_info->last_active_power = (extra_info->power_pulse_width > 0) ? 1e6F / extra_info->power_pulse_width : 0;
+    /* Active power */
+    uint64 power_pulse_width =
+            extra_info->power_pulse_count > 0 ?
+            extra_info->power_pulse_width_sum / extra_info->power_pulse_count :
+            0;
+    extra_info->last_active_power = power_pulse_width > 0 ? 1e6F / power_pulse_width : 0;
     DEBUG_HLW8012("read active power = %s", dtostr(extra_info->last_active_power, -1));
 
-    extra_info->last_energy = extra_info->power_pulse_count / 1000.0;
+    extra_info->last_energy = extra_info->total_power_pulse_count / 1000.0;
     DEBUG_HLW8012("read energy = %s", dtostr(extra_info->last_energy, -1));
 
-    extra_info->last_voltage = (extra_info->voltage_pulse_width > 0) ? 1e6F / extra_info->voltage_pulse_width : 0;
+    extra_info->power_pulse_width_sum = 0;
+    extra_info->power_pulse_count = 0;
+
+    /* Voltage */
+    uint64 voltage_pulse_width =
+            extra_info->voltage_pulse_count > 0 ?
+            extra_info->voltage_pulse_width_sum / extra_info->voltage_pulse_count :
+            0;
+    extra_info->last_voltage = voltage_pulse_width > 0 ? 1e6F / voltage_pulse_width : 0;
     DEBUG_HLW8012("read voltage = %s", dtostr(extra_info->last_voltage, -1));
 
+    extra_info->voltage_pulse_width_sum = 0;
+    extra_info->voltage_pulse_count = 0;
+
+    /* Current */
     if (extra_info->last_active_power == 0) {
         /* Active power measurement being a bit more sensitive than current, make sure we don't report current when
          * power is zero */
         extra_info->last_current = 0;
     }
     else {
-        extra_info->last_current = (extra_info->current_pulse_width > 0) ? 1e3F / extra_info->current_pulse_width : 0;
+        uint64 current_pulse_width =
+                extra_info->current_pulse_count > 0 ?
+                extra_info->current_pulse_width_sum / extra_info->current_pulse_count :
+                0;
+        extra_info->last_current = current_pulse_width > 0 ? 1e6F / current_pulse_width : 0;
     }
     DEBUG_HLW8012("read current = %s", dtostr(extra_info->last_current, -1));
 
-    extra_info->power_pulse_width = 0;
-
-    return TRUE;
+    extra_info->current_pulse_width_sum = 0;
+    extra_info->current_pulse_count = 0;
 }
 
 void gpio_interrupt_handler(void *arg) {
@@ -538,82 +527,40 @@ void gpio_interrupt_handler(void *arg) {
     uint32 gpio_status = GPIO_REG_READ(GPIO_STATUS_ADDRESS);
 
     if ((cf_gpio >= 0) && (gpio_status & BIT(cf_gpio))) {
-        extra_info->power_pulse_width = now_us - extra_info->last_cf_interrupt_time;
+        extra_info->power_pulse_width_sum += now_us - extra_info->last_cf_interrupt_time;
         extra_info->power_pulse_count++;
+        extra_info->total_power_pulse_count++;
         extra_info->last_cf_interrupt_time = now_us;
-
-        /* Disable interrupt */
-        gpio_pin_intr_state_set(GPIO_ID_PIN(cf_gpio), GPIO_PIN_INTR_DISABLE);
-
-        /* Clear interrupt status */
-        GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, gpio_status & BIT(cf_gpio));
-
-        /* Enable interrupt */
-        gpio_pin_intr_state_set(GPIO_ID_PIN(cf_gpio), GPIO_PIN_INTR_NEGEDGE);
     }
 
     if ((cf1_gpio >= 0) && (gpio_status & BIT(cf1_gpio))) {
-        if ((now_us - extra_info->first_cf1_interrupt_time) > PULSE_TIMEOUT) {
-            uint32 pulse_width;
+        uint32 pulse_width = now_us - extra_info->last_cf1_interrupt_time;
 
-            if (extra_info->last_cf1_interrupt_time == extra_info->first_cf1_interrupt_time) {
-                pulse_width = 0;
-            }
-            else {
-                pulse_width = now_us - extra_info->last_cf1_interrupt_time;
-            }
-
-            /* Consider current mode and switch it */
-            if (extra_info->mode == get_current_mode_sel(port)) {
-                extra_info->current_pulse_width = pulse_width;
-            }
-            else { /* Assuming voltage mode */
-                extra_info->voltage_pulse_width = pulse_width;
-            }
-
-            extra_info->mode = 1 - extra_info->mode;
-
-            if (get_sel_gpio(port) >= 0) {
-                gpio_write_value(get_sel_gpio(port), extra_info->mode);
-            }
-
-            extra_info->first_cf1_interrupt_time = now_us;
+        if (extra_info->mode == get_current_mode_sel(port)) {
+            extra_info->current_pulse_width_sum += pulse_width;
+            extra_info->current_pulse_count++;
+        }
+        else { /* Assuming voltage mode */
+            extra_info->voltage_pulse_width_sum += pulse_width;
+            extra_info->voltage_pulse_count++;
         }
 
         extra_info->last_cf1_interrupt_time = now_us;
 
-        /* Disable interrupt */
-        gpio_pin_intr_state_set(GPIO_ID_PIN(cf1_gpio), GPIO_PIN_INTR_DISABLE);
+        /* Switch from voltage to current mode, if enough time has passed in currently selected mode */
+        if (get_cf1_gpio(port) >= 0) {
+            if ((now_us - extra_info->last_cf1_switch_time) > 5e5) {
+                extra_info->last_cf1_switch_time = now_us;
+                extra_info->mode = 1 - extra_info->mode;
 
-        /* Clear interrupt status */
-        GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, gpio_status & BIT(cf1_gpio));
-
-        /* Enable interrupt */
-        gpio_pin_intr_state_set(GPIO_ID_PIN(cf1_gpio), GPIO_PIN_INTR_NEGEDGE);
-    }
-}
-
-void check_cf1_toggle_mode(port_t *port) {
-    extra_info_t *extra_info = port->extra_info;
-    uint64 now_us = system_uptime_us();
-
-    if ((now_us - extra_info->last_cf1_interrupt_time) <= PULSE_TIMEOUT) {
-        return;
+                if (get_sel_gpio(port) >= 0) {
+                    gpio_write_value(get_sel_gpio(port), extra_info->mode);
+                }
+            }
+        }
     }
 
-    if (extra_info->mode == get_current_mode_sel(port)) {
-        extra_info->current_pulse_width = 0;
-    }
-    else {
-        extra_info->voltage_pulse_width = 0;
-    }
-
-    extra_info->mode = 1 - extra_info->mode;
-    extra_info->last_cf1_interrupt_time = extra_info->first_cf1_interrupt_time = now_us;
-
-    if (get_sel_gpio(port) >= 0) {
-        gpio_write_value(get_sel_gpio(port), extra_info->mode);
-    }
+    GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, gpio_status);
 }
 
 
