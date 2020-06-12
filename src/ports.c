@@ -600,7 +600,7 @@ void port_save(port_t *port, uint8 *data, uint32 *strings_offs) {
         }
     }
 
-    /* flags */
+    /* Flags */
     memcpy(base_ptr + CONFIG_OFFS_PORT_FLAGS, &port->flags, 4);
 
     /* value */
@@ -621,7 +621,7 @@ void port_save(port_t *port, uint8 *data, uint32 *strings_offs) {
     /* Custom data */
     memcpy(base_ptr + CONFIG_OFFS_PORT_DATA, port->extra_data, PORT_PERSISTED_EXTRA_DATA_LEN);
 
-    /* Value expression */
+    /* value expression */
     if (!string_pool_write(strings_ptr, strings_offs, port->sexpr, base_ptr + CONFIG_OFFS_PORT_EXPR)) {
         DEBUG_PORT(port, "no more string space to save expression");
     }

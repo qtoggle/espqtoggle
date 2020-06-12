@@ -181,7 +181,6 @@ bool virtual_port_register(port_t *port) {
 
     port->flags |= PORT_FLAG_VIRTUAL_ACTIVE;
     port->flags |= PORT_FLAG_OUTPUT;
-    port->flags |= PORT_FLAG_ENABLED;
     port->def_sampling_interval = SAMP_INT;
 
     port->read_value = read_value;

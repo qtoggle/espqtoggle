@@ -1550,6 +1550,9 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
         return API_ERROR(500, "port registration failed");
     }
 
+    /* Newly added ports must be automatically enabled */
+    new_port->flags |= PORT_FLAG_ENABLED;
+
     /* Rebuild deps mask for all ports, as the new port might be among their deps */
     port_t *p, **ports = all_ports;
     while ((p = *ports++)) {
