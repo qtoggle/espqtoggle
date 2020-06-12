@@ -71,11 +71,29 @@
 #define PORT_FLAG_PERSISTED                 0x00000008
 #define PORT_FLAG_INTERNAL                  0x00000010
 #define PORT_FLAG_SET                       0x00000020
-#define PORT_FLAG_PULL_DOWN                 0x00000040
+#define PORT_FLAG_PULL_DOWN                 0x00000040  /* 0x00000080 - 0x00000800: reserved */
 
-#define PORT_FLAG_VIRTUAL_INTEGER           0x00002000
+#define PORT_FLAG_VIRTUAL_INTEGER           0x00002000  /* 0x00001000: reserved */
 #define PORT_FLAG_VIRTUAL_TYPE              0x00004000  /* 0x00008000: reserved */
 #define PORT_FLAG_VIRTUAL_ACTIVE            0x00010000
+
+#define PORT_FLAG_CUSTOM0                   0x01000000
+#define PORT_FLAG_CUSTOM1                   0x02000000
+#define PORT_FLAG_CUSTOM2                   0x04000000
+#define PORT_FLAG_CUSTOM3                   0x08000000
+#define PORT_FLAG_CUSTOM4                   0x10000000
+#define PORT_FLAG_CUSTOM5                   0x20000000
+#define PORT_FLAG_CUSTOM6                   0x40000000
+#define PORT_FLAG_CUSTOM7                   0x80000000
+
+#define PORT_FLAG_BIT_CUSTOM0               24
+#define PORT_FLAG_BIT_CUSTOM1               25
+#define PORT_FLAG_BIT_CUSTOM2               26
+#define PORT_FLAG_BIT_CUSTOM3               27
+#define PORT_FLAG_BIT_CUSTOM4               28
+#define PORT_FLAG_BIT_CUSTOM5               29
+#define PORT_FLAG_BIT_CUSTOM6               30
+#define PORT_FLAG_BIT_CUSTOM7               31
 
 #define PORT_SLOT_AUTO                      -1
 #define PORT_SLOT_EXTRA0                    18

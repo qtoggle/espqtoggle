@@ -48,7 +48,8 @@
 #define CF1_GPIO_CONFIG_OFFS            0x01 /* 1 byte */
 #define SEL_GPIO_CONFIG_OFFS            0x02 /* 1 byte */
 
-#define FLAG_CURRENT_MODE_SEL           0x01000000
+#define FLAG_CURRENT_MODE_SEL           PORT_FLAG_CUSTOM0
+#define FLAG_BIT_CURRENT_MODE_SEL       PORT_FLAG_BIT_CUSTOM0
 
 
 typedef struct {
@@ -57,15 +58,9 @@ typedef struct {
     int8                                cf1_gpio;
     int8                                sel_gpio;
 
-    double                              last_voltage;
-    double                              last_current;
-    double                              last_active_power;
-    double                              last_energy;
-
-    uint64                              last_read_time; /* Milliseconds */
-    uint64                              last_cf1_switch_time; /* Microseconds*/
-    uint64                              last_cf1_interrupt_time; /* Microseconds */
-    uint64                              last_cf_interrupt_time; /* Microseconds */
+    uint64                              last_cf1_switch_time;       /* Microseconds */
+    uint64                              last_cf1_interrupt_time;    /* Microseconds */
+    uint64                              last_cf_interrupt_time;     /* Microseconds */
 
     uint64                              power_pulse_width_sum;
     uint32                              power_pulse_count;
@@ -79,15 +74,6 @@ typedef struct {
 
 } extra_info_t;
 
-
-#define get_cf_gpio(p)                  (((extra_info_t *) (p)->extra_info)->cf_gpio)
-#define set_cf_gpio(p, v)               {((extra_info_t *) (p)->extra_info)->cf_gpio = v;}
-
-#define get_cf1_gpio(p)                 (((extra_info_t *) (p)->extra_info)->cf1_gpio)
-#define set_cf1_gpio(p, v)              {((extra_info_t *) (p)->extra_info)->cf1_gpio = v;}
-
-#define get_sel_gpio(p)                 (((extra_info_t *) (p)->extra_info)->sel_gpio)
-#define set_sel_gpio(p, v)              {((extra_info_t *) (p)->extra_info)->sel_gpio = v;}
 
 #define get_current_mode_sel(p)         (!!((p)->flags & FLAG_CURRENT_MODE_SEL))
 #define set_current_mode_sel(p, v)      {if (v) (p)->flags |= FLAG_CURRENT_MODE_SEL; \
@@ -111,21 +97,6 @@ ICACHE_FLASH_ATTR static double         read_act_pow(port_t *port);
 ICACHE_FLASH_ATTR static double         read_energy(port_t *port);
 #endif
 
-ICACHE_FLASH_ATTR static int8           attr_get_cf_gpio(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void           attr_set_cf_gpio(port_t *port, attrdef_t *attrdef, int index);
-
-ICACHE_FLASH_ATTR static int8           attr_get_cf1_gpio(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void           attr_set_cf1_gpio(port_t *port, attrdef_t *attrdef, int index);
-
-ICACHE_FLASH_ATTR static int8           attr_get_sel_gpio(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void           attr_set_sel_gpio(port_t *port, attrdef_t *attrdef, int index);
-
-ICACHE_FLASH_ATTR static bool           attr_get_current_mode_sel(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void           attr_set_current_mode_sel(port_t *port, attrdef_t *attrdef, bool value);
-
-ICACHE_FLASH_ATTR static void           read_status_if_needed(port_t *port);
-ICACHE_FLASH_ATTR static void           read_status(port_t *port);
-
 static void                             gpio_interrupt_handler(void *arg);
 
 
@@ -137,8 +108,10 @@ static attrdef_t cf_gpio_attrdef = {
     .type = ATTR_TYPE_NUMBER,
     .choices = all_gpio_none_choices,
     .modifiable = TRUE,
-    .set = attr_set_cf_gpio,
-    .get = attr_get_cf_gpio
+    .def = -1,
+    .gs_type = ATTRDEF_GS_TYPE_EXTRA_DATA_1BS,
+    .gs_extra_data_offs = CF_GPIO_CONFIG_OFFS,
+    .extra_info_cache_offs = ATTRDEF_CACHE_EXTRA_INFO_FIELD(extra_info_t, cf_gpio)
 
 };
 
@@ -150,8 +123,10 @@ static attrdef_t cf1_gpio_attrdef = {
     .type = ATTR_TYPE_NUMBER,
     .choices = all_gpio_none_choices,
     .modifiable = TRUE,
-    .set = attr_set_cf1_gpio,
-    .get = attr_get_cf1_gpio
+    .def = -1,
+    .gs_type = ATTRDEF_GS_TYPE_EXTRA_DATA_1BS,
+    .gs_extra_data_offs = CF1_GPIO_CONFIG_OFFS,
+    .extra_info_cache_offs = ATTRDEF_CACHE_EXTRA_INFO_FIELD(extra_info_t, cf1_gpio)
 
 };
 
@@ -163,8 +138,10 @@ static attrdef_t sel_gpio_attrdef = {
     .type = ATTR_TYPE_NUMBER,
     .choices = all_gpio_none_choices,
     .modifiable = TRUE,
-    .set = attr_set_sel_gpio,
-    .get = attr_get_sel_gpio
+    .def = -1,
+    .gs_type = ATTRDEF_GS_TYPE_EXTRA_DATA_1BS,
+    .gs_extra_data_offs = SEL_GPIO_CONFIG_OFFS,
+    .extra_info_cache_offs = ATTRDEF_CACHE_EXTRA_INFO_FIELD(extra_info_t, sel_gpio)
 
 };
 
@@ -176,8 +153,8 @@ static attrdef_t current_mode_sel_attrdef = {
     .type = ATTR_TYPE_BOOLEAN,
     .modifiable = TRUE,
     .integer = TRUE,
-    .set = attr_set_current_mode_sel,
-    .get = attr_get_current_mode_sel
+    .gs_type = ATTRDEF_GS_TYPE_FLAG,
+    .gs_flag_bit = FLAG_BIT_CURRENT_MODE_SEL
 
 };
 
@@ -310,7 +287,7 @@ void configure(port_t *port) {
     ETS_GPIO_INTR_DISABLE();
     ETS_GPIO_INTR_ATTACH(gpio_interrupt_handler, port);
 
-    int8 cf_gpio = get_cf_gpio(port);
+    int8 cf_gpio = extra_info->cf_gpio;
     if (cf_gpio >= 0) {
         gpio_configure_input(cf_gpio, /* pull = */ TRUE);
         gpio_register_set(GPIO_PIN_ADDR(cf_gpio),
@@ -321,7 +298,7 @@ void configure(port_t *port) {
         gpio_pin_intr_state_set(cf_gpio, GPIO_PIN_INTR_NEGEDGE);
     }
 
-    int8 cf1_gpio = get_cf1_gpio(port);
+    int8 cf1_gpio = extra_info->cf1_gpio;
     if (cf1_gpio >= 0) {
         gpio_configure_input(cf1_gpio, /* pull = */ TRUE);
         gpio_register_set(GPIO_PIN_ADDR(cf1_gpio),
@@ -334,14 +311,10 @@ void configure(port_t *port) {
 
     extra_info->mode = get_current_mode_sel(port);
 
-    if (get_sel_gpio(port) >= 0) {
-        gpio_configure_output(get_sel_gpio(port), /* initial = */ extra_info->mode);
+    int8 sel_gpio = extra_info->sel_gpio;
+    if (sel_gpio >= 0) {
+        gpio_configure_output(sel_gpio, /* initial = */ extra_info->mode);
     }
-
-    extra_info->last_voltage = UNDEFINED;
-    extra_info->last_current = UNDEFINED;
-    extra_info->last_active_power = UNDEFINED;
-    extra_info->last_energy = UNDEFINED;
 
     ETS_GPIO_INTR_ENABLE();
 }
@@ -350,8 +323,17 @@ void configure(port_t *port) {
 double read_voltage(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
-    read_status_if_needed(port);
-    return extra_info->last_voltage;
+    double voltage = 0;
+    if (extra_info->voltage_pulse_count && extra_info->voltage_pulse_width_sum) {
+        voltage = 1e6F * extra_info->voltage_pulse_count / extra_info->voltage_pulse_width_sum;
+    }
+
+    DEBUG_HLW8012("read voltage = %s", dtostr(voltage, -1));
+
+    extra_info->voltage_pulse_width_sum = 0;
+    extra_info->voltage_pulse_count = 0;
+
+    return voltage;
 }
 #endif
 
@@ -359,8 +341,17 @@ double read_voltage(port_t *port) {
 double read_current(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
-    read_status_if_needed(port);
-    return extra_info->last_current;
+    double current = 0;
+    if (extra_info->current_pulse_count && extra_info->current_pulse_width_sum) {
+        current = 1e6F * extra_info->current_pulse_count / extra_info->current_pulse_width_sum;
+    }
+
+    DEBUG_HLW8012("read current = %s", dtostr(current, -1));
+
+    extra_info->current_pulse_width_sum = 0;
+    extra_info->current_pulse_count = 0;
+
+    return current;
 }
 #endif
 
@@ -368,8 +359,17 @@ double read_current(port_t *port) {
 double read_act_pow(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
-    read_status_if_needed(port);
-    return extra_info->last_active_power;
+    double power = 0;
+    if (extra_info->power_pulse_count && extra_info->power_pulse_width_sum) {
+        power = 1e6F * extra_info->power_pulse_count / extra_info->power_pulse_width_sum;
+    }
+
+    DEBUG_HLW8012("read power = %s", dtostr(power, -1));
+
+    extra_info->power_pulse_width_sum = 0;
+    extra_info->power_pulse_count = 0;
+
+    return power;
 }
 #endif
 
@@ -377,153 +377,22 @@ double read_act_pow(port_t *port) {
 double read_energy(port_t *port) {
     extra_info_t *extra_info = port->extra_info;
 
-    read_status_if_needed(port);
-    return extra_info->last_energy;
+    double energy = extra_info->total_power_pulse_count / 1000.0;
+    DEBUG_HLW8012("read energy = %s", dtostr(energy, -1));
+
+    return energy;
 }
 #endif
 
-
-int8 attr_get_cf_gpio(port_t *port, attrdef_t *attrdef) {
-    int8 value;
-
-    /* Read from persisted data */
-    memcpy(&value, port->extra_data + CF_GPIO_CONFIG_OFFS, 1);
-
-    /* Update cached value */
-    set_cf_gpio(port, get_choice_value_num(attrdef->choices[value]));
-
-    return value;
-}
-
-void attr_set_cf_gpio(port_t *port, attrdef_t *attrdef, int index) {
-    int8 value = index;
-
-    /* Update cached value */
-    set_cf_gpio(port, get_choice_value_num(attrdef->choices[value]));
-
-    /* Write to persisted data */
-    memcpy(port->extra_data + CF_GPIO_CONFIG_OFFS, &value, 1);
-}
-
-int8 attr_get_cf1_gpio(port_t *port, attrdef_t *attrdef) {
-    int8 value;
-
-    /* Read from persisted data */
-    memcpy(&value, port->extra_data + CF1_GPIO_CONFIG_OFFS, 1);
-
-    /* Update cached value */
-    set_cf1_gpio(port, get_choice_value_num(attrdef->choices[value]));
-
-    return value;
-}
-
-void attr_set_cf1_gpio(port_t *port, attrdef_t *attrdef, int index) {
-    int8 value = index;
-
-    /* Update cached value */
-    set_cf1_gpio(port, get_choice_value_num(attrdef->choices[value]));
-
-    /* Write to persisted data */
-    memcpy(port->extra_data + CF1_GPIO_CONFIG_OFFS, &value, 1);
-}
-
-int8 attr_get_sel_gpio(port_t *port, attrdef_t *attrdef) {
-    int8 value;
-
-    /* Read from persisted data */
-    memcpy(&value, port->extra_data + SEL_GPIO_CONFIG_OFFS, 1);
-
-    /* Update cached value */
-    set_sel_gpio(port, get_choice_value_num(attrdef->choices[value]));
-
-    return value;
-}
-
-void attr_set_sel_gpio(port_t *port, attrdef_t *attrdef, int index) {
-    int8 value = index;
-
-    /* Update cached value */
-    set_sel_gpio(port, get_choice_value_num(attrdef->choices[value]));
-
-    /* Write to persisted data */
-    memcpy(port->extra_data + SEL_GPIO_CONFIG_OFFS, &value, 1);
-}
-
-void attr_set_current_mode_sel(port_t *port, attrdef_t *attrdef, bool value) {
-    set_current_mode_sel(port, value);
-}
-
-bool attr_get_current_mode_sel(port_t *port, attrdef_t *attrdef) {
-    return get_current_mode_sel(port);
-}
-
-void read_status_if_needed(port_t *port) {
-    extra_info_t *extra_info = port->extra_info;
-
-    uint64 now_ms = system_uptime_ms();
-    uint64 delta = now_ms - extra_info->last_read_time;
-    if (delta >= port->sampling_interval - 100) { /* Allow 100 milliseconds of tolerance */
-        DEBUG_HLW8012("status needs new reading");
-        /* Update last read time */
-        extra_info->last_read_time = now_ms;
-        read_status(port);
-    }
-}
-
-void read_status(port_t *port) {
-    extra_info_t *extra_info = port->extra_info;
-
-    /* Active power */
-    uint64 power_pulse_width =
-            extra_info->power_pulse_count > 0 ?
-            extra_info->power_pulse_width_sum / extra_info->power_pulse_count :
-            0;
-    extra_info->last_active_power = power_pulse_width > 0 ? 1e6F / power_pulse_width : 0;
-    DEBUG_HLW8012("read active power = %s", dtostr(extra_info->last_active_power, -1));
-
-    extra_info->last_energy = extra_info->total_power_pulse_count / 1000.0;
-    DEBUG_HLW8012("read energy = %s", dtostr(extra_info->last_energy, -1));
-
-    extra_info->power_pulse_width_sum = 0;
-    extra_info->power_pulse_count = 0;
-
-    /* Voltage */
-    uint64 voltage_pulse_width =
-            extra_info->voltage_pulse_count > 0 ?
-            extra_info->voltage_pulse_width_sum / extra_info->voltage_pulse_count :
-            0;
-    extra_info->last_voltage = voltage_pulse_width > 0 ? 1e6F / voltage_pulse_width : 0;
-    DEBUG_HLW8012("read voltage = %s", dtostr(extra_info->last_voltage, -1));
-
-    extra_info->voltage_pulse_width_sum = 0;
-    extra_info->voltage_pulse_count = 0;
-
-    /* Current */
-    if (extra_info->last_active_power == 0) {
-        /* Active power measurement being a bit more sensitive than current, make sure we don't report current when
-         * power is zero */
-        extra_info->last_current = 0;
-    }
-    else {
-        uint64 current_pulse_width =
-                extra_info->current_pulse_count > 0 ?
-                extra_info->current_pulse_width_sum / extra_info->current_pulse_count :
-                0;
-        extra_info->last_current = current_pulse_width > 0 ? 1e6F / current_pulse_width : 0;
-    }
-    DEBUG_HLW8012("read current = %s", dtostr(extra_info->last_current, -1));
-
-    extra_info->current_pulse_width_sum = 0;
-    extra_info->current_pulse_count = 0;
-}
 
 void gpio_interrupt_handler(void *arg) {
     port_t *port = arg;
     extra_info_t *extra_info = port->extra_info;
 
     uint64 now_us = system_uptime_us();
-    int8 cf_gpio = get_cf_gpio(port);
-    int8 cf1_gpio = get_cf1_gpio(port);
+    int8 cf_gpio = extra_info->cf_gpio;
+    int8 cf1_gpio = extra_info->cf1_gpio;
+    int8 sel_gpio = extra_info->sel_gpio;
     uint32 gpio_status = GPIO_REG_READ(GPIO_STATUS_ADDRESS);
 
     if ((cf_gpio >= 0) && (gpio_status & BIT(cf_gpio))) {
@@ -548,13 +417,13 @@ void gpio_interrupt_handler(void *arg) {
         extra_info->last_cf1_interrupt_time = now_us;
 
         /* Switch from voltage to current mode, if enough time has passed in currently selected mode */
-        if (get_cf1_gpio(port) >= 0) {
+        if (cf1_gpio >= 0) {
             if ((now_us - extra_info->last_cf1_switch_time) > 5e5) {
                 extra_info->last_cf1_switch_time = now_us;
                 extra_info->mode = 1 - extra_info->mode;
 
-                if (get_sel_gpio(port) >= 0) {
-                    gpio_write_value(get_sel_gpio(port), extra_info->mode);
+                if (sel_gpio >= 0) {
+                    gpio_write_value(sel_gpio, extra_info->mode);
                 }
             }
         }
