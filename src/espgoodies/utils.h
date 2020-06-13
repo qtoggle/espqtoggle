@@ -52,6 +52,7 @@ ICACHE_FLASH_ATTR int           realloc_chunks(char **p, int current_size, int r
 ICACHE_FLASH_ATTR double        strtod(const char *s, char **endptr);
 ICACHE_FLASH_ATTR char        * dtostr(double d, int8 decimals);
 ICACHE_FLASH_ATTR double        decent_round(double d);
+ICACHE_FLASH_ATTR double        round_to(double d, uint8 decimals);
 ICACHE_FLASH_ATTR int           compare_double(const void *a, const void *b);
 ICACHE_FLASH_ATTR bool          call_later(call_later_callback_t callback, void *arg, uint32 delay_ms);
 
