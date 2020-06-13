@@ -15,19 +15,19 @@
  * limitations under the License.
  */
 
-#ifndef _EXTRA_V9821_H
-#define _EXTRA_V9821_H
+#ifndef _EXTRA_BL0940_H
+#define _EXTRA_BL0940_H
 
 #include <ets_sys.h>
 
 
-#ifdef _DEBUG_V9821
-#define DEBUG_V9821(port, f, ...)           DEBUG("[%-14s] " f, (port)->id, ##__VA_ARGS__)
+#ifdef _DEBUG_BL0940
+#define DEBUG_BL0940(port, f, ...)          DEBUG("[%-14s] " f, (port)->id, ##__VA_ARGS__)
 #else
-#define DEBUG_V9821(...)                    {}
+#define DEBUG_BL0940(...)                   {}
 #endif
 
-ICACHE_FLASH_ATTR void                      v9821_init_ports(void);
+ICACHE_FLASH_ATTR void                      bl0940_init_ports(void);
 
 
-#endif /* _EXTRA_V9821_H */
+#endif /* _EXTRA_BL0940_H */

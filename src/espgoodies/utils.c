@@ -227,6 +227,20 @@ double decent_round(double d) {
     }
 }
 
+double round_to(double d, uint8 decimals) {
+    uint8 i = decimals;
+    while (i--) {
+        d *= 10;
+    }
+    d = round(d);
+    i = decimals;
+    while (i--) {
+        d /= 10;
+    }
+
+    return d;
+}
+
 int compare_double(const void *a, const void *b) {
     double x = *(double *) a;
     double y = *(double *) b;
