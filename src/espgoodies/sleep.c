@@ -18,28 +18,25 @@
 
 #include <user_interface.h>
 
-#include "common.h"
-#include "rtc.h"
-#include "sleep.h"
-
-#ifdef _OTA
-#include "ota.h"
-#endif
+#include "espgoodies/common.h"
+#include "espgoodies/ota.h"
+#include "espgoodies/rtc.h"
+#include "espgoodies/sleep.h"
 
 
-#define WAKE_SHORT_DURATION     60      /* Seconds */
-#define MAX_SLEEP_DURATION      1800    /* Seconds */
-#define RTC_SLEEP_COUNT_ADDR    130     /* 130 * 4 bytes = 520 */
-#define RTC_SLEEP_REM_ADDR      134     /* 131 * 4 bytes = 524 */
+#define WAKE_SHORT_DURATION  60                /* Seconds */
+#define MAX_SLEEP_DURATION   1800              /* Seconds */
+#define RTC_SLEEP_COUNT_ADDR RTC_USER_ADDR + 1 /* 131 * 4 bytes = 524 */
+#define RTC_SLEEP_REM_ADDR   RTC_USER_ADDR + 2 /* 132 * 4 bytes = 528 */
 
 
-static uint16                   wake_interval = 0;  /* Minutes, 0 - sleep disabled */
-static uint16                   wake_duration = 0;  /* Seconds */
-static os_timer_t               sleep_timer;
-static bool                     about_to_sleep = FALSE;
+static uint16     wake_interval = 0;      /* Minutes, 0 - sleep disabled */
+static uint16     wake_duration = 0;      /* Seconds */
+static os_timer_t sleep_timer;
+static bool       about_to_sleep = FALSE;
 
 
-ICACHE_FLASH_ATTR static void   on_sleep(void *arg);
+static void ICACHE_FLASH_ATTR on_sleep(void *arg);
 
 
 void sleep_init(void) {
@@ -47,6 +44,11 @@ void sleep_init(void) {
 
     uint32 sleep_count = rtc_get_value(RTC_SLEEP_COUNT_ADDR);
     uint32 sleep_rem = rtc_get_value(RTC_SLEEP_REM_ADDR);
+
+    if (sleep_count >= 1024 || sleep_rem >= 1024) {
+        DEBUG_SLEEP("ignoring invalid sleep count/rem values");
+        return;
+    }
 
     DEBUG_SLEEP("sleep_count = %d, sleep_rem = %d", sleep_count, sleep_rem);
 
@@ -118,8 +120,12 @@ void on_sleep(void *arg) {
     uint32 sleep_count = wake_interval_seconds / MAX_SLEEP_DURATION;
     uint32 sleep_rem = wake_interval_seconds % MAX_SLEEP_DURATION;
 
-    DEBUG_SLEEP("about to sleep for a total of %d seconds (count = %d, rem = %d)",
-                wake_interval_seconds, sleep_count, sleep_rem);
+    DEBUG_SLEEP(
+        "about to sleep for a total of %d seconds (count = %d, rem = %d)",
+        wake_interval_seconds,
+        sleep_count,
+        sleep_rem
+    );
     about_to_sleep = TRUE;
 
     if (sleep_count > 0) {

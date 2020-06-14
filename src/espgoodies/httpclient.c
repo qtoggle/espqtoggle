@@ -15,31 +15,31 @@
 #include <mem.h>
 #include <limits.h>
 
-#include "common.h"
-#include "wifi.h"
-#include "httpclient.h"
+#include "espgoodies/common.h"
+#include "espgoodies/wifi.h"
+#include "espgoodies/httpclient.h"
 
 
-#define BUFFER_SIZE_MAX             5000    /* Size of http responses that will cause an error */
+#define BUFFER_SIZE_MAX 5000 /* Size of http responses that will cause an error */
 
 
 /* Internal request state */
 typedef struct {
 
-    char              * path;
-    uint16              port;
-    char              * method;
-    uint8             * body;
-    int                 body_len;
-    char              * headers;
-    char              * hostname;
-    char              * buffer;
-    int                 buffer_size;
-    uint8               ip_addr[4];
-    bool                secure;
-    http_callback_t     callback;
-    os_timer_t          timer;
-    struct espconn    * connection;
+    char            *path;
+    uint16           port;
+    char            *method;
+    uint8           *body;
+    int              body_len;
+    char            *headers;
+    char            *hostname;
+    char            *buffer;
+    int              buffer_size;
+    uint8            ip_addr[4];
+    bool             secure;
+    http_callback_t  callback;
+    os_timer_t       timer;
+    struct espconn  *connection;
 
 } request_args_t;
 
@@ -47,12 +47,87 @@ typedef struct {
 static char *user_agent = NULL;
 
 
-void ICACHE_FLASH_ATTR http_raw_request(char *hostname, uint16 port, bool secure, char *path, char *method,
-                                        uint8 *body, int body_len, char *headers, http_callback_t callback,
-                                        int timeout);
+void ICACHE_FLASH_ATTR http_raw_request(
+                           char *hostname,
+                           uint16 port,
+                           bool secure,
+                           char *path,
+                           char *method,
+                           uint8 *body,
+                           int body_len,
+                           char *headers,
+                           http_callback_t callback,
+                           int timeout
+                       );
+
+static int  ICACHE_FLASH_ATTR chunked_decode(char *chunked, int size);
+static void ICACHE_FLASH_ATTR receive_callback(void * arg, char * buf, uint16 len);
+static void ICACHE_FLASH_ATTR sent_callback(void *arg);
+static void ICACHE_FLASH_ATTR connect_callback(void *arg);
+static void ICACHE_FLASH_ATTR disconnect_callback(void * arg);
+static void ICACHE_FLASH_ATTR error_callback(void *arg, int8 errType);
+static void ICACHE_FLASH_ATTR dns_callback(const char * hostname, ip_addr_t *addr, void * arg);
+static void ICACHE_FLASH_ATTR timeout_callback(void *arg);
 
 
-static int ICACHE_FLASH_ATTR chunked_decode(char *chunked, int size) {
+void http_raw_request(
+    char *hostname,
+    uint16 port,
+    bool secure,
+    char *path,
+    char *method,
+    uint8 *body,
+    int body_len,
+    char *headers,
+    http_callback_t callback,
+    int timeout
+) {
+    DEBUG_HTTPCLIENT("DNS request");
+
+    request_args_t *req = (request_args_t *)malloc(sizeof(request_args_t));
+    req->hostname = strdup(hostname);
+    req->path = strdup(path);
+    req->port = port;
+    req->secure = secure;
+    req->headers = headers;
+    req->method = (char *) method;
+    req->buffer_size = 1;
+    req->buffer = (char *)malloc(1);
+    req->buffer[0] = 0;
+    req->callback = callback;
+    req->body_len = body_len;
+    req->body = malloc(body_len + 1);
+    memcpy(req->body, body, body_len);
+    req->body[body_len] = '\0'; /* Null-terminate body so that we can log it as a string */
+
+    ip_addr_t addr;
+    err_t error = espconn_gethostbyname((struct espconn *)req, // It seems we don't need a real espconn pointer here.
+                                        hostname, &addr, dns_callback);
+
+    if (error == ESPCONN_INPROGRESS) {
+        DEBUG_HTTPCLIENT("DNS pending");
+    }
+    else if (error == ESPCONN_OK) {
+        /* Already in the local names table (or hostname was an IP address), execute the callback ourselves */
+        dns_callback(hostname, &addr, req);
+    }
+    else {
+        if (error == ESPCONN_ARG) {
+            DEBUG_HTTPCLIENT("DNS arg error %s", hostname);
+        }
+        else {
+            DEBUG_HTTPCLIENT("DNS error code %d", error);
+        }
+        dns_callback(hostname, NULL, req); /* Handle all DNS errors the same way */
+    }
+
+    /* Timeout timer */
+    os_timer_disarm(&req->timer);
+    os_timer_setfn(&req->timer, timeout_callback, req);
+    os_timer_arm(&req->timer, timeout * 1000, /* repeat = */ FALSE);
+}
+
+int chunked_decode(char *chunked, int size) {
     char *src = chunked;
     char *end = chunked + size;
     int i, dst = 0;
@@ -77,7 +152,7 @@ static int ICACHE_FLASH_ATTR chunked_decode(char *chunked, int size) {
     return dst;
 }
 
-static void ICACHE_FLASH_ATTR receive_callback(void * arg, char * buf, uint16 len) {
+void receive_callback(void * arg, char * buf, uint16 len) {
     struct espconn *conn = (struct espconn *) arg;
     request_args_t *req = (request_args_t *) conn->reverse;
 
@@ -110,7 +185,7 @@ static void ICACHE_FLASH_ATTR receive_callback(void * arg, char * buf, uint16 le
     req->buffer_size = new_size;
 }
 
-static void ICACHE_FLASH_ATTR sent_callback(void *arg) {
+void sent_callback(void *arg) {
     struct espconn *conn = (struct espconn *) arg;
     request_args_t *req = (request_args_t *) conn->reverse;
 
@@ -134,7 +209,7 @@ static void ICACHE_FLASH_ATTR sent_callback(void *arg) {
     }
 }
 
-static void ICACHE_FLASH_ATTR connect_callback(void *arg) {
+void connect_callback(void *arg) {
     struct espconn *conn = (struct espconn *) arg;
     request_args_t *req = (request_args_t *) conn->reverse;
 
@@ -145,10 +220,15 @@ static void ICACHE_FLASH_ATTR connect_callback(void *arg) {
 
     int len = strlen(req->method) + strlen(req->path) + strlen(req->headers) + 64;
     char buf[len];
-    len = snprintf(buf, len,
-                   "%s %s HTTP/1.1\r\n"
-                   "%s\r\n",
-                   req->method, req->path, req->headers);
+    len = snprintf(
+        buf,
+        len,
+        "%s %s HTTP/1.1\r\n"
+        "%s\r\n",
+        req->method,
+        req->path,
+        req->headers
+    );
 
     if (!req->body) {
         DEBUG_HTTPCLIENT("request (%d bytes):\n----------------\n%s----------------", len, buf);
@@ -169,7 +249,7 @@ static void ICACHE_FLASH_ATTR connect_callback(void *arg) {
     DEBUG_HTTPCLIENT("sending request header");
 }
 
-static void ICACHE_FLASH_ATTR disconnect_callback(void * arg) {
+void disconnect_callback(void * arg) {
     DEBUG_HTTPCLIENT("disconnected");
     struct espconn *conn = (struct espconn *)arg;
 
@@ -285,12 +365,12 @@ static void ICACHE_FLASH_ATTR disconnect_callback(void * arg) {
     free(conn);
 }
 
-static void ICACHE_FLASH_ATTR error_callback(void *arg, int8 errType) {
+void error_callback(void *arg, int8 errType) {
     DEBUG_HTTPCLIENT("disconnected with error");
     disconnect_callback(arg);
 }
 
-static void ICACHE_FLASH_ATTR dns_callback(const char * hostname, ip_addr_t *addr, void * arg) {
+void dns_callback(const char * hostname, ip_addr_t *addr, void * arg) {
     request_args_t * req = (request_args_t *)arg;
 
     if (addr == NULL) {
@@ -342,7 +422,7 @@ static void ICACHE_FLASH_ATTR dns_callback(const char * hostname, ip_addr_t *add
     }
 }
 
-static void ICACHE_FLASH_ATTR timeout_callback(void *arg) {
+void timeout_callback(void *arg) {
     request_args_t * req = (request_args_t *)arg;
 
     DEBUG_HTTPCLIENT("request timeout waiting for %s:%d", req->hostname, req->port);
@@ -363,54 +443,8 @@ static void ICACHE_FLASH_ATTR timeout_callback(void *arg) {
         espconn_disconnect(req->connection);
 }
 
-void http_raw_request(char *hostname, uint16 port, bool secure, char *path, char *method, uint8 *body, int body_len,
-                      char *headers, http_callback_t callback, int timeout) {
 
-    DEBUG_HTTPCLIENT("DNS request");
-
-    request_args_t *req = (request_args_t *)malloc(sizeof(request_args_t));
-    req->hostname = strdup(hostname);
-    req->path = strdup(path);
-    req->port = port;
-    req->secure = secure;
-    req->headers = headers;
-    req->method = (char *) method;
-    req->buffer_size = 1;
-    req->buffer = (char *)malloc(1);
-    req->buffer[0] = 0;
-    req->callback = callback;
-    req->body_len = body_len;
-    req->body = malloc(body_len);
-    memcpy(req->body, body, body_len);
-
-    ip_addr_t addr;
-    err_t error = espconn_gethostbyname((struct espconn *)req, // It seems we don't need a real espconn pointer here.
-                                        hostname, &addr, dns_callback);
-
-    if (error == ESPCONN_INPROGRESS) {
-        DEBUG_HTTPCLIENT("DNS pending");
-    }
-    else if (error == ESPCONN_OK) {
-        /* Already in the local names table (or hostname was an IP address), execute the callback ourselves */
-        dns_callback(hostname, &addr, req);
-    }
-    else {
-        if (error == ESPCONN_ARG) {
-            DEBUG_HTTPCLIENT("DNS arg error %s", hostname);
-        }
-        else {
-            DEBUG_HTTPCLIENT("DNS error code %d", error);
-        }
-        dns_callback(hostname, NULL, req); /* Handle all DNS errors the same way */
-    }
-
-    /* Timeout timer */
-    os_timer_disarm(&req->timer);
-    os_timer_setfn(&req->timer, timeout_callback, req);
-    os_timer_arm(&req->timer, timeout * 1000, /* repeat = */ FALSE);
-}
-
-void ICACHE_FLASH_ATTR httpclient_set_user_agent(char *agent) {
+void httpclient_set_user_agent(char *agent) {
     if (user_agent) {
         free(user_agent);
     }
@@ -420,10 +454,17 @@ void ICACHE_FLASH_ATTR httpclient_set_user_agent(char *agent) {
     DEBUG_HTTPCLIENT("user agent set to \"%s\"", agent);
 }
 
-void ICACHE_FLASH_ATTR httpclient_request(char *method, char *url, uint8 *body, int body_len,
-                                          char *header_names[], char *header_values[], int header_count,
-                                          http_callback_t callback, int timeout) {
-
+void httpclient_request(
+    char *method,
+    char *url,
+    uint8 *body,
+    int body_len,
+    char *header_names[],
+    char *header_values[],
+    int header_count,
+    http_callback_t callback,
+    int timeout
+) {
     char hostname[128] = "";
     char *h, *headers = NULL;
     int i, hl, headers_len = 0;

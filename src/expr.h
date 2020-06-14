@@ -24,65 +24,65 @@
 
 
 #ifdef _DEBUG_EXPR
-#define DEBUG_EXPR(fmt, ...)    DEBUG("[expressions   ] " fmt, ##__VA_ARGS__)
+#define DEBUG_EXPR(fmt, ...) DEBUG("[expressions   ] " fmt, ##__VA_ARGS__)
 #else
-#define DEBUG_EXPR(...)         {}
+#define DEBUG_EXPR(...)      {}
 #endif
 
 
 typedef struct expr {
 
-    double          value;          /* Used for literal expressions, value change detection and caching purposes */
+    double        value;   /* Used for literal expressions, value change detection and caching purposes */
 
     union {
-        int64       aux;            /* Auxiliary flag 1 */
-        double      faux;
+        int64     aux;     /* Auxiliary flag 1 */
+        double    faux;
     };
     union {
-        int64       aux2;           /* Auxiliary flag 2 */
-        double      faux2;
-        void      * paux;
+        int64     aux2;    /* Auxiliary flag 2 */
+        double    faux2;
+        void     *paux;
     };
 
-    char          * port_id;
-    uint16          len;            /* Used for value history queue size */
+    char         *port_id;
+    uint16        len;     /* Used for value history queue size */
 
-    void          * func;
-    int8            argc;
-    struct expr  ** args;
+    void         *func;
+    int8          argc;
+    struct expr **args;
 
 } expr_t;
 
 typedef struct {
 
-    char          * reason;
-    char          * token;
-    int32           pos;
+    char  *reason;
+    char  *token;
+    int32  pos;
 
 } expr_parse_error_t;
 
 struct port;
 
-typedef double (* func_callback_t)(expr_t *expr, int argc, double *args);
+typedef double (*func_callback_t)(expr_t *expr, int argc, double *args);
 
 typedef struct {
 
-    char          * name;
-    int8            argc;           /* If negative, acts as a minimum */
-    func_callback_t callback;
+    char            *name;
+    int8             argc; /* If negative, acts as a minimum */
+    func_callback_t  callback;
 
 } func_t;
 
 
-ICACHE_FLASH_ATTR expr_t              * expr_parse(char *port_id, char *input, int len);
-ICACHE_FLASH_ATTR expr_parse_error_t  * expr_parse_get_error(void);
-ICACHE_FLASH_ATTR double                expr_eval(expr_t *expr);
-ICACHE_FLASH_ATTR void                  expr_free(expr_t *expr);
-ICACHE_FLASH_ATTR int                   expr_check_loops(expr_t *expr, struct port *the_port);
-ICACHE_FLASH_ATTR struct port        ** expr_port_deps(expr_t *expr);
-ICACHE_FLASH_ATTR bool                  expr_is_time_dep(expr_t *expr);
-ICACHE_FLASH_ATTR bool                  expr_is_time_ms_dep(expr_t *expr);
-ICACHE_FLASH_ATTR bool                  expr_is_rounding(expr_t *expr);
+expr_t             ICACHE_FLASH_ATTR *expr_parse(char *port_id, char *input, int len);
+expr_parse_error_t ICACHE_FLASH_ATTR *expr_parse_get_error(void);
+double             ICACHE_FLASH_ATTR  expr_eval(expr_t *expr);
+void               ICACHE_FLASH_ATTR  expr_free(expr_t *expr);
+int                ICACHE_FLASH_ATTR  expr_check_loops(expr_t *expr, struct port *the_port);
+uint32             ICACHE_FLASH_ATTR  expr_get_port_deps(expr_t *expr);
+bool               ICACHE_FLASH_ATTR  expr_is_time_dep(expr_t *expr);
+bool               ICACHE_FLASH_ATTR  expr_is_time_ms_dep(expr_t *expr);
+bool               ICACHE_FLASH_ATTR  expr_is_rounding(expr_t *expr);
 
 
 #endif /* _EXPR_H */

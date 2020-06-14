@@ -19,14 +19,14 @@
 #include <mem.h>
 #include <ctype.h>
 
-#include "common.h"
-#include "crypto.h"
+#include "espgoodies/common.h"
+#include "espgoodies/crypto.h"
 
 
-#define HMAC_SHA256_BLOCK_LEN       64
+#define HMAC_SHA256_BLOCK_LEN 64
 
-#define IPAD                        0x36
-#define OPAD                        0x5C
+#define IPAD 0x36
+#define OPAD 0x5C
 
 #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
 #define ror(value, bits) (((value) >> (bits)) | ((value) << (32 - (bits))))
@@ -81,15 +81,20 @@ static const char b64_table[] = {
 };
 
 
-ICACHE_FLASH_ATTR static void               sha1_transform(uint32 state[5], uint8 buffer[64]);
-ICACHE_FLASH_ATTR static void               sha1_update(uint32 state[5], uint8 buffer[64], uint32 count[2],
-                                                        uint8* data, uint32 len);
-ICACHE_FLASH_ATTR static uint8            * sha1_final(uint32 state[5], uint8 buffer[64], uint32 count[2]);
+static void  ICACHE_FLASH_ATTR  sha1_transform(uint32 state[5], uint8 buffer[64]);
+static void  ICACHE_FLASH_ATTR  sha1_update(
+                                    uint32 state[5],
+                                    uint8 buffer[64],
+                                    uint32 count[2],
+                                    uint8* data,
+                                    uint32 len
+                                );
+static uint8 ICACHE_FLASH_ATTR *sha1_final(uint32 state[5], uint8 buffer[64], uint32 count[2]);
 
-ICACHE_FLASH_ATTR static void               sha256_init(sha256_ctx_t *ctx);
-ICACHE_FLASH_ATTR static void               sha256_transform(sha256_ctx_t *ctx, uint8 *data);
-ICACHE_FLASH_ATTR static void               sha256_update(sha256_ctx_t *ctx, uint8 *data, uint32 len);
-ICACHE_FLASH_ATTR static uint8            * sha256_final(sha256_ctx_t *ctx);
+static void  ICACHE_FLASH_ATTR  sha256_init(sha256_ctx_t *ctx);
+static void  ICACHE_FLASH_ATTR  sha256_transform(sha256_ctx_t *ctx, uint8 *data);
+static void  ICACHE_FLASH_ATTR  sha256_update(sha256_ctx_t *ctx, uint8 *data, uint32 len);
+static uint8 ICACHE_FLASH_ATTR *sha256_final(sha256_ctx_t *ctx);
 
 
 uint8 *sha1(uint8 *data, int len) {

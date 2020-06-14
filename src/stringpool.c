@@ -49,7 +49,7 @@ bool string_pool_write(char *pool, uint32 *pool_offs, char *value, void *offs_sa
     }
 
     int len = strlen(value) + 1;
-    if (len > CONFIG_SIZE_STR - *pool_offs) {
+    if (len > CONFIG_STR_SIZE - *pool_offs) {
         return FALSE;
     }
 

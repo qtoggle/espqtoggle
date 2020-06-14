@@ -1,0 +1,110 @@
+{
+    "name": "already-provisioned",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/test_adc",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "display_name": "Already Provisioned"
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "DELETE",
+                "path": "/ports/virtual1",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/reset",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "wifi-ap-wait-device-disconnect"
+        },
+        {
+            "name": "wifi-ap-wait-device-connect"
+        },
+        {
+            "name": "sleep",
+            "params": {
+                "duration": 5000
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "expected_status": 200,
+                "expected_body": [
+				    {
+				        "id": "test_adc",
+				        "display_name": "Already Provisioned",
+				        "writable": false,
+				        "enabled": false,
+				        "persisted": false,
+				        "internal": false,
+				        "sampling_interval": 10000,
+				        "transform_read": "",
+				        "type": "number",
+				        "min": 0,
+				        "max": 1000,
+				        "integer": true,
+				        "unit": "mV",
+				        "value": null,
+                        "definitions": {
+                            "sampling_interval": {
+                                "display_name": "Sampling Interval",
+                                "description": "Indicates how often the port value will be read.",
+                                "unit": "ms",
+                                "modifiable": true,
+                                "type": "number",
+                                "min": 0,
+                                "max": 60000,
+                                "integer": true
+                            }
+                        }
+				    },
+				    {
+				        "id": "test_gpio",
+				        "display_name": "",
+				        "writable": false,
+				        "enabled": true,
+				        "persisted": false,
+				        "internal": false,
+				        "transform_read": "",
+				        "type": "boolean",
+				        "value": true,
+				        "definitions": {}
+				    }
+				]
+            }
+        }
+    ]
+}

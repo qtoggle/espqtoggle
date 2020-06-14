@@ -1,0 +1,67 @@
+{
+    "name": "set-system",
+    "instructions": [
+        {
+            "name": "device-write-gpio",
+            "params": {
+                "gpio": 12,
+                "value": true
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PUT",
+                "path": "/system",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "setup_button": {
+                        "pin": 12,
+                        "level": false,
+                        "hold": 5,
+                        "reset_hold": 10
+                    },
+                    "status_led": {
+                        "pin": -1,
+                        "level": false
+                    },
+                    "battery": {
+                        "div": 166,
+                        "voltages": [3500, 3600, 3700, 3800, 3900, 4000]
+                    }
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/system",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": {
+                    "setup_button": {
+                        "pin": 12,
+                        "level": false,
+                        "hold": 5,
+                        "reset_hold": 10
+                    },
+                    "status_led": {
+                        "pin": -1,
+                        "level": false
+                    },
+                    "battery": {
+                        "div": 166,
+                        "voltages": [3500, 3600, 3700, 3800, 3900, 4000]
+                    }
+                }
+            }
+        }
+    ]
+}

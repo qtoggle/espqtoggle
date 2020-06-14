@@ -29,32 +29,37 @@
 #include "ports.h"
 
 
-#define EMPTY_SHA256_HEX                    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+#define EMPTY_SHA256_HEX "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
 
-ICACHE_FLASH_ATTR double                    get_choice_value_num(char *choice);
-ICACHE_FLASH_ATTR char                    * get_choice_value_str(char *choice);
-ICACHE_FLASH_ATTR char                    * get_choice_display_name(char *choice);
-ICACHE_FLASH_ATTR json_t                  * choice_to_json(char *choice, char type);
-ICACHE_FLASH_ATTR void                      free_choices(char **choices);
-ICACHE_FLASH_ATTR bool                      choices_equal(char **choices1, char **choices2);
+double ICACHE_FLASH_ATTR  get_choice_value_num(char *choice);
+char   ICACHE_FLASH_ATTR *get_choice_value_str(char *choice);
+char   ICACHE_FLASH_ATTR *get_choice_display_name(char *choice);
+json_t ICACHE_FLASH_ATTR *choice_to_json(char *choice, char type);
+void   ICACHE_FLASH_ATTR  free_choices(char **choices);
+bool   ICACHE_FLASH_ATTR  choices_equal(char **choices1, char **choices2);
 
-ICACHE_FLASH_ATTR int                       validate_num(double value, double min, double max, bool integer,
-                                                         double step, char **choices);
-ICACHE_FLASH_ATTR int                       validate_str(char *value, char **choices);
-ICACHE_FLASH_ATTR bool                      validate_id(char *id);
-ICACHE_FLASH_ATTR bool                      validate_ip_address(char *ip, uint8 *a);
-ICACHE_FLASH_ATTR bool                      validate_wifi_ssid(char *ssid);
-ICACHE_FLASH_ATTR bool                      validate_wifi_key(char *key);
-ICACHE_FLASH_ATTR bool                      validate_wifi_bssid(char *bssid_str, uint8 *bssid);
-#ifdef _SLEEP
-ICACHE_FLASH_ATTR bool                      validate_str_sleep_mode(char *sleep_mode, int *wake_interval,
-                                                                    int *wake_duration);
-#endif
+int    ICACHE_FLASH_ATTR  validate_num(double value, double min, double max, bool integer, double step, char **choices);
+int    ICACHE_FLASH_ATTR  validate_str(char *value, char **choices);
+bool   ICACHE_FLASH_ATTR  validate_id(char *id);
+bool   ICACHE_FLASH_ATTR  validate_ip_address(char *ip, uint8 *a);
+bool   ICACHE_FLASH_ATTR  validate_wifi_ssid(char *ssid);
+bool   ICACHE_FLASH_ATTR  validate_wifi_key(char *key);
+bool   ICACHE_FLASH_ATTR  validate_wifi_bssid(char *bssid_str, uint8 *bssid);
 
-ICACHE_FLASH_ATTR json_t                  * attrdef_to_json(char *display_name, char *description, char *unit,
-                                                            char type, bool modifiable, double min, double max,
-                                                            bool integer, double step, char **choices, bool reconnect);
+json_t ICACHE_FLASH_ATTR *attrdef_to_json(
+                              char *display_name,
+                              char *description,
+                              char *unit,
+                              char type,
+                              bool modifiable,
+                              double min,
+                              double max,
+                              bool integer,
+                              double step,
+                              char **choices,
+                              bool reconnect
+                          );
 
 
 #endif /* _API_UTILS_H */

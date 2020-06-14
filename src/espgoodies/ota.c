@@ -21,43 +21,56 @@
 #include <upgrade.h>
 #include <ctype.h>
 
-#include "common.h"
-#include "utils.h"
-#include "tcpserver.h"
-#include "system.h"
-#include "httpclient.h"
-#include "ota.h"
+#include "espgoodies/common.h"
+#include "espgoodies/httpclient.h"
+#include "espgoodies/system.h"
+#include "espgoodies/tcpserver.h"
+#include "espgoodies/utils.h"
+#include "espgoodies/ota.h"
 
 
-#define OTA_PERFORM_DELAY       2000  /* Milliseconds */
+#define OTA_PERFORM_DELAY 2000  /* Milliseconds */
 
 
-static os_timer_t               ota_timer;
-static char                   * ota_url;
-static uint8                    ota_ip_addr[4];
-static ota_latest_callback_t    ota_latest_callback = NULL;
-static ota_perform_callback_t   ota_perform_callback = NULL;
-static ota_perform_callback_t   ota_auto_perform_callback = NULL;
-static bool                     ota_auto_update_checking = FALSE;
+static os_timer_t              ota_timer;
+static char                   *ota_url;
+static uint8                   ota_ip_addr[4];
+static ota_latest_callback_t   ota_latest_callback = NULL;
+static ota_perform_callback_t  ota_perform_callback = NULL;
+static ota_perform_callback_t  ota_auto_perform_callback = NULL;
+static bool                    ota_auto_update_checking = FALSE;
 
-static char                   * latest_url = NULL;
-static char                   * latest_stable_url = NULL;
-static char                   * latest_beta_url = NULL;
-static char                   * url_template = NULL;
-static char                   * current_version = NULL;
+static char                   *latest_url = NULL;
+static char                   *latest_stable_url = NULL;
+static char                   *latest_beta_url = NULL;
+static char                   *url_template = NULL;
+static char                   *current_version = NULL;
 
 
-ICACHE_FLASH_ATTR int           ota_next_slot(void);
+int         ICACHE_FLASH_ATTR ota_next_slot(void);
 
-ICACHE_FLASH_ATTR static void   on_ota_start(void *arg);
-ICACHE_FLASH_ATTR static void   on_ota_finish_check(void *arg);
-ICACHE_FLASH_ATTR static void   on_ota_latest_response(char *body, int body_len, int status, char *header_names[],
-                                                       char *header_values[], int header_count, uint8 addr[]);
-ICACHE_FLASH_ATTR static void   on_ota_head_response(char *body, int body_len, int status, char *header_names[],
-                                                     char *header_values[], int header_count, uint8 addr[]);
+static void ICACHE_FLASH_ATTR on_ota_start(void *arg);
+static void ICACHE_FLASH_ATTR on_ota_finish_check(void *arg);
+static void ICACHE_FLASH_ATTR on_ota_latest_response(
+                                  char *body,
+                                  int body_len,
+                                  int status,
+                                  char *header_names[],
+                                  char *header_values[],
+                                  int header_count,
+                                  uint8 addr[]
+                              );
+static void ICACHE_FLASH_ATTR on_ota_head_response(
+                                  char *body,
+                                  int body_len,
+                                  int status,
+                                  char *header_names[],
+                                  char *header_values[],
+                                  int header_count,
+                                  uint8 addr[]
+                              );
 
-ICACHE_FLASH_ATTR static void   on_ota_auto_latest(char *version, char *date, char *url);
-
+static void ICACHE_FLASH_ATTR on_ota_auto_latest(char *version, char *date, char *url);
 
 
 void ota_init(char *cv, char *lu, char *lsu, char *lbu, char *ut) {
@@ -105,9 +118,17 @@ bool ota_get_latest(bool beta, ota_latest_callback_t callback) {
 
     DEBUG_OTA("fetching latest version from \"%s\"", url);
 
-    httpclient_request("GET", url, /* body = */ NULL, /* body_len = */ 0,
-                       /* header_names = */ NULL, /* header_values = */ NULL, /* header_count = */ 0,
-                       on_ota_latest_response, HTTP_DEF_TIMEOUT);
+    httpclient_request(
+        "GET",
+        url,
+        /* body = */ NULL,
+        /* body_len = */ 0,
+        /* header_names = */ NULL,
+        /* header_values = */ NULL,
+        /* header_count = */ 0,
+        on_ota_latest_response,
+        HTTP_DEF_TIMEOUT
+    );
 
     return TRUE;
 }
@@ -129,9 +150,17 @@ bool ota_perform_url(char *url, ota_perform_callback_t callback) {
     DEBUG_OTA("perform: downloading from %s", final_url);
     ota_url = final_url;
 
-    httpclient_request("HEAD", ota_url, /* body = */ NULL, /* body_len = */ 0,
-                       /* header_names = */ NULL, /* header_values = */ NULL, /* header_count = */ 0,
-                       on_ota_head_response, HTTP_DEF_TIMEOUT);
+    httpclient_request(
+        "HEAD",
+        ota_url,
+        /* body = */ NULL,
+        /* body_len = */ 0,
+        /* header_names = */ NULL,
+        /* header_values = */ NULL,
+        /* header_count = */ 0,
+        on_ota_head_response,
+        HTTP_DEF_TIMEOUT
+    );
 
     return TRUE;
 }
@@ -221,12 +250,16 @@ void on_ota_start(void *arg) {
     char *path = strdup(p);
     host[p - host] = 0;
 
-    snprintf((char *) info->url, 512,
-             "GET %s HTTP/1.1\r\n"
-             "Host: %s\r\n"
-             "Connection: keep-alive\r\n"
-             "\r\n",
-             path, host);
+    snprintf(
+        (char *) info->url,
+        512,
+        "GET %s HTTP/1.1\r\n"
+        "Host: %s\r\n"
+        "Connection: keep-alive\r\n"
+        "\r\n",
+        path,
+        host
+    );
 
     DEBUG_OTA("host = %s", host);
     DEBUG_OTA("path = %s", path);
@@ -259,9 +292,15 @@ void on_ota_finish_check(void *arg) {
     free(info);
 }
 
-void on_ota_latest_response(char *body, int body_len, int status, char *header_names[], char *header_values[],
-                            int header_count, uint8 addr[]) {
-
+void on_ota_latest_response(
+    char *body,
+    int body_len,
+    int status,
+    char *header_names[],
+    char *header_values[],
+    int header_count,
+    uint8 addr[]
+) {
     ota_latest_callback_t callback = ota_latest_callback;
     ota_latest_callback = NULL;
 
@@ -339,9 +378,15 @@ void on_ota_latest_response(char *body, int body_len, int status, char *header_n
     }
 }
 
-void on_ota_head_response(char *body, int body_len, int status, char *header_names[], char *header_values[],
-                          int header_count, uint8 addr[]) {
-
+void on_ota_head_response(
+    char *body,
+    int body_len,
+    int status,
+    char *header_names[],
+    char *header_values[],
+    int header_count,
+    uint8 addr[]
+) {
     ota_perform_callback_t callback = ota_perform_callback;
     ota_perform_callback = NULL;
 

@@ -27,18 +27,18 @@
 
 #include "api.h"
 #include "client.h"
-#include "events.h"
 #include "core.h"
+#include "events.h"
 #include "sessions.h"
 
 
-session_t                               sessions[SESSION_COUNT];
+session_t sessions[SESSION_COUNT];
 
 
-ICACHE_FLASH_ATTR static void           session_push(session_t *session, int type, char *port_id);
-ICACHE_FLASH_ATTR static void           session_free(session_t *session);
-ICACHE_FLASH_ATTR static event_t **     pop_all_events(session_t *session);
-ICACHE_FLASH_ATTR static void           on_session_timeout(void *arg);
+static void    ICACHE_FLASH_ATTR   session_push(session_t *session, int type, char *port_id);
+static void    ICACHE_FLASH_ATTR   session_free(session_t *session);
+static event_t ICACHE_FLASH_ATTR **pop_all_events(session_t *session);
+static void    ICACHE_FLASH_ATTR   on_session_timeout(void *arg);
 
 
 session_t *session_find_by_id(char *id) {
@@ -246,8 +246,12 @@ void session_push(session_t *session, int type, char *port_id) {
     session->queue = n;
     session->queue_len++;
 
-    DEBUG_SESSION(session->id, "pushing event of type \"%s\" (queue length=%d)", EVENT_TYPES_STR[type],
-                  session->queue_len);
+    DEBUG_SESSION(
+        session->id,
+        "pushing event of type \"%s\" (queue length=%d)",
+        EVENT_TYPES_STR[type],
+        session->queue_len
+    );
 }
 
 void session_free(session_t *session) {

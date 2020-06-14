@@ -20,12 +20,12 @@
 #define _ESPGOODIES_HTTPUTILS_H
 
 
-#include "json.h"
+#include "espgoodies/json.h"
 
 
-ICACHE_FLASH_ATTR json_t          * http_parse_url_encoded(char *input);
-ICACHE_FLASH_ATTR char            * http_build_auth_token_header(char *token);
-ICACHE_FLASH_ATTR char            * http_parse_auth_token_header(char *header);
+json_t ICACHE_FLASH_ATTR *http_parse_url_encoded(char *input);
+char   ICACHE_FLASH_ATTR *http_build_auth_token_header(char *token);
+char   ICACHE_FLASH_ATTR *http_parse_auth_token_header(char *header);
 
 
 #endif /* _ESPGOODIES_HTTPUTILS_H */

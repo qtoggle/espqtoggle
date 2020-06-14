@@ -4,6 +4,31 @@
         {
             "name": "json-http-client",
             "params": {
+                "method": "PUT",
+                "path": "/system",
+                "body": {
+                    "setup_button": {
+                        "pin": 12,
+                        "level": false,
+                        "hold": 5,
+                        "reset_hold": 10
+                    },
+                    "status_led": {
+                        "pin": -1,
+                        "level": false
+                    },
+                    "battery": {
+                        "div": 166,
+                        "voltages": [3500, 3600, 3700, 3800, 3900, 4000]
+                    }
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
                 "method": "PATCH",
                 "path": "/device",
                 "body": {

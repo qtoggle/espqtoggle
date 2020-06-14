@@ -24,22 +24,21 @@
 
 
 #ifdef _DEBUG_ESPQTCLIENT
-#define DEBUG_ESPQTCLIENT(fmt, ...)             DEBUG("[espqtclient   ] " fmt, ##__VA_ARGS__)
-#define DEBUG_ESPQTCLIENT_CONN(conn, fmt, ...)  DEBUG_CONN("espqtclient", conn, fmt, ##__VA_ARGS__)
+#define DEBUG_ESPQTCLIENT(fmt, ...)            DEBUG("[espqtclient   ] " fmt, ##__VA_ARGS__)
+#define DEBUG_ESPQTCLIENT_CONN(conn, fmt, ...) DEBUG_CONN("espqtclient", conn, fmt, ##__VA_ARGS__)
 #else
-#define DEBUG_ESPQTCLIENT(...)                  {}
-#define DEBUG_ESPQTCLIENT_CONN(...)             {}
+#define DEBUG_ESPQTCLIENT(...)                 {}
+#define DEBUG_ESPQTCLIENT_CONN(...)            {}
 #endif
 
 
 
-ICACHE_FLASH_ATTR void                          client_init(void);
+void ICACHE_FLASH_ATTR client_init(void);
 
     /* respond_json() will free the json structure by itself, using json_free() ! */
-ICACHE_FLASH_ATTR void                          respond_json(struct espconn *conn, int status, json_t *json);
-ICACHE_FLASH_ATTR void                          respond_error(struct espconn *conn, int status, char *error);
-
-ICACHE_FLASH_ATTR void                          respond_html(struct espconn *conn, int status, uint8 *html, int len);
+void ICACHE_FLASH_ATTR respond_json(struct espconn *conn, int status, json_t *json);
+void ICACHE_FLASH_ATTR respond_error(struct espconn *conn, int status, char *error);
+void ICACHE_FLASH_ATTR respond_html(struct espconn *conn, int status, uint8 *html, int len);
 
 
 #endif /* _CLIENT_H */

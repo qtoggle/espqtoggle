@@ -32,89 +32,89 @@
 #include "expr.h"
 
 
-#define MAX_NAME_LEN    16
-#define MAX_ARGS        16
-#define MAX_HIST_LEN    32
+#define MAX_NAME_LEN 16
+#define MAX_ARGS     16
+#define MAX_HIST_LEN 32
 
 
 typedef struct {
 
-    double      value;
-    uint64      time_ms;
+    double value;
+    uint64 time_ms;
 
 } value_hist_t;
 
 typedef struct {
 
-    char          * name;
-    double          value;
+    char   *name;
+    double  value;
 
 } literal_t;
 
 
-ICACHE_FLASH_ATTR static double     _add_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _sub_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _mul_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _div_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _mod_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _pow_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _add_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _sub_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _mul_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _div_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _mod_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _pow_callback(expr_t *expr, int argc, double *args);
 
-ICACHE_FLASH_ATTR static double     _and_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _or_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _not_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _xor_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _and_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _or_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _not_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _xor_callback(expr_t *expr, int argc, double *args);
 
-ICACHE_FLASH_ATTR static double     _bitand_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _bitor_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _bitnot_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _bitxor_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _shl_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _shr_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _bitand_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _bitor_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _bitnot_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _bitxor_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _shl_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _shr_callback(expr_t *expr, int argc, double *args);
 
-ICACHE_FLASH_ATTR static double     _if_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _eq_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _gt_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _gte_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _lt_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _lte_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _if_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _eq_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _gt_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _gte_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _lt_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _lte_callback(expr_t *expr, int argc, double *args);
 
-ICACHE_FLASH_ATTR static double     _abs_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _sgn_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _abs_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _sgn_callback(expr_t *expr, int argc, double *args);
 
-ICACHE_FLASH_ATTR static double     _min_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _max_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _avg_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _min_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _max_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _avg_callback(expr_t *expr, int argc, double *args);
 
-ICACHE_FLASH_ATTR static double     _floor_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _ceil_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _round_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _floor_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _ceil_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _round_callback(expr_t *expr, int argc, double *args);
 
-ICACHE_FLASH_ATTR static double     _time_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _timems_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _time_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _timems_callback(expr_t *expr, int argc, double *args);
 
-ICACHE_FLASH_ATTR static double     _delay_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _sample_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _freeze_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _held_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _deriv_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _integ_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static bool       _filter_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _fmavg_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _fmedian_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _delay_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _sample_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _freeze_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _held_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _deriv_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _integ_callback(expr_t *expr, int argc, double *args);
+static bool      ICACHE_FLASH_ATTR  _filter_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _fmavg_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _fmedian_callback(expr_t *expr, int argc, double *args);
 
-ICACHE_FLASH_ATTR static double     _acc_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _accinc_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _hyst_callback(expr_t *expr, int argc, double *args);
-ICACHE_FLASH_ATTR static double     _sequence_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _acc_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _accinc_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _hyst_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _sequence_callback(expr_t *expr, int argc, double *args);
 
-ICACHE_FLASH_ATTR expr_t          * parse_rec(char *port_id, char *input, int len, int abs_pos);
-ICACHE_FLASH_ATTR static expr_t   * parse_port_id_expr(char *port_id, char *input, int abs_pos);
-ICACHE_FLASH_ATTR static expr_t   * parse_literal_expr(char *input, int abs_pos);
-ICACHE_FLASH_ATTR static void       set_parse_error(char *reason, char *token, int32 pos);
-ICACHE_FLASH_ATTR static literal_t* find_literal_by_name(char *name);
-ICACHE_FLASH_ATTR static func_t   * find_func_by_name(char *name);
-ICACHE_FLASH_ATTR static int        check_loops_rec(port_t *the_port, int level, expr_t *expr);
-ICACHE_FLASH_ATTR static bool       func_needs_free(expr_t *expr);
+expr_t           ICACHE_FLASH_ATTR *parse_rec(char *port_id, char *input, int len, int abs_pos);
+static expr_t    ICACHE_FLASH_ATTR *parse_port_id_expr(char *port_id, char *input, int abs_pos);
+static expr_t    ICACHE_FLASH_ATTR *parse_literal_expr(char *input, int abs_pos);
+static void      ICACHE_FLASH_ATTR  set_parse_error(char *reason, char *token, int32 pos);
+static literal_t ICACHE_FLASH_ATTR *find_literal_by_name(char *name);
+static func_t    ICACHE_FLASH_ATTR *find_func_by_name(char *name);
+static int       ICACHE_FLASH_ATTR  check_loops_rec(port_t *the_port, int level, expr_t *expr);
+static bool      ICACHE_FLASH_ATTR  func_needs_free(expr_t *expr);
 
 
 static literal_t _false = {.name = "false", .value = 0};
@@ -126,7 +126,7 @@ static literal_t *literals[] = {
     NULL
 };
 
-static expr_parse_error_t           parse_error;
+static expr_parse_error_t parse_error;
 
 
 double _add_callback(expr_t *expr, int argc, double *args) {
@@ -1123,7 +1123,7 @@ double expr_eval(expr_t *expr) {
     }
     else if (expr->port_id) { /* Port value */
         port_t *port = port_find_by_id(expr->port_id);
-        if (port && IS_ENABLED(port)) {
+        if (port && IS_PORT_ENABLED(port)) {
             return port->value;
         }
         else {
@@ -1153,46 +1153,31 @@ void expr_free(expr_t *expr) {
 }
 
 int expr_check_loops(expr_t *expr, struct port *the_port) {
-    port_t *p, **port = all_ports;
-    
     /* Initialize aux (seen) flag */
-    while ((p = *port++)) {
-        p->aux = 0;
+    for (int i = 0; i < all_ports_count; i++) {
+        all_ports[i]->aux = 0;
     }
     the_port->aux = 1;
     
     return check_loops_rec(the_port, 1, expr);
 }
 
-struct port **expr_port_deps(expr_t *expr) { // TODO this should return a bitmask of port_ids
-    port_t **ports = NULL, **subports, **port, *p;
-    int i, size = 0;
+uint32 expr_get_port_deps(expr_t *expr) {
+    port_t *port;
 
     if (expr->func) {
-        for (i = 0; i < expr->argc; i++) {
-            subports = expr_port_deps(expr->args[i]);
-            if (subports) {
-                port = subports;
-                while ((p = *port++)) {
-                    ports = realloc(ports, sizeof(port_t *) * (size + 1));
-                    ports[size++] = p;
-                }
-                
-                free(subports);
-            }
+        uint32 dep_mask = 0;
+        for (int i = 0; i < expr->argc; i++) {
+            dep_mask |= expr_get_port_deps(expr->args[i]);
         }
+
+        return dep_mask;
     }
-    else if (expr->port_id && (p = port_find_by_id(expr->port_id))) {
-        ports = malloc(sizeof(port_t *) * (size + 1));
-        ports[size++] = p;
-    }
-    
-    if (ports) {
-        ports = realloc(ports, sizeof(port_t *) * (size + 1));
-        ports[size] = NULL;
+    else if (expr->port_id && (port = port_find_by_id(expr->port_id))) {
+        return BIT(port->slot);
     }
 
-    return ports;
+    return 0;
 }
 
 bool expr_is_time_dep(expr_t *expr) {

@@ -1,0 +1,164 @@
+{
+    "name": "persistence",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "name": "testdevice2",
+                    "display_name": "Test Display Name 2"
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "display_name": "test display name 2",
+                    "enabled": true,
+                    "persisted": true,
+                    "transform_read": "NOT(${DOLLAR})",
+                    "transform_write": "NOT(${DOLLAR})"
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio0/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": true,
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "sleep",
+            "params": {
+                "duration": 7000
+            }
+        },
+        {
+            "name": "device-reset"
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "required": [
+                        "name",
+                        "display_name"
+                    ],
+                    "properties": {
+                        "name": {
+                            "enum": ["testdevice2"]
+                        },
+                        "display_name": {
+                            "enum": ["Test Display Name 2"]
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "array",
+                    "additionalItems": true,
+                    "items": [
+                        {
+                            "type": "object",
+                            "required": [
+                                "id",
+                                "display_name",
+                                "enabled",
+                                "persisted",
+                                "transform_read",
+                                "transform_write"
+                            ],
+                            "properties": {
+                                "id": {
+                                    "enum": ["gpio0"]
+                                },
+                                "display_name": {
+                                    "enum": ["test display name 2"]
+                                },
+                                "enabled": {
+                                    "enum": [true]
+                                },
+                                "persisted": {
+                                    "enum": [true]
+                                },
+                                "transform_read": {
+                                    "enum": ["NOT(${DOLLAR})"]
+                                },
+                                "transform_write": {
+                                    "enum": ["NOT(${DOLLAR})"]
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/gpio0/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": true
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "persisted": false
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        }
+    ]
+}

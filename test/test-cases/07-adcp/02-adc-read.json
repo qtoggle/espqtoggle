@@ -1,0 +1,103 @@
+{
+    "name": "adc-read",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/adc0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "enabled": true
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "device-write-adc",
+            "params": {
+                "value": 0
+            }
+        },
+        {
+            "name": "sleep",
+            "params": {
+                "duration": 1500
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/adc0/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 200
+                }
+            }
+        },
+        {
+            "name": "device-write-adc",
+            "params": {
+                "value": 500
+            }
+        },
+        {
+            "name": "sleep",
+            "params": {
+                "duration": 1500
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/adc0/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "integer",
+                    "minimum": 400,
+                    "maximum": 600
+                }
+            }
+        },
+        {
+            "name": "device-write-adc",
+            "params": {
+                "value": 1000
+            }
+        },
+        {
+            "name": "sleep",
+            "params": {
+                "duration": 1500
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/adc0/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "integer",
+                    "minimum": 900,
+                    "maximum": 1024
+                }
+            }
+        }
+    ]
+}

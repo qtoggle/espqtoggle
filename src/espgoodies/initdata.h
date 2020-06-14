@@ -23,7 +23,7 @@
 #include <c_types.h>
 
 
-void ICACHE_FLASH_ATTR      init_data_ensure(void);
+void ICACHE_FLASH_ATTR init_data_ensure(void);
 
 
 #endif /* _ESPGOODIES_INITDATA_H */

@@ -25,11 +25,8 @@
 #include "espgoodies/httputils.h"
 #include "espgoodies/json.h"
 #include "espgoodies/jwt.h"
-#include "espgoodies/wifi.h"
-
-#ifdef _OTA
 #include "espgoodies/ota.h"
-#endif
+#include "espgoodies/wifi.h"
 
 #include "common.h"
 #include "device.h"
@@ -38,38 +35,45 @@
 #include "webhooks.h"
 
 
-#define CONTENT_TYPE_HEADER         "Content-Type: application/json; charset=utf-8\r\n"
-#define CONTENT_TYPE_HEADER_LEN     47
+#define CONTENT_TYPE_HEADER     "Content-Type: application/json; charset=utf-8\r\n"
+#define CONTENT_TYPE_HEADER_LEN 47
 
 
 typedef struct webhooks_queue_node {
 
-    event_t                       * event;
-    char                            retries_left;
-    struct webhooks_queue_node    * next;
+    event_t                    *event;
+    char                        retries_left;
+    struct webhooks_queue_node *next;
 
 } webhooks_queue_node_t;
 
 
-char *                          webhooks_host = NULL;
-uint16                          webhooks_port = 80;
-char *                          webhooks_path = NULL;
-char                            webhooks_password_hash[SHA256_HEX_LEN + 1] = {0};
-uint8                           webhooks_events_mask = 0;
-int                             webhooks_timeout = 0;
-int                             webhooks_retries = 3;
+char   *webhooks_host = NULL;
+uint16  webhooks_port = 80;
+char   *webhooks_path = NULL;
+char    webhooks_password_hash[SHA256_HEX_LEN + 1] = {0};
+uint8   webhooks_events_mask = 0;
+int     webhooks_timeout = 0;
+int     webhooks_retries = 3;
 
-static webhooks_queue_node_t  * queue = NULL;
-static int                      queue_len = 0;
-os_timer_t                      later_timer;
+static webhooks_queue_node_t *queue = NULL;
+static int                    queue_len = 0;
+static os_timer_t             later_timer;
 
 
-ICACHE_FLASH_ATTR static void   process_queue(void);
-ICACHE_FLASH_ATTR static void   process_queue_later(void);
-ICACHE_FLASH_ATTR static void   on_process_queue_later(void *arg);
-ICACHE_FLASH_ATTR static void   do_webhook_request(event_t *event);
-ICACHE_FLASH_ATTR static void   on_webhook_response(char *body, int body_len, int status, char *header_names[],
-                                                    char *header_values[], int header_count, uint8 addr[]);
+static void ICACHE_FLASH_ATTR process_queue(void);
+static void ICACHE_FLASH_ATTR process_queue_later(void);
+static void ICACHE_FLASH_ATTR on_process_queue_later(void *arg);
+static void ICACHE_FLASH_ATTR do_webhook_request(event_t *event);
+static void ICACHE_FLASH_ATTR on_webhook_response(
+                                  char *body,
+                                  int body_len,
+                                  int status,
+                                  char *header_names[],
+                                  char *header_values[],
+                                  int header_count,
+                                  uint8 addr[]
+                              );
 
 
 void webhooks_push_event(int type, char *port_id) {
@@ -161,9 +165,15 @@ void do_webhook_request(event_t *event) {
         DEBUG_WEBHOOKS("some parameters are not configured");
 
         /* Manually call the callback */
-        on_webhook_response(/* body = */ NULL, /* body_len = */ 0, /* status = */ 200,
-                            /* header_names = */ NULL, /* header_values = */ NULL, /* header_count = */ 0,
-                            /* addr = */ NULL);
+        on_webhook_response(
+            /* body = */ NULL,
+            /* body_len = */ 0,
+            /* status = */ 200,
+            /* header_names = */ NULL,
+            /* header_values = */ NULL,
+            /* header_count = */ 0,
+            /* addr = */ NULL
+        );
 
         return;
     }
@@ -175,9 +185,15 @@ void do_webhook_request(event_t *event) {
     url_len += strlen(webhooks_path); /* /path/to/events */
 
     char url[url_len + 1];
-    snprintf(url, url_len, "%s://%s:%d%s",
-             (device_flags & DEVICE_FLAG_WEBHOOKS_HTTPS) ? "https" : "http",
-             webhooks_host, webhooks_port, webhooks_path);
+    snprintf(
+        url,
+        url_len,
+        "%s://%s:%d%s",
+        (device_flags & DEVICE_FLAG_WEBHOOKS_HTTPS) ? "https" : "http",
+        webhooks_host,
+        webhooks_port,
+        webhooks_path
+    );
 
     /* Add authorization header */
     json_t *claims = json_obj_new();
@@ -207,16 +223,31 @@ void do_webhook_request(event_t *event) {
         DEBUG_WEBHOOKS("request POST %s: %s", url, body);
 
         /* Actual request */
-        httpclient_request("POST", url, (uint8 *) body, strlen(body), header_names, header_values, header_count,
-                           on_webhook_response, webhooks_timeout);
+        httpclient_request(
+            "POST",
+            url,
+            (uint8 *) body,
+            strlen(body),
+            header_names,
+            header_values,
+            header_count,
+            on_webhook_response,
+            webhooks_timeout
+        );
     }
 
     free(auth_header);
 }
 
-void on_webhook_response(char *body, int body_len, int status, char *header_names[], char *header_values[],
-                         int header_count, uint8 addr[]) {
-
+void on_webhook_response(
+    char *body,
+    int body_len,
+    int status,
+    char *header_names[],
+    char *header_values[],
+    int header_count,
+    uint8 addr[]
+) {
     DEBUG_WEBHOOKS("response received: %d", status);
 
     webhooks_queue_node_t *n = queue, *pn = NULL;

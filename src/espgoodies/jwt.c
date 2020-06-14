@@ -18,9 +18,9 @@
 
 #include <mem.h>
 
-#include "common.h"
-#include "crypto.h"
-#include "jwt.h"
+#include "espgoodies/common.h"
+#include "espgoodies/crypto.h"
+#include "espgoodies/jwt.h"
 
 
 typedef uint8 *(*sign_func_t)(uint8 *data, int data_len, uint8 *key, int key_len);

@@ -18,51 +18,50 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h> /* for strcasecmp */
 #include <ctype.h>
 #include <stdarg.h>
 #include <mem.h>
 
-#include "common.h"
-#include "utils.h"
-#include "httpserver.h"
+#include "espgoodies/common.h"
+#include "espgoodies/utils.h"
+#include "espgoodies/httpserver.h"
 
 
-#define RESPONSE_TEMPLATE_NO_BODY                           \
-        "HTTP/1.1 %d %s\r\n"                                \
-        "Server: %s\r\n"                                    \
-        "Connection: close\r\n"
+#define RESPONSE_TEMPLATE_NO_BODY "HTTP/1.1 %d %s\r\n"          \
+                                  "Server: %s\r\n"              \
+                                  "Connection: close\r\n"
 
-#define RESPONSE_TEMPLATE                                   \
-        "HTTP/1.1 %d %s\r\n"                                \
-        "Content-Type: %s\r\n"                              \
-        "Cache-Control: no-cache\r\n"                       \
-        "Server: %s\r\n"                                    \
-        "Content-Length: %d\r\n"                            \
-        "Connection: close\r\n"
+#define RESPONSE_TEMPLATE         "HTTP/1.1 %d %s\r\n"          \
+                                  "Content-Type: %s\r\n"        \
+                                  "Cache-Control: no-cache\r\n" \
+                                  "Server: %s\r\n"              \
+                                  "Content-Length: %d\r\n"      \
+                                  "Connection: close\r\n"
 
-#define DEF_REQUEST_TIMEOUT         8
+#define DEF_REQUEST_TIMEOUT 8
 
-#define STATUS_MSG_200              "OK"
-#define STATUS_MSG_201              "Created"
-#define STATUS_MSG_204              "No Content"
+#define STATUS_MSG_200 "OK"
+#define STATUS_MSG_201 "Created"
+#define STATUS_MSG_204 "No Content"
 
-#define STATUS_MSG_400              "Bad Request"
-#define STATUS_MSG_401              "Unauthorized"
-#define STATUS_MSG_403              "Forbidden"
-#define STATUS_MSG_404              "Not Found"
+#define STATUS_MSG_400 "Bad Request"
+#define STATUS_MSG_401 "Unauthorized"
+#define STATUS_MSG_403 "Forbidden"
+#define STATUS_MSG_404 "Not Found"
 
-#define STATUS_MSG_500              "Internal Server Error"
-#define STATUS_MSG_503              "Service Unavailable"
+#define STATUS_MSG_500 "Internal Server Error"
+#define STATUS_MSG_503 "Service Unavailable"
 
 
-static char                       * server_name = NULL;
-static uint32                       request_timeout = 8;
+static char   *server_name = NULL;
+static uint32  request_timeout = 8;
 
 
-ICACHE_FLASH_ATTR static void       handle_header_value_ready(httpserver_context_t *hc);
-ICACHE_FLASH_ATTR static void       handle_invalid(httpserver_context_t *hc, char c);
-ICACHE_FLASH_ATTR static void       handle_request(httpserver_context_t *hc);
-ICACHE_FLASH_ATTR static void       handle_request_timeout(void *arg);
+static void ICACHE_FLASH_ATTR handle_header_value_ready(httpserver_context_t *hc);
+static void ICACHE_FLASH_ATTR handle_invalid(httpserver_context_t *hc, char c);
+static void ICACHE_FLASH_ATTR handle_request(httpserver_context_t *hc);
+static void ICACHE_FLASH_ATTR handle_request_timeout(void *arg);
 
 
 void handle_header_value_ready(httpserver_context_t *hc) {
@@ -103,9 +102,16 @@ void handle_request(httpserver_context_t *hc) {
     os_timer_disarm(&hc->timer);
 
     if (hc->request_callback) {
-        hc->request_callback(hc->callback_arg, hc->method, hc->path, hc->query,
-                             hc->header_names, hc->header_values, hc->header_count,
-                             hc->body);
+        hc->request_callback(
+            hc->callback_arg,
+            hc->method,
+            hc->path,
+            hc->query,
+            hc->header_names,
+            hc->header_values,
+            hc->header_count,
+            hc->body
+        );
     }
 }
 
@@ -123,10 +129,13 @@ void httpserver_set_request_timeout(uint32 timeout) {
     DEBUG_HTTPSERVER("request timeout set to %d", request_timeout);
 }
 
-void httpserver_setup_connection(httpserver_context_t *hc, void *arg,
-                                 http_invalid_callback_t ic,
-                                 http_timeout_callback_t tc,
-                                 http_request_callback_t rc) {
+void httpserver_setup_connection(
+    httpserver_context_t *hc,
+    void *arg,
+    http_invalid_callback_t ic,
+    http_timeout_callback_t tc,
+    http_request_callback_t rc
+) {
     hc->callback_arg = arg;
     hc->invalid_callback = ic;
     hc->timeout_callback = tc;
@@ -424,8 +433,15 @@ void httpserver_context_reset(httpserver_context_t *hc) {
     os_timer_disarm(&hc->timer);
 }
 
-uint8 *httpserver_build_response(int status, char *content_type, char *header_names[], char *header_values[],
-                                 int header_count, uint8 *body, int *len) {
+uint8 *httpserver_build_response(
+    int status,
+    char *content_type,
+    char *header_names[],
+    char *header_values[],
+    int header_count,
+    uint8 *body,
+    int *len
+) {
 
     char *status_msg;
     uint8 *response = NULL;
@@ -528,8 +544,18 @@ void DEBUG_HTTPSERVER_CTX(httpserver_context_t *hc, char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
     
-    snprintf(new_fmt, sizeof(new_fmt), "[httpserver    ] [%d.%d.%d.%d:%d/%d] %s",
-             hc->ip[0], hc->ip[1], hc->ip[2], hc->ip[3], hc->port, hc->slot_index, fmt);
+    snprintf(
+        new_fmt,
+        sizeof(new_fmt),
+        "[httpserver    ] [%d.%d.%d.%d:%d/%d] %s",
+        hc->ip[0],
+        hc->ip[1],
+        hc->ip[2],
+        hc->ip[3],
+        hc->port,
+        hc->slot_index,
+        fmt
+    );
 
     vsnprintf(buf, sizeof(buf), new_fmt, args);
     DEBUG("%s", buf);

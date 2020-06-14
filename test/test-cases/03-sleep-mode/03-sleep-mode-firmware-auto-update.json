@@ -10,11 +10,12 @@
                 "method": "PATCH",
                 "path": "/device",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "body": {
                     "firmware_auto_update": true,
-                    "sleep_mode": "30:10"
+                    "sleep_wake_interval": 30,
+                    "sleep_wake_duration": 10
                 },
                 "expected_status": 204
             }
@@ -103,11 +104,12 @@
                 "method": "PATCH",
                 "path": "/device",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "body": {
                     "firmware_auto_update": false,
-                    "sleep_mode": ""
+                    "sleep_wake_interval": 0,
+                    "sleep_wake_duration": 1
                 },
                 "expected_status": 204
             }
