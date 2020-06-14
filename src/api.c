@@ -97,11 +97,11 @@
     response_json;                                                                      \
 })
 
-#define INVALID_EXPRESSION(reason, token, pos) ({                                       \
+#define INVALID_EXPRESSION(field, reason, token, pos) ({                                \
     if (response_json) json_free(response_json);                                        \
     response_json = json_obj_new();                                                     \
     json_obj_append(response_json, "error", json_str_new("invalid-field"));             \
-    json_obj_append(response_json, "field", json_str_new("expression"));                \
+    json_obj_append(response_json, "field", json_str_new(field));                       \
     json_t *details_json = json_obj_new();                                              \
     json_obj_append(details_json, "reason", json_str_new(reason));                      \
     if (token) {                                                                        \
@@ -115,9 +115,10 @@
     response_json;                                                                      \
 })
 
-#define INVALID_EXPRESSION_FROM_ERROR() ({                                              \
+#define INVALID_EXPRESSION_FROM_ERROR(field) ({                                         \
     expr_parse_error_t *parse_error = expr_parse_get_error();                           \
-    INVALID_EXPRESSION(parse_error->reason,                                             \
+    INVALID_EXPRESSION(field,                                                           \
+                       parse_error->reason,                                             \
                        parse_error->token,                                              \
                        parse_error->pos);                                               \
 })
@@ -1752,18 +1753,18 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 /* Parse & validate expression */
                 if (strlen(sexpr) > API_MAX_EXPR_LEN) {
                     DEBUG_PORT(port, "expression is too long");
-                    return INVALID_EXPRESSION("too-long", /* token = */ NULL, /* pos = */ -1);
+                    return INVALID_EXPRESSION("expression", "too-long", /* token = */ NULL, /* pos = */ -1);
                 }
 
                 expr_t *expr = expr_parse(port->id, sexpr, strlen(sexpr));
                 if (!expr) {
-                    return INVALID_EXPRESSION_FROM_ERROR();
+                    return INVALID_EXPRESSION_FROM_ERROR("expression");
                 }
 
                 if (expr_check_loops(expr, port) > 1) {
                     DEBUG_API("loop detected in expression \"%s\"", sexpr);
                     expr_free(expr);
-                    return INVALID_EXPRESSION("circular-dependency", /* token = */ NULL, /* pos = */ -1);
+                    return INVALID_EXPRESSION("expression", "circular-dependency", /* token = */ NULL, /* pos = */ -1);
                 }
 
                 port->sexpr = strdup(sexpr);
@@ -1804,12 +1805,12 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 /* Parse & validate expression */
                 if (strlen(stransform_write) > API_MAX_EXPR_LEN) {
                     DEBUG_PORT(port, "expression is too long");
-                    return INVALID_EXPRESSION("too-long", /* token = */ NULL, /* pos = */ -1);
+                    return INVALID_EXPRESSION("transform_write", "too-long", /* token = */ NULL, /* pos = */ -1);
                 }
 
                 expr_t *transform_write = expr_parse(port->id, stransform_write, strlen(stransform_write));
                 if (!transform_write) {
-                    return INVALID_EXPRESSION_FROM_ERROR();
+                    return INVALID_EXPRESSION_FROM_ERROR("transform_write");
                 }
 
                 port_t **_ports, **ports, *p;
@@ -1833,7 +1834,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                     DEBUG_PORT(port, "transform expression depends on external port \"%s\"", other_dep->id);
                     expr_free(transform_write);
                     int32 pos = strstr(stransform_write, other_dep->id) - stransform_write;
-                    return INVALID_EXPRESSION("external-dependency", other_dep->id, pos);
+                    return INVALID_EXPRESSION("transform_write", "external-dependency", other_dep->id, pos);
                 }
 
                 port->stransform_write = strdup(stransform_write);
@@ -1866,12 +1867,12 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 /* Parse & validate expression */
                 if (strlen(stransform_read) > API_MAX_EXPR_LEN) {
                     DEBUG_PORT(port, "expression is too long");
-                    return INVALID_EXPRESSION("too-long", /* token = */ NULL, /* pos = */ -1);
+                    return INVALID_EXPRESSION("transform_read", "too-long", /* token = */ NULL, /* pos = */ -1);
                 }
 
                 expr_t *transform_read = expr_parse(port->id, stransform_read, strlen(stransform_read));
                 if (!transform_read) {
-                    return INVALID_EXPRESSION_FROM_ERROR();
+                    return INVALID_EXPRESSION_FROM_ERROR("transform_read");
                 }
 
                 port_t **_ports, **ports, *p;
@@ -1895,7 +1896,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                     DEBUG_PORT(port, "transform expression depends on external port \"%s\"", other_dep->id);
                     expr_free(transform_read);
                     int32 pos = strstr(stransform_read, other_dep->id) - stransform_read;
-                    return INVALID_EXPRESSION("external-dependency", other_dep->id, pos);
+                    return INVALID_EXPRESSION("transform_read", "external-dependency", other_dep->id, pos);
                 }
 
                 port->stransform_read = strdup(stransform_read);
