@@ -36,6 +36,7 @@
 #include "core.h"
 #include "device.h"
 #include "events.h"
+#include "peri.h"
 #include "ports.h"
 #include "stringpool.h"
 #include "webhooks.h"
@@ -55,6 +56,8 @@ ICACHE_FLASH_ATTR void                  on_config_provisioning_response(char *bo
                                                                         char *header_names[], char *header_values[],
                                                                         int header_count, uint8 addr[]);
 ICACHE_FLASH_ATTR void                  apply_device_provisioning_config(json_t *device_config);
+ICACHE_FLASH_ATTR void                  apply_peripherals_provisioning_config(json_t *peripherals_config);
+ICACHE_FLASH_ATTR void                  apply_peripheral_provisioning_config(json_t *peripheral_config);
 ICACHE_FLASH_ATTR void                  apply_ports_provisioning_config(json_t *ports_config);
 ICACHE_FLASH_ATTR void                  apply_port_provisioning_config(json_t *port_config);
 
@@ -445,7 +448,7 @@ void on_config_provisioning_response(char *body, int body_len, int status, char 
 
             /* Set device configured flag before actual provisioning to prevent endless reboot loops in case of
              * device crash during provisioning */
-            DEBUG_DEVICE("mark device as configured");
+            DEBUG_DEVICE("marking device as configured");
             device_flags |= DEVICE_FLAG_CONFIGURED;
             config_save();
 
@@ -454,10 +457,19 @@ void on_config_provisioning_response(char *body, int body_len, int status, char 
             api_conn_set((void *) 1, API_ACCESS_LEVEL_ADMIN);
 
             json_t *device_config = json_obj_lookup_key(config, "device");
-            apply_device_provisioning_config(device_config);
+            if (device_config) {
+                apply_device_provisioning_config(device_config);
+            }
+
+            json_t *peripherals_config = json_obj_lookup_key(config, "peripherals");
+            if (peripherals_config) {
+                apply_peripherals_provisioning_config(peripherals_config);
+            }
 
             json_t *ports_config = json_obj_lookup_key(config, "ports");
-            apply_ports_provisioning_config(ports_config);
+            if (ports_config) {
+                apply_ports_provisioning_config(ports_config);
+            }
 
             api_conn_restore();
             json_free(config);
@@ -496,7 +508,7 @@ void apply_device_provisioning_config(json_t *device_config) {
         }
     }
 
-    if (device_config && json_get_type(device_config) == JSON_TYPE_OBJ) {
+    if (json_get_type(device_config) == JSON_TYPE_OBJ) {
         DEBUG_DEVICE("provisioning: setting device attributes");
         code = 200;
         response_json = api_patch_device(/* query_json = */ NULL, device_config, &code);
@@ -506,8 +518,84 @@ void apply_device_provisioning_config(json_t *device_config) {
         }
     }
     else {
-        DEBUG_DEVICE("provisioning: invalid or missing device config");
+        DEBUG_DEVICE("provisioning: invalid device config");
     }
+}
+
+void apply_peripherals_provisioning_config(json_t *peripherals_config) {
+    json_t *peripheral_config;
+    int i;
+
+    DEBUG_DEVICE("provisioning: applying peripherals config");
+
+    peri_unregister_all();
+
+    if (json_get_type(peripherals_config) == JSON_TYPE_LIST) {
+        for (i = 0; i < json_list_get_len(peripherals_config); i++) {
+            peripheral_config = json_list_value_at(peripherals_config, i);
+            apply_peripheral_provisioning_config(peripheral_config);
+        }
+    }
+    else {
+        DEBUG_DEVICE("provisioning: invalid peripherals config");
+    }
+}
+
+void apply_peripheral_provisioning_config(json_t *peripheral_config) {
+    json_t *class_json;
+    json_t *slots_json;
+    json_t *slot_json;
+    json_t *params_json;
+    int8 slots[32];
+    uint8 slot_count = 0;
+    char *class_name;
+    int i;
+
+    if (json_get_type(peripheral_config) != JSON_TYPE_OBJ) {
+        DEBUG_DEVICE("provisioning: invalid peripheral config");
+        return;
+    }
+
+    class_json = json_obj_lookup_key(peripheral_config, "class");
+    if (!class_json || json_get_type(class_json) != JSON_TYPE_STR) {
+        DEBUG_DEVICE("provisioning: invalid or missing peripheral class");
+        return;
+    }
+
+    slots_json = json_obj_lookup_key(peripheral_config, "slots");
+    if (slots_json) {
+        if (json_get_type(slots_json) != JSON_TYPE_LIST) {
+            DEBUG_DEVICE("provisioning: invalid peripheral slots");
+            return;
+        }
+
+        for (i = 0; i < json_list_get_len(slots_json); i++) {
+            slot_json = json_list_value_at(slots_json, i);
+            if (json_get_type(slot_json) != JSON_TYPE_INT) {
+                DEBUG_DEVICE("provisioning: invalid peripheral slots");
+                return;
+            }
+
+            slots[slot_count++] = json_int_get(slot_json);
+        }
+    }
+
+    params_json = json_obj_lookup_key(peripheral_config, "params");
+    if (params_json && json_get_type(params_json) != JSON_TYPE_OBJ) {
+        DEBUG_DEVICE("provisioning: invalid peripheral params");
+        return;
+    }
+
+    class_name = json_str_get(class_json);
+    peri_class_t *cls = peri_class_lookup(class_name);
+    if (!cls) {
+        DEBUG_DEVICE("provisioning: unknown peripheral class \"%s\"", class_name);
+        return;
+    }
+
+    peri_t *peri = zalloc(sizeof(peri_t));
+    peri->cls = cls;
+    peri_register(peri);
 }
 
 void apply_ports_provisioning_config(json_t *ports_config) {
@@ -516,14 +604,14 @@ void apply_ports_provisioning_config(json_t *ports_config) {
 
     DEBUG_DEVICE("provisioning: applying ports config");
 
-    if (ports_config && json_get_type(ports_config) == JSON_TYPE_LIST) {
+    if (json_get_type(ports_config) == JSON_TYPE_LIST) {
         for (i = 0; i < json_list_get_len(ports_config); i++) {
             port_config = json_list_value_at(ports_config, i);
             apply_port_provisioning_config(port_config);
         }
     }
     else {
-        DEBUG_DEVICE("provisioning: invalid or missing ports config");
+        DEBUG_DEVICE("provisioning: invalid ports config");
     }
 }
 
@@ -537,7 +625,7 @@ void apply_port_provisioning_config(json_t *port_config) {
     port_t *port;
     int code;
 
-    if (port_config && json_get_type(port_config) == JSON_TYPE_OBJ) {
+    if (json_get_type(port_config) == JSON_TYPE_OBJ) {
         port_id_json = json_obj_pop_key(port_config, "id");
         virtual_json = json_obj_pop_key(port_config, "virtual");
         if (port_id_json && json_get_type(port_id_json) == JSON_TYPE_STR) {
@@ -634,6 +722,6 @@ void apply_port_provisioning_config(json_t *port_config) {
         }
     }
     else {
-        DEBUG_DEVICE("provisioning: invalid or missing port config");
+        DEBUG_DEVICE("provisioning: invalid port config");
     }
 }

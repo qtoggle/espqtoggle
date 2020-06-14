@@ -120,7 +120,7 @@
 #define CONFIG_OFFS_PORT_MAX                0x14    /*   8 bytes */
 #define CONFIG_OFFS_PORT_STEP               0x1C    /*   8 bytes */
 #define CONFIG_OFFS_PORT_CHOICES            0x24    /*   4 bytes */
-                                                /*  40 bytes reserved: 0x28 - 0x4F */
+                                                    /*  40 bytes reserved: 0x28 - 0x4F */
 #define CONFIG_OFFS_PORT_FLAGS              0x50    /*   4 bytes */
 #define CONFIG_OFFS_PORT_VALUE              0x54    /*   8 bytes */
 #define CONFIG_OFFS_PORT_FWIDTH             0x5C    /*   4 bytes */
@@ -223,10 +223,10 @@ typedef struct port {
     uint64          last_heart_beat_time;   /* In milliseconds, since boot */
 
     /* Callbacks */
-    double          (* read_value)(struct port *port);
-    bool            (* write_value)(struct port *port, double value);
-    void            (* configure)(struct port *port);
-    void            (* heart_beat)(struct port *port);
+    double       (* read_value)(struct port *port);
+    bool         (* write_value)(struct port *port, double value);
+    void         (* configure)(struct port *port);
+    void         (* heart_beat)(struct port *port);
 
     /* Extra attribute definitions */
     attrdef_t    ** attrdefs;
