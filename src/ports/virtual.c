@@ -47,15 +47,15 @@ ICACHE_FLASH_ATTR static void           init_virtual_port(uint8 *data, char *str
 
 
 static double                           virtual_values[VIRTUAL_MAX_PORTS];
-static bool                             virtual_port_in_use[VIRTUAL_MAX_PORTS];
+static bool                             virtual_port_in_use[VIRTUAL_MAX_PORTS]; // TODO use ports.used_slots instead
 
 
 double read_value(port_t *port) {
-    return virtual_values[port->slot - VIRTUAL0_SLOT];
+    return virtual_values[port->slot - PORT_SLOT_VIRTUAL0];
 }
 
 bool write_value(port_t *port, double value) {
-    virtual_values[port->slot - VIRTUAL0_SLOT] = value;
+    virtual_values[port->slot - PORT_SLOT_VIRTUAL0] = value;
 
     return TRUE;
 }
@@ -63,7 +63,7 @@ bool write_value(port_t *port, double value) {
 void init_virtual_port(uint8 *base_ptr, char *strings_ptr, uint32 flags, uint8 index) {
     port_t *port = zalloc(sizeof(port_t));
 
-    port->slot = index + VIRTUAL0_SLOT;
+    port->slot = index + PORT_SLOT_VIRTUAL0;
 
     /* Virtual ports don't have an id before loading */
     snprintf(port->id, PORT_MAX_ID_LEN + 1, "virtual%d", index);
@@ -106,18 +106,19 @@ void init_virtual_port(uint8 *base_ptr, char *strings_ptr, uint32 flags, uint8 i
     }
 
     virtual_port_register(port);
+    port_register(port);
 
     virtual_port_in_use[index] = TRUE;
 }
 
-void virtual_ports_init(uint8 *data) {
+void virtual_ports_init(uint8 *config_data) {
     uint8 *base_ptr;
     uint32 flags;
-    char *strings_ptr = (char *) data + CONFIG_OFFS_STR_BASE;
+    char *strings_ptr = (char *) config_data + CONFIG_OFFS_STR_BASE;
     int i;
 
     for (i = 0; i < VIRTUAL_MAX_PORTS; i++) {
-        base_ptr = data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * (i + VIRTUAL0_SLOT);
+        base_ptr = config_data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * (i + PORT_SLOT_VIRTUAL0);
         memcpy(&flags, base_ptr + CONFIG_OFFS_PORT_FLAGS, 4);
 
         if (flags & PORT_FLAG_VIRTUAL_ACTIVE) {
@@ -126,14 +127,14 @@ void virtual_ports_init(uint8 *data) {
     }
 }
 
-void virtual_ports_save(uint8 *data, uint32 *strings_offs) {
+void virtual_ports_save(uint8 *config_data, uint32 *strings_offs) {
     uint8 *base_ptr;
     uint32 i, flags;
     uint8 slot;
 
     for (i = 0; i < VIRTUAL_MAX_PORTS; i++) {
-        slot = i + VIRTUAL0_SLOT;
-        base_ptr = data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * slot;
+        slot = i + PORT_SLOT_VIRTUAL0;
+        base_ptr = config_data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * slot;
         memcpy(&flags, base_ptr + CONFIG_OFFS_PORT_FLAGS, 4);
         if (virtual_port_in_use[i]) {
             flags |= PORT_FLAG_VIRTUAL_ACTIVE;
@@ -156,7 +157,7 @@ int8 virtual_find_unused_slot(bool occupy) {
                 virtual_port_in_use[i] = TRUE;
             }
 
-            return i + VIRTUAL0_SLOT;
+            return i + PORT_SLOT_VIRTUAL0;
         }
     }
 
@@ -186,25 +187,17 @@ bool virtual_port_register(port_t *port) {
     port->read_value = read_value;
     port->write_value = write_value;
 
-    port_register(port);
-
-    DEBUG_PORT(port, "using slot %d", port->slot);
-
     return TRUE;
 }
 
 bool virtual_port_unregister(port_t *port) {
-    if (port->slot < VIRTUAL0_SLOT || port->slot > VIRTUAL0_SLOT + VIRTUAL_MAX_PORTS - 1) {
+    if (port->slot < PORT_SLOT_VIRTUAL0 || port->slot > PORT_SLOT_VIRTUAL0 + VIRTUAL_MAX_PORTS - 1) {
         DEBUG_VIRTUAL("unregister: invalid slot %d", port->slot);
         return FALSE;
     }
 
-    virtual_port_in_use[port->slot - VIRTUAL0_SLOT] = FALSE;
+    virtual_port_in_use[port->slot - PORT_SLOT_VIRTUAL0] = FALSE;
     port->flags &= ~PORT_FLAG_VIRTUAL_ACTIVE;
-
-    if (!port_unregister(port)) {
-        return FALSE;
-    }
 
     DEBUG_VIRTUAL("unregister: slot %d is now free", port->slot);
 

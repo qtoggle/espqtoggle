@@ -350,6 +350,7 @@ void config_init(void) {
 
     DEBUG_DEVICE("config model is \"%s\"", device_config_model);
 
+    peri_init(config_data);
     ports_init(config_data);
 
     /* At this point we no longer need the config data */
@@ -383,6 +384,7 @@ void config_save(void) {
     uint32 strings_offs = 1; /* Address 0 in strings pool represents an unset string, so it's left out */
 
     flashcfg_load(config_data, 0, 0);
+    peri_save(config_data);
     ports_save(config_data, &strings_offs);
     device_save(config_data, &strings_offs);
     flashcfg_save(config_data);
@@ -523,79 +525,22 @@ void apply_device_provisioning_config(json_t *device_config) {
 }
 
 void apply_peripherals_provisioning_config(json_t *peripherals_config) {
-    json_t *peripheral_config;
-    int i;
+    json_t *response_json;
+    int code;
 
     DEBUG_DEVICE("provisioning: applying peripherals config");
 
-    peri_unregister_all();
-
     if (json_get_type(peripherals_config) == JSON_TYPE_LIST) {
-        for (i = 0; i < json_list_get_len(peripherals_config); i++) {
-            peripheral_config = json_list_value_at(peripherals_config, i);
-            apply_peripheral_provisioning_config(peripheral_config);
+        code = 200;
+        response_json = api_patch_peripherals(/* query_json = */ NULL, peripherals_config, &code);
+        json_free(response_json);
+        if (code / 100 != 2) {
+            DEBUG_DEVICE("provisioning: api_patch_peripherals() failed with status code %d", code);
         }
     }
     else {
         DEBUG_DEVICE("provisioning: invalid peripherals config");
     }
-}
-
-void apply_peripheral_provisioning_config(json_t *peripheral_config) {
-    json_t *class_json;
-    json_t *slots_json;
-    json_t *slot_json;
-    json_t *params_json;
-    int8 slots[32];
-    uint8 slot_count = 0;
-    char *class_name;
-    int i;
-
-    if (json_get_type(peripheral_config) != JSON_TYPE_OBJ) {
-        DEBUG_DEVICE("provisioning: invalid peripheral config");
-        return;
-    }
-
-    class_json = json_obj_lookup_key(peripheral_config, "class");
-    if (!class_json || json_get_type(class_json) != JSON_TYPE_STR) {
-        DEBUG_DEVICE("provisioning: invalid or missing peripheral class");
-        return;
-    }
-
-    slots_json = json_obj_lookup_key(peripheral_config, "slots");
-    if (slots_json) {
-        if (json_get_type(slots_json) != JSON_TYPE_LIST) {
-            DEBUG_DEVICE("provisioning: invalid peripheral slots");
-            return;
-        }
-
-        for (i = 0; i < json_list_get_len(slots_json); i++) {
-            slot_json = json_list_value_at(slots_json, i);
-            if (json_get_type(slot_json) != JSON_TYPE_INT) {
-                DEBUG_DEVICE("provisioning: invalid peripheral slots");
-                return;
-            }
-
-            slots[slot_count++] = json_int_get(slot_json);
-        }
-    }
-
-    params_json = json_obj_lookup_key(peripheral_config, "params");
-    if (params_json && json_get_type(params_json) != JSON_TYPE_OBJ) {
-        DEBUG_DEVICE("provisioning: invalid peripheral params");
-        return;
-    }
-
-    class_name = json_str_get(class_json);
-    peri_class_t *cls = peri_class_lookup(class_name);
-    if (!cls) {
-        DEBUG_DEVICE("provisioning: unknown peripheral class \"%s\"", class_name);
-        return;
-    }
-
-    peri_t *peri = zalloc(sizeof(peri_t));
-    peri->cls = cls;
-    peri_register(peri);
 }
 
 void apply_ports_provisioning_config(json_t *ports_config) {

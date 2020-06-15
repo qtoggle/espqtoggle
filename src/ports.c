@@ -56,8 +56,9 @@ char                              * esp8266_gpio_none_choices[] = {"0:GPIO0", "1
                                                                    "14:GPIO14", "15:GPIO15", "16:GPIO16", "-1:none",
                                                                    NULL};
 
+static uint32                       used_slots = 0;
+
 static int                          all_ports_count = 0;
-static uint8                        next_extra_slot = PORT_SLOT_EXTRA0;
 
 
 ICACHE_FLASH_ATTR static int        attr_get_extra_data_1bu(port_t *port, attrdef_t *attrdef);
@@ -86,8 +87,8 @@ ICACHE_FLASH_ATTR static void       attr_set_extra_data_num_choices(port_t *port
 
 ICACHE_FLASH_ATTR static void       attr_set_extra_info_cache(port_t *port, attrdef_t *attrdef, void *value);
 
-ICACHE_FLASH_ATTR static void       port_load(port_t *port, uint8 *data);
-ICACHE_FLASH_ATTR static void       port_save(port_t *port, uint8 *data, uint32 *strings_offs);
+ICACHE_FLASH_ATTR static void       port_load(port_t *port, uint8 *config_data);
+ICACHE_FLASH_ATTR static void       port_save(port_t *port, uint8 *config_data, uint32 *strings_offs);
 
 
 int attr_get_extra_data_1bu(port_t *port, attrdef_t *attrdef) {
@@ -354,9 +355,15 @@ void attr_set_extra_info_cache(port_t *port, attrdef_t *attrdef, void *value) {
 }
 
 
-void port_load(port_t *port, uint8 *data) {
-    uint8 *base_ptr = data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * port->slot;
-    char *strings_ptr = (char *) data + CONFIG_OFFS_STR_BASE;
+void port_load(port_t *port, uint8 *config_data) {
+    uint8 *base_ptr = config_data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * port->slot;
+    char *strings_ptr = (char *) config_data + CONFIG_OFFS_STR_BASE;
+
+    /* id */
+    char *id = string_pool_read(strings_ptr, base_ptr + CONFIG_OFFS_PORT_ID);
+    if (id) {
+        strcpy(port->id, id);
+    }
 
     DEBUG_PORT(port, "slot = %d", port->slot);
 
@@ -576,9 +583,9 @@ void port_load(port_t *port, uint8 *data) {
     port->flags |= PORT_FLAG_SET;
 }
 
-void port_save(port_t *port, uint8 *data, uint32 *strings_offs) {
-    uint8 *base_ptr = data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * port->slot;
-    char *strings_ptr = (char *) data + CONFIG_OFFS_STR_BASE;
+void port_save(port_t *port, uint8 *config_data, uint32 *strings_offs) {
+    uint8 *base_ptr = config_data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * port->slot;
+    char *strings_ptr = (char *) config_data + CONFIG_OFFS_STR_BASE;
 
     /* id */
     if (IS_VIRTUAL(port)) {
@@ -663,7 +670,7 @@ void port_save(port_t *port, uint8 *data, uint32 *strings_offs) {
     }
 }
 
-void ports_init(uint8 *data) {
+void ports_init(uint8 *config_data) {
     /* Add the ports list null terminator */
     all_ports = malloc(sizeof(port_t *));
     all_ports[0] = NULL;
@@ -681,7 +688,7 @@ void ports_init(uint8 *data) {
 #endif
 
 #ifdef HAS_VIRTUAL
-    virtual_ports_init(data);
+    virtual_ports_init(config_data);
 #endif
 
 #ifdef _INIT_EXTRA_PORT_DRIVERS
@@ -696,33 +703,49 @@ void ports_init(uint8 *data) {
     port_t **p = all_ports;
     while (*p) {
         DEBUG_PORT(*p, "loading data");
-        port_load(*p, data);
+        port_load(*p, config_data);
         p++;
     }
 }
 
-void ports_save(uint8 *data, uint32 *strings_offs) {
+void ports_save(uint8 *config_data, uint32 *strings_offs) {
     port_t **p = all_ports;
     while (*p) {
         DEBUG_PORT(*p, "saving data");
-        port_save(*p, data, strings_offs);
+        port_save(*p, config_data, strings_offs);
         p++;
     }
 
-    virtual_ports_save(data, strings_offs);
+    virtual_ports_save(config_data, strings_offs);
+}
+
+bool ports_slot_busy(uint8 slot) {
+    return !!(used_slots & (1 << slot));
+}
+
+int8 ports_next_slot() {
+    uint8 slot;
+
+    /* Virtual port slots come in last and are not available for peripherals. Always look for free ports starting with
+     * extra slots. If no extra slot is available, look through standard slots as well. */
+
+    for (slot = PORT_SLOT_EXTRA0; slot < PORT_SLOT_VIRTUAL0; slot++) {
+        if (!!(used_slots & (1 << slot))) {
+            return slot;
+        }
+    }
+
+    /* If no extra slot is free, try the regular slots */
+    for (slot = 0; slot < PORT_SLOT_EXTRA0; slot++) {
+        if (!!(used_slots & (1 << slot))) {
+            return slot;
+        }
+    }
+
+    return -1;
 }
 
 void port_register(port_t *port) {
-    if (port->slot == PORT_SLOT_AUTO) {
-        if (next_extra_slot > PORT_SLOT_EXTRA_MAX) {
-            DEBUG("reached max extra port slots, continuing from 0");
-            next_extra_slot = 0;
-        }
-
-        port->slot = next_extra_slot++;
-        DEBUG_PORT(port, "automatically allocated extra slot %d", port->slot);
-    }
-
     /* If a unit is present, it's normally a literal string. Make sure it's a free()-able string. */
     if (port->unit) {
         port->unit = strdup(port->unit);
@@ -793,6 +816,12 @@ void port_register(port_t *port) {
         }
     }
 
+    used_slots |= 1L << port->slot;
+
+    if (!port->id[0]) { /* Port may not have an ID when registered */
+        snprintf(port->id, PORT_MAX_ID_LEN + 1, "port%d", port->slot);
+    }
+
     DEBUG_PORT(port, "registered");
 }
 
@@ -819,9 +848,59 @@ bool port_unregister(port_t *port) {
     all_ports = realloc(all_ports, (all_ports_count + 1) * sizeof(port_t *));
     all_ports[all_ports_count] = NULL;
 
+    used_slots &= ~(1L << port->slot);
+
     DEBUG_PORT(port, "unregistered");
 
     return TRUE;
+}
+
+void port_cleanup(port_t *port) {
+    DEBUG_PORT(port, "cleaning up");
+
+    /* Free choices */
+    if (port->choices) {
+        free_choices(port->choices);
+        port->choices = NULL;
+    }
+
+    /* Free display name & unit */
+    if (port->display_name) {
+        free(port->display_name);
+        port->display_name = NULL;
+    }
+    if (port->unit) {
+        free(port->unit);
+        port->unit = NULL;
+    }
+
+    /* Destroy value expression */
+    if (port->expr) {
+        port_expr_remove(port);
+    }
+
+    /* Destroy transform expressions */
+    if (port->transform_read) {
+        expr_free(port->transform_read);
+        port->transform_read = NULL;
+    }
+    if (port->stransform_read) {
+        free(port->stransform_read);
+        port->stransform_read = NULL;
+    }
+    if (port->transform_write) {
+        expr_free(port->transform_write);
+        port->transform_write = NULL;
+    }
+    if (port->stransform_write) {
+        free(port->stransform_write);
+        port->stransform_write = NULL;
+    }
+
+    /* Cancel sequence */
+    if (port->sequence_pos >= 0) {
+        port_sequence_cancel(port);
+    }
 }
 
 port_t *port_find_by_id(char *id) {

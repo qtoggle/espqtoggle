@@ -23,7 +23,6 @@
 
 #include "ports.h"
 
-#define VIRTUAL0_SLOT               24
 #define VIRTUAL_MAX_PORTS           8
 
 #ifdef _DEBUG_VIRTUAL

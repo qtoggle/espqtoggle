@@ -95,14 +95,15 @@
 #define PORT_FLAG_BIT_CUSTOM6               30
 #define PORT_FLAG_BIT_CUSTOM7               31
 
-#define PORT_SLOT_AUTO                      -1
+#define PORT_SLOT_AUTO                      -1 // TODO remove these
 #define PORT_SLOT_EXTRA0                    18
 #define PORT_SLOT_EXTRA1                    19
 #define PORT_SLOT_EXTRA2                    20
 #define PORT_SLOT_EXTRA3                    21
 #define PORT_SLOT_EXTRA4                    22
 #define PORT_SLOT_EXTRA5                    23
-#define PORT_SLOT_EXTRA_MAX                 PORT_SLOT_EXTRA5
+
+#define PORT_SLOT_VIRTUAL0                  24
 
 #define IS_ENABLED(port)                    ((port)->flags & PORT_FLAG_ENABLED)
 #define IS_OUTPUT(port)                     ((port)->flags & PORT_FLAG_OUTPUT)
@@ -254,8 +255,12 @@ extern char       * esp8266_gpio_none_choices[];
 ICACHE_FLASH_ATTR void      ports_init(uint8 *data);
 ICACHE_FLASH_ATTR void      ports_save(uint8 *data, uint32 *strings_offs);
 
+ICACHE_FLASH_ATTR bool      ports_slot_busy(uint8 slot);
+ICACHE_FLASH_ATTR int8      ports_next_slot(void);
+
 ICACHE_FLASH_ATTR void      port_register(port_t *port);
 ICACHE_FLASH_ATTR bool      port_unregister(port_t *port);
+ICACHE_FLASH_ATTR void      port_cleanup(port_t *port);
 ICACHE_FLASH_ATTR port_t  * port_find_by_id(char *id);
 ICACHE_FLASH_ATTR void      port_rebuild_change_dep_mask(port_t *port);
 ICACHE_FLASH_ATTR void      port_sequence_cancel(port_t *port);
@@ -267,7 +272,6 @@ ICACHE_FLASH_ATTR void      port_disable(port_t *port);
 ICACHE_FLASH_ATTR void      port_configure(port_t *port);
 
 
-#include "ports/gpio.h"
 #include "ports/adc.h"
 #include "ports/pwm.h"
 #include "ports/virtual.h"

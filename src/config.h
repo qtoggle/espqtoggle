@@ -23,16 +23,13 @@
 #include <c_types.h>
 
 
-#define CONFIG_PORT_SIZE                0x0080 /*  128 bytes for each port */
-
 #define CONFIG_OFFS_DEVICE_NAME         0x0000 /*  32 bytes */
 #define CONFIG_OFFS_DEVICE_DISP_NAME    0x0020 /*  64 bytes */
 
 #define CONFIG_OFFS_ADMIN_PASSWORD      0x0060 /*  32 bytes */
 #define CONFIG_OFFS_NORMAL_PASSWORD     0x0080 /*  32 bytes */
 #define CONFIG_OFFS_VIEWONLY_PASSWORD   0x00A0 /*  32 bytes */
-                                               /* 0x00C0 - 0x13F: reserved */
-
+#define CONFIG_OFFS_PERI_BASE           0x00C0 /*  32 bytes */
 #define CONFIG_OFFS_TCP_PORT            0x0140 /*   2 bytes */
                                                /* 0x0142 - 0x0143: reserved */
 #define CONFIG_OFFS_DEVICE_FLAGS        0x0144 /*   4 bytes */
@@ -63,7 +60,10 @@
 #define CONFIG_OFFS_PORT_BASE           0x0200 /* 128 bytes for each of the maximum 32 supported ports */
 #define CONFIG_OFFS_STR_BASE            0x1200 /* 3584 bytes for strings pool */
 
-#define CONFIG_SIZE_STR                 0x0E00 /* 3584 bytes */
+#define CONFIG_STR_SIZE                 0x0E00 /* 3584 bytes */
+#define CONFIG_PORT_SIZE                0x0080 /*  128 bytes for each port */
+#define CONFIG_PERI_SIZE                0x20   /*   32 bytes for each peripheral */
+
 
 
 ICACHE_FLASH_ATTR void                  config_init(void);

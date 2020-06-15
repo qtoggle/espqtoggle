@@ -98,8 +98,8 @@ ICACHE_FLASH_ATTR json_t                  * api_delete_port(port_t *port, json_t
 ICACHE_FLASH_ATTR json_t                  * api_get_port_value(port_t *port, json_t *query_json, int *code);
 ICACHE_FLASH_ATTR json_t                  * api_patch_port_value(port_t *port, json_t *query_json, json_t *request_json,
                                                                  int *code);
-ICACHE_FLASH_ATTR json_t                  * api_patch_port_sequence(port_t *port, json_t *query_json, json_t *request_json,
-                                                                    int *code);
+ICACHE_FLASH_ATTR json_t                  * api_patch_port_sequence(port_t *port, json_t *query_json,
+                                                                    json_t *request_json, int *code);
 
 ICACHE_FLASH_ATTR json_t                  * api_get_webhooks(json_t *query_json, int *code);
 ICACHE_FLASH_ATTR json_t                  * api_patch_webhooks(json_t *query_json, json_t *request_json, int *code);
@@ -107,7 +107,10 @@ ICACHE_FLASH_ATTR json_t                  * api_patch_webhooks(json_t *query_jso
 ICACHE_FLASH_ATTR json_t                  * api_get_wifi(json_t *query_json, int *code);
 
 ICACHE_FLASH_ATTR json_t                  * api_get_raw_io(char *io, json_t *query_json, int *code);
-ICACHE_FLASH_ATTR json_t                  * api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int *code);
+ICACHE_FLASH_ATTR json_t                  * api_patch_raw_io(char *io, json_t *query_json, json_t *request_json,
+                                                             int *code);
+
+ICACHE_FLASH_ATTR json_t                  * api_patch_peripherals(json_t *query_json, json_t *request_json, int *code);
 
 ICACHE_FLASH_ATTR json_t                  * port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx);
 ICACHE_FLASH_ATTR json_t                  * device_to_json(void);
