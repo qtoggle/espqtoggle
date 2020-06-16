@@ -575,7 +575,7 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
                         json_obj_append(json, a->name, json_double_new(get_choice_value_num(a->choices[index])));
                     }
                     else {
-                        if (a->integer) {
+                        if (IS_ATTRDEF_INTEGER(a)) {
                             json_obj_append(json, a->name, json_int_new(((int_getter_t) a->get)(port, a)));
                         }
                         else { /* float */
@@ -1630,7 +1630,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
             key = a->name;
             child = json_obj_pop_key(request_json, key);
             if (child) {
-                if (!a->modifiable) {
+                if (!IS_ATTRDEF_MODIFIABLE(a)) {
                     json_free(child);
                     return ATTR_NOT_MODIFIABLE(key);
                 }
@@ -1653,14 +1653,15 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
 
                     case ATTR_TYPE_NUMBER: {
                         if (json_get_type(child) != JSON_TYPE_INT &&
-                            (json_get_type(child) != JSON_TYPE_DOUBLE || a->integer)) {
+                            (json_get_type(child) != JSON_TYPE_DOUBLE || IS_ATTRDEF_INTEGER(a))) {
+
                             json_free(child);
                             return INVALID_FIELD(key);
                         }
 
                         double value = json_get_type(child) == JSON_TYPE_INT ?
                                        json_int_get(child) : json_double_get(child);
-                        int idx = validate_num(value, a->min, a->max, a->integer, a->step, a->choices);
+                        int idx = validate_num(value, a->min, a->max, IS_ATTRDEF_INTEGER(a), a->step, a->choices);
                         if (!idx) {
                             json_free(child);
                             return INVALID_FIELD(key);
@@ -1670,7 +1671,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                             ((int_setter_t) a->set)(port, a, idx - 1);
                         }
                         else {
-                            if (a->integer) {
+                            if (IS_ATTRDEF_INTEGER(a)) {
                                 ((int_setter_t) a->set)(port, a, (int) value);
                             }
                             else { /* float */
@@ -2967,8 +2968,12 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
 
             attrdef_json = attrdef_to_json(a->display_name ? a->display_name : "",
                                            a->description ? a->description : "",
-                                           a->unit, a->type, a->modifiable,
-                                           a->min, a->max, a->integer, a->step, choices, a->reconnect);
+                                           a->unit, a->type,
+                                           IS_ATTRDEF_MODIFIABLE(a),
+                                           a->min, a->max,
+                                           IS_ATTRDEF_INTEGER(a),
+                                           a->step, choices,
+                                           IS_ATTRDEF_RECONNECT(a));
 
             /* If similar choices found, replace with $ref */
             if (found_attrdef_name) {

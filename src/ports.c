@@ -514,7 +514,7 @@ void port_load(port_t *port, uint8 *config_data) {
                             DEBUG_PORT(port, "%s set to choice %d", a->name, (int) a->def);
                         }
                         else {
-                            if (a->integer) {
+                            if (IS_ATTRDEF_INTEGER(a)) {
                                 ((int_setter_t) a->set)(port, a, (int) a->def);
                                 DEBUG_PORT(port, "%s set to %d", a->name, (int) a->def);
                             }

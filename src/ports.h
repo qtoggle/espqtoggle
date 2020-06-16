@@ -51,6 +51,14 @@
 #define ATTR_TYPE_NUMBER                    'N'
 #define ATTR_TYPE_STRING                    'S'
 
+#define ATTRDEF_FLAG_MODIFIABLE             0x00000001
+#define ATTRDEF_FLAG_INTEGER                0x00000002
+#define ATTRDEF_FLAG_RECONNECT              0x00000004
+
+#define IS_ATTRDEF_MODIFIABLE(a)            !!((a)->flags & ATTRDEF_FLAG_MODIFIABLE)
+#define IS_ATTRDEF_INTEGER(a)               !!((a)->flags & ATTRDEF_FLAG_INTEGER)
+#define IS_ATTRDEF_RECONNECT(a)             !!((a)->flags & ATTRDEF_FLAG_RECONNECT)
+
 #define ATTRDEF_GS_TYPE_CUSTOM              0
 #define ATTRDEF_GS_TYPE_EXTRA_DATA_1BU      1
 #define ATTRDEF_GS_TYPE_EXTRA_DATA_1BS      2
@@ -96,12 +104,12 @@
 #define PORT_SLOT_EXTRA0                    18
 #define PORT_SLOT_VIRTUAL0                  24
 
-#define IS_PORT_ENABLED(port)               ((port)->flags & PORT_FLAG_ENABLED)
-#define IS_PORT_WRITABLE(port)              ((port)->flags & PORT_FLAG_WRITABLE)
-#define IS_PORT_SET(port)                   ((port)->flags & PORT_FLAG_SET)
-#define IS_PORT_PERSISTED(port)             ((port)->flags & PORT_FLAG_PERSISTED)
-#define IS_PORT_INTERNAL(port)              ((port)->flags & PORT_FLAG_INTERNAL)
-#define IS_PORT_VIRTUAL(port)               ((port)->flags & PORT_FLAG_VIRTUAL_ACTIVE)
+#define IS_PORT_ENABLED(port)               !!((port)->flags & PORT_FLAG_ENABLED)
+#define IS_PORT_WRITABLE(port)              !!((port)->flags & PORT_FLAG_WRITABLE)
+#define IS_PORT_SET(port)                   !!((port)->flags & PORT_FLAG_SET)
+#define IS_PORT_PERSISTED(port)             !!((port)->flags & PORT_FLAG_PERSISTED)
+#define IS_PORT_INTERNAL(port)              !!((port)->flags & PORT_FLAG_INTERNAL)
+#define IS_PORT_VIRTUAL(port)               !!((port)->flags & PORT_FLAG_VIRTUAL_ACTIVE)
 
 #define CONFIG_OFFS_PORT_ID                 0x00    /*   4 bytes */
 #define CONFIG_OFFS_PORT_DISP_NAME          0x04    /*   4 bytes */
@@ -133,18 +141,17 @@ typedef struct attrdef {
     char          * description;
     char          * unit;
     char            type;
-    bool            modifiable;
+    uint32          flags;
     double          min;
     double          max;
+    double          step;
+    char         ** choices;
+
     union {
         double      def;
         bool        def_bool;
         char      * def_str;
     };
-    bool            integer;
-    double          step;
-    bool            reconnect;
-    char         ** choices;
 
     void          * get;
     void          * set;
@@ -162,11 +169,10 @@ typedef struct port {
     int8            slot;               /* Slot number */
     double          value;              /* Current value */
 
-    char            change_reason;      /* Last value change reason */
+    char            change_reason;      /* Last value-change reason */
     uint64          change_dep_mask;    /* Port change dependency mask */
 
-    int             aux;                /* Flag used internally for dependency loops & more */
-    int8            mapped;             /* Flag used for mapping (e.g. pwm channel) */
+    int             aux;                /* Member used internally for dependency loops & more */
     uint8           extra_data[PORT_PERSISTED_EXTRA_DATA_LEN];
     void          * extra_info;         /* In-memory extra state */
 
