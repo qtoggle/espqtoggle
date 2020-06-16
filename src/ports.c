@@ -998,14 +998,6 @@ void port_enable(port_t *port) {
         if (!IS_ENABLED(p)) {
             continue;
         }
-
-        if ((p->mutual_excl_mask & (1UL << port->slot)) || (port->mutual_excl_mask & (1UL << p->slot))) {
-            if (IS_ENABLED(p)) {
-                DEBUG_PORT(port, "mutually exclusive with %s", p->id);
-                port_disable(p);
-                event_push_port_update(p);
-            }
-        }
     }
 
     /* Rebuild expression */

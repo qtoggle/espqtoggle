@@ -175,7 +175,6 @@ typedef struct port {
 
     char            change_reason;      /* Last value change reason */
     uint64          change_dep_mask;    /* Port change dependency mask */
-    uint32          mutual_excl_mask;   /* Mask for ports that cannot be simultaneously enabled */
 
     int             aux;                /* Flag used internally for dependency loops & more */
     int8            mapped;             /* Flag used for mapping (e.g. pwm channel) */
