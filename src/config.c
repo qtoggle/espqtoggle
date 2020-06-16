@@ -36,7 +36,7 @@
 #include "core.h"
 #include "device.h"
 #include "events.h"
-#include "peri.h"
+#include "peripherals.h"
 #include "ports.h"
 #include "stringpool.h"
 #include "webhooks.h"
@@ -350,7 +350,7 @@ void config_init(void) {
 
     DEBUG_DEVICE("config model is \"%s\"", device_config_model);
 
-    peri_init(config_data);
+    peripherals_init(config_data);
     ports_init(config_data);
 
     /* At this point we no longer need the config data */
@@ -384,7 +384,7 @@ void config_save(void) {
     uint32 strings_offs = 1; /* Address 0 in strings pool represents an unset string, so it's left out */
 
     flashcfg_load(config_data, 0, 0);
-    peri_save(config_data);
+    peripherals_save(config_data, &strings_offs);
     ports_save(config_data, &strings_offs);
     device_save(config_data, &strings_offs);
     flashcfg_save(config_data);

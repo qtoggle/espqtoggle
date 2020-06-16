@@ -252,8 +252,8 @@ extern char       * esp8266_gpio_choices[];
 extern char       * esp8266_gpio_none_choices[];
 
 
-ICACHE_FLASH_ATTR void      ports_init(uint8 *data);
-ICACHE_FLASH_ATTR void      ports_save(uint8 *data, uint32 *strings_offs);
+ICACHE_FLASH_ATTR void      ports_init(uint8 *config_data);
+ICACHE_FLASH_ATTR void      ports_save(uint8 *config_data, uint32 *strings_offs);
 
 ICACHE_FLASH_ATTR bool      ports_slot_busy(uint8 slot);
 ICACHE_FLASH_ATTR int8      ports_next_slot(void);

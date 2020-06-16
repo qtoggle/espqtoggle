@@ -16,22 +16,15 @@
  *
  */
 
-#ifndef _PERI_GPIO_H
-#define _PERI_GPIO_H
+#ifndef _PERIPHERALS_GPIO_H
+#define _PERIPHERALS_GPIO_H
 
 #include <c_types.h>
 
-#include "peri.h"
+#include "peripherals.h"
 
 
-#ifdef _DEBUG_PERI_GPIO
-#define DEBUG_PERI_GPIO(port, f, ...)   DEBUG("[%-14s] " f, (port)->id, ##__VA_ARGS__)
-#else
-#define DEBUG_PERI_GPIO(...)            {}
-#endif
+extern peripheral_type_t peripheral_type_gpio;
 
 
-extern peri_class_t                     peri_class_gpio;
-
-
-#endif /* _PERI_GPIO_H */
+#endif /* _PERIPHERALS_GPIO_H */

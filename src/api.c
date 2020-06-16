@@ -50,7 +50,7 @@
 #include "core.h"
 #include "device.h"
 #include "jsonrefs.h"
-#include "peri.h"
+#include "peripherals.h"
 #include "ports.h"
 #include "sessions.h"
 #include "ver.h"
@@ -2695,24 +2695,30 @@ json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int
 json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = json_obj_new();
     json_t *peripheral_config;
-    json_t *class_json;
+    json_t *type_json;
     json_t *flags_json;
     json_t *params_json;
     json_t *port_ids_json;
     json_t *json;
 
-    int8 byte_param = 0;
-    uint8 byte_param_count = 0;
-    int32 long_param = 0;
-    uint8 long_param_count = 0;
-    peri_t peri;
+    uint16 type_id;
+    uint16 flags;
+    int8 byte_params[PERIPHERAL_MAX_BYTE_PARAMS];
+    int8 byte_param;
+    uint8 byte_param_count;
+    int32 long_params[PERIPHERAL_MAX_BYTE_PARAMS];
+    int32 long_param;
+    uint8 long_param_count;
+    int8 raw_params[PERIPHERAL_MAX_RAW_PARAMS];
+    uint8 raw_param_count;
     char **port_ids = NULL;
     uint8 port_ids_len = 0;
+
+    peripheral_t *peripheral;
 
     char *s;
     char hex[3] = {0, 0, 0};
     int i;
-
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
         return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
@@ -2722,7 +2728,7 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
         return API_ERROR(400, "invalid-request");
     }
 
-    if (json_list_get_len(request_json) > PERI_MAX_NUM) {
+    if (json_list_get_len(request_json) > PERIPHERAL_MAX_NUM) {
         return API_ERROR(400, "too-many-peripherals");
     }
 
@@ -2732,8 +2738,6 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
         if (IS_VIRTUAL(p)) {
             continue;
         }
-
-        event_push_port_remove(p);
 
         port_cleanup(p);
 
@@ -2750,35 +2754,39 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
         port_rebuild_change_dep_mask(p);
     }
 
-    peri_reset();
+    peripherals_clear();
 
     for (i = 0; i < json_list_get_len(request_json); i++) {
         peripheral_config = json_list_value_at(request_json, i);
+
+        flags = 0;
+        byte_param_count = 0;
+        long_param_count = 0;
+        raw_param_count = 0;
+        port_ids_len = 0;
 
         if (json_get_type(peripheral_config) != JSON_TYPE_OBJ) {
             return API_ERROR(400, "invalid-request");
         }
 
-        memset(&peri, 0, sizeof(peri_t));
-
-        /* Class */
-        class_json = json_obj_lookup_key(peripheral_config, "class");
-        if (!class_json || json_get_type(class_json) != JSON_TYPE_INT) {
-            return INVALID_FIELD("class");
+        /* Type */
+        type_json = json_obj_lookup_key(peripheral_config, "type");
+        if (!type_json || json_get_type(type_json) != JSON_TYPE_INT) {
+            return INVALID_FIELD("type");
         }
-        peri.class_id = json_int_get(class_json);
-        if (peri.class_id > PERI_MAX_CLASS_ID) {
-            return INVALID_FIELD("class");
+        type_id = json_int_get(type_json);
+        if (type_id > PERIPHERAL_MAX_TYPE_ID) {
+            return INVALID_FIELD("type");
         }
 
         /* Flags */
         flags_json = json_obj_lookup_key(peripheral_config, "flags");
         if (flags_json) {
             if (json_get_type(flags_json) == JSON_TYPE_STR) {
-                peri.flags = strtol(json_str_get(flags_json), NULL, 16);
+                flags = strtol(json_str_get(flags_json), NULL, 16);
             }
             else if (json_get_type(flags_json) == JSON_TYPE_INT) {
-                peri.flags = json_int_get(flags_json);
+                flags = json_int_get(flags_json);
             }
             else {
                 return INVALID_FIELD("flags");
@@ -2788,11 +2796,8 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
         /* Byte params */
         params_json = json_obj_lookup_key(peripheral_config, "byte_params");
         if (params_json) {
-            byte_param = 0;
-            byte_param_count = 0;
-
             if ((json_get_type(params_json) != JSON_TYPE_LIST) ||
-                (json_list_get_len(params_json) > PERI_MAX_BYTE_PARAMS)) {
+                (json_list_get_len(params_json) > PERIPHERAL_MAX_BYTE_PARAMS)) {
 
                 return INVALID_FIELD("byte_params");
             }
@@ -2808,19 +2813,16 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
                 else {
                     return INVALID_FIELD("byte_params");
                 }
-            }
 
-            peri.byte_params[byte_param_count++] = byte_param;
+                byte_params[byte_param_count++] = byte_param;
+            }
         }
 
         /* Long params */
         params_json = json_obj_lookup_key(peripheral_config, "long_params");
         if (params_json) {
-            long_param = 0;
-            long_param_count = 0;
-
             if ((json_get_type(params_json) != JSON_TYPE_LIST) ||
-                (json_list_get_len(params_json) > PERI_MAX_LONG_PARAMS)) {
+                (json_list_get_len(params_json) > PERIPHERAL_MAX_LONG_PARAMS)) {
 
                 return INVALID_FIELD("long_params");
             }
@@ -2836,9 +2838,9 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
                 else {
                     return INVALID_FIELD("long_params");
                 }
-            }
 
-            peri.long_params[long_param_count++] = long_param;
+                long_params[long_param_count++] = long_param;
+            }
         }
 
         /* Raw params */
@@ -2849,13 +2851,13 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
             }
 
             s = json_str_get(params_json);
-            if ((strlen(s) % 2) || (strlen(s) > PERI_MAX_RAW_PARAMS * 2)) {
+            if ((strlen(s) % 2) || (strlen(s) > PERIPHERAL_MAX_RAW_PARAMS * 2)) {
                 return INVALID_FIELD("raw_params");
             }
 
             for (i = 0; i < strlen(s) / 2; i++) {
                 memcpy(hex, s + i * 2, 2);
-                peri.raw_params[i] = strtol(hex, NULL, 16);
+                raw_params[raw_param_count++] = strtol(hex, NULL, 16);
             }
         }
 
@@ -2866,21 +2868,47 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
                 return INVALID_FIELD("port_ids");
             }
 
+            port_ids_len = json_list_get_len(port_ids_json);
+            port_ids = malloc(port_ids_len * sizeof(char *));
             for (i = 0; i < json_list_get_len(port_ids_json); i++) {
                 json = json_list_value_at(port_ids_json, i);
                 if (json_get_type(json) != JSON_TYPE_STR) {
+                    free(port_ids);
                     return INVALID_FIELD("port_ids");
                 }
 
-                port_ids = realloc(port_ids, (port_ids_len + 1) * sizeof(char *));
-                port_ids[port_ids_len++] = strdup(json_str_get(json));
+                port_ids[i] = strdup(json_str_get(json));
             }
         }
 
-        peri_register(&peri, port_ids, port_ids_len);
+        /* Create the peripheral & its ports */
+        peripheral = zalloc(sizeof(peripheral_t));
+        peripheral->index = i;
+
+        peripheral_register(peripheral);
+
+        peripheral->type_id = type_id;
+        peripheral->flags = flags;
+
+        if (byte_param_count) {
+            memcpy(peripheral->byte_params, byte_params, byte_param_count);
+        }
+        if (long_param_count) {
+            memcpy(peripheral->long_params, long_params, long_param_count);
+        }
+        if (raw_param_count) {
+            memcpy(peripheral->raw_params, raw_params, raw_param_count);
+        }
+
+        peripheral_make_ports(peripheral, port_ids, port_ids_len);
+
+        free(port_ids);
+        port_ids = NULL;
     }
 
     config_mark_for_saving();
+
+    event_push_full_update();
 
     return response_json;
 }

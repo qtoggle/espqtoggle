@@ -29,7 +29,7 @@
 #define CONFIG_OFFS_ADMIN_PASSWORD      0x0060 /*  32 bytes */
 #define CONFIG_OFFS_NORMAL_PASSWORD     0x0080 /*  32 bytes */
 #define CONFIG_OFFS_VIEWONLY_PASSWORD   0x00A0 /*  32 bytes */
-#define CONFIG_OFFS_PERI_BASE           0x00C0 /*  32 bytes */
+#define CONFIG_OFFS_PERIPHERALS_BASE    0x00C0 /*  32 bytes */
 #define CONFIG_OFFS_TCP_PORT            0x0140 /*   2 bytes */
                                                /* 0x0142 - 0x0143: reserved */
 #define CONFIG_OFFS_DEVICE_FLAGS        0x0144 /*   4 bytes */
@@ -62,7 +62,7 @@
 
 #define CONFIG_STR_SIZE                 0x0E00 /* 3584 bytes */
 #define CONFIG_PORT_SIZE                0x0080 /*  128 bytes for each port */
-#define CONFIG_PERI_SIZE                0x20   /*   32 bytes for each peripheral */
+#define CONFIG_PERIPHERAL_SIZE          0x20   /*   32 bytes for each peripheral */
 
 
 

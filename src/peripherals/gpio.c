@@ -23,10 +23,17 @@
 #include "espgoodies/gpio.h"
 
 #include "common.h"
-#include "peri.h"
+#include "peripherals.h"
 #include "ports.h"
 
-#include "peri/gpio.h"
+#include "peripherals/gpio.h"
+
+
+#ifdef _DEBUG_PERIPHERAL_GPIO
+#define DEBUG_GPIO(port, f, ...)   DEBUG("[%-14s] " f, (port)->id, ##__VA_ARGS__)
+#else
+#define DEBUG_GPIO(...)            {}
+#endif
 
 
 #define FLAG_OUTPUT                 0
@@ -38,10 +45,10 @@ ICACHE_FLASH_ATTR static double     read_value(port_t *port);
 ICACHE_FLASH_ATTR static bool       write_value(port_t *port, double value);
 ICACHE_FLASH_ATTR static void       configure(port_t *port); // TODO needed?
 
-ICACHE_FLASH_ATTR static void       make_ports(peri_t *peri, port_t **ports, uint8 *ports_len);
+ICACHE_FLASH_ATTR static void       make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len);
 
 
-peri_class_t peri_class_gpio = {
+peripheral_type_t peripheral_type_gpio = {
 
     .make_ports = make_ports
 
@@ -57,7 +64,7 @@ double read_value(port_t *port) {
 }
 
 bool write_value(port_t *port, double value) {
-    DEBUG_PERI_GPIO(port, "writing %d", !!value);
+    DEBUG_GPIO(port, "writing %d", !!value);
     gpio_write_value(port->slot, (int) value);  // TODO use extra info to store pin
 
     //set_output_value(port, value); // TODO use buffered value in extra info or something
@@ -69,27 +76,27 @@ void configure(port_t *port) {
     bool value;
     if (port->slot == 16) {
         if (IS_PULL_DOWN(port)) {
-            DEBUG_PERI_GPIO(port, "pull-down enabled");
+            DEBUG_GPIO(port, "pull-down enabled");
             value = FALSE;
         }
         else {
-            DEBUG_PERI_GPIO(port, "pull-down disabled");
+            DEBUG_GPIO(port, "pull-down disabled");
             value = TRUE;
         }
     }
     else {
         if (IS_PULL_UP(port)) {
-            DEBUG_PERI_GPIO(port, "pull-up enabled");
+            DEBUG_GPIO(port, "pull-up enabled");
             value = TRUE;
         }
         else {
-            DEBUG_PERI_GPIO(port, "pull-up disabled");
+            DEBUG_GPIO(port, "pull-up disabled");
             value = FALSE;
         }
     }
 
     if (IS_OUTPUT(port)) {
-        DEBUG_PERI_GPIO(port, "output enabled");
+        DEBUG_GPIO(port, "output enabled");
 
         /* Set initial value to current GPIO value */
         value = gpio_read_value(port->slot);
@@ -98,17 +105,17 @@ void configure(port_t *port) {
         //set_output_value(port, value);
     }
     else {
-        DEBUG_PERI_GPIO(port, "output disabled");
+        DEBUG_GPIO(port, "output disabled");
         gpio_configure_input(port->slot, value);
     }
 }
 
 
-void make_ports(peri_t *peri, port_t **ports, uint8 *ports_len) {
-    uint8 pin = PERI_BYTE_PARAM(peri, 0);
-    bool output = PERI_FLAG(peri, FLAG_OUTPUT);
-    bool pull_up = PERI_FLAG(peri, FLAG_PULL_UP);
-    bool pull_down = PERI_FLAG(peri, FLAG_PULL_DOWN);
+void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
+    uint8 pin = PERIPHERAL_BYTE_PARAM(peripheral, 0);
+    bool output = PERIPHERAL_FLAG(peripheral, FLAG_OUTPUT);
+    bool pull_up = PERIPHERAL_FLAG(peripheral, FLAG_PULL_UP);
+    bool pull_down = PERIPHERAL_FLAG(peripheral, FLAG_PULL_DOWN);
 
     port_t *port = zalloc(sizeof(port_t));
 

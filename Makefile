@@ -2,7 +2,7 @@
 DEBUG ?= true
 DEBUG_FLAGS ?= battery dnsserver flashcfg gpio html httpclient \
                httpserver ota rtc sleep system tcpserver wifi \
-               peri api core device espqtclient expr ports events sessions virtual webhooks \
+               peripherals api core device espqtclient expr ports events sessions virtual webhooks \
                adc gpiop pwm uart hspi dallastemp dht v9821 bl0940 hlw8012 sht kr102
 DEBUG_IP ?= # 192.168.0.1
 DEBUG_PORT ?= 48879
@@ -121,7 +121,7 @@ APP = espqtoggle
 SRC_MAIN_DIR = src
 SRC_ESPGOODIES_DIR = src/espgoodies
 SRC_PORTS_DIR = src/ports
-SRC_PERI_DIR = src/peri
+SRC_PERIPERALS_DIR = src/peripherals
 SRC_DRIVERS_DIR = src/drivers
 SRC_EXTRA_PORT_DRIVERS_DIR = src/extra
 SRC_EXTERNAL_PORT_DRIVERS_DIR = $(EXTERNAL_PORT_DRIVERS_DIR)
@@ -201,7 +201,7 @@ LIB := $(addprefix -l,$(LIB))
 SRC_MAIN_FILES =                  $(wildcard $(SRC_MAIN_DIR)/*.c)
 SRC_ESPGOODIES_FILES =            $(wildcard $(SRC_ESPGOODIES_DIR)/*.c)
 SRC_PORT_FILES =                  $(wildcard $(SRC_PORTS_DIR)/*.c)
-SRC_PERI_FILES =                  $(wildcard $(SRC_PERI_DIR)/*.c)
+SRC_PERIPHERALS_FILES =           $(wildcard $(SRC_PERIPHERALS_DIR)/*.c)
 SRC_DRIVERS_FILES =               $(wildcard $(SRC_DRIVERS_DIR)/*.c)
 SRC_EXTERNAL_DRIVERS_FILES =      $(wildcard $(SRC_EXTERNAL_DRIVERS_DIR)/*.c)
 SRC_EXTRA_PORT_DRIVERS_FILES =    $(foreach p,$(EXTRA_PORT_DRIVERS),$(SRC_EXTRA_PORT_DRIVERS_DIR)/$(p).c)
@@ -210,7 +210,7 @@ SRC_EXTERNAL_PORT_DRIVERS_FILES = $(foreach p,$(EXTERNAL_PORT_DRIVERS),$(SRC_EXT
 OBJ_FILES = $(SRC_MAIN_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
             $(SRC_ESPGOODIES_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
             $(SRC_PORT_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
-            $(SRC_PERI_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
+            $(SRC_PERIPHERALS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
             $(SRC_DRIVERS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
             $(SRC_EXTERNAL_DRIVERS_FILES:$(SRC_EXTERNAL_DRIVERS_DIR)/%.c=$(BUILD_DIR)/external/drivers/%.o) \
             $(SRC_EXTRA_PORT_DRIVERS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
