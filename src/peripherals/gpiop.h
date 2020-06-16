@@ -16,21 +16,24 @@
  *
  */
 
-#ifndef _EXTRA_DHT_H
-#define _EXTRA_DHT_H
+#ifndef _PERIPHERALS_GPIO_H
+#define _PERIPHERALS_GPIO_H
 
-#include <ets_sys.h>
+#include <c_types.h>
 
-#include "ports.h"
+#include "peripherals.h"
 
 
-#ifdef _DEBUG_DHT
-#define DEBUG_DHT(port, f, ...)     DEBUG("[dht.%-10s] " f, (port)->id, ##__VA_ARGS__)
+#ifdef _DEBUG_GPIOP
+#define DEBUG_GPIO_PORT             DEBUG_PORT
+#define DEBUG_GPIO_PERI             DEBUG_PERI
 #else
-#define DEBUG_DHT(...)              {}
+#define DEBUG_GPIO_PORT(...)        {}
+#define DEBUG_GPIO_PERI(...)        {}
 #endif
 
-ICACHE_FLASH_ATTR void              dht_init_ports(void);
+
+extern peripheral_type_t peripheral_type_gpio;
 
 
-#endif /* _EXTRA_DHT_H */
+#endif /* _PERIPHERALS_GPIO_H */

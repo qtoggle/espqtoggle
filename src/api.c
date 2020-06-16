@@ -54,6 +54,7 @@
 #include "ports.h"
 #include "sessions.h"
 #include "ver.h"
+#include "virtual.h"
 #include "webhooks.h"
 #include "api.h"
 #include "apiutils.h"

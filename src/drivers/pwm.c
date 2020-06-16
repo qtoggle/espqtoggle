@@ -125,7 +125,7 @@ static void pwm_intr_handler(void)
 
 	do {
 		// force write to GPIO registers on each loop
-		asm volatile ("" : : : "memory");
+		__asm__ __volatile__ ("" : : : "memory");
 
 		gpio->out_w1ts = (uint32)(pwm_state.current_set[pwm_state.current_phase].on_mask);
 		gpio->out_w1tc = (uint32)(pwm_state.current_set[pwm_state.current_phase].off_mask);
@@ -147,7 +147,7 @@ static void pwm_intr_handler(void)
 			do {
 				ticks -= 1;
 				// stop compiler from optimizing delay loop to noop
-				asm volatile ("" : : : "memory");
+				__asm__ __volatile__ ("" : : : "memory");
 			} while (ticks > 0);
 		}
 

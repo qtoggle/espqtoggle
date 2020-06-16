@@ -28,7 +28,7 @@
 
 
 #ifdef _DEBUG_PERIPHERALS
-#define DEBUG_PERIPHERALS(fmt, ...)       DEBUG("[peripherals   ] " fmt, ##__VA_ARGS__) // TODO needed?
+#define DEBUG_PERIPHERALS(fmt, ...)       DEBUG("[peripherals   ] " fmt, ##__VA_ARGS__)
 #define DEBUG_PERIPHERAL(p, fmt, ...)     DEBUG("[peripheral%d  ] " fmt, (p)->index, ##__VA_ARGS__)
 #else
 #define DEBUG_PERIPHERALS(...)            {}

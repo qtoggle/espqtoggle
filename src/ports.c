@@ -32,11 +32,14 @@
 #include "config.h"
 #include "core.h"
 #include "events.h"
-#include "ports.h"
 #include "stringpool.h"
+#include "virtual.h"
+#include "ports.h"
 
 
 port_t                           ** all_ports = NULL;
+
+// TODO needed?
 char                              * all_gpio_choices[] = {"0:GPIO0", "1:GPIO1", "2:GPIO2", "3:GPIO3", "4:GPIO4",
                                                           "5:GPIO5", "6:GPIO6", "7:GPIO7", "8:GPIO8", "9:GPIO9",
                                                           "10:GPIO10", "11:GPIO11", "12:GPIO12", "13:GPIO13",
@@ -424,7 +427,7 @@ void port_load(port_t *port, uint8 *config_data) {
     if (!port->max_sampling_interval) {
         port->max_sampling_interval = PORT_MAX_SAMP_INT;
     }
-    port->last_sample_time = -LONG_LONG_MAX;
+    port->last_sample_time = -LLONG_MAX;
 
     DEBUG_PORT(port, "sampling_interval = %d ms", port->sampling_interval);
 
@@ -432,7 +435,7 @@ void port_load(port_t *port, uint8 *config_data) {
     if (!port->heart_beat_interval) {
         port->heart_beat_interval = PORT_DEF_HEART_BEAT_INT;
     }
-    port->last_heart_beat_time = -LONG_LONG_MAX;
+    port->last_heart_beat_time = -LLONG_MAX;
 
     DEBUG_PORT(port, "heart_beat_interval = %d ms", port->heart_beat_interval);
 
@@ -675,28 +678,8 @@ void ports_init(uint8 *config_data) {
     all_ports = malloc(sizeof(port_t *));
     all_ports[0] = NULL;
 
-#ifdef HAS_GPIO
-    gpio_init_ports();
-#endif
-
-#ifdef HAS_PWM
-    pwm_init_ports();
-#endif
-
-#ifdef HAS_ADC
-    adc_init_ports();
-#endif
-
 #ifdef HAS_VIRTUAL
     virtual_ports_init(config_data);
-#endif
-
-#ifdef _INIT_EXTRA_PORT_DRIVERS
-    _INIT_EXTRA_PORT_DRIVERS
-#endif
-
-#ifdef _INIT_EXTERNAL_PORT_DRIVERS
-    _INIT_EXTERNAL_PORT_DRIVERS
 #endif
 
     /* Load port data */

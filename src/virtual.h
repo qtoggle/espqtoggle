@@ -16,32 +16,27 @@
  *
  */
 
-#ifndef _PORTS_ADC_H
-#define _PORTS_ADC_H
+#ifndef _VIRTUAL_H
+#define _VIRTUAL_H
 
 #include <c_types.h>
 
 #include "ports.h"
 
+#define VIRTUAL_MAX_PORTS           8
 
-#if defined(HAS_ADC0)
-#define HAS_ADC
-#endif
-
-
-#ifdef _DEBUG_ADC
-#define DEBUG_ADC(port, f, ...) DEBUG("[%-14s] " f, (port)->id, ##__VA_ARGS__)
+#ifdef _DEBUG_VIRTUAL
+#define DEBUG_VIRTUAL(fmt, ...)     DEBUG("[virtual       ] " fmt, ##__VA_ARGS__)
 #else
-#define DEBUG_ADC(...)          {}
+#define DEBUG_VIRTUAL(...)          {}
 #endif
 
 
-#ifdef HAS_ADC0
-extern port_t *                 adc0;
-#endif
+ICACHE_FLASH_ATTR void              virtual_ports_init(uint8 *data);
+ICACHE_FLASH_ATTR void              virtual_ports_save(uint8 *data, uint32 *strings_offs);
+ICACHE_FLASH_ATTR int8              virtual_find_unused_slot(bool occupy);
+ICACHE_FLASH_ATTR bool              virtual_port_register(port_t *port);
+ICACHE_FLASH_ATTR bool              virtual_port_unregister(port_t *port);
 
 
-ICACHE_FLASH_ATTR void          adc_init_ports(void);
-
-
-#endif  /* _PORTS_ADC_H */
+#endif  /* _VIRTUAL_H */

@@ -17,6 +17,8 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
+#include <strings.h> /* for strcasecmp */
 #include <mem.h>
 #include <c_types.h>
 #include <user_interface.h>

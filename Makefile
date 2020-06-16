@@ -3,7 +3,8 @@ DEBUG ?= true
 DEBUG_FLAGS ?= battery dnsserver flashcfg gpio html httpclient \
                httpserver ota rtc sleep system tcpserver wifi \
                peripherals api core device espqtclient expr ports events sessions virtual webhooks \
-               adc gpiop pwm uart hspi dallastemp dht v9821 bl0940 hlw8012 sht kr102
+               adc pwm uart hspi \
+               gpiop dallastemp dht v9821 bl0940 hlw8012 sht kr102
 DEBUG_IP ?= # 192.168.0.1
 DEBUG_PORT ?= 48879
 DEBUG_UART_NO ?= 0
@@ -12,13 +13,6 @@ OTA     ?= true
 SSL     ?= false
 SLEEP   ?= false
 VIRTUAL ?= true
-
-PORTS ?= # gpio0 gpio2 gpio4 gpio5 gpio12 gpio13 gpio14 gpio15 adc0 pwm0
-EXTRA_PORT_DRIVERS ?=
-EXTERNAL_PORT_DRIVERS ?=
-EXTERNAL_PORT_DRIVERS_DIR ?=
-EXTERNAL_DRIVERS_DIR ?=
-PORT_ID_MAPPINGS ?= # gpio0:mygpio adc0:myadc
 
 BATTERY ?= false
 BATTERY_DIV_FACTOR ?= 0.166 # 200k / (1000k + 200k)
@@ -120,12 +114,8 @@ endif
 APP = espqtoggle
 SRC_MAIN_DIR = src
 SRC_ESPGOODIES_DIR = src/espgoodies
-SRC_PORTS_DIR = src/ports
-SRC_PERIPERALS_DIR = src/peripherals
 SRC_DRIVERS_DIR = src/drivers
-SRC_EXTRA_PORT_DRIVERS_DIR = src/extra
-SRC_EXTERNAL_PORT_DRIVERS_DIR = $(EXTERNAL_PORT_DRIVERS_DIR)
-SRC_EXTERNAL_DRIVERS_DIR = $(EXTERNAL_DRIVERS_DIR)
+SRC_PERIPHERALS_DIR = src/peripherals
 BUILD_DIR = build
 INIT_DATA_FILES = esp_init_data_default.bin
 
@@ -135,7 +125,7 @@ CFLAGS += -Wpointer-arith -Wall -Wl,-EL -fno-inline-functions -nostdlib -mlongca
           -ffunction-sections -fdata-sections -mforce-l32 -Wmissing-prototypes -fno-builtin-printf \
           -fno-guess-branch-probability -freorder-blocks-and-partition -fno-cse-follow-jumps \
           -D__ets__ -DICACHE_FLASH -DUSE_OPTIMIZE_PRINTF -DFLASH_CONFIG_ADDR=$(FLASH_CONFIG_ADDR) \
-          -Os -O2
+          -Os -O2 -std=c99
 LDFLAGS	= -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static -L$(SDK_BASE)/lib -Wl,--gc-sections -Os -O2
 
 ifneq ($(DEBUG),true)
@@ -198,42 +188,19 @@ endif
 INC := $(addprefix -I,$(INC))
 LIB := $(addprefix -l,$(LIB))
 
-SRC_MAIN_FILES =                  $(wildcard $(SRC_MAIN_DIR)/*.c)
-SRC_ESPGOODIES_FILES =            $(wildcard $(SRC_ESPGOODIES_DIR)/*.c)
-SRC_PORT_FILES =                  $(wildcard $(SRC_PORTS_DIR)/*.c)
-SRC_PERIPHERALS_FILES =           $(wildcard $(SRC_PERIPHERALS_DIR)/*.c)
-SRC_DRIVERS_FILES =               $(wildcard $(SRC_DRIVERS_DIR)/*.c)
-SRC_EXTERNAL_DRIVERS_FILES =      $(wildcard $(SRC_EXTERNAL_DRIVERS_DIR)/*.c)
-SRC_EXTRA_PORT_DRIVERS_FILES =    $(foreach p,$(EXTRA_PORT_DRIVERS),$(SRC_EXTRA_PORT_DRIVERS_DIR)/$(p).c)
-SRC_EXTERNAL_PORT_DRIVERS_FILES = $(foreach p,$(EXTERNAL_PORT_DRIVERS),$(SRC_EXTERNAL_PORT_DRIVERS_DIR)/$(p).c)
+SRC_MAIN_FILES =        $(wildcard $(SRC_MAIN_DIR)/*.c)
+SRC_ESPGOODIES_FILES =  $(wildcard $(SRC_ESPGOODIES_DIR)/*.c)
+SRC_DRIVERS_FILES =     $(wildcard $(SRC_DRIVERS_DIR)/*.c)
+SRC_PERIPHERALS_FILES = $(wildcard $(SRC_PERIPHERALS_DIR)/*.c)
 
 OBJ_FILES = $(SRC_MAIN_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
             $(SRC_ESPGOODIES_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
-            $(SRC_PORT_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
-            $(SRC_PERIPHERALS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
             $(SRC_DRIVERS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
-            $(SRC_EXTERNAL_DRIVERS_FILES:$(SRC_EXTERNAL_DRIVERS_DIR)/%.c=$(BUILD_DIR)/external/drivers/%.o) \
-            $(SRC_EXTRA_PORT_DRIVERS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
-            $(SRC_EXTERNAL_PORT_DRIVERS_FILES:$(SRC_EXTERNAL_PORT_DRIVERS_DIR)/%.c=$(BUILD_DIR)/external/ports/%.o)
+            $(SRC_PERIPHERALS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o)
             
 INIT_DATA_FILES := $(foreach f,$(INIT_DATA_FILES),$(SDK_BASE)/bin/$(f))
 
 VPATH = $(SRC_MAIN_DIR)
-
-ifneq ($(EXTRA_PORT_DRIVERS),)
-    INCLUDE_EXTRA_PORT_DRIVERS = $(foreach p,$(EXTRA_PORT_DRIVERS),-include $(SRC_EXTRA_PORT_DRIVERS_DIR)/$(p).h)
-    INIT_EXTRA_PORT_DRIVERS = $(foreach p,$(EXTRA_PORT_DRIVERS),$(p)_init_ports();)
-    CFLAGS += -D_INIT_EXTRA_PORT_DRIVERS="$(INIT_EXTRA_PORT_DRIVERS)"
-    CFLAGS += $(addprefix -DHAS_,$(shell echo $(EXTRA_PORT_DRIVERS) | tr a-z A-Z))
-endif
-
-ifneq ($(EXTERNAL_PORT_DRIVERS),)
-    INCLUDE_EXTERNAL_PORT_DRIVERS = $(foreach p,$(EXTERNAL_PORT_DRIVERS),\
-    								  -include $(SRC_EXTERNAL_PORT_DRIVERS_DIR)/$(p).h)
-    INIT_EXTERNAL_PORT_DRIVERS = $(foreach p,$(EXTERNAL_PORT_DRIVERS),$(p)_init_ports();)
-    CFLAGS += -D_INIT_EXTERNAL_PORT_DRIVERS="$(INIT_EXTERNAL_PORT_DRIVERS)"
-    CFLAGS += $(addprefix -DHAS_,$(shell echo $(EXTERNAL_PORT_DRIVERS) | tr a-z A-Z))
-endif
 
 ifeq ($(DEBUG), true)
     CFLAGS += -D_DEBUG
@@ -244,25 +211,8 @@ ifneq ($(DEBUG_IP),)
 endif
 endif
 
-# define HAS_<PORT>
-CFLAGS += $(addprefix -DHAS_,$(shell echo $(PORTS) | tr a-z A-Z))
-
 # define _DEBUG_<FLAG>
 CFLAGS += $(addprefix -D_DEBUG_,$(shell echo $(DEBUG_FLAGS) | tr a-z A-Z))
-
-# define <PORT>_ID="<id>" from mappings
-CFLAGS += $(foreach m,$(PORT_ID_MAPPINGS),-D$(shell \
-    m=$$(echo $(m) | tr ':' ' '); parts=($${m}); \
-    name=$$(echo $${parts[0]} | tr a-z A-Z); id=$${parts[1]}; \
-    echo $${name}_ID=\\\"$${id}\\\"; \
-))
-
-# define <PORT>_ID="<id>" defaults
-CFLAGS += $(foreach p,$(PORTS),$(shell \
-    if ! [[ "$(PORT_ID_MAPPINGS)" =~ $(p): ]]; then \
-        echo -D$$(echo $(p) | tr a-z A-Z)_ID=\\\"$(p)\\\"; \
-    fi \
-))
 
 # define init data hex content
 INIT_DATA_HEX_DEF = $(foreach f,$(INIT_DATA_FILES),$(shell \
@@ -321,12 +271,6 @@ buildinfo:
 	$(vecho) " *" BATTERY_DIV_FACTOR = $(BATTERY_DIV_FACTOR)
 	$(vecho) " *" BATTERY_VOLT = $(BATTERY_VOLT_0) $(BATTERY_VOLT_20) $(BATTERY_VOLT_40) \
 								 $(BATTERY_VOLT_60) $(BATTERY_VOLT_80) $(BATTERY_VOLT_100)
-	$(vecho) " *" PORTS = $(PORTS)
-	$(vecho) " *" EXTRA_PORT_DRIVERS = $(EXTRA_PORT_DRIVERS)
-	$(vecho) " *" EXTERNAL_PORT_DRIVERS = $(EXTERNAL_PORT_DRIVERS)
-	$(vecho) " *" EXTERNAL_PORT_DRIVERS_DIR = $(EXTERNAL_PORT_DRIVERS_DIR)
-	$(vecho) " *" EXTERNAL_DRIVERS_DIR = $(EXTERNAL_DRIVERS_DIR)
-	$(vecho) " *" PORT_ID_MAPPINGS = $(PORT_ID_MAPPINGS)
 	$(vecho) " *" SETUP_MODE_PORT = $(SETUP_MODE_PORT)
 	$(vecho) " *" SETUP_MODE_LEVEL = $(SETUP_MODE_LEVEL)
 	$(vecho) " *" SETUP_MODE_LED_PORT = $(SETUP_MODE_LED_PORT)
@@ -347,21 +291,6 @@ $(BUILD_DIR)/%.o: %.c
 	$(vecho) "CC $<"
 	@$(MD) -p $(@D)
 	$(Q) $(CC) $(INC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/ports.o: ports.c
-	$(vecho) "CC $<"
-	@$(MD) -p $(@D)
-	$(Q) $(CC) $(INC) $(CFLAGS) $(INCLUDE_EXTRA_PORT_DRIVERS) $(INCLUDE_EXTERNAL_PORT_DRIVERS) -c $< -o $@
-
-$(BUILD_DIR)/external/ports/%.o: $(SRC_EXTERNAL_PORT_DRIVERS_DIR)/%.c
-	$(vecho) "CC $<"
-	@$(MD) -p $(@D)
-	$(Q) $(CC) $(INC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/external/drivers/%.o: $(SRC_EXTERNAL_DRIVERS_DIR)/%.c
-	$(vecho) "CC $<"
-	@$(MD) -p $(@D)
-	$(Q) $(CC) $(INC) $(CFLAGS) $(INCLUDE_EXTRA_PORT_DRIVERS) $(INCLUDE_EXTERNAL_PORT_DRIVERS) -c $< -o $@
 
 $(BUILD_DIR)/espgoodies/initdata.o: espgoodies/initdata.c
 	$(vecho) "CC $<"

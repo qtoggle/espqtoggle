@@ -25,7 +25,7 @@
 #include "config.h"
 #include "peripherals.h"
 
-#include "peripherals/gpio.h"
+#include "peripherals/gpiop.h"
 
 
 static peripheral_type_t *all_peripheral_types[] = {

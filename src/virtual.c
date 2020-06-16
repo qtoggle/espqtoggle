@@ -29,7 +29,7 @@
 #include "common.h"
 #include "config.h"
 #include "stringpool.h"
-#include "ports/virtual.h"
+#include "virtual.h"
 
 
 #ifdef HAS_VIRTUAL

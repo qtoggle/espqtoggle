@@ -272,8 +272,4 @@ ICACHE_FLASH_ATTR void      port_disable(port_t *port);
 ICACHE_FLASH_ATTR void      port_configure(port_t *port);
 
 
-#include "ports/adc.h"
-#include "ports/pwm.h"
-#include "ports/virtual.h"
-
 #endif  /* _PORTS_H */
