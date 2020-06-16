@@ -302,7 +302,7 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
                 if (method == HTTP_METHOD_PATCH) {
                     response_json = api_patch_port(port, query_json, request_json, code);
                 }
-#ifdef HAS_VIRTUAL
+#ifdef _VIRTUAL
                 else if (method == HTTP_METHOD_DELETE) {
                     response_json = api_delete_port(port, query_json, code);
                 }
@@ -316,7 +316,7 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
             if (method == HTTP_METHOD_GET) {
                 response_json = api_get_ports(query_json, code);
             }
-#ifdef HAS_VIRTUAL
+#ifdef _VIRTUAL
             else if (method == HTTP_METHOD_POST) {
                 response_json = api_post_ports( query_json, request_json, code);
             }
@@ -462,12 +462,12 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
 
     json_obj_append(json, "id", json_str_new(port->id));
     json_obj_append(json, "display_name", json_str_new(port->display_name ? port->display_name : ""));
-    json_obj_append(json, "writable", json_bool_new(IS_OUTPUT(port)));
-    json_obj_append(json, "enabled", json_bool_new(IS_ENABLED(port)));
-    json_obj_append(json, "persisted", json_bool_new(IS_PERSISTED(port)));
-    json_obj_append(json, "internal", json_bool_new(IS_INTERNAL(port)));
+    json_obj_append(json, "enabled", json_bool_new(IS_PORT_ENABLED(port)));
+    json_obj_append(json, "writable", json_bool_new(IS_PORT_WRITABLE(port)));
+    json_obj_append(json, "persisted", json_bool_new(IS_PORT_PERSISTED(port)));
+    json_obj_append(json, "internal", json_bool_new(IS_PORT_INTERNAL(port)));
 
-    if (IS_VIRTUAL(port)) {
+    if (IS_PORT_VIRTUAL(port)) {
         json_obj_append(json, "virtual", json_bool_new(TRUE));
     }
     else {
@@ -542,7 +542,7 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
     }
 
     /* Specific to output ports */
-    if (IS_OUTPUT(port)) {
+    if (IS_PORT_WRITABLE(port)) {
         if (port->sexpr) {
             json_obj_append(json, "expression", json_str_new(port->sexpr));
         }
@@ -662,7 +662,7 @@ json_t *device_to_json(void) {
     /* Various optional attributes */
     json_obj_append(json, "uptime", json_int_new(system_uptime()));
 
-#ifdef HAS_VIRTUAL
+#ifdef _VIRTUAL
     json_obj_append(json, "virtual_ports", json_int_new(VIRTUAL_MAX_PORTS));
 #endif
 
@@ -1613,10 +1613,10 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
             return INVALID_FIELD(key);
         }
 
-        if (json_bool_get(child) && !IS_ENABLED(port)) {
+        if (json_bool_get(child) && !IS_PORT_ENABLED(port)) {
             port_enable(port);
         }
-        else if (!json_bool_get(child) && IS_ENABLED(port)) {
+        else if (!json_bool_get(child) && IS_PORT_ENABLED(port)) {
             port_disable(port);
         }
 
@@ -1745,7 +1745,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
 
             DEBUG_PORT(port, "unit set to \"%s\"", port->unit ? port->unit : "");
         }
-        else if (IS_OUTPUT(port) && !strcmp(key, "expression")) {
+        else if (IS_PORT_WRITABLE(port) && !strcmp(key, "expression")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
                 return INVALID_FIELD(key);
             }
@@ -1785,7 +1785,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
 
                 port->sexpr = strdup(sexpr);
 
-                if (IS_ENABLED(port)) {
+                if (IS_PORT_ENABLED(port)) {
                     port->expr = expr;
                     port_rebuild_change_dep_mask(port);
                 }
@@ -1797,7 +1797,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
             DEBUG_PORT(port, "expression set to \"%s\"", port->sexpr ? port->sexpr : "");
             update_port_expression(port);
         }
-        else if (IS_OUTPUT(port) && !strcmp(key, "transform_write")) {
+        else if (IS_PORT_WRITABLE(port) && !strcmp(key, "transform_write")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
                 return INVALID_FIELD(key);
             }
@@ -1949,7 +1949,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 DEBUG_PORT(port, "internal disabled");
             }
         }
-        else if (!IS_VIRTUAL(port) && !strcmp(key, "sampling_interval")) {
+        else if (!IS_PORT_VIRTUAL(port) && !strcmp(key, "sampling_interval")) {
             if (json_get_type(child) != JSON_TYPE_INT) {
                 return INVALID_FIELD(key);
             }
@@ -1982,7 +1982,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
         }
     }
     
-    if (IS_ENABLED(port)) {
+    if (IS_PORT_ENABLED(port)) {
         port_configure(port);
     }
 
@@ -2007,7 +2007,7 @@ json_t *api_delete_port(port_t *port, json_t *query_json, int *code) {
         return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
     }
 
-    if (!IS_VIRTUAL(port)) {
+    if (!IS_PORT_VIRTUAL(port)) {
         return API_ERROR(400, "port-not-removable");  /* Can't unregister a non-virtual port */
     }
 
@@ -2062,11 +2062,11 @@ json_t *api_patch_port_value(port_t *port, json_t *query_json, json_t *request_j
         return FORBIDDEN(API_ACCESS_LEVEL_NORMAL);
     }
 
-    if (!IS_ENABLED(port)) {
+    if (!IS_PORT_ENABLED(port)) {
         return API_ERROR(400, "port-disabled");
     }
 
-    if (!IS_OUTPUT(port)) {
+    if (!IS_PORT_WRITABLE(port)) {
         return API_ERROR(400, "read-only-port");
     }
 
@@ -2110,11 +2110,11 @@ json_t *api_patch_port_sequence(port_t *port, json_t *query_json, json_t *reques
         return FORBIDDEN(API_ACCESS_LEVEL_NORMAL);
     }
 
-    if (!IS_ENABLED(port)) {
+    if (!IS_PORT_ENABLED(port)) {
         return API_ERROR(400, "port-disabled");
     }
 
-    if (!IS_OUTPUT(port)) {
+    if (!IS_PORT_WRITABLE(port)) {
         return API_ERROR(400, "read-only-port");
     }
 
@@ -2736,7 +2736,7 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
     /* Unregister all (non-virtual) ports */
     port_t *p, **ports = all_ports;
     while ((p = *ports++)) {
-        if (IS_VIRTUAL(p)) {
+        if (IS_PORT_VIRTUAL(p)) {
             continue;
         }
 
@@ -2926,8 +2926,8 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
             uint8 i = 0;
             while ((p = *ports++) && (p != port)) {
                 if ((p->attrdefs == port->attrdefs) &&
-                    (IS_OUTPUT(p) == IS_OUTPUT(port)) &&
-                    (IS_VIRTUAL(p) == IS_VIRTUAL(port)) &&
+                    (IS_PORT_WRITABLE(p) == IS_PORT_WRITABLE(port)) &&
+                    (IS_PORT_VIRTUAL(p) == IS_PORT_VIRTUAL(port)) &&
                     (p->type == port->type)) {
 
                     found_port_index = i;
@@ -3004,8 +3004,8 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
         }
     }
 
-    if (!IS_VIRTUAL(port)) {
-        /* Sampling_interval attrdef */
+    if (!IS_PORT_VIRTUAL(port)) {
+        /* sampling_interval attrdef */
         if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST && json_refs_ctx->sampling_interval_port_index >= 0) {
             attrdef_json = make_json_ref("#/%d/definitions/sampling_interval",
                                          json_refs_ctx->sampling_interval_port_index);
@@ -3142,7 +3142,7 @@ void on_sequence_timer(void *arg) {
 
             DEBUG_PORT(port, "sequence done");
 
-            if (IS_PERSISTED(port)) {
+            if (IS_PORT_PERSISTED(port)) {
                 config_mark_for_saving();
             }
         }

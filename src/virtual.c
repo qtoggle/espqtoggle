@@ -32,7 +32,7 @@
 #include "virtual.h"
 
 
-#ifdef HAS_VIRTUAL
+#ifdef _VIRTUAL
 
 
 #define SAMP_INT                        100  /* Milliseconds */ // TODO can we lower this?
@@ -175,7 +175,7 @@ bool virtual_port_register(port_t *port) {
     }
 
     port->flags |= PORT_FLAG_VIRTUAL_ACTIVE;
-    port->flags |= PORT_FLAG_OUTPUT;
+    port->flags |= PORT_FLAG_WRITABLE;
     port->def_sampling_interval = SAMP_INT;
 
     port->read_value = read_value;
@@ -198,4 +198,4 @@ bool virtual_port_unregister(port_t *port) {
 }
 
 
-#endif  /* HAS_VIRTUAL */
+#endif  /* _VIRTUAL */

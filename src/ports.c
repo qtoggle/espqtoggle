@@ -391,21 +391,20 @@ void port_load(port_t *port, uint8 *config_data) {
     port->flags |= flags; /* Flags that are set by initialization remain set */
 
     /* All enabled ports are automatically considered as set */
-    if (IS_ENABLED(port)) {
+    if (IS_PORT_ENABLED(port)) {
         port->flags |= PORT_FLAG_SET;
     }
 
-    DEBUG_PORT(port, "enabled = %s", IS_ENABLED(port) ? "true" : "false");
-    DEBUG_PORT(port, "output = %s", IS_OUTPUT(port) ? "true" : "false");
-    DEBUG_PORT(port, "pull_up = %s", IS_PULL_UP(port) ? "true" : "false");
-    DEBUG_PORT(port, "persisted = %s", IS_PERSISTED(port) ? "true" : "false");
-    DEBUG_PORT(port, "internal = %s", IS_INTERNAL(port) ? "true" : "false");
-    DEBUG_PORT(port, "set = %s", IS_SET(port) ? "true" : "false");
-    DEBUG_PORT(port, "virtual = %s", IS_VIRTUAL(port) ? "true" : "false");
+    DEBUG_PORT(port, "enabled = %s", IS_PORT_ENABLED(port) ? "true" : "false");
+    DEBUG_PORT(port, "writable = %s", IS_PORT_WRITABLE(port) ? "true" : "false");
+    DEBUG_PORT(port, "set = %s", IS_PORT_SET(port) ? "true" : "false");
+    DEBUG_PORT(port, "persisted = %s", IS_PORT_PERSISTED(port) ? "true" : "false");
+    DEBUG_PORT(port, "internal = %s", IS_PORT_INTERNAL(port) ? "true" : "false");
+    DEBUG_PORT(port, "virtual = %s", IS_PORT_VIRTUAL(port) ? "true" : "false");
 
     /* value */
     double value = UNDEFINED;
-    if (IS_PERSISTED(port)) {
+    if (IS_PORT_PERSISTED(port)) {
         memcpy(&value, base_ptr + CONFIG_OFFS_PORT_VALUE, sizeof(double));
 
         if (IS_UNDEFINED(value)) {
@@ -450,7 +449,7 @@ void port_load(port_t *port, uint8 *config_data) {
     port->stransform_read = NULL;
     port->transform_read = NULL;
 
-    if (IS_OUTPUT(port)) {
+    if (IS_PORT_WRITABLE(port)) {
         /* Value expression */
         port->sexpr = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_EXPR);
         DEBUG_PORT(port, "expression = \"%s\"", port->sexpr ? port->sexpr : "");
@@ -496,7 +495,7 @@ void port_load(port_t *port, uint8 *config_data) {
     if (port->attrdefs) {
         attrdef_t *a, **attrdefs = port->attrdefs;
         while ((a = *attrdefs++)) {
-            if (!IS_SET(port)) {
+            if (!IS_PORT_SET(port)) {
                 DEBUG_PORT(port, "setting default value for attribute %s", a->name);
 
                 switch (a->type) {
@@ -551,14 +550,14 @@ void port_load(port_t *port, uint8 *config_data) {
     }
 
     /* Port can now be configured */
-    if (IS_ENABLED(port)) {
+    if (IS_PORT_ENABLED(port)) {
         port_configure(port);
     }
 
     /* Initial port value */
     port->value = UNDEFINED;
-    if (IS_OUTPUT(port) && IS_ENABLED(port)) {
-        if (IS_PERSISTED(port)) {
+    if (IS_PORT_WRITABLE(port) && IS_PORT_ENABLED(port)) {
+        if (IS_PORT_PERSISTED(port)) {
             /* Initial value is given by the persisted value */
             port->value = value;
             DEBUG_PORT(port, "setting persisted value %s", dtostr(port->value, -1));
@@ -591,11 +590,8 @@ void port_save(port_t *port, uint8 *config_data, uint32 *strings_offs) {
     char *strings_ptr = (char *) config_data + CONFIG_OFFS_STR_BASE;
 
     /* id */
-    if (IS_VIRTUAL(port)) {
-        /* Only virtual ports have custom ids */
-        if (!string_pool_write(strings_ptr, strings_offs, port->id, base_ptr + CONFIG_OFFS_PORT_ID)) {
-            DEBUG_PORT(port, "no more string space to save id");
-        }
+    if (!string_pool_write(strings_ptr, strings_offs, port->id, base_ptr + CONFIG_OFFS_PORT_ID)) {
+        DEBUG_PORT(port, "no more string space to save id");
     }
 
     /* display name */
@@ -678,7 +674,7 @@ void ports_init(uint8 *config_data) {
     all_ports = malloc(sizeof(port_t *));
     all_ports[0] = NULL;
 
-#ifdef HAS_VIRTUAL
+#ifdef _VIRTUAL
     virtual_ports_init(config_data);
 #endif
 
@@ -974,7 +970,7 @@ bool port_set_value(port_t *port, double value, char reason) {
 }
 
 json_t *port_get_json_value(port_t *port) {
-    if (IS_UNDEFINED(port->value) || !IS_ENABLED(port)) {
+    if (IS_UNDEFINED(port->value) || !IS_PORT_ENABLED(port)) {
         return json_null_new();
     }
 
@@ -992,13 +988,6 @@ json_t *port_get_json_value(port_t *port) {
 void port_enable(port_t *port) {
     DEBUG_PORT(port, "enabling");
     port->flags |= PORT_FLAG_ENABLED;
-
-    port_t *p, **pp = all_ports;
-    while ((p = *pp++)) {
-        if (!IS_ENABLED(p)) {
-            continue;
-        }
-    }
 
     /* Rebuild expression */
     if (port->expr) {

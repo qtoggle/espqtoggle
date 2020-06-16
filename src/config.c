@@ -359,7 +359,7 @@ void config_init(void) {
     /* Parse port value expressions */
     port_t *p, **port = all_ports;
     while ((p = *port++)) {
-        if (!IS_ENABLED(p)) {
+        if (!IS_PORT_ENABLED(p)) {
             continue;
         }
 

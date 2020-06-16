@@ -146,7 +146,7 @@ ifeq ($(SLEEP), true)
 endif
 
 ifeq ($(VIRTUAL), true)
-    CFLAGS += -DHAS_VIRTUAL
+    CFLAGS += -D_VIRTUAL
 endif
 
 ifeq ($(BATTERY), true)

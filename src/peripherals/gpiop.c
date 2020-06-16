@@ -48,7 +48,7 @@ peripheral_type_t peripheral_type_gpio = {
 };
 
 double read_value(port_t *port) {
-    if (IS_OUTPUT(port)) {
+    if (IS_PORT_WRITABLE(port)) {
         return FALSE; // TODO use buffered value in extra info or something
     }
     else {
@@ -68,27 +68,27 @@ bool write_value(port_t *port, double value) {
 void configure(port_t *port) {
     bool value;
     if (port->slot == 16) {
-        if (IS_PULL_DOWN(port)) {
-            DEBUG_GPIO_PORT(port, "pull-down enabled");
-            value = FALSE;
-        }
-        else {
-            DEBUG_GPIO_PORT(port, "pull-down disabled");
-            value = TRUE;
-        }
+//        if (IS_PULL_DOWN(port)) {
+//            DEBUG_GPIO_PORT(port, "pull-down enabled");
+//            value = FALSE;
+//        }
+//        else {
+//            DEBUG_GPIO_PORT(port, "pull-down disabled");
+//            value = TRUE;
+//        }
     }
     else {
-        if (IS_PULL_UP(port)) {
-            DEBUG_GPIO_PORT(port, "pull-up enabled");
-            value = TRUE;
-        }
-        else {
-            DEBUG_GPIO_PORT(port, "pull-up disabled");
-            value = FALSE;
-        }
+//        if (IS_PULL_UP(port)) {
+//            DEBUG_GPIO_PORT(port, "pull-up enabled");
+//            value = TRUE;
+//        }
+//        else {
+//            DEBUG_GPIO_PORT(port, "pull-up disabled");
+//            value = FALSE;
+//        }
     }
 
-    if (IS_OUTPUT(port)) {
+    if (IS_PORT_WRITABLE(port)) {
         DEBUG_GPIO_PORT(port, "output enabled");
 
         /* Set initial value to current GPIO value */

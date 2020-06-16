@@ -134,7 +134,7 @@ void core_poll(void) {
     /* Determine changed ports */
     port_t **port = all_ports, *p;
     while ((p = *port++)) {
-        if (!IS_ENABLED(p)) {
+        if (!IS_PORT_ENABLED(p)) {
             continue;
         }
 
@@ -270,7 +270,7 @@ void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_m
         }
 
         /* Add a value-change event, but only for non-internal ports */
-        if (!IS_INTERNAL(p)) {
+        if (!IS_PORT_INTERNAL(p)) {
 #ifdef _SLEEP
             if (sleep_is_short_wake()) {
                 if (!(value_change_trigger_mask & (1UL << p->slot))) {
@@ -286,7 +286,7 @@ void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_m
 #endif
         }
 
-        if (IS_PERSISTED(p) && (now_ms - poll_started_time_ms > 2000)) {
+        if (IS_PORT_PERSISTED(p) && (now_ms - poll_started_time_ms > 2000)) {
             /* Don't save config during the first few seconds since polling starts; this avoids saving at each boot due
              * to port values transitioning from undefined to their initial value */
             config_mark_for_saving();
@@ -296,12 +296,12 @@ void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_m
     /* Reevaluate the expressions depending on changed ports */
     port = all_ports;
     while ((p = *port++)) {
-        if (!IS_ENABLED(p)) {
+        if (!IS_PORT_ENABLED(p)) {
             continue;
         }
 
-        /* Only output (writable) ports have value expressions */
-        if (!IS_OUTPUT(p)) {
+        /* Only writable ports have value expressions */
+        if (!IS_PORT_WRITABLE(p)) {
             continue;
         }
 
