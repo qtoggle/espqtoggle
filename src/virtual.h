@@ -34,7 +34,7 @@
 
 ICACHE_FLASH_ATTR void              virtual_ports_init(uint8 *data);
 ICACHE_FLASH_ATTR void              virtual_ports_save(uint8 *data, uint32 *strings_offs);
-ICACHE_FLASH_ATTR int8              virtual_find_unused_slot(bool occupy);
+ICACHE_FLASH_ATTR int8              virtual_find_unused_slot(void);
 ICACHE_FLASH_ATTR bool              virtual_port_register(port_t *port);
 ICACHE_FLASH_ATTR bool              virtual_port_unregister(port_t *port);
 

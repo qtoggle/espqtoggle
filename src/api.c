@@ -1353,7 +1353,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
         return API_ERROR(400, "invalid-request");
     }
 
-    if (virtual_find_unused_slot(/* occupy = */ FALSE) < 0) {
+    if (virtual_find_unused_slot() < 0) {
         DEBUG_API("adding virtual port: no more free slots");
         return API_ERROR(400, "too-many-ports");
     }

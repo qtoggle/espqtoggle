@@ -35,7 +35,7 @@
 #ifdef HAS_VIRTUAL
 
 
-#define SAMP_INT                        100  /* Milliseconds */
+#define SAMP_INT                        100  /* Milliseconds */ // TODO can we lower this?
 
 #define CONFIG_CUSTOM_DATA_OFFS_MIN     0x00 /* 4 bytes */
 #define RETRIES_DATA_OFFS               0x05 /* 1 bytes */
@@ -47,7 +47,6 @@ ICACHE_FLASH_ATTR static void           init_virtual_port(uint8 *data, char *str
 
 
 static double                           virtual_values[VIRTUAL_MAX_PORTS];
-static bool                             virtual_port_in_use[VIRTUAL_MAX_PORTS]; // TODO use ports.used_slots instead
 
 
 double read_value(port_t *port) {
@@ -107,8 +106,6 @@ void init_virtual_port(uint8 *base_ptr, char *strings_ptr, uint32 flags, uint8 i
 
     virtual_port_register(port);
     port_register(port);
-
-    virtual_port_in_use[index] = TRUE;
 }
 
 void virtual_ports_init(uint8 *config_data) {
@@ -136,7 +133,7 @@ void virtual_ports_save(uint8 *config_data, uint32 *strings_offs) {
         slot = i + PORT_SLOT_VIRTUAL0;
         base_ptr = config_data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * slot;
         memcpy(&flags, base_ptr + CONFIG_OFFS_PORT_FLAGS, 4);
-        if (virtual_port_in_use[i]) {
+        if (ports_slot_busy(slot)) {
             flags |= PORT_FLAG_VIRTUAL_ACTIVE;
             DEBUG_VIRTUAL("setting slot %d virtual flag", slot);
         }
@@ -148,16 +145,13 @@ void virtual_ports_save(uint8 *config_data, uint32 *strings_offs) {
     }
 }
 
-int8 virtual_find_unused_slot(bool occupy) {
+int8 virtual_find_unused_slot(void) {
     /* Find next available slot */
-    int i;
+    int i, slot;
     for (i = 0; i < VIRTUAL_MAX_PORTS; i++) {
-        if (!virtual_port_in_use[i]) {
-            if (occupy) {
-                virtual_port_in_use[i] = TRUE;
-            }
-
-            return i + PORT_SLOT_VIRTUAL0;
+        slot = i + PORT_SLOT_VIRTUAL0;
+        if (!ports_slot_busy(slot)) {
+            return slot;
         }
     }
 
@@ -166,7 +160,7 @@ int8 virtual_find_unused_slot(bool occupy) {
 
 bool virtual_port_register(port_t *port) {
     if (port->slot < 0) {
-        int8 unused_slot = virtual_find_unused_slot(/* occupy = */ TRUE);
+        int8 unused_slot = virtual_find_unused_slot();
         if (unused_slot < 0) {
             DEBUG_VIRTUAL("register: no more free slots");
             return FALSE;
@@ -196,7 +190,6 @@ bool virtual_port_unregister(port_t *port) {
         return FALSE;
     }
 
-    virtual_port_in_use[port->slot - PORT_SLOT_VIRTUAL0] = FALSE;
     port->flags &= ~PORT_FLAG_VIRTUAL_ACTIVE;
 
     DEBUG_VIRTUAL("unregister: slot %d is now free", port->slot);
