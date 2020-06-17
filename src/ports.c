@@ -64,163 +64,163 @@ static uint32                       used_slots = 0;
 static int                          all_ports_count = 0;
 
 
-ICACHE_FLASH_ATTR static int        attr_get_extra_data_1bu(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_extra_data_1bu(port_t *port, attrdef_t *attrdef, int value);
+ICACHE_FLASH_ATTR static int        attr_get_user_config_1bu(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_user_config_1bu(port_t *port, attrdef_t *attrdef, int value);
 
-ICACHE_FLASH_ATTR static int        attr_get_extra_data_1bs(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_extra_data_1bs(port_t *port, attrdef_t *attrdef, int value);
+ICACHE_FLASH_ATTR static int        attr_get_user_config_1bs(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_user_config_1bs(port_t *port, attrdef_t *attrdef, int value);
 
-ICACHE_FLASH_ATTR static int        attr_get_extra_data_2bu(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_extra_data_2bu(port_t *port, attrdef_t *attrdef, int value);
+ICACHE_FLASH_ATTR static int        attr_get_user_config_2bu(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_user_config_2bu(port_t *port, attrdef_t *attrdef, int value);
 
-ICACHE_FLASH_ATTR static int        attr_get_extra_data_2bs(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_extra_data_2bs(port_t *port, attrdef_t *attrdef, int value);
+ICACHE_FLASH_ATTR static int        attr_get_user_config_2bs(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_user_config_2bs(port_t *port, attrdef_t *attrdef, int value);
 
-ICACHE_FLASH_ATTR static int        attr_get_extra_data_4bs(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_extra_data_4bs(port_t *port, attrdef_t *attrdef, int value);
+ICACHE_FLASH_ATTR static int        attr_get_user_config_4bs(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_user_config_4bs(port_t *port, attrdef_t *attrdef, int value);
 
-ICACHE_FLASH_ATTR static double     attr_get_extra_data_double(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_extra_data_double(port_t *port, attrdef_t *attrdef, double value);
+ICACHE_FLASH_ATTR static double     attr_get_user_config_double(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_user_config_double(port_t *port, attrdef_t *attrdef, double value);
 
 ICACHE_FLASH_ATTR static int        attr_get_flag(port_t *port, attrdef_t *attrdef);
 ICACHE_FLASH_ATTR static void       attr_set_flag(port_t *port, attrdef_t *attrdef, int value);
 
-ICACHE_FLASH_ATTR static int        attr_get_extra_data_num_choices(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_extra_data_num_choices(port_t *port, attrdef_t *attrdef, int index);
+ICACHE_FLASH_ATTR static int        attr_get_user_config_num_choices(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_user_config_num_choices(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static void       attr_set_extra_info_cache(port_t *port, attrdef_t *attrdef, void *value);
+ICACHE_FLASH_ATTR static void       attr_set_user_data_cache(port_t *port, attrdef_t *attrdef, void *value);
 
 ICACHE_FLASH_ATTR static void       port_load(port_t *port, uint8 *config_data);
 ICACHE_FLASH_ATTR static void       port_save(port_t *port, uint8 *config_data, uint32 *strings_offs);
 
 
-int attr_get_extra_data_1bu(port_t *port, attrdef_t *attrdef) {
-    uint8 v = port->extra_data[attrdef->gs_extra_data_offs];
+int attr_get_user_config_1bu(port_t *port, attrdef_t *attrdef) {
+    uint8 v = port->user_config[attrdef->gs_user_config_offs];
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &v);
+    if (attrdef->user_data_cache_offs) {
+        attr_set_user_data_cache(port, attrdef, &v);
     }
 
     return v;
 }
 
-void attr_set_extra_data_1bu(port_t *port, attrdef_t *attrdef, int value) {
+void attr_set_user_config_1bu(port_t *port, attrdef_t *attrdef, int value) {
     uint8 v = value;
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &v);
+    if (attrdef->user_data_cache_offs) {
+        attr_set_user_data_cache(port, attrdef, &v);
     }
 
-    port->extra_data[attrdef->gs_extra_data_offs] = v;
+    port->user_config[attrdef->gs_user_config_offs] = v;
 }
 
-int attr_get_extra_data_1bs(port_t *port, attrdef_t *attrdef) {
-    int8 v = port->extra_data[attrdef->gs_extra_data_offs];
+int attr_get_user_config_1bs(port_t *port, attrdef_t *attrdef) {
+    int8 v = port->user_config[attrdef->gs_user_config_offs];
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &v);
+    if (attrdef->user_data_cache_offs) {
+        attr_set_user_data_cache(port, attrdef, &v);
     }
 
     return v;
 }
 
-void attr_set_extra_data_1bs(port_t *port, attrdef_t *attrdef, int value) {
+void attr_set_user_config_1bs(port_t *port, attrdef_t *attrdef, int value) {
     int8 v = value;
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &v);
+    if (attrdef->user_data_cache_offs) {
+        attr_set_user_data_cache(port, attrdef, &v);
     }
 
-    port->extra_data[attrdef->gs_extra_data_offs] = v;
+    port->user_config[attrdef->gs_user_config_offs] = v;
 }
 
-int attr_get_extra_data_2bu(port_t *port, attrdef_t *attrdef) {
-    uint16 *pv = ((uint16 *) (port->extra_data + attrdef->gs_extra_data_offs));
+int attr_get_user_config_2bu(port_t *port, attrdef_t *attrdef) {
+    uint16 *pv = ((uint16 *) (port->user_config + attrdef->gs_user_config_offs));
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, pv);
+    if (attrdef->user_data_cache_offs) {
+        attr_set_user_data_cache(port, attrdef, pv);
     }
 
     return *pv;
 }
 
-void attr_set_extra_data_2bu(port_t *port, attrdef_t *attrdef, int value) {
+void attr_set_user_config_2bu(port_t *port, attrdef_t *attrdef, int value) {
     uint16 v = value;
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &v);
+    if (attrdef->user_data_cache_offs) {
+        attr_set_user_data_cache(port, attrdef, &v);
     }
 
-    uint16 *pv = ((uint16 *) (port->extra_data + attrdef->gs_extra_data_offs));
+    uint16 *pv = ((uint16 *) (port->user_config + attrdef->gs_user_config_offs));
     *pv = v;
 }
 
-int attr_get_extra_data_2bs(port_t *port, attrdef_t *attrdef) {
-    int16 *pv = ((int16 *) (port->extra_data + attrdef->gs_extra_data_offs));
+int attr_get_user_config_2bs(port_t *port, attrdef_t *attrdef) {
+    int16 *pv = ((int16 *) (port->user_config + attrdef->gs_user_config_offs));
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, pv);
+    if (attrdef->user_data_cache_offs) {
+        attr_set_user_data_cache(port, attrdef, pv);
     }
 
     return *pv;
 }
 
-void attr_set_extra_data_2bs(port_t *port, attrdef_t *attrdef, int value) {
+void attr_set_user_config_2bs(port_t *port, attrdef_t *attrdef, int value) {
     int16 v = value;
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &v);
+    if (attrdef->user_data_cache_offs) {
+        attr_set_user_data_cache(port, attrdef, &v);
     }
 
-    int16 *pv = ((int16 *) (port->extra_data + attrdef->gs_extra_data_offs));
+    int16 *pv = ((int16 *) (port->user_config + attrdef->gs_user_config_offs));
     *pv = v;
 }
 
-int attr_get_extra_data_4bs(port_t *port, attrdef_t *attrdef) {
-    int32 *pv = ((int32 *) (port->extra_data + attrdef->gs_extra_data_offs));
+int attr_get_user_config_4bs(port_t *port, attrdef_t *attrdef) {
+    int32 *pv = ((int32 *) (port->user_config + attrdef->gs_user_config_offs));
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, pv);
+    if (attrdef->user_data_cache_offs) {
+        attr_set_user_data_cache(port, attrdef, pv);
     }
 
     return *pv;
 }
 
-void attr_set_extra_data_4bs(port_t *port, attrdef_t *attrdef, int value) {
+void attr_set_user_config_4bs(port_t *port, attrdef_t *attrdef, int value) {
     int32 v = value;
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &v);
+    if (attrdef->user_data_cache_offs) {
+        attr_set_user_data_cache(port, attrdef, &v);
     }
 
-    int32 *pv = ((int32 *) (port->extra_data + attrdef->gs_extra_data_offs));
+    int32 *pv = ((int32 *) (port->user_config + attrdef->gs_user_config_offs));
     *pv = v;
 }
 
-double attr_get_extra_data_double(port_t *port, attrdef_t *attrdef) {
-    double *pv = ((double *) (port->extra_data + attrdef->gs_extra_data_offs));
+double attr_get_user_config_double(port_t *port, attrdef_t *attrdef) {
+    double *pv = ((double *) (port->user_config + attrdef->gs_user_config_offs));
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, pv);
+    if (attrdef->user_data_cache_offs) {
+        attr_set_user_data_cache(port, attrdef, pv);
     }
 
     return *pv;
 }
 
-void attr_set_extra_data_double(port_t *port, attrdef_t *attrdef, double value) {
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &value);
+void attr_set_user_config_double(port_t *port, attrdef_t *attrdef, double value) {
+    if (attrdef->user_data_cache_offs) {
+        attr_set_user_data_cache(port, attrdef, &value);
     }
 
-    double *pv = ((double *) (port->extra_data + attrdef->gs_extra_data_offs));
+    double *pv = ((double *) (port->user_config + attrdef->gs_user_config_offs));
     *pv = value;
 }
 
 int attr_get_flag(port_t *port, attrdef_t *attrdef) {
     bool v = !!(port->flags & (1 << attrdef->gs_flag_bit));
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &v);
+    if (attrdef->user_data_cache_offs) {
+        attr_set_user_data_cache(port, attrdef, &v);
     }
 
     return v;
@@ -229,8 +229,8 @@ int attr_get_flag(port_t *port, attrdef_t *attrdef) {
 void attr_set_flag(port_t *port, attrdef_t *attrdef, int value) {
     bool v = value;
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &v);
+    if (attrdef->user_data_cache_offs) {
+        attr_set_user_data_cache(port, attrdef, &v);
     }
 
     if (v) {
@@ -241,45 +241,45 @@ void attr_set_flag(port_t *port, attrdef_t *attrdef, int value) {
     }
 }
 
-int attr_get_extra_data_num_choices(port_t *port, attrdef_t *attrdef) {
-    uint8 index = port->extra_data[attrdef->gs_extra_data_offs];
+int attr_get_user_config_num_choices(port_t *port, attrdef_t *attrdef) {
+    uint8 index = port->user_config[attrdef->gs_user_config_offs];
 
-    if (attrdef->extra_info_cache_offs) {
+    if (attrdef->user_data_cache_offs) {
         double dv = get_choice_value_num(attrdef->choices[index]);
 
         switch (attrdef->gs_type) {
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_1BU: {
+            case ATTRDEF_GS_TYPE_USER_CONFIG_1BU: {
                 uint8 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
+                attr_set_user_data_cache(port, attrdef, &v);
                 break;
             }
 
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_1BS: {
+            case ATTRDEF_GS_TYPE_USER_CONFIG_1BS: {
                 int8 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
+                attr_set_user_data_cache(port, attrdef, &v);
                 break;
             }
 
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_2BU: {
+            case ATTRDEF_GS_TYPE_USER_CONFIG_2BU: {
                 uint16 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
+                attr_set_user_data_cache(port, attrdef, &v);
                 break;
             }
 
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_2BS: {
+            case ATTRDEF_GS_TYPE_USER_CONFIG_2BS: {
                 int16 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
+                attr_set_user_data_cache(port, attrdef, &v);
                 break;
             }
 
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_4BS: {
+            case ATTRDEF_GS_TYPE_USER_CONFIG_4BS: {
                 int32 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
+                attr_set_user_data_cache(port, attrdef, &v);
                 break;
             }
 
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_DOUBLE:
-                attr_set_extra_info_cache(port, attrdef, &dv);
+            case ATTRDEF_GS_TYPE_USER_CONFIG_DOUBLE:
+                attr_set_user_data_cache(port, attrdef, &dv);
                 break;
         }
     }
@@ -287,74 +287,74 @@ int attr_get_extra_data_num_choices(port_t *port, attrdef_t *attrdef) {
     return index;
 }
 
-void attr_set_extra_data_num_choices(port_t *port, attrdef_t *attrdef, int index) {
-    port->extra_data[attrdef->gs_extra_data_offs] = index;
+void attr_set_user_config_num_choices(port_t *port, attrdef_t *attrdef, int index) {
+    port->user_config[attrdef->gs_user_config_offs] = index;
 
-    if (attrdef->extra_info_cache_offs) {
+    if (attrdef->user_data_cache_offs) {
         double dv = get_choice_value_num(attrdef->choices[index]);
 
         switch (attrdef->gs_type) {
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_1BU: {
+            case ATTRDEF_GS_TYPE_USER_CONFIG_1BU: {
                 uint8 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
+                attr_set_user_data_cache(port, attrdef, &v);
                 break;
             }
 
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_1BS: {
+            case ATTRDEF_GS_TYPE_USER_CONFIG_1BS: {
                 int8 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
+                attr_set_user_data_cache(port, attrdef, &v);
                 break;
             }
 
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_2BU: {
+            case ATTRDEF_GS_TYPE_USER_CONFIG_2BU: {
                 uint16 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
+                attr_set_user_data_cache(port, attrdef, &v);
                 break;
             }
 
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_2BS: {
+            case ATTRDEF_GS_TYPE_USER_CONFIG_2BS: {
                 int16 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
+                attr_set_user_data_cache(port, attrdef, &v);
                 break;
             }
 
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_4BS: {
+            case ATTRDEF_GS_TYPE_USER_CONFIG_4BS: {
                 int32 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
+                attr_set_user_data_cache(port, attrdef, &v);
                 break;
             }
 
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_DOUBLE:
-                attr_set_extra_info_cache(port, attrdef, &dv);
+            case ATTRDEF_GS_TYPE_USER_CONFIG_DOUBLE:
+                attr_set_user_data_cache(port, attrdef, &dv);
                 break;
         }
     }
 }
 
-void attr_set_extra_info_cache(port_t *port, attrdef_t *attrdef, void *value) {
+void attr_set_user_data_cache(port_t *port, attrdef_t *attrdef, void *value) {
     uint8 size = 1;
     switch (attrdef->gs_type) {
-        case ATTRDEF_GS_TYPE_EXTRA_DATA_1BU:
-        case ATTRDEF_GS_TYPE_EXTRA_DATA_1BS:
-        case ATTRDEF_GS_TYPE_EXTRA_DATA_BOOL:
+        case ATTRDEF_GS_TYPE_USER_CONFIG_1BU:
+        case ATTRDEF_GS_TYPE_USER_CONFIG_1BS:
+        case ATTRDEF_GS_TYPE_USER_CONFIG_BOOL:
             size = 1;
             break;
 
-        case ATTRDEF_GS_TYPE_EXTRA_DATA_2BU:
-        case ATTRDEF_GS_TYPE_EXTRA_DATA_2BS:
+        case ATTRDEF_GS_TYPE_USER_CONFIG_2BU:
+        case ATTRDEF_GS_TYPE_USER_CONFIG_2BS:
             size = 2;
             break;
 
-        case ATTRDEF_GS_TYPE_EXTRA_DATA_4BS:
+        case ATTRDEF_GS_TYPE_USER_CONFIG_4BS:
             size = 4;
             break;
 
-        case ATTRDEF_GS_TYPE_EXTRA_DATA_DOUBLE:
+        case ATTRDEF_GS_TYPE_USER_CONFIG_DOUBLE:
             size = sizeof(double);
             break;
     }
 
-    memcpy(((uint8 *) port->extra_info) + attrdef->extra_info_cache_offs - 1 /* common offset */, value, size);
+    memcpy(((uint8 *) port->user_data) + attrdef->user_data_cache_offs - 1 /* common offset */, value, size);
 }
 
 
@@ -439,7 +439,7 @@ void port_load(port_t *port, uint8 *config_data) {
     DEBUG_PORT(port, "heart_beat_interval = %d ms", port->heart_beat_interval);
 
     /* Extra data */
-    memcpy(port->extra_data, base_ptr + CONFIG_OFFS_PORT_DATA, PORT_PERSISTED_EXTRA_DATA_LEN);
+    memcpy(port->user_config, base_ptr + CONFIG_OFFS_PORT_DATA, PORT_PERSISTED_USER_CONFIG_LEN);
 
     /* Expressions */
     port->sexpr = NULL;
@@ -543,7 +543,7 @@ void port_load(port_t *port, uint8 *config_data) {
             }
 
             /* Calling getter will load value into cache */
-            if (a->extra_info_cache_offs) {
+            if (a->user_data_cache_offs) {
                 ((int_getter_t) a->get)(port, a);
             }
         }
@@ -625,7 +625,7 @@ void port_save(port_t *port, uint8 *config_data, uint32 *strings_offs) {
     memcpy(base_ptr + CONFIG_OFFS_PORT_SAMP_INT, &port->sampling_interval, 4);
 
     /* Custom data */
-    memcpy(base_ptr + CONFIG_OFFS_PORT_DATA, port->extra_data, PORT_PERSISTED_EXTRA_DATA_LEN);
+    memcpy(base_ptr + CONFIG_OFFS_PORT_DATA, port->user_config, PORT_PERSISTED_USER_CONFIG_LEN);
 
     /* value expression */
     if (!string_pool_write(strings_ptr, strings_offs, port->sexpr, base_ptr + CONFIG_OFFS_PORT_EXPR)) {
@@ -748,41 +748,41 @@ void port_register(port_t *port) {
             if ((!a->get || !a->set) && (a->gs_type != ATTRDEF_GS_TYPE_CUSTOM)) {
                 if (a->choices) {
                     if (a->type == ATTR_TYPE_NUMBER) {
-                        a->get = attr_get_extra_data_num_choices;
-                        a->set = attr_set_extra_data_num_choices;
+                        a->get = attr_get_user_config_num_choices;
+                        a->set = attr_set_user_config_num_choices;
                     }
                 }
                 else {
                     switch (a->gs_type) {
-                        case ATTRDEF_GS_TYPE_EXTRA_DATA_1BS:
-                        case ATTRDEF_GS_TYPE_EXTRA_DATA_BOOL:
-                            a->get = attr_get_extra_data_1bs;
-                            a->set = attr_set_extra_data_1bs;
+                        case ATTRDEF_GS_TYPE_USER_CONFIG_1BS:
+                        case ATTRDEF_GS_TYPE_USER_CONFIG_BOOL:
+                            a->get = attr_get_user_config_1bs;
+                            a->set = attr_set_user_config_1bs;
                             break;
 
-                        case ATTRDEF_GS_TYPE_EXTRA_DATA_1BU:
-                            a->get = attr_get_extra_data_1bu;
-                            a->set = attr_set_extra_data_1bu;
+                        case ATTRDEF_GS_TYPE_USER_CONFIG_1BU:
+                            a->get = attr_get_user_config_1bu;
+                            a->set = attr_set_user_config_1bu;
                             break;
 
-                        case ATTRDEF_GS_TYPE_EXTRA_DATA_2BS:
-                            a->get = attr_get_extra_data_2bs;
-                            a->set = attr_set_extra_data_2bs;
+                        case ATTRDEF_GS_TYPE_USER_CONFIG_2BS:
+                            a->get = attr_get_user_config_2bs;
+                            a->set = attr_set_user_config_2bs;
                             break;
 
-                        case ATTRDEF_GS_TYPE_EXTRA_DATA_2BU:
-                            a->get = attr_get_extra_data_2bu;
-                            a->set = attr_set_extra_data_2bu;
+                        case ATTRDEF_GS_TYPE_USER_CONFIG_2BU:
+                            a->get = attr_get_user_config_2bu;
+                            a->set = attr_set_user_config_2bu;
                             break;
 
-                        case ATTRDEF_GS_TYPE_EXTRA_DATA_4BS:
-                            a->get = attr_get_extra_data_4bs;
-                            a->set = attr_set_extra_data_4bs;
+                        case ATTRDEF_GS_TYPE_USER_CONFIG_4BS:
+                            a->get = attr_get_user_config_4bs;
+                            a->set = attr_set_user_config_4bs;
                             break;
 
-                        case ATTRDEF_GS_TYPE_EXTRA_DATA_DOUBLE:
-                            a->get = attr_get_extra_data_double;
-                            a->set = attr_set_extra_data_double;
+                        case ATTRDEF_GS_TYPE_USER_CONFIG_DOUBLE:
+                            a->get = attr_get_user_config_double;
+                            a->set = attr_set_user_config_double;
                             break;
 
                         case ATTRDEF_GS_TYPE_FLAG:
@@ -1030,7 +1030,7 @@ void port_disable(port_t *port) {
 void port_configure(port_t *port) {
     DEBUG_PORT(port, "configuring");
 
-    /* Attribute getters may cache values inside port->extra_info; calling all attribute getters here ensures that this
+    /* Attribute getters may cache values inside port->user_data; calling all attribute getters here ensures that this
      * cached data is up-do-date with latest attribute values */
     if (port->attrdefs) {
         attrdef_t *a, **attrdefs = port->attrdefs;

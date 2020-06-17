@@ -60,18 +60,18 @@
 #define IS_ATTRDEF_RECONNECT(a)             !!((a)->flags & ATTRDEF_FLAG_RECONNECT)
 
 #define ATTRDEF_GS_TYPE_CUSTOM              0
-#define ATTRDEF_GS_TYPE_EXTRA_DATA_1BU      1
-#define ATTRDEF_GS_TYPE_EXTRA_DATA_1BS      2
-#define ATTRDEF_GS_TYPE_EXTRA_DATA_2BU      3
-#define ATTRDEF_GS_TYPE_EXTRA_DATA_2BS      4
-#define ATTRDEF_GS_TYPE_EXTRA_DATA_4BS      5
-#define ATTRDEF_GS_TYPE_EXTRA_DATA_BOOL     6
-#define ATTRDEF_GS_TYPE_EXTRA_DATA_DOUBLE   7
+#define ATTRDEF_GS_TYPE_USER_CONFIG_1BU     1
+#define ATTRDEF_GS_TYPE_USER_CONFIG_1BS     2
+#define ATTRDEF_GS_TYPE_USER_CONFIG_2BU     3
+#define ATTRDEF_GS_TYPE_USER_CONFIG_2BS     4
+#define ATTRDEF_GS_TYPE_USER_CONFIG_4BS     5
+#define ATTRDEF_GS_TYPE_USER_CONFIG_BOOL    6
+#define ATTRDEF_GS_TYPE_USER_CONFIG_DOUBLE  7
 #define ATTRDEF_GS_TYPE_FLAG                8
 
-#define ATTRDEF_CACHE_EXTRA_INFO_FIELD(e, f) (offsetof(e, f) + 1 /* +1 is a common offset */)
+#define ATTRDEF_CACHE_USER_DATA_FIELD(e, f) (offsetof(e, f) + 1 /* +1 is a common offset */)
 
-#define PORT_PERSISTED_EXTRA_DATA_LEN       16
+#define PORT_PERSISTED_USER_CONFIG_LEN      16
 
 #define PORT_FLAG_ENABLED                   0x00000001
 #define PORT_FLAG_WRITABLE                  0x00000002
@@ -157,10 +157,10 @@ typedef struct attrdef {
     void          * set;
     uint8           gs_type;
     union {
-        uint8       gs_extra_data_offs;
+        uint8       gs_user_config_offs;
         uint8       gs_flag_bit;
     };
-    uint16          extra_info_cache_offs;
+    uint16          user_data_cache_offs;
 
 } attrdef_t;
 
@@ -173,8 +173,8 @@ typedef struct port {
     uint64          change_dep_mask;    /* Port change dependency mask */
 
     int             aux;                /* Member used internally for dependency loops & more */
-    uint8           extra_data[PORT_PERSISTED_EXTRA_DATA_LEN];
-    void          * extra_info;         /* In-memory extra state */
+    uint8           user_config[PORT_PERSISTED_USER_CONFIG_LEN];
+    void          * user_data;          /* In-memory extra state */
 
     /* Sampling */
     uint32          sampling_interval;
