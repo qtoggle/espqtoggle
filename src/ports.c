@@ -38,30 +38,8 @@
 
 
 port_t                           ** all_ports = NULL;
-
-// TODO needed?
-char                              * all_gpio_choices[] = {"0:GPIO0", "1:GPIO1", "2:GPIO2", "3:GPIO3", "4:GPIO4",
-                                                          "5:GPIO5", "6:GPIO6", "7:GPIO7", "8:GPIO8", "9:GPIO9",
-                                                          "10:GPIO10", "11:GPIO11", "12:GPIO12", "13:GPIO13",
-                                                          "14:GPIO14", "15:GPIO15", "16:GPIO16", NULL};
-
-char                              * all_gpio_none_choices[] = {"0:GPIO0", "1:GPIO1", "2:GPIO2", "3:GPIO3", "4:GPIO4",
-                                                               "5:GPIO5", "6:GPIO6", "7:GPIO7", "8:GPIO8", "9:GPIO9",
-                                                               "10:GPIO10", "11:GPIO11", "12:GPIO12", "13:GPIO13",
-                                                               "14:GPIO14", "15:GPIO15", "16:GPIO16", "-1:none", NULL};
-
-char                              * esp8266_gpio_choices[] = {"0:GPIO0", "1:GPIO1", "2:GPIO2", "3:GPIO3", "4:GPIO4",
-                                                              "5:GPIO5", "12:GPIO12", "13:GPIO13", "14:GPIO14",
-                                                              "15:GPIO15", "16:GPIO16", NULL};
-
-char                              * esp8266_gpio_none_choices[] = {"0:GPIO0", "1:GPIO1", "2:GPIO2", "3:GPIO3",
-                                                                   "4:GPIO4", "5:GPIO5", "12:GPIO12", "13:GPIO13",
-                                                                   "14:GPIO14", "15:GPIO15", "16:GPIO16", "-1:none",
-                                                                   NULL};
-
-static uint32                       used_slots = 0;
-
 static int                          all_ports_count = 0;
+static uint32                       used_slots = 0;
 
 
 ICACHE_FLASH_ATTR static int        attr_get_user_config_1bu(port_t *port, attrdef_t *attrdef);
