@@ -2689,22 +2689,30 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
 
     uint16 type_id;
     uint16 flags;
-    int8 byte_params[PERIPHERAL_MAX_BYTE_PARAMS];
-    int8 byte_param;
-    uint8 byte_param_count;
-    int32 long_params[PERIPHERAL_MAX_BYTE_PARAMS];
-    int32 long_param;
-    uint8 long_param_count;
-    int8 raw_params[PERIPHERAL_MAX_RAW_PARAMS];
-    uint8 raw_param_count;
     char **port_ids = NULL;
+    int i;
     uint8 port_ids_len = 0;
-
     peripheral_t *peripheral;
 
-    char *s;
-    char hex[3] = {0, 0, 0};
-    int i;
+    uint8 int8_params[PERIPHERAL_MAX_INT8_PARAMS];
+    uint8 int8_param;
+    uint8 int8_param_count;
+
+    uint16 int16_params[PERIPHERAL_MAX_INT16_PARAMS];
+    uint16 int16_param;
+    uint8 int16_param_count;
+
+    uint32 int32_params[PERIPHERAL_MAX_INT32_PARAMS];
+    uint32 int32_param;
+    uint8 int32_param_count;
+
+    uint64 int64_params[PERIPHERAL_MAX_INT64_PARAMS];
+    uint64 int64_param;
+    uint8 int64_param_count;
+
+    double double_params[PERIPHERAL_MAX_DOUBLE_PARAMS];
+    double double_param;
+    uint8 double_param_count;
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
         return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
@@ -2746,9 +2754,11 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
         peripheral_config = json_list_value_at(request_json, i);
 
         flags = 0;
-        byte_param_count = 0;
-        long_param_count = 0;
-        raw_param_count = 0;
+        int8_param_count = 0;
+        int16_param_count = 0;
+        int32_param_count = 0;
+        int64_param_count = 0;
+        double_param_count = 0;
         port_ids_len = 0;
 
         if (json_get_type(peripheral_config) != JSON_TYPE_OBJ) {
@@ -2779,71 +2789,128 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
             }
         }
 
-        /* Byte params */
-        params_json = json_obj_lookup_key(peripheral_config, "byte_params");
+        /* int8 params */
+        params_json = json_obj_lookup_key(peripheral_config, "int8_params");
         if (params_json) {
             if ((json_get_type(params_json) != JSON_TYPE_LIST) ||
-                (json_list_get_len(params_json) > PERIPHERAL_MAX_BYTE_PARAMS)) {
+                (json_list_get_len(params_json) > PERIPHERAL_MAX_INT8_PARAMS)) {
 
-                return INVALID_FIELD("byte_params");
+                return INVALID_FIELD("int8_params");
             }
 
             for (i = 0; i < json_list_get_len(params_json); i++) {
                 json = json_list_value_at(params_json, i);
                 if (json_get_type(json) == JSON_TYPE_STR) { /* Hex value */
-                    byte_param = strtol(json_str_get(json), NULL, 16);
+                    int8_param = strtol(json_str_get(json), NULL, 16);
                 }
                 else if (json_get_type(json) == JSON_TYPE_INT) {
-                    byte_param = json_int_get(json);
+                    int8_param = json_int_get(json);
                 }
                 else {
-                    return INVALID_FIELD("byte_params");
+                    return INVALID_FIELD("int8_params");
                 }
 
-                byte_params[byte_param_count++] = byte_param;
+                int8_params[int8_param_count++] = int8_param;
             }
         }
 
-        /* Long params */
-        params_json = json_obj_lookup_key(peripheral_config, "long_params");
+        /* int16 params */
+        params_json = json_obj_lookup_key(peripheral_config, "int16_params");
         if (params_json) {
             if ((json_get_type(params_json) != JSON_TYPE_LIST) ||
-                (json_list_get_len(params_json) > PERIPHERAL_MAX_LONG_PARAMS)) {
+                (json_list_get_len(params_json) > PERIPHERAL_MAX_INT16_PARAMS)) {
 
-                return INVALID_FIELD("long_params");
+                return INVALID_FIELD("int16_params");
             }
 
             for (i = 0; i < json_list_get_len(params_json); i++) {
                 json = json_list_value_at(params_json, i);
                 if (json_get_type(json) == JSON_TYPE_STR) { /* Hex value */
-                    long_param = strtol(json_str_get(json), NULL, 16);
+                    int16_param = strtol(json_str_get(json), NULL, 16);
                 }
                 else if (json_get_type(json) == JSON_TYPE_INT) {
-                    long_param = json_int_get(json);
+                    int16_param = json_int_get(json);
                 }
                 else {
-                    return INVALID_FIELD("long_params");
+                    return INVALID_FIELD("int16_params");
                 }
 
-                long_params[long_param_count++] = long_param;
+                int16_params[int16_param_count++] = int16_param;
             }
         }
 
-        /* Raw params */
-        params_json = json_obj_lookup_key(peripheral_config, "raw_params");
+        /* int32 params */
+        params_json = json_obj_lookup_key(peripheral_config, "int32_params");
         if (params_json) {
-            if (json_get_type(params_json) != JSON_TYPE_STR) {
-                return INVALID_FIELD("raw_params");
+            if ((json_get_type(params_json) != JSON_TYPE_LIST) ||
+                (json_list_get_len(params_json) > PERIPHERAL_MAX_INT32_PARAMS)) {
+
+                return INVALID_FIELD("int32_params");
             }
 
-            s = json_str_get(params_json);
-            if ((strlen(s) % 2) || (strlen(s) > PERIPHERAL_MAX_RAW_PARAMS * 2)) {
-                return INVALID_FIELD("raw_params");
+            for (i = 0; i < json_list_get_len(params_json); i++) {
+                json = json_list_value_at(params_json, i);
+                if (json_get_type(json) == JSON_TYPE_STR) { /* Hex value */
+                    int32_param = strtol(json_str_get(json), NULL, 16);
+                }
+                else if (json_get_type(json) == JSON_TYPE_INT) {
+                    int32_param = json_int_get(json);
+                }
+                else {
+                    return INVALID_FIELD("int32_params");
+                }
+
+                int32_params[int32_param_count++] = int32_param;
+            }
+        }
+
+        /* int64 params */
+        params_json = json_obj_lookup_key(peripheral_config, "int64_params");
+        if (params_json) {
+            if ((json_get_type(params_json) != JSON_TYPE_LIST) ||
+                (json_list_get_len(params_json) > PERIPHERAL_MAX_INT64_PARAMS)) {
+
+                return INVALID_FIELD("int64_params");
             }
 
-            for (i = 0; i < strlen(s) / 2; i++) {
-                memcpy(hex, s + i * 2, 2);
-                raw_params[raw_param_count++] = strtol(hex, NULL, 16);
+            for (i = 0; i < json_list_get_len(params_json); i++) {
+                json = json_list_value_at(params_json, i);
+                if (json_get_type(json) == JSON_TYPE_STR) { /* Hex value */
+                    int64_param = strtol(json_str_get(json), NULL, 16);
+                }
+                else if (json_get_type(json) == JSON_TYPE_INT) {
+                    int64_param = json_int_get(json);
+                }
+                else {
+                    return INVALID_FIELD("int64_params");
+                }
+
+                int64_params[int64_param_count++] = int64_param;
+            }
+        }
+
+        /* double params */
+        params_json = json_obj_lookup_key(peripheral_config, "double_params");
+        if (params_json) {
+            if ((json_get_type(params_json) != JSON_TYPE_LIST) ||
+                (json_list_get_len(params_json) > PERIPHERAL_MAX_DOUBLE_PARAMS)) {
+
+                return INVALID_FIELD("double_params");
+            }
+
+            for (i = 0; i < json_list_get_len(params_json); i++) {
+                json = json_list_value_at(params_json, i);
+                if (json_get_type(json) == JSON_TYPE_INT) {
+                    double_param = json_int_get(json);
+                }
+                else if (json_get_type(json) == JSON_TYPE_DOUBLE) {
+                    double_param = json_double_get(json);
+                }
+                else {
+                    return INVALID_FIELD("double_params");
+                }
+
+                double_params[double_param_count++] = double_param;
             }
         }
 
@@ -2876,17 +2943,23 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
         peripheral->type_id = type_id;
         peripheral->flags = flags;
 
-        if (byte_param_count) {
-            memcpy(peripheral->byte_params, byte_params, byte_param_count);
+        if (int8_param_count) {
+            memcpy(peripheral->params + PERIPHERAL_CONFIG_OFFS_INT8_PARAMS, int8_params, int8_param_count);
         }
-        if (long_param_count) {
-            memcpy(peripheral->long_params, long_params, long_param_count);
+        if (int16_param_count) {
+            memcpy(peripheral->params + PERIPHERAL_CONFIG_OFFS_INT16_PARAMS, int16_params, int16_param_count * 2);
         }
-        if (raw_param_count) {
-            memcpy(peripheral->raw_params, raw_params, raw_param_count);
+        if (int32_param_count) {
+            memcpy(peripheral->params + PERIPHERAL_CONFIG_OFFS_INT32_PARAMS, int32_params, int32_param_count * 4);
+        }
+        if (int64_param_count) {
+            memcpy(peripheral->params + PERIPHERAL_CONFIG_OFFS_INT64_PARAMS, int64_params, int64_param_count * 4);
+        }
+        if (double_param_count) {
+            memcpy(peripheral->params + PERIPHERAL_CONFIG_OFFS_DOUBLE_PARAMS, double_params, double_param_count * 4);
         }
 
-        peripheral_make_ports(peripheral, port_ids, port_ids_len);
+        peripheral_init(peripheral, port_ids, port_ids_len);
 
         free(port_ids);
         port_ids = NULL;

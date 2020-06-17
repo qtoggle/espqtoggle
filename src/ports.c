@@ -32,6 +32,7 @@
 #include "config.h"
 #include "core.h"
 #include "events.h"
+#include "peripherals.h"
 #include "stringpool.h"
 #include "virtual.h"
 #include "ports.h"
@@ -42,163 +43,203 @@ static int                          all_ports_count = 0;
 static uint32                       used_slots = 0;
 
 
-ICACHE_FLASH_ATTR static int        attr_get_user_config_1bu(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_user_config_1bu(port_t *port, attrdef_t *attrdef, int value);
+ICACHE_FLASH_ATTR static int64      attr_get_param_uint8(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_param_uint8(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static int        attr_get_user_config_1bs(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_user_config_1bs(port_t *port, attrdef_t *attrdef, int value);
+ICACHE_FLASH_ATTR static int64      attr_get_param_sint8(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_param_sint8(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static int        attr_get_user_config_2bu(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_user_config_2bu(port_t *port, attrdef_t *attrdef, int value);
+ICACHE_FLASH_ATTR static int64      attr_get_param_uint16(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_param_uint16(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static int        attr_get_user_config_2bs(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_user_config_2bs(port_t *port, attrdef_t *attrdef, int value);
+ICACHE_FLASH_ATTR static int64      attr_get_param_sint16(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_param_sint16(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static int        attr_get_user_config_4bs(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_user_config_4bs(port_t *port, attrdef_t *attrdef, int value);
+ICACHE_FLASH_ATTR static int64      attr_get_param_uint32(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_param_uint32(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static double     attr_get_user_config_double(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_user_config_double(port_t *port, attrdef_t *attrdef, double value);
+ICACHE_FLASH_ATTR static int64      attr_get_param_sint32(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_param_sint32(port_t *port, attrdef_t *attrdef, int64 value);
+
+ICACHE_FLASH_ATTR static int64      attr_get_param_sint64(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_param_sint64(port_t *port, attrdef_t *attrdef, int64 value);
+
+ICACHE_FLASH_ATTR static double     attr_get_param_double(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_param_double(port_t *port, attrdef_t *attrdef, double value);
 
 ICACHE_FLASH_ATTR static int        attr_get_flag(port_t *port, attrdef_t *attrdef);
 ICACHE_FLASH_ATTR static void       attr_set_flag(port_t *port, attrdef_t *attrdef, int value);
 
-ICACHE_FLASH_ATTR static int        attr_get_user_config_num_choices(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_user_config_num_choices(port_t *port, attrdef_t *attrdef, int index);
+ICACHE_FLASH_ATTR static int        attr_get_param_num_choices(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void       attr_set_param_num_choices(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static void       attr_set_user_data_cache(port_t *port, attrdef_t *attrdef, void *value);
+ICACHE_FLASH_ATTR static void       attr_set_user_data_cache(port_t *port, attrdef_t *attrdef, double value);
 
 ICACHE_FLASH_ATTR static void       port_load(port_t *port, uint8 *config_data);
 ICACHE_FLASH_ATTR static void       port_save(port_t *port, uint8 *config_data, uint32 *strings_offs);
 
 
-int attr_get_user_config_1bu(port_t *port, attrdef_t *attrdef) {
-    uint8 v = port->user_config[attrdef->gs_user_config_offs];
+int64 attr_get_param_uint8(port_t *port, attrdef_t *attrdef) {
+    uint8 v = PERIPHERAL_PARAM_UINT8(port->peripheral, attrdef->storage_param_no);
 
-    if (attrdef->user_data_cache_offs) {
-        attr_set_user_data_cache(port, attrdef, &v);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
     return v;
 }
 
-void attr_set_user_config_1bu(port_t *port, attrdef_t *attrdef, int value) {
+void attr_set_param_uint8(port_t *port, attrdef_t *attrdef, int64 value) {
     uint8 v = value;
 
-    if (attrdef->user_data_cache_offs) {
-        attr_set_user_data_cache(port, attrdef, &v);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    port->user_config[attrdef->gs_user_config_offs] = v;
+    PERIPHERAL_PARAM_UINT8(port->peripheral, attrdef->storage_param_no) = v;
 }
 
-int attr_get_user_config_1bs(port_t *port, attrdef_t *attrdef) {
-    int8 v = port->user_config[attrdef->gs_user_config_offs];
+int64 attr_get_param_sint8(port_t *port, attrdef_t *attrdef) {
+    int8 v = PERIPHERAL_PARAM_SINT8(port->peripheral, attrdef->storage_param_no);
 
-    if (attrdef->user_data_cache_offs) {
-        attr_set_user_data_cache(port, attrdef, &v);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
     return v;
 }
 
-void attr_set_user_config_1bs(port_t *port, attrdef_t *attrdef, int value) {
+void attr_set_param_sint8(port_t *port, attrdef_t *attrdef, int64 value) {
     int8 v = value;
 
-    if (attrdef->user_data_cache_offs) {
-        attr_set_user_data_cache(port, attrdef, &v);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    port->user_config[attrdef->gs_user_config_offs] = v;
+    PERIPHERAL_PARAM_SINT8(port->peripheral, attrdef->storage_param_no) = v;
 }
 
-int attr_get_user_config_2bu(port_t *port, attrdef_t *attrdef) {
-    uint16 *pv = ((uint16 *) (port->user_config + attrdef->gs_user_config_offs));
+int64 attr_get_param_uint16(port_t *port, attrdef_t *attrdef) {
+    uint16 v = PERIPHERAL_PARAM_UINT16(port->peripheral, attrdef->storage_param_no);
 
-    if (attrdef->user_data_cache_offs) {
-        attr_set_user_data_cache(port, attrdef, pv);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    return *pv;
+    return v;
 }
 
-void attr_set_user_config_2bu(port_t *port, attrdef_t *attrdef, int value) {
+void attr_set_param_uint16(port_t *port, attrdef_t *attrdef, int64 value) {
     uint16 v = value;
 
-    if (attrdef->user_data_cache_offs) {
-        attr_set_user_data_cache(port, attrdef, &v);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    uint16 *pv = ((uint16 *) (port->user_config + attrdef->gs_user_config_offs));
-    *pv = v;
+    PERIPHERAL_PARAM_UINT16(port->peripheral, attrdef->storage_param_no) = v;
 }
 
-int attr_get_user_config_2bs(port_t *port, attrdef_t *attrdef) {
-    int16 *pv = ((int16 *) (port->user_config + attrdef->gs_user_config_offs));
+int64 attr_get_param_sint16(port_t *port, attrdef_t *attrdef) {
+    int16 v = PERIPHERAL_PARAM_SINT16(port->peripheral, attrdef->storage_param_no);
 
-    if (attrdef->user_data_cache_offs) {
-        attr_set_user_data_cache(port, attrdef, pv);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    return *pv;
+    return v;
 }
 
-void attr_set_user_config_2bs(port_t *port, attrdef_t *attrdef, int value) {
+void attr_set_param_sint16(port_t *port, attrdef_t *attrdef, int64 value) {
     int16 v = value;
 
-    if (attrdef->user_data_cache_offs) {
-        attr_set_user_data_cache(port, attrdef, &v);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    int16 *pv = ((int16 *) (port->user_config + attrdef->gs_user_config_offs));
-    *pv = v;
+    PERIPHERAL_PARAM_SINT16(port->peripheral, attrdef->storage_param_no) = v;
 }
 
-int attr_get_user_config_4bs(port_t *port, attrdef_t *attrdef) {
-    int32 *pv = ((int32 *) (port->user_config + attrdef->gs_user_config_offs));
+int64 attr_get_param_uint32(port_t *port, attrdef_t *attrdef) {
+    uint32 v = PERIPHERAL_PARAM_UINT32(port->peripheral, attrdef->storage_param_no);
 
-    if (attrdef->user_data_cache_offs) {
-        attr_set_user_data_cache(port, attrdef, pv);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    return *pv;
+    return v;
 }
 
-void attr_set_user_config_4bs(port_t *port, attrdef_t *attrdef, int value) {
+void attr_set_param_uint32(port_t *port, attrdef_t *attrdef, int64 value) {
+    uint32 v = value;
+
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
+    }
+
+    PERIPHERAL_PARAM_SINT32(port->peripheral, attrdef->storage_param_no) = v;
+}
+
+int64 attr_get_param_sint32(port_t *port, attrdef_t *attrdef) {
+    int32 v = PERIPHERAL_PARAM_SINT32(port->peripheral, attrdef->storage_param_no);
+
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
+    }
+
+    return v;
+}
+
+void attr_set_param_sint32(port_t *port, attrdef_t *attrdef, int64 value) {
     int32 v = value;
 
-    if (attrdef->user_data_cache_offs) {
-        attr_set_user_data_cache(port, attrdef, &v);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    int32 *pv = ((int32 *) (port->user_config + attrdef->gs_user_config_offs));
-    *pv = v;
+    PERIPHERAL_PARAM_UINT16(port->peripheral, attrdef->storage_param_no) = v;
 }
 
-double attr_get_user_config_double(port_t *port, attrdef_t *attrdef) {
-    double *pv = ((double *) (port->user_config + attrdef->gs_user_config_offs));
+int64 attr_get_param_sint64(port_t *port, attrdef_t *attrdef) {
+    int64 v = PERIPHERAL_PARAM_SINT64(port->peripheral, attrdef->storage_param_no);
 
-    if (attrdef->user_data_cache_offs) {
-        attr_set_user_data_cache(port, attrdef, pv);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    return *pv;
+    return v;
 }
 
-void attr_set_user_config_double(port_t *port, attrdef_t *attrdef, double value) {
-    if (attrdef->user_data_cache_offs) {
-        attr_set_user_data_cache(port, attrdef, &value);
+void attr_set_param_sint64(port_t *port, attrdef_t *attrdef, int64 value) {
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, value);
     }
 
-    double *pv = ((double *) (port->user_config + attrdef->gs_user_config_offs));
-    *pv = value;
+    PERIPHERAL_PARAM_SINT64(port->peripheral, attrdef->storage_param_no) = value;
+}
+
+double attr_get_param_double(port_t *port, attrdef_t *attrdef) {
+    double v = PERIPHERAL_PARAM_DOUBLE(port->peripheral, attrdef->storage_param_no);
+
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
+    }
+
+    return v;
+}
+
+void attr_set_param_double(port_t *port, attrdef_t *attrdef, double value) {
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, value);
+    }
+
+    PERIPHERAL_PARAM_UINT16(port->peripheral, attrdef->storage_param_no) = value;
 }
 
 int attr_get_flag(port_t *port, attrdef_t *attrdef) {
-    bool v = !!(port->flags & (1 << attrdef->gs_flag_bit));
+    bool v = PERIPHERAL_GET_FLAG(port->peripheral, attrdef->storage_flag_bit_no);
 
-    if (attrdef->user_data_cache_offs) {
-        attr_set_user_data_cache(port, attrdef, &v);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
     return v;
@@ -207,141 +248,91 @@ int attr_get_flag(port_t *port, attrdef_t *attrdef) {
 void attr_set_flag(port_t *port, attrdef_t *attrdef, int value) {
     bool v = value;
 
-    if (attrdef->user_data_cache_offs) {
-        attr_set_user_data_cache(port, attrdef, &v);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    if (v) {
-        port->flags |= 1 << attrdef->gs_flag_bit;
-    }
-    else {
-        port->flags &= ~(1 << attrdef->gs_flag_bit);
-    }
+    PERIPHERAL_SET_FLAG(port->peripheral, attrdef->storage_flag_bit_no, v);
 }
 
-int attr_get_user_config_num_choices(port_t *port, attrdef_t *attrdef) {
-    uint8 index = port->user_config[attrdef->gs_user_config_offs];
+int attr_get_param_num_choices(port_t *port, attrdef_t *attrdef) {
+    uint8 index = PERIPHERAL_PARAM_UINT8(port->peripheral, attrdef->storage_param_no);
 
-    if (attrdef->user_data_cache_offs) {
-        double dv = get_choice_value_num(attrdef->choices[index]);
-
-        switch (attrdef->gs_type) {
-            case ATTRDEF_GS_TYPE_USER_CONFIG_1BU: {
-                uint8 v = dv;
-                attr_set_user_data_cache(port, attrdef, &v);
-                break;
-            }
-
-            case ATTRDEF_GS_TYPE_USER_CONFIG_1BS: {
-                int8 v = dv;
-                attr_set_user_data_cache(port, attrdef, &v);
-                break;
-            }
-
-            case ATTRDEF_GS_TYPE_USER_CONFIG_2BU: {
-                uint16 v = dv;
-                attr_set_user_data_cache(port, attrdef, &v);
-                break;
-            }
-
-            case ATTRDEF_GS_TYPE_USER_CONFIG_2BS: {
-                int16 v = dv;
-                attr_set_user_data_cache(port, attrdef, &v);
-                break;
-            }
-
-            case ATTRDEF_GS_TYPE_USER_CONFIG_4BS: {
-                int32 v = dv;
-                attr_set_user_data_cache(port, attrdef, &v);
-                break;
-            }
-
-            case ATTRDEF_GS_TYPE_USER_CONFIG_DOUBLE:
-                attr_set_user_data_cache(port, attrdef, &dv);
-                break;
-        }
+    if (attrdef->cache_user_data_field_offs) {
+        double value = get_choice_value_num(attrdef->choices[index]);
+        attr_set_user_data_cache(port, attrdef, value);
     }
 
     return index;
 }
 
-void attr_set_user_config_num_choices(port_t *port, attrdef_t *attrdef, int index) {
-    port->user_config[attrdef->gs_user_config_offs] = index;
+void attr_set_param_num_choices(port_t *port, attrdef_t *attrdef, int index) {
+    PERIPHERAL_PARAM_UINT8(port->peripheral, attrdef->storage_param_no) = index;
 
-    if (attrdef->user_data_cache_offs) {
-        double dv = get_choice_value_num(attrdef->choices[index]);
+    if (attrdef->cache_user_data_field_offs) {
+        double value = get_choice_value_num(attrdef->choices[index]);
+        attr_set_user_data_cache(port, attrdef, value);
+    }
+}
 
-        switch (attrdef->gs_type) {
-            case ATTRDEF_GS_TYPE_USER_CONFIG_1BU: {
-                uint8 v = dv;
-                attr_set_user_data_cache(port, attrdef, &v);
-                break;
-            }
+void attr_set_user_data_cache(port_t *port, attrdef_t *attrdef, double value) {
+    void *dest_addr = ((uint8 *) port->peripheral->user_data) + attrdef->cache_user_data_field_offs - 1;
+    switch (attrdef->storage) {
+        case ATTRDEF_STORAGE_PARAM_UINT8: {
+            uint8 v = value;
+            memcpy(dest_addr, &v, 1);
+            break;
+        }
 
-            case ATTRDEF_GS_TYPE_USER_CONFIG_1BS: {
-                int8 v = dv;
-                attr_set_user_data_cache(port, attrdef, &v);
-                break;
-            }
+        case ATTRDEF_STORAGE_PARAM_SINT8: {
+            int8 v = value;
+            memcpy(dest_addr, &v, 1);
+            break;
+        }
 
-            case ATTRDEF_GS_TYPE_USER_CONFIG_2BU: {
-                uint16 v = dv;
-                attr_set_user_data_cache(port, attrdef, &v);
-                break;
-            }
+        case ATTRDEF_STORAGE_PARAM_UINT16: {
+            uint16 v = value;
+            memcpy(dest_addr, &v, 2);
+            break;
+        }
 
-            case ATTRDEF_GS_TYPE_USER_CONFIG_2BS: {
-                int16 v = dv;
-                attr_set_user_data_cache(port, attrdef, &v);
-                break;
-            }
+        case ATTRDEF_STORAGE_PARAM_SINT16: {
+            sint16 v = value;
+            memcpy(dest_addr, &v, 2);
+            break;
+        }
 
-            case ATTRDEF_GS_TYPE_USER_CONFIG_4BS: {
-                int32 v = dv;
-                attr_set_user_data_cache(port, attrdef, &v);
-                break;
-            }
+        case ATTRDEF_STORAGE_PARAM_UINT32: {
+            uint32 v = value;
+            memcpy(dest_addr, &v, 4);
+            break;
+        }
 
-            case ATTRDEF_GS_TYPE_USER_CONFIG_DOUBLE:
-                attr_set_user_data_cache(port, attrdef, &dv);
-                break;
+        case ATTRDEF_STORAGE_PARAM_SINT32: {
+            int32 v = value;
+            memcpy(dest_addr, &v, 4);
+            break;
+        }
+
+        case ATTRDEF_STORAGE_PARAM_SINT64: {
+            int64 v = value;
+            memcpy(dest_addr, &v, 8);
+            break;
+        }
+
+        case ATTRDEF_STORAGE_PARAM_DOUBLE: {
+            memcpy(dest_addr, &value, 8);
+            break;
         }
     }
 }
-
-void attr_set_user_data_cache(port_t *port, attrdef_t *attrdef, void *value) {
-    uint8 size = 1;
-    switch (attrdef->gs_type) {
-        case ATTRDEF_GS_TYPE_USER_CONFIG_1BU:
-        case ATTRDEF_GS_TYPE_USER_CONFIG_1BS:
-        case ATTRDEF_GS_TYPE_USER_CONFIG_BOOL:
-            size = 1;
-            break;
-
-        case ATTRDEF_GS_TYPE_USER_CONFIG_2BU:
-        case ATTRDEF_GS_TYPE_USER_CONFIG_2BS:
-            size = 2;
-            break;
-
-        case ATTRDEF_GS_TYPE_USER_CONFIG_4BS:
-            size = 4;
-            break;
-
-        case ATTRDEF_GS_TYPE_USER_CONFIG_DOUBLE:
-            size = sizeof(double);
-            break;
-    }
-
-    memcpy(((uint8 *) port->user_data) + attrdef->user_data_cache_offs - 1 /* common offset */, value, size);
-}
-
 
 void port_load(port_t *port, uint8 *config_data) {
     uint8 *base_ptr = config_data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * port->slot;
     char *strings_ptr = (char *) config_data + CONFIG_OFFS_STR_BASE;
 
     /* id */
-    char *id = string_pool_read(strings_ptr, base_ptr + CONFIG_OFFS_PORT_ID);
+    char *id = string_pool_read(strings_ptr, base_ptr + PORT_CONFIG_OFFS_ID);
     if (id) {
         strcpy(port->id, id);
     }
@@ -349,23 +340,23 @@ void port_load(port_t *port, uint8 *config_data) {
     DEBUG_PORT(port, "slot = %d", port->slot);
 
     /* display_name */
-    port->display_name = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_DISP_NAME);
+    port->display_name = string_pool_read_dup(strings_ptr, base_ptr + PORT_CONFIG_OFFS_DISP_NAME);
     DEBUG_PORT(port, "display_name = \"%s\"", port->display_name ? port->display_name : "");
 
     /* unit */
     if (port->type == PORT_TYPE_NUMBER) {
-        if (string_pool_read(strings_ptr, base_ptr + CONFIG_OFFS_PORT_UNIT)) {
+        if (string_pool_read(strings_ptr, base_ptr + PORT_CONFIG_OFFS_UNIT)) {
             if (port->unit) {
                 free(port->unit);
             }
-            port->unit = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_UNIT);
+            port->unit = string_pool_read_dup(strings_ptr, base_ptr + PORT_CONFIG_OFFS_UNIT);
         }
         DEBUG_PORT(port, "unit = \"%s\"", port->unit ? port->unit : "");
     }
 
     /* flags */
     uint32 flags = 0;
-    memcpy(&flags, base_ptr + CONFIG_OFFS_PORT_FLAGS, 4);
+    memcpy(&flags, base_ptr + PORT_CONFIG_OFFS_FLAGS, 4);
     port->flags |= flags; /* Flags that are set by initialization remain set */
 
     /* All enabled ports are automatically considered as set */
@@ -383,7 +374,7 @@ void port_load(port_t *port, uint8 *config_data) {
     /* value */
     double value = UNDEFINED;
     if (IS_PORT_PERSISTED(port)) {
-        memcpy(&value, base_ptr + CONFIG_OFFS_PORT_VALUE, sizeof(double));
+        memcpy(&value, base_ptr + PORT_CONFIG_OFFS_VALUE, sizeof(double));
 
         if (IS_UNDEFINED(value)) {
             DEBUG_PORT(port, "value = (undefined)");
@@ -394,7 +385,7 @@ void port_load(port_t *port, uint8 *config_data) {
     }
 
     /* sampling_interval */
-    memcpy(&port->sampling_interval, base_ptr + CONFIG_OFFS_PORT_SAMP_INT, 4);
+    memcpy(&port->sampling_interval, base_ptr + PORT_CONFIG_OFFS_SAMP_INT, 4);
     if (!port->def_sampling_interval) {
         port->def_sampling_interval = PORT_DEF_SAMP_INT;
     }
@@ -416,9 +407,6 @@ void port_load(port_t *port, uint8 *config_data) {
 
     DEBUG_PORT(port, "heart_beat_interval = %d ms", port->heart_beat_interval);
 
-    /* Extra data */
-    memcpy(port->user_config, base_ptr + CONFIG_OFFS_PORT_DATA, PORT_PERSISTED_USER_CONFIG_LEN);
-
     /* Expressions */
     port->sexpr = NULL;
     port->expr = NULL;
@@ -429,12 +417,12 @@ void port_load(port_t *port, uint8 *config_data) {
 
     if (IS_PORT_WRITABLE(port)) {
         /* Value expression */
-        port->sexpr = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_EXPR);
+        port->sexpr = string_pool_read_dup(strings_ptr, base_ptr + PORT_CONFIG_OFFS_EXPR);
         DEBUG_PORT(port, "expression = \"%s\"", port->sexpr ? port->sexpr : "");
         /* The expression will be parsed later, in config_init() */
 
         /* transform_write */
-        port->stransform_write = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_TRANS_W);
+        port->stransform_write = string_pool_read_dup(strings_ptr, base_ptr + PORT_CONFIG_OFFS_TRANS_W);
         DEBUG_PORT(port, "transform_write = \"%s\"", port->stransform_write ? port->stransform_write : "");
 
         if (port->stransform_write) {
@@ -451,7 +439,7 @@ void port_load(port_t *port, uint8 *config_data) {
     }
 
     /* transform_read */
-    port->stransform_read = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_TRANS_R);
+    port->stransform_read = string_pool_read_dup(strings_ptr, base_ptr + PORT_CONFIG_OFFS_TRANS_R);
     DEBUG_PORT(port, "transform_read = \"%s\"", port->stransform_read ? port->stransform_read : "");
 
     if (port->stransform_read) {
@@ -521,7 +509,7 @@ void port_load(port_t *port, uint8 *config_data) {
             }
 
             /* Calling getter will load value into cache */
-            if (a->user_data_cache_offs) {
+            if (a->cache_user_data_field_offs) {
                 ((int_getter_t) a->get)(port, a);
             }
         }
@@ -568,55 +556,52 @@ void port_save(port_t *port, uint8 *config_data, uint32 *strings_offs) {
     char *strings_ptr = (char *) config_data + CONFIG_OFFS_STR_BASE;
 
     /* id */
-    if (!string_pool_write(strings_ptr, strings_offs, port->id, base_ptr + CONFIG_OFFS_PORT_ID)) {
+    if (!string_pool_write(strings_ptr, strings_offs, port->id, base_ptr + PORT_CONFIG_OFFS_ID)) {
         DEBUG_PORT(port, "no more string space to save id");
     }
 
     /* display name */
-    if (!string_pool_write(strings_ptr, strings_offs, port->display_name, base_ptr + CONFIG_OFFS_PORT_DISP_NAME)) {
+    if (!string_pool_write(strings_ptr, strings_offs, port->display_name, base_ptr + PORT_CONFIG_OFFS_DISP_NAME)) {
         DEBUG_PORT(port, "no more string space to save display name");
     }
 
     /* unit */
     if (port->type == PORT_TYPE_NUMBER) {
-        if (!string_pool_write(strings_ptr, strings_offs, port->unit, base_ptr + CONFIG_OFFS_PORT_UNIT)) {
+        if (!string_pool_write(strings_ptr, strings_offs, port->unit, base_ptr + PORT_CONFIG_OFFS_UNIT)) {
             DEBUG_PORT(port, "no more string space to save unit");
         }
     }
 
     /* Flags */
-    memcpy(base_ptr + CONFIG_OFFS_PORT_FLAGS, &port->flags, 4);
+    memcpy(base_ptr + PORT_CONFIG_OFFS_FLAGS, &port->flags, 4);
 
     /* value */
-    memcpy(base_ptr + CONFIG_OFFS_PORT_VALUE, &port->value, sizeof(double));
+    memcpy(base_ptr + PORT_CONFIG_OFFS_VALUE, &port->value, sizeof(double));
 
     /* min */
-    memcpy(base_ptr + CONFIG_OFFS_PORT_MIN, &port->min, sizeof(double));
+    memcpy(base_ptr + PORT_CONFIG_OFFS_MIN, &port->min, sizeof(double));
 
     /* max */
-    memcpy(base_ptr + CONFIG_OFFS_PORT_MAX, &port->max, sizeof(double));
+    memcpy(base_ptr + PORT_CONFIG_OFFS_MAX, &port->max, sizeof(double));
 
     /* step */
-    memcpy(base_ptr + CONFIG_OFFS_PORT_STEP, &port->step, sizeof(double));
+    memcpy(base_ptr + PORT_CONFIG_OFFS_STEP, &port->step, sizeof(double));
 
     /* sampling_interval */
-    memcpy(base_ptr + CONFIG_OFFS_PORT_SAMP_INT, &port->sampling_interval, 4);
-
-    /* Custom data */
-    memcpy(base_ptr + CONFIG_OFFS_PORT_DATA, port->user_config, PORT_PERSISTED_USER_CONFIG_LEN);
+    memcpy(base_ptr + PORT_CONFIG_OFFS_SAMP_INT, &port->sampling_interval, 4);
 
     /* value expression */
-    if (!string_pool_write(strings_ptr, strings_offs, port->sexpr, base_ptr + CONFIG_OFFS_PORT_EXPR)) {
+    if (!string_pool_write(strings_ptr, strings_offs, port->sexpr, base_ptr + PORT_CONFIG_OFFS_EXPR)) {
         DEBUG_PORT(port, "no more string space to save expression");
     }
 
     /* transform_write */
-    if (!string_pool_write(strings_ptr, strings_offs, port->stransform_write, base_ptr + CONFIG_OFFS_PORT_TRANS_W)) {
+    if (!string_pool_write(strings_ptr, strings_offs, port->stransform_write, base_ptr + PORT_CONFIG_OFFS_TRANS_W)) {
         DEBUG_PORT(port, "no more string space to save write transform");
     }
 
     /* transform_read */
-    if (!string_pool_write(strings_ptr, strings_offs, port->stransform_read, base_ptr + CONFIG_OFFS_PORT_TRANS_R)) {
+    if (!string_pool_write(strings_ptr, strings_offs, port->stransform_read, base_ptr + PORT_CONFIG_OFFS_TRANS_R)) {
         DEBUG_PORT(port, "no more string space to save read transform");
     }
 
@@ -636,14 +621,14 @@ void port_save(port_t *port, uint8 *config_data, uint32 *strings_offs) {
 
         choices_str[len - 1] = 0;
 
-        if (!string_pool_write(strings_ptr, strings_offs, choices_str, base_ptr + CONFIG_OFFS_PORT_CHOICES)) {
+        if (!string_pool_write(strings_ptr, strings_offs, choices_str, base_ptr + PORT_CONFIG_OFFS_CHOICES)) {
             DEBUG_PORT(port, "no more string space to save port choices");
         }
 
         free(choices_str);
     }
     else {
-        string_pool_write(strings_ptr, strings_offs, NULL, base_ptr + CONFIG_OFFS_PORT_CHOICES);
+        string_pool_write(strings_ptr, strings_offs, NULL, base_ptr + PORT_CONFIG_OFFS_CHOICES);
     }
 }
 
@@ -723,47 +708,56 @@ void port_register(port_t *port) {
 
             /* Set default getter/setter */
             /* TODO: add support for default setters/getters for string attributes */
-            if ((!a->get || !a->set) && (a->gs_type != ATTRDEF_GS_TYPE_CUSTOM)) {
+            if ((!a->get || !a->set) && (a->storage != ATTRDEF_STORAGE_CUSTOM)) {
                 if (a->choices) {
                     if (a->type == ATTR_TYPE_NUMBER) {
-                        a->get = attr_get_user_config_num_choices;
-                        a->set = attr_set_user_config_num_choices;
+                        a->get = attr_get_param_num_choices;
+                        a->set = attr_set_param_num_choices;
                     }
                 }
                 else {
-                    switch (a->gs_type) {
-                        case ATTRDEF_GS_TYPE_USER_CONFIG_1BS:
-                        case ATTRDEF_GS_TYPE_USER_CONFIG_BOOL:
-                            a->get = attr_get_user_config_1bs;
-                            a->set = attr_set_user_config_1bs;
+                    switch (a->storage) {
+                        case ATTRDEF_STORAGE_PARAM_UINT8:
+                            a->get = attr_get_param_uint8;
+                            a->set = attr_set_param_uint8;
                             break;
 
-                        case ATTRDEF_GS_TYPE_USER_CONFIG_1BU:
-                            a->get = attr_get_user_config_1bu;
-                            a->set = attr_set_user_config_1bu;
+                        case ATTRDEF_STORAGE_PARAM_SINT8:
+                            a->get = attr_get_param_sint8;
+                            a->set = attr_set_param_sint8;
                             break;
 
-                        case ATTRDEF_GS_TYPE_USER_CONFIG_2BS:
-                            a->get = attr_get_user_config_2bs;
-                            a->set = attr_set_user_config_2bs;
+                        case ATTRDEF_STORAGE_PARAM_UINT16:
+                            a->get = attr_get_param_uint16;
+                            a->set = attr_set_param_uint16;
                             break;
 
-                        case ATTRDEF_GS_TYPE_USER_CONFIG_2BU:
-                            a->get = attr_get_user_config_2bu;
-                            a->set = attr_set_user_config_2bu;
+                        case ATTRDEF_STORAGE_PARAM_SINT16:
+                            a->get = attr_get_param_sint16;
+                            a->set = attr_set_param_sint16;
                             break;
 
-                        case ATTRDEF_GS_TYPE_USER_CONFIG_4BS:
-                            a->get = attr_get_user_config_4bs;
-                            a->set = attr_set_user_config_4bs;
+                        case ATTRDEF_STORAGE_PARAM_UINT32:
+                            a->get = attr_get_param_uint32;
+                            a->set = attr_set_param_uint32;
                             break;
 
-                        case ATTRDEF_GS_TYPE_USER_CONFIG_DOUBLE:
-                            a->get = attr_get_user_config_double;
-                            a->set = attr_set_user_config_double;
+                        case ATTRDEF_STORAGE_PARAM_SINT32:
+                            a->get = attr_get_param_sint32;
+                            a->set = attr_set_param_sint32;
                             break;
 
-                        case ATTRDEF_GS_TYPE_FLAG:
+                        case ATTRDEF_STORAGE_PARAM_SINT64:
+                            a->get = attr_get_param_sint64;
+                            a->set = attr_set_param_sint64;
+                            break;
+
+                        case ATTRDEF_STORAGE_PARAM_DOUBLE:
+                            a->get = attr_get_param_double;
+                            a->set = attr_set_param_double;
+                            break;
+
+                        case ATTRDEF_STORAGE_FLAG:
                             a->get = attr_get_flag;
                             a->set = attr_set_flag;
                             break;
@@ -796,7 +790,7 @@ bool port_unregister(port_t *port) {
         return FALSE;  /* Port not found */
     }
 
-    /* Shift following ports back with 1 position */
+    /* Shift following ports back by 1 position */
     for (i = p; i < all_ports_count - 1; i++) {
         all_ports[i] = all_ports[i + 1];
     }

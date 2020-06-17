@@ -35,18 +35,6 @@
 #define DEBUG_PORT(...)                     {}
 #endif
 
-#define PORT_MAX_ID_LEN                     64
-#define PORT_MAX_DISP_NAME_LEN              64
-#define PORT_MAX_UNIT_LEN                   16
-
-#define PORT_MAX_SAMP_INT                   86400000    /* Milliseconds */
-#define PORT_DEF_SAMP_INT                   0           /* Milliseconds */
-
-#define PORT_DEF_HEART_BEAT_INT             0           /* Milliseconds */
-
-#define PORT_TYPE_BOOLEAN                   'B'
-#define PORT_TYPE_NUMBER                    'N'
-
 #define ATTR_TYPE_BOOLEAN                   'B'
 #define ATTR_TYPE_NUMBER                    'N'
 #define ATTR_TYPE_STRING                    'S'
@@ -59,19 +47,30 @@
 #define IS_ATTRDEF_INTEGER(a)               !!((a)->flags & ATTRDEF_FLAG_INTEGER)
 #define IS_ATTRDEF_RECONNECT(a)             !!((a)->flags & ATTRDEF_FLAG_RECONNECT)
 
-#define ATTRDEF_GS_TYPE_CUSTOM              0
-#define ATTRDEF_GS_TYPE_USER_CONFIG_1BU     1
-#define ATTRDEF_GS_TYPE_USER_CONFIG_1BS     2
-#define ATTRDEF_GS_TYPE_USER_CONFIG_2BU     3
-#define ATTRDEF_GS_TYPE_USER_CONFIG_2BS     4
-#define ATTRDEF_GS_TYPE_USER_CONFIG_4BS     5
-#define ATTRDEF_GS_TYPE_USER_CONFIG_BOOL    6
-#define ATTRDEF_GS_TYPE_USER_CONFIG_DOUBLE  7
-#define ATTRDEF_GS_TYPE_FLAG                8
+#define ATTRDEF_STORAGE_CUSTOM              0
+#define ATTRDEF_STORAGE_PARAM_UINT8         1
+#define ATTRDEF_STORAGE_PARAM_SINT8         2
+#define ATTRDEF_STORAGE_PARAM_UINT16        3
+#define ATTRDEF_STORAGE_PARAM_SINT16        4
+#define ATTRDEF_STORAGE_PARAM_UINT32        5
+#define ATTRDEF_STORAGE_PARAM_SINT32        6
+#define ATTRDEF_STORAGE_PARAM_SINT64        7  /* UINT64 can't be implemented since our int_getter_t returns int64 */
+#define ATTRDEF_STORAGE_PARAM_DOUBLE        8
+#define ATTRDEF_STORAGE_FLAG                9
 
 #define ATTRDEF_CACHE_USER_DATA_FIELD(e, f) (offsetof(e, f) + 1 /* +1 is a common offset */)
 
-#define PORT_PERSISTED_USER_CONFIG_LEN      16
+#define PORT_MAX_ID_LEN                     64
+#define PORT_MAX_DISP_NAME_LEN              64
+#define PORT_MAX_UNIT_LEN                   16
+
+#define PORT_MAX_SAMP_INT                   86400000    /* Milliseconds */
+#define PORT_DEF_SAMP_INT                   0           /* Milliseconds */
+
+#define PORT_DEF_HEART_BEAT_INT             0           /* Milliseconds */
+
+#define PORT_TYPE_BOOLEAN                   'B'
+#define PORT_TYPE_NUMBER                    'N'
 
 #define PORT_FLAG_ENABLED                   0x00000001
 #define PORT_FLAG_WRITABLE                  0x00000002
@@ -111,22 +110,20 @@
 #define IS_PORT_INTERNAL(port)              !!((port)->flags & PORT_FLAG_INTERNAL)
 #define IS_PORT_VIRTUAL(port)               !!((port)->flags & PORT_FLAG_VIRTUAL_ACTIVE)
 
-#define CONFIG_OFFS_PORT_ID                 0x00    /*   4 bytes */
-#define CONFIG_OFFS_PORT_DISP_NAME          0x04    /*   4 bytes */
-#define CONFIG_OFFS_PORT_UNIT               0x08    /*   4 bytes */
-#define CONFIG_OFFS_PORT_MIN                0x0C    /*   8 bytes */
-#define CONFIG_OFFS_PORT_MAX                0x14    /*   8 bytes */
-#define CONFIG_OFFS_PORT_STEP               0x1C    /*   8 bytes */
-#define CONFIG_OFFS_PORT_CHOICES            0x24    /*   4 bytes */
-                                                    /*  40 bytes reserved: 0x28 - 0x4F */
-#define CONFIG_OFFS_PORT_FLAGS              0x50    /*   4 bytes */
-#define CONFIG_OFFS_PORT_VALUE              0x54    /*   8 bytes */
-#define CONFIG_OFFS_PORT_FWIDTH             0x5C    /*   4 bytes */
-#define CONFIG_OFFS_PORT_EXPR               0x60    /*   4 bytes */
-#define CONFIG_OFFS_PORT_TRANS_W            0x64    /*   4 bytes */
-#define CONFIG_OFFS_PORT_TRANS_R            0x68    /*   4 bytes */
-#define CONFIG_OFFS_PORT_SAMP_INT           0x6C    /*   4 bytes */
-#define CONFIG_OFFS_PORT_DATA               0x70    /*  16 bytes for custom data */
+#define PORT_CONFIG_OFFS_ID                 0x00    /*  4 bytes */
+#define PORT_CONFIG_OFFS_DISP_NAME          0x04    /*  4 bytes */
+#define PORT_CONFIG_OFFS_UNIT               0x08    /*  4 bytes */
+#define PORT_CONFIG_OFFS_MIN                0x0C    /*  8 bytes */
+#define PORT_CONFIG_OFFS_MAX                0x14    /*  8 bytes */
+#define PORT_CONFIG_OFFS_STEP               0x1C    /*  8 bytes */
+#define PORT_CONFIG_OFFS_CHOICES            0x24    /*  4 bytes */
+#define PORT_CONFIG_OFFS_FLAGS              0x28    /*  4 bytes */
+#define PORT_CONFIG_OFFS_VALUE              0x2C    /*  8 bytes */
+#define PORT_CONFIG_OFFS_EXPR               0x34    /*  4 bytes */
+#define PORT_CONFIG_OFFS_TRANS_W            0x38    /*  4 bytes */
+#define PORT_CONFIG_OFFS_TRANS_R            0x3C    /*  4 bytes */
+#define PORT_CONFIG_OFFS_SAMP_INT           0x40    /*  4 bytes */
+                                                    /* 0x45 - 0x60: reserved */
 
 #define CHANGE_REASON_NATIVE                'N'
 #define CHANGE_REASON_API                   'A'
@@ -155,16 +152,18 @@ typedef struct attrdef {
 
     void          * get;
     void          * set;
-    uint8           gs_type;
+    uint8           storage;
     union {
-        uint8       gs_user_config_offs;
-        uint8       gs_flag_bit;
+        uint8       storage_param_no;
+        uint8       storage_flag_bit_no;
     };
-    uint16          user_data_cache_offs;
+    uint16          cache_user_data_field_offs;
 
 } attrdef_t;
 
 typedef struct port {
+
+    struct peripheral * peripheral;
 
     int8            slot;               /* Slot number */
     double          value;              /* Current value */
@@ -173,8 +172,6 @@ typedef struct port {
     uint64          change_dep_mask;    /* Port change dependency mask */
 
     int             aux;                /* Member used internally for dependency loops & more */
-    uint8           user_config[PORT_PERSISTED_USER_CONFIG_LEN];
-    void          * user_data;          /* In-memory extra state */
 
     /* Sampling */
     uint32          sampling_interval;
@@ -229,8 +226,8 @@ typedef struct port {
 } port_t;
 
 
-typedef int         (* int_getter_t)(struct port *port, attrdef_t *attrdef);
-typedef void        (* int_setter_t)(struct port *port, attrdef_t *attrdef, int value);
+typedef int64       (* int_getter_t)(struct port *port, attrdef_t *attrdef);
+typedef void        (* int_setter_t)(struct port *port, attrdef_t *attrdef, int64 value);
 
 typedef char      * (* str_getter_t)(struct port *port, attrdef_t *attrdef);
 typedef void        (* str_setter_t)(struct port *port, attrdef_t *attrdef, char *value);
@@ -240,10 +237,6 @@ typedef void        (* float_setter_t)(struct port *port, attrdef_t *attrdef, do
 
 
 extern port_t    ** all_ports;
-extern char       * all_gpio_choices[];
-extern char       * all_gpio_none_choices[];
-extern char       * esp8266_gpio_choices[];
-extern char       * esp8266_gpio_none_choices[];
 
 
 ICACHE_FLASH_ATTR void      ports_init(uint8 *config_data);

@@ -28,49 +28,61 @@
 
 
 #ifdef _DEBUG_PERIPHERALS
-#define DEBUG_PERIPHERALS(fmt, ...)       DEBUG("[peripherals   ] " fmt, ##__VA_ARGS__)
-#define DEBUG_PERIPHERAL(p, fmt, ...)     DEBUG("[peripheral%d  ] " fmt, (p)->index, ##__VA_ARGS__)
+#define DEBUG_PERIPHERALS(fmt, ...)         DEBUG("[peripherals   ] " fmt, ##__VA_ARGS__)
+#define DEBUG_PERIPHERAL(p, fmt, ...)       DEBUG("[peripheral%d  ] " fmt, (p)->index, ##__VA_ARGS__)
 #else
-#define DEBUG_PERIPHERALS(...)            {}
+#define DEBUG_PERIPHERALS(...)              {}
 #endif
 
-#define PERIPHERAL_MAX_BYTE_PARAMS        8
-#define PERIPHERAL_MAX_LONG_PARAMS        4
-#define PERIPHERAL_MAX_RAW_PARAMS         24
-#define PERIPHERAL_MAX_NUM                16
-#define PERIPHERAL_MAX_PORTS              16
-#define PERIPHERAL_MAX_TYPE_ID           1   /* Needs to be adjusted when adding new peripheral types */
+#define PERIPHERAL_CONFIG_OFFS_TYPE_ID      0x00    /*  2 bytes */
+#define PERIPHERAL_CONFIG_OFFS_FLAGS        0x02    /*  2 bytes */
+                                                /* 0x04 - 0x08: reserved */
+#define PERIPHERAL_CONFIG_OFFS_PARAMS       0x08    /* 56 bytes */
 
-#define PERIPHERAL_FLAG(p, no)         (!!((p)->flags & (1 << (no))))
-#define PERIPHERAL_BYTE_PARAM(p, no)   (p)->byte_params[no]
-#define PERIPHERAL_LONG_PARAM(p, no)   (p)->long_params[no]
+#define PERIPHERAL_CONFIG_OFFS_INT8_PARAMS  0x00    /* relative to start of params */
+#define PERIPHERAL_CONFIG_OFFS_INT16_PARAMS 0x08
+#define PERIPHERAL_CONFIG_OFFS_INT32_PARAMS 0x10
+#define PERIPHERAL_CONFIG_OFFS_INT64_PARAMS 0x20
+#define PERIPHERAL_CONFIG_OFFS_DOUBLE_PARAMS 0x20
+
+#define PERIPHERAL_PARAMS_SIZE              56
+#define PERIPHERAL_MAX_INT8_PARAMS          56      /* 8 non-overlapping bytes */
+#define PERIPHERAL_MAX_INT16_PARAMS         24      /* 4 non-overlapping shorts */
+#define PERIPHERAL_MAX_INT32_PARAMS         10      /* 4 non-overlapping longs */
+#define PERIPHERAL_MAX_INT64_PARAMS         3       /* 3 non-overlapping long-longs or doubles */
+#define PERIPHERAL_MAX_DOUBLE_PARAMS        3
+#define PERIPHERAL_MAX_NUM                  16      /* Max number of registered peripherals */
+#define PERIPHERAL_MAX_PORTS                16      /* Max number of ports/peripheral */
+#define PERIPHERAL_MAX_TYPE_ID              1       /* Needs to be increased when adding a new peripheral type */
+
+#define PERIPHERAL_GET_FLAG(p, no)              (!!((p)->flags & (1 << (no))))
+#define PERIPHERAL_SET_FLAG(p, no, v)       {if (v) (p)->flags |= (1 << (no)); else (p)->flags &= ~(1 << (no));}
+#define PERIPHERAL_PARAM_UINT8(p, no)       (p)->params[no]
+#define PERIPHERAL_PARAM_SINT8(p, no)       ((int8 *) (p)->params)[no]
+#define PERIPHERAL_PARAM_UINT16(p, no)      ((uint16 *) (p)->params)[no + 8]
+#define PERIPHERAL_PARAM_SINT16(p, no)      ((int16 *) (p)->params)[no + 8]
+#define PERIPHERAL_PARAM_UINT32(p, no)      ((uint32 *) (p)->params)[no + 16]
+#define PERIPHERAL_PARAM_SINT32(p, no)      ((int32 *) (p)->params)[no + 16]
+#define PERIPHERAL_PARAM_UINT64(p, no)      ((uint64 *) (p)->params)[no + 32]
+#define PERIPHERAL_PARAM_SINT64(p, no)      ((uint64*) (p)->params)[no + 32]
+#define PERIPHERAL_PARAM_DOUBLE(p, no)      ((double *) (p)->params)[no + 32]
 
 
-typedef struct {
+typedef struct peripheral {
 
     uint8                           index;
     uint16                          type_id;
     uint16                          flags;
+    uint8                           params[PERIPHERAL_PARAMS_SIZE];
 
-#pragma pack(push, 1)
-
-    union {
-        struct {
-            int8                    byte_params[PERIPHERAL_MAX_BYTE_PARAMS];
-            int32                   long_params[PERIPHERAL_MAX_LONG_PARAMS];
-        };
-        uint8                       raw_params[PERIPHERAL_MAX_RAW_PARAMS];
-    };
-
-#pragma pack(pop)
+    void                          * user_data; /* In-memory user state */
 
 } peripheral_t;
 
-typedef void (*peripheral_make_ports_callback_t)(peripheral_t *peripheral, port_t **ports, uint8 *ports_len);
-
 typedef struct {
 
-    peripheral_make_ports_callback_t      make_ports;
+    void                         (* init)(peripheral_t *peripheral);
+    void                         (* make_ports)(peripheral_t *peripheral, port_t **ports, uint8 *ports_len);
 
 } peripheral_type_t;
 
@@ -79,8 +91,7 @@ ICACHE_FLASH_ATTR void              peripherals_init(uint8 *config_data);
 ICACHE_FLASH_ATTR void              peripherals_save(uint8 *config_data, uint32 *strings_offs);
 ICACHE_FLASH_ATTR void              peripherals_clear(void);
 
-ICACHE_FLASH_ATTR void              peripheral_make_ports(peripheral_t *peripheral, char *port_ids[],
-                                                          uint8 port_ids_len);
+ICACHE_FLASH_ATTR void              peripheral_init(peripheral_t *peripheral, char *port_ids[], uint8 port_ids_len);
 ICACHE_FLASH_ATTR void              peripheral_register(peripheral_t *peripheral);
 ICACHE_FLASH_ATTR void              peripheral_unregister(peripheral_t *peripheral);
 

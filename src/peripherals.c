@@ -50,7 +50,7 @@ void peripherals_init(uint8 *config_data) {
 
     for (i = 0; i < PERIPHERAL_MAX_NUM; i++) {
         data = config_data + CONFIG_OFFS_PERIPHERALS_BASE + i * CONFIG_PERIPHERAL_SIZE;
-        memcpy(&type_id, data, 2);
+        memcpy(&type_id, data + PERIPHERAL_CONFIG_OFFS_TYPE_ID, 2);
         if (!type_id || type_id > PERIPHERAL_MAX_TYPE_ID) {
             break; /* Peripheral at given index is not configured; stop at first unconfigured peripheral index */
         }
@@ -60,8 +60,7 @@ void peripherals_init(uint8 *config_data) {
 
         peripheral_register(peripheral);
         peripheral_load(peripheral, config_data);
-
-        peripheral_make_ports(peripheral, /* port_ids = */ NULL, /* port_ids_len = */ 0);
+        peripheral_init(peripheral, /* port_ids = */ NULL, /* port_ids_len = */ 0);
     }
 }
 
@@ -105,7 +104,7 @@ void peripheral_unregister(peripheral_t *peripheral) {
         return;  /* Peripheral not found */
     }
 
-    /* Shift following peripherals back with 1 position */
+    /* Shift following peripherals back by 1 position */
     for (i = p; i < all_peripherals_count - 1; i++) {
         all_peripherals[i] = all_peripherals[i + 1];
     }
@@ -119,7 +118,7 @@ void peripheral_load(peripheral_t *peripheral, uint8 *config_data) {
     uint8 *data = config_data + CONFIG_OFFS_PERIPHERALS_BASE + peripheral->index * CONFIG_PERIPHERAL_SIZE;
     uint16 type_id;
 
-    memcpy(&type_id, data, 2);
+    memcpy(&type_id, data + PERIPHERAL_CONFIG_OFFS_TYPE_ID, 2);
     if (!type_id || type_id > PERIPHERAL_MAX_TYPE_ID) {
         return; /* Peripheral at given index is not configured */
     }
@@ -128,15 +127,19 @@ void peripheral_load(peripheral_t *peripheral, uint8 *config_data) {
 
     DEBUG_PERIPHERAL(peripheral, "type %d", type_id);
 
-    memcpy(&peripheral->flags, data + 2, 2);
-    memcpy(peripheral->raw_params, data + 4, PERIPHERAL_MAX_RAW_PARAMS);
+    memcpy(&peripheral->flags, data + PERIPHERAL_CONFIG_OFFS_FLAGS, 2);
+    memcpy(peripheral->params, data + PERIPHERAL_CONFIG_OFFS_PARAMS, PERIPHERAL_PARAMS_SIZE);
 }
 
-void peripheral_make_ports(peripheral_t *peripheral, char *port_ids[], uint8 port_ids_len) {
+void peripheral_init(peripheral_t *peripheral, char *port_ids[], uint8 port_ids_len) {
     peripheral_type_t *type = all_peripheral_types[peripheral->type_id - 1 /* Type IDs start at 1 */];
     port_t *ports[PERIPHERAL_MAX_PORTS];
     uint8 ports_len = 0;
 
+    DEBUG_PERIPHERAL(peripheral, "initializing");
+    type->init(peripheral);
+
+    DEBUG_PERIPHERAL(peripheral, "making ports");
     type->make_ports(peripheral, ports, &ports_len);
 
     /* Allocate slots and register new ports */
@@ -176,7 +179,7 @@ void peripheral_save(peripheral_t *peripheral, uint8 *config_data, uint32 *strin
 
     uint8 *data = config_data + peripheral->index * CONFIG_PERIPHERAL_SIZE;
 
-    memcpy(data, &peripheral->type_id, 2);
-    memcpy(data + 2, &peripheral->flags, 2);
-    memcpy(data + 4, peripheral->raw_params, PERIPHERAL_MAX_RAW_PARAMS);
+    memcpy(data + PERIPHERAL_CONFIG_OFFS_TYPE_ID, &peripheral->type_id, 2);
+    memcpy(data + PERIPHERAL_CONFIG_OFFS_FLAGS, &peripheral->flags, 2);
+    memcpy(data + PERIPHERAL_CONFIG_OFFS_PARAMS, peripheral->params, PERIPHERAL_PARAMS_SIZE);
 }

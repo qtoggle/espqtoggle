@@ -67,7 +67,7 @@ void init_virtual_port(uint8 *base_ptr, char *strings_ptr, uint32 flags, uint8 i
     /* Virtual ports don't have an id before loading */
     snprintf(port->id, PORT_MAX_ID_LEN + 1, "virtual%d", index);
 
-    char *id = string_pool_read(strings_ptr, base_ptr + CONFIG_OFFS_PORT_ID);
+    char *id = string_pool_read(strings_ptr, base_ptr + PORT_CONFIG_OFFS_ID);
     if (id) {
         strncpy(port->id, id, PORT_MAX_ID_LEN + 1);
     }
@@ -75,9 +75,9 @@ void init_virtual_port(uint8 *base_ptr, char *strings_ptr, uint32 flags, uint8 i
     port->type = flags & PORT_FLAG_VIRTUAL_TYPE ? PORT_TYPE_NUMBER : PORT_TYPE_BOOLEAN;
     port->integer = !!(flags & PORT_FLAG_VIRTUAL_INTEGER);
 
-    memcpy(&port->min, base_ptr + CONFIG_OFFS_PORT_MIN, sizeof(double));
-    memcpy(&port->max, base_ptr + CONFIG_OFFS_PORT_MAX, sizeof(double));
-    memcpy(&port->step, base_ptr + CONFIG_OFFS_PORT_STEP, sizeof(double));
+    memcpy(&port->min, base_ptr + PORT_CONFIG_OFFS_MIN, sizeof(double));
+    memcpy(&port->max, base_ptr + PORT_CONFIG_OFFS_MAX, sizeof(double));
+    memcpy(&port->step, base_ptr + PORT_CONFIG_OFFS_STEP, sizeof(double));
 
     DEBUG_PORT(port, "type = %s", port->type == PORT_TYPE_NUMBER ? "number" : "boolean");
     DEBUG_PORT(port, "integer = %s", port->integer ? "true" : "false");
@@ -86,7 +86,7 @@ void init_virtual_port(uint8 *base_ptr, char *strings_ptr, uint32 flags, uint8 i
     DEBUG_PORT(port, "step = %s", IS_UNDEFINED(port->step) ? "unset" : dtostr(port->step, -1));
 
     /* Choices are stored in the strings pool */
-    char *choices_str = string_pool_read(strings_ptr, base_ptr + CONFIG_OFFS_PORT_CHOICES);
+    char *choices_str = string_pool_read(strings_ptr, base_ptr + PORT_CONFIG_OFFS_CHOICES);
     if (choices_str && port->type == PORT_TYPE_NUMBER) {
         char *choice;
         int n = 0;
@@ -116,7 +116,7 @@ void virtual_ports_init(uint8 *config_data) {
 
     for (i = 0; i < VIRTUAL_MAX_PORTS; i++) {
         base_ptr = config_data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * (i + PORT_SLOT_VIRTUAL0);
-        memcpy(&flags, base_ptr + CONFIG_OFFS_PORT_FLAGS, 4);
+        memcpy(&flags, base_ptr + PORT_CONFIG_OFFS_FLAGS, 4);
 
         if (flags & PORT_FLAG_VIRTUAL_ACTIVE) {
             init_virtual_port(base_ptr, strings_ptr, flags, i);
@@ -132,7 +132,7 @@ void virtual_ports_save(uint8 *config_data, uint32 *strings_offs) {
     for (i = 0; i < VIRTUAL_MAX_PORTS; i++) {
         slot = i + PORT_SLOT_VIRTUAL0;
         base_ptr = config_data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * slot;
-        memcpy(&flags, base_ptr + CONFIG_OFFS_PORT_FLAGS, 4);
+        memcpy(&flags, base_ptr + PORT_CONFIG_OFFS_FLAGS, 4);
         if (ports_slot_busy(slot)) {
             flags |= PORT_FLAG_VIRTUAL_ACTIVE;
             DEBUG_VIRTUAL("setting slot %d virtual flag", slot);
@@ -141,7 +141,7 @@ void virtual_ports_save(uint8 *config_data, uint32 *strings_offs) {
             flags &= ~PORT_FLAG_VIRTUAL_ACTIVE;
             DEBUG_VIRTUAL("clearing slot %d virtual flag", slot);
         }
-        memcpy(base_ptr + CONFIG_OFFS_PORT_FLAGS, &flags, 4);
+        memcpy(base_ptr + PORT_CONFIG_OFFS_FLAGS, &flags, 4);
     }
 }
 
