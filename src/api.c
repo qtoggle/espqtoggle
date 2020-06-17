@@ -156,8 +156,6 @@ static struct espconn         * api_conn;
 static struct espconn         * api_conn_saved;
 
 
-static char                   * frequency_choices[] = {"80", "160", NULL};
-
 #ifdef _OTA
 static char                   * ota_states_str[] = {"idle", "checking", "downloading", "restarting"};
 #endif
@@ -786,7 +784,6 @@ json_t *device_to_json(void) {
     }
     json_obj_append(json, "wifi_signal_strength", json_int_new(wifi_signal_strength));
 
-    json_obj_append(json, "frequency", json_int_new(system_get_cpu_freq()));
     json_obj_append(json, "mem_usage", json_int_new(100 - 100 * system_get_free_heap_size() / MAX_AVAILABLE_RAM));
     json_obj_append(json, "flash_size", json_int_new(system_get_flash_size() / 1024));
 
@@ -943,19 +940,6 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
             strcpy(device_viewonly_password_hash, password_hash);
             free(password_hash);
             DEBUG_DEVICE("view-only password set");
-        }
-        else if (!strcmp(key, "frequency")) {
-            if (json_get_type(child) != JSON_TYPE_INT) {
-                return INVALID_FIELD(key);
-            }
-
-            int frequency = json_int_get(child);
-            if (!validate_num(frequency, UNDEFINED, UNDEFINED, TRUE, 0, frequency_choices)) {
-                return INVALID_FIELD(key);
-            }
-
-            system_update_cpu_freq(frequency);
-            DEBUG_DEVICE("CPU frequency set to %d MHz", frequency);
         }
         else if (!strcmp(key, "ip_address")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
@@ -3040,11 +3024,6 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
 json_t *device_attrdefs_to_json(void) {
     json_t *json = json_obj_new();
     json_t *attrdef_json;
-
-    attrdef_json = attrdef_to_json("CPU Frequency", "The CPU frequency.", "MHz", ATTR_TYPE_NUMBER,
-                                   /* modifiable = */TRUE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
-                                   /* integer = */ TRUE, /* step = */ 0, frequency_choices, /* reconnect = */ FALSE);
-    json_obj_append(json, "frequency", attrdef_json);
 
 #ifdef _SLEEP
     attrdef_json = attrdef_to_json("Sleep Mode",

@@ -33,8 +33,7 @@
 #define CONFIG_OFFS_TCP_PORT            0x0140 /*   2 bytes */
                                                /* 0x0142 - 0x0143: reserved */
 #define CONFIG_OFFS_DEVICE_FLAGS        0x0144 /*   4 bytes */
-#define CONFIG_OFFS_CPU_FREQ            0x0148 /*   4 bytes */
-
+                                               /* 0x0148 - 0x014B: reserved */
 #define CONFIG_OFFS_IP_ADDRESS          0x014C /*   4 bytes */
 #define CONFIG_OFFS_GATEWAY             0x0150 /*   4 bytes */
 #define CONFIG_OFFS_DNS                 0x0154 /*   4 bytes */

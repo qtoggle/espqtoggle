@@ -63,7 +63,6 @@ ICACHE_FLASH_ATTR void                  apply_port_provisioning_config(json_t *p
 
 
 void device_load(uint8 *data) {
-    int frequency;
     char *strings_ptr = (char *) data + CONFIG_OFFS_STR_BASE;
     ip_addr_t wifi_ip, wifi_gw, wifi_dns;
     uint8 wifi_netmask;
@@ -136,11 +135,6 @@ void device_load(uint8 *data) {
     memcpy(&device_flags, data + CONFIG_OFFS_DEVICE_FLAGS, 4);
     DEBUG_DEVICE("flags = %08X", device_flags);
 
-    memcpy(&frequency, data + CONFIG_OFFS_CPU_FREQ, 4);
-    if (frequency) {
-        system_update_cpu_freq(frequency);
-    }
-
     /* Config model */
     char *model = string_pool_read(strings_ptr, data + CONFIG_OFFS_MODEL);
     if (model) {
@@ -200,7 +194,6 @@ void device_load(uint8 *data) {
 }
 
 void device_save(uint8 *data, uint32 *strings_offs) {
-    int frequency = system_get_cpu_freq();
     char *strings_ptr = (char *) data + CONFIG_OFFS_STR_BASE;
     ip_addr_t wifi_ip_address, wifi_gateway, wifi_dns;
     uint8 wifi_netmask;
@@ -240,7 +233,6 @@ void device_save(uint8 *data, uint32 *strings_offs) {
     /* Flags & others */
     memcpy(data + CONFIG_OFFS_TCP_PORT, &device_tcp_port, 2);
     memcpy(data + CONFIG_OFFS_DEVICE_FLAGS, &device_flags, 4);
-    memcpy(data + CONFIG_OFFS_CPU_FREQ, &frequency, 4);
 
     /* Config model */
     if (!string_pool_write(strings_ptr, strings_offs, device_config_model, data + CONFIG_OFFS_MODEL)) {
@@ -331,8 +323,6 @@ void config_init(void) {
 
     /* Backwards compatibility code ends */
 
-
-    DEBUG_DEVICE("CPU frequency set to %d MHz", system_get_cpu_freq());
 
     if (!device_name[0]) {
         snprintf(device_name, API_MAX_DEVICE_NAME_LEN, DEFAULT_HOSTNAME, system_get_chip_id());
