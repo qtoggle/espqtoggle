@@ -34,16 +34,16 @@
 #define DEBUG_PERIPHERALS(...)              {}
 #endif
 
-#define PERIPHERAL_CONFIG_OFFS_TYPE_ID      0x00    /*  2 bytes */
-#define PERIPHERAL_CONFIG_OFFS_FLAGS        0x02    /*  2 bytes */
-                                                /* 0x04 - 0x08: reserved */
-#define PERIPHERAL_CONFIG_OFFS_PARAMS       0x08    /* 56 bytes */
+#define PERIPHERAL_CONFIG_OFFS_TYPE_ID          0x00    /*  2 bytes */
+#define PERIPHERAL_CONFIG_OFFS_FLAGS            0x02    /*  2 bytes */
+                                                        /* 0x04 - 0x08: reserved */
+#define PERIPHERAL_CONFIG_OFFS_PARAMS           0x08    /* 56 bytes */
 
-#define PERIPHERAL_CONFIG_OFFS_INT8_PARAMS  0x00    /* relative to start of params */
-#define PERIPHERAL_CONFIG_OFFS_INT16_PARAMS 0x08
-#define PERIPHERAL_CONFIG_OFFS_INT32_PARAMS 0x10
-#define PERIPHERAL_CONFIG_OFFS_INT64_PARAMS 0x20
-#define PERIPHERAL_CONFIG_OFFS_DOUBLE_PARAMS 0x20
+#define PERIPHERAL_CONFIG_OFFS_INT8_PARAMS      0x00    /* relative to start of params */
+#define PERIPHERAL_CONFIG_OFFS_INT16_PARAMS     0x08
+#define PERIPHERAL_CONFIG_OFFS_INT32_PARAMS     0x10
+#define PERIPHERAL_CONFIG_OFFS_INT64_PARAMS     0x20
+#define PERIPHERAL_CONFIG_OFFS_DOUBLE_PARAMS    0x20
 
 #define PERIPHERAL_PARAMS_SIZE              56
 #define PERIPHERAL_MAX_INT8_PARAMS          56      /* 8 non-overlapping bytes */
@@ -55,7 +55,7 @@
 #define PERIPHERAL_MAX_PORTS                16      /* Max number of ports/peripheral */
 #define PERIPHERAL_MAX_TYPE_ID              1       /* Needs to be increased when adding a new peripheral type */
 
-#define PERIPHERAL_GET_FLAG(p, no)              (!!((p)->flags & (1 << (no))))
+#define PERIPHERAL_GET_FLAG(p, no)          (!!((p)->flags & (1 << (no))))
 #define PERIPHERAL_SET_FLAG(p, no, v)       {if (v) (p)->flags |= (1 << (no)); else (p)->flags &= ~(1 << (no));}
 #define PERIPHERAL_PARAM_UINT8(p, no)       (p)->params[no]
 #define PERIPHERAL_PARAM_SINT8(p, no)       ((int8 *) (p)->params)[no]
@@ -73,7 +73,7 @@ typedef struct peripheral {
     uint8                           index;
     uint16                          type_id;
     uint16                          flags;
-    uint8                           params[PERIPHERAL_PARAMS_SIZE];
+    uint8                           params[PERIPHERAL_PARAMS_SIZE]; // TODO don't keep this in memory all the time
 
     void                          * user_data; /* In-memory user state */
 
