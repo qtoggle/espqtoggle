@@ -132,8 +132,10 @@ void core_poll(void) {
     }
 
     /* Determine changed ports */
-    port_t **port = all_ports, *p;
-    while ((p = *port++)) {
+    port_t *p;
+    int i;
+    for (i = 0; i < all_ports_count; i++) {
+        p = all_ports[i];
         if (!IS_PORT_ENABLED(p)) {
             continue;
         }
@@ -263,8 +265,11 @@ void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_m
     force_eval_expressions_mask = 0;
 
     /* Trigger value-change events; save persisted ports */
-    port_t **port = all_ports, *p;
-    while ((p = *port++)) {
+    port_t *p;
+    int i;
+    for (i = 0; i < all_ports_count; i++) {
+        p = all_ports[i];
+
         if (!((1ULL << p->slot) & change_mask)) {
             continue;
         }
@@ -294,8 +299,9 @@ void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_m
     }
 
     /* Reevaluate the expressions depending on changed ports */
-    port = all_ports;
-    while ((p = *port++)) {
+    for (i = 0; i < all_ports_count; i++) {
+        p = all_ports[i];
+
         if (!IS_PORT_ENABLED(p)) {
             continue;
         }

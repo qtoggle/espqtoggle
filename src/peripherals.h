@@ -29,7 +29,7 @@
 
 #ifdef _DEBUG_PERIPHERALS
 #define DEBUG_PERIPHERALS(fmt, ...)         DEBUG("[peripherals   ] " fmt, ##__VA_ARGS__)
-#define DEBUG_PERIPHERAL(p, fmt, ...)       DEBUG("[peripheral%d  ] " fmt, (p)->index, ##__VA_ARGS__)
+#define DEBUG_PERIPHERAL(p, fmt, ...)       DEBUG("[peripheral%02d  ] " fmt, (p)->index, ##__VA_ARGS__)
 #else
 #define DEBUG_PERIPHERALS(...)              {}
 #endif
@@ -82,16 +82,21 @@ typedef struct peripheral {
 typedef struct {
 
     void                         (* init)(peripheral_t *peripheral);
+    void                         (* cleanup)(peripheral_t *peripheral);
     void                         (* make_ports)(peripheral_t *peripheral, port_t **ports, uint8 *ports_len);
 
 } peripheral_type_t;
 
 
+extern peripheral_t              ** all_peripherals;
+extern uint8                        all_peripherals_count;
+
+
 ICACHE_FLASH_ATTR void              peripherals_init(uint8 *config_data);
 ICACHE_FLASH_ATTR void              peripherals_save(uint8 *config_data, uint32 *strings_offs);
-ICACHE_FLASH_ATTR void              peripherals_clear(void);
 
 ICACHE_FLASH_ATTR void              peripheral_init(peripheral_t *peripheral, char *port_ids[], uint8 port_ids_len);
+ICACHE_FLASH_ATTR void              peripheral_cleanup(peripheral_t *peripheral);
 ICACHE_FLASH_ATTR void              peripheral_register(peripheral_t *peripheral);
 ICACHE_FLASH_ATTR void              peripheral_unregister(peripheral_t *peripheral);
 

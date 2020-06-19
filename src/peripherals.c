@@ -30,12 +30,12 @@
 
 static peripheral_type_t *all_peripheral_types[] = {
 
-    &peripheral_type_gpio
+    &peripheral_type_gpio       /* Type 1 */
 
 };
 
-static peripheral_t  ** all_peripherals = NULL;
-static uint8            all_peripherals_count = 0;
+peripheral_t  ** all_peripherals = NULL;
+uint8            all_peripherals_count = 0;
 
 
 ICACHE_FLASH_ATTR static void peripheral_load(peripheral_t *peripheral, uint8 *config_data);
@@ -47,6 +47,8 @@ void peripherals_init(uint8 *config_data) {
     uint8 *data;
     uint16 type_id;
     peripheral_t *peripheral;
+
+    DEBUG_PERIPHERALS("initializing");
 
     for (i = 0; i < PERIPHERAL_MAX_NUM; i++) {
         data = config_data + CONFIG_OFFS_PERIPHERALS_BASE + i * CONFIG_PERIPHERAL_SIZE;
@@ -72,15 +74,6 @@ void peripherals_save(uint8 *config_data, uint32 *strings_offs) {
         peripheral_save(all_peripherals[i], config_data, strings_offs);
     }
 }
-
-void peripherals_clear(void) {
-    DEBUG_PERIPHERALS("clearing");
-
-    while (all_peripherals_count) {
-        peripheral_unregister(all_peripherals[all_peripherals_count - 1]);
-    }
-}
-
 
 void peripheral_register(peripheral_t *peripheral) {
     DEBUG_PERIPHERAL(peripheral, "registering");
@@ -109,7 +102,7 @@ void peripheral_unregister(peripheral_t *peripheral) {
         all_peripherals[i] = all_peripherals[i + 1];
     }
 
-    all_peripherals = realloc(all_peripherals, (--all_peripherals_count) * sizeof(peripheral_t *));
+    all_peripherals = realloc(all_peripherals, --all_peripherals_count * sizeof(peripheral_t *));
 
     DEBUG_PERIPHERAL(peripheral, "unregistered");
 }
@@ -152,11 +145,13 @@ void peripheral_init(peripheral_t *peripheral, char *port_ids[], uint8 port_ids_
         }
 
         /* Automatically allocate next available slot, if not supplied */
-        port->slot = ports_next_slot();
-        if (!port->slot) {
-            DEBUG_PERIPHERAL(peripheral, "could not allocate slot for new port");
-            free(port);
-            break;
+        if (port->slot == -1) {
+            port->slot = ports_next_slot();
+            if (port->slot == -1) {
+                DEBUG_PERIPHERAL(peripheral, "could not allocate slot for new port");
+                free(port);
+                break;
+            }
         }
 
         port_register(port);
@@ -169,7 +164,23 @@ void peripheral_init(peripheral_t *peripheral, char *port_ids[], uint8 port_ids_
                 break; /* Not enough supplied IDs */
             }
 
+            DEBUG_PORT(ports[i], "id = \"%s\"", port_ids[i]);
             strncpy(ports[i]->id, port_ids[i], PORT_MAX_ID_LEN + 1);
+        }
+    }
+}
+
+void peripheral_cleanup(peripheral_t *peripheral) {
+    DEBUG_PERIPHERAL(peripheral, "cleaning up");
+
+    peripheral_type_t *type = all_peripheral_types[peripheral->type_id - 1 /* Type IDs start at 1 */];
+    if (type->cleanup) {
+        type->cleanup(peripheral);
+    }
+    else {
+        /* Default cleanup routine will simply free user_data */
+        if (peripheral->user_data) {
+            free(peripheral->user_data);
         }
     }
 }
@@ -177,7 +188,7 @@ void peripheral_init(peripheral_t *peripheral, char *port_ids[], uint8 port_ids_
 void peripheral_save(peripheral_t *peripheral, uint8 *config_data, uint32 *strings_offs) {
     DEBUG_PERIPHERAL(peripheral, "saving");
 
-    uint8 *data = config_data + peripheral->index * CONFIG_PERIPHERAL_SIZE;
+    uint8 *data = config_data + CONFIG_OFFS_PERIPHERALS_BASE + peripheral->index * CONFIG_PERIPHERAL_SIZE;
 
     memcpy(data + PERIPHERAL_CONFIG_OFFS_TYPE_ID, &peripheral->type_id, 2);
     memcpy(data + PERIPHERAL_CONFIG_OFFS_FLAGS, &peripheral->flags, 2);

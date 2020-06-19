@@ -46,39 +46,41 @@ bool flashcfg_load(uint8 *data, uint32 offs, uint32 size) {
 }
 
 bool flashcfg_save(uint8 *data) {
-    int i, sector;
-    SpiFlashOpResult result;
+    return TRUE; // TODO !!!
 
-    for (i = 0; i < FLASH_CONFIG_SIZE / SPI_FLASH_SEC_SIZE; i++) {
-        sector = (FLASH_CONFIG_ADDR + SPI_FLASH_SEC_SIZE * i) / SPI_FLASH_SEC_SIZE;
-        ETS_INTR_LOCK();
-        result = spi_flash_erase_sector(sector);
-        ETS_INTR_UNLOCK();
-        if (result != SPI_FLASH_RESULT_OK) {
-            DEBUG_FLASHCFG("failed to erase flash sector at 0x%05X",
-                           FLASH_CONFIG_ADDR + SPI_FLASH_SEC_SIZE * i);
-            return FALSE;
-        }
-        else {
-            DEBUG_FLASHCFG("flash sector at 0x%05X erased",
-                           FLASH_CONFIG_ADDR + SPI_FLASH_SEC_SIZE * i);
-        }
-    }
-
-    ETS_INTR_LOCK();
-    result = spi_flash_write(FLASH_CONFIG_ADDR, (uint32 *) data, FLASH_CONFIG_SIZE);
-    ETS_INTR_UNLOCK();
-    if (result != SPI_FLASH_RESULT_OK) {
-        DEBUG_FLASHCFG("failed to write %d bytes of flash config at 0x%05X",
-                       FLASH_CONFIG_SIZE, FLASH_CONFIG_ADDR);
-        return FALSE;
-    }
-    else {
-        DEBUG_FLASHCFG("successfully written %d bytes of flash config at 0x%05X",
-                       FLASH_CONFIG_SIZE, FLASH_CONFIG_ADDR);
-    }
-
-    return TRUE;
+//    int i, sector;
+//    SpiFlashOpResult result;
+//
+//    for (i = 0; i < FLASH_CONFIG_SIZE / SPI_FLASH_SEC_SIZE; i++) {
+//        sector = (FLASH_CONFIG_ADDR + SPI_FLASH_SEC_SIZE * i) / SPI_FLASH_SEC_SIZE;
+//        ETS_INTR_LOCK();
+//        result = spi_flash_erase_sector(sector);
+//        ETS_INTR_UNLOCK();
+//        if (result != SPI_FLASH_RESULT_OK) {
+//            DEBUG_FLASHCFG("failed to erase flash sector at 0x%05X",
+//                           FLASH_CONFIG_ADDR + SPI_FLASH_SEC_SIZE * i);
+//            return FALSE;
+//        }
+//        else {
+//            DEBUG_FLASHCFG("flash sector at 0x%05X erased",
+//                           FLASH_CONFIG_ADDR + SPI_FLASH_SEC_SIZE * i);
+//        }
+//    }
+//
+//    ETS_INTR_LOCK();
+//    result = spi_flash_write(FLASH_CONFIG_ADDR, (uint32 *) data, FLASH_CONFIG_SIZE);
+//    ETS_INTR_UNLOCK();
+//    if (result != SPI_FLASH_RESULT_OK) {
+//        DEBUG_FLASHCFG("failed to write %d bytes of flash config at 0x%05X",
+//                       FLASH_CONFIG_SIZE, FLASH_CONFIG_ADDR);
+//        return FALSE;
+//    }
+//    else {
+//        DEBUG_FLASHCFG("successfully written %d bytes of flash config at 0x%05X",
+//                       FLASH_CONFIG_SIZE, FLASH_CONFIG_ADDR);
+//    }
+//
+//    return TRUE;
 }
 
 bool flashcfg_reset(void) {

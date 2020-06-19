@@ -1107,11 +1107,9 @@ void expr_free(expr_t *expr) {
 }
 
 int expr_check_loops(expr_t *expr, struct port *the_port) {
-    port_t *p, **port = all_ports;
-    
     /* Initialize aux (seen) flag */
-    while ((p = *port++)) {
-        p->aux = 0;
+    for (int i = 0; i < all_ports_count; i++) {
+        all_ports[i]->aux = 0;
     }
     the_port->aux = 1;
     

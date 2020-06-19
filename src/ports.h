@@ -237,6 +237,7 @@ typedef void        (* float_setter_t)(struct port *port, attrdef_t *attrdef, do
 
 
 extern port_t    ** all_ports;
+extern int          all_ports_count;
 
 
 ICACHE_FLASH_ATTR void      ports_init(uint8 *config_data);

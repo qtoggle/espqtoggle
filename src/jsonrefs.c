@@ -47,26 +47,23 @@ void lookup_port_attrdef_choices(char **choices, port_t *port, attrdef_t *attrde
     *found_port_index = -1;
     *found_attrdef_name = NULL;
 
-    port_t *p, **ports = all_ports;
+    port_t *p = NULL;
     attrdef_t *a, **attrdefs;
-    uint8 pi = 0;
+    uint8 i = 0;
 
     if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST) {
         /* Look through the attrdefs of all ports for similar choices */
-        while ((p = *ports++)) {
+        for (i = 0; i < all_ports_count && p != port; i++) {
+            p = all_ports[i];
+
             if ((attrdefs = p->attrdefs)) {
                 while ((a = *attrdefs++) && (a != attrdef)) {
                     if (choices_equal(choices, a->choices)) {
-                        *found_port_index = pi;
+                        *found_port_index = i;
                         *found_attrdef_name = a->name;
                         break;
                     }
                 }
-            }
-
-            pi++;
-            if (p == port) {
-                break;
             }
         }
     }

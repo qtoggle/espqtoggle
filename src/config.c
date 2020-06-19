@@ -347,8 +347,9 @@ void config_init(void) {
     free(config_data);
 
     /* Parse port value expressions */
-    port_t *p, **port = all_ports;
-    while ((p = *port++)) {
+    port_t *p;
+    for (i = 0; i < all_ports_count; i++) {
+        p = all_ports[i];
         if (!IS_PORT_ENABLED(p)) {
             continue;
         }

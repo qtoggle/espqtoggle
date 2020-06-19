@@ -35,7 +35,7 @@
 #define PARAM_NO_PIN                0
 
 
-ICACHE_FLASH_ATTR static void       configure(port_t *port); // TODO needed?
+ICACHE_FLASH_ATTR static void       configure(port_t *port);
 ICACHE_FLASH_ATTR static double     read_value(port_t *port);
 ICACHE_FLASH_ATTR static bool       write_value(port_t *port, double value);
 
@@ -146,5 +146,5 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
     port->read_value = read_value;
     port->write_value = write_value;
 
-    ports[*ports_len++] = port;
+    ports[(*ports_len)++] = port;
 }

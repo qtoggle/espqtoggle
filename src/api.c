@@ -501,15 +501,14 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
             int8 found_ref_index = -1;
             if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST) {
                 /* Look through previous ports for same choices */
-                port_t *p, **ports = all_ports;
-                uint8 i = 0;
-                while ((p = *ports++) && (p != port)) {
+                port_t *p;
+                uint8 i;
+                for (i = 0; i < all_ports_count && p != port; i++) {
+                    p = all_ports[i];
                     if (choices_equal(port->choices, p->choices)) {
                         found_ref_index = i;
                         break;
                     }
-
-                    i++;
                 }
             }
 
@@ -1312,10 +1311,12 @@ json_t *api_get_ports(json_t *query_json, int *code) {
         return FORBIDDEN(API_ACCESS_LEVEL_VIEWONLY);
     }
 
-    port_t **port = all_ports, *p;
+    port_t *p;
+    int i;
     json_refs_ctx_t json_refs_ctx;
     json_refs_ctx_init(&json_refs_ctx, JSON_REFS_TYPE_PORTS_LIST);
-    while ((p = *port++)) {
+    for (i = 0; i < all_ports_count; i++) {
+        p = all_ports[i];
         DEBUG_API("returning attributes of port %s", p->id);
         json_list_append(response_json, port_to_json(p, &json_refs_ctx));
         json_refs_ctx.index++;
@@ -1555,9 +1556,8 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
     new_port->flags |= PORT_FLAG_ENABLED;
 
     /* Rebuild deps mask for all ports, as the new port might be among their deps */
-    port_t *p, **ports = all_ports;
-    while ((p = *ports++)) {
-        port_rebuild_change_dep_mask(p);
+    for (i = 0; i < all_ports_count; i++) {
+        port_rebuild_change_dep_mask(all_ports[i]);
     }
 
     config_mark_for_saving();
@@ -2013,9 +2013,9 @@ json_t *api_delete_port(port_t *port, json_t *query_json, int *code) {
     free(port);
 
     /* Rebuild deps mask for all ports, as the former port might have been among their deps */
-    port_t *p, **ports = all_ports;
-    while ((p = *ports++)) {
-        port_rebuild_change_dep_mask(p);
+    int i;
+    for (i = 0; i < all_ports_count; i++) {
+        port_rebuild_change_dep_mask(all_ports[i]);
     }
 
     *code = 204;
@@ -2690,7 +2690,7 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
     uint16 type_id;
     uint16 flags;
     char **port_ids = NULL;
-    int i;
+    int i, index;
     uint8 port_ids_len = 0;
     peripheral_t *peripheral;
 
@@ -2727,8 +2727,9 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
     }
 
     /* Unregister all (non-virtual) ports */
-    port_t *p, **ports = all_ports;
-    while ((p = *ports++)) {
+    port_t *p;
+    for (i = 0; i < all_ports_count; i++) {
+        p = all_ports[i];
         if (IS_PORT_VIRTUAL(p)) {
             continue;
         }
@@ -2740,18 +2741,26 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
         }
 
         free(p);
+
+        i--; /* Current port was removed from all_ports; position i should be processed again */
     }
 
     /* Rebuild deps mask for remaining (virtual) ports */
-    ports = all_ports;
-    while ((p = *ports++)) {
-        port_rebuild_change_dep_mask(p);
+    for (i = 0; i < all_ports_count; i++) { // TODO these 3 lines are duplicated code
+        port_rebuild_change_dep_mask(all_ports[i]);
     }
 
-    peripherals_clear();
+    DEBUG_PERIPHERALS("cleaning up");
 
-    for (i = 0; i < json_list_get_len(request_json); i++) {
-        peripheral_config = json_list_value_at(request_json, i);
+    while (all_peripherals_count) {
+        peripheral = all_peripherals[0];
+        peripheral_unregister(peripheral);
+        peripheral_cleanup(peripheral);
+        free(peripheral);
+    }
+
+    for (index = 0; index < json_list_get_len(request_json); index++) {
+        peripheral_config = json_list_value_at(request_json, index);
 
         flags = 0;
         int8_param_count = 0;
@@ -2930,13 +2939,13 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
                     return INVALID_FIELD("port_ids");
                 }
 
-                port_ids[i] = strdup(json_str_get(json));
+                port_ids[i] = json_str_get(json);
             }
         }
 
         /* Create the peripheral & its ports */
         peripheral = zalloc(sizeof(peripheral_t));
-        peripheral->index = i;
+        peripheral->index = index;
 
         peripheral_register(peripheral);
 
@@ -2980,9 +2989,10 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
         int8 found_port_index = -1;
         if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST) {
             /* Look through previous ports for ports having exact same attrdefs */
-            port_t *p, **ports = all_ports;
+            port_t *p = NULL;
             uint8 i = 0;
-            while ((p = *ports++) && (p != port)) {
+            for (i = 0; i < all_ports_count && p != port; i++) {
+                p = all_ports[i];
                 if ((p->attrdefs == port->attrdefs) &&
                     (IS_PORT_WRITABLE(p) == IS_PORT_WRITABLE(port)) &&
                     (IS_PORT_VIRTUAL(p) == IS_PORT_VIRTUAL(port)) &&
@@ -2991,8 +3001,6 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
                     found_port_index = i;
                     break;
                 }
-
-                i++;
             }
         }
 

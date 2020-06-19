@@ -39,7 +39,7 @@
 
 
 port_t                           ** all_ports = NULL;
-static int                          all_ports_count = 0;
+int                                 all_ports_count = 0;
 static uint32                       used_slots = 0;
 
 
@@ -334,6 +334,7 @@ void port_load(port_t *port, uint8 *config_data) {
     /* id */
     char *id = string_pool_read(strings_ptr, base_ptr + PORT_CONFIG_OFFS_ID);
     if (id) {
+        DEBUG_PORT(port, "id = \"%s\"", id);
         strcpy(port->id, id);
     }
 
@@ -633,29 +634,27 @@ void port_save(port_t *port, uint8 *config_data, uint32 *strings_offs) {
 }
 
 void ports_init(uint8 *config_data) {
-    /* Add the ports list null terminator */
-    all_ports = malloc(sizeof(port_t *));
-    all_ports[0] = NULL;
-
 #ifdef _VIRTUAL
     virtual_ports_init(config_data);
 #endif
 
     /* Load port data */
-    port_t **p = all_ports;
-    while (*p) {
-        DEBUG_PORT(*p, "loading data");
-        port_load(*p, config_data);
-        p++;
+    port_t *p;
+    int i;
+    for (i = 0; i < all_ports_count; i++) {
+        p = all_ports[i];
+        DEBUG_PORT(p, "loading data");
+        port_load(p, config_data);
     }
 }
 
 void ports_save(uint8 *config_data, uint32 *strings_offs) {
-    port_t **p = all_ports;
-    while (*p) {
-        DEBUG_PORT(*p, "saving data");
-        port_save(*p, config_data, strings_offs);
-        p++;
+    port_t *p;
+    int i;
+    for (i = 0; i < all_ports_count; i++) {
+        p = all_ports[i];
+        DEBUG_PORT(p, "saving");
+        port_save(p, config_data, strings_offs);
     }
 
     virtual_ports_save(config_data, strings_offs);
@@ -672,14 +671,14 @@ int8 ports_next_slot() {
      * extra slots. If no extra slot is available, look through standard slots as well. */
 
     for (slot = PORT_SLOT_EXTRA0; slot < PORT_SLOT_VIRTUAL0; slot++) {
-        if (!!(used_slots & (1 << slot))) {
+        if (!(used_slots & (1 << slot))) {
             return slot;
         }
     }
 
     /* If no extra slot is free, try the regular slots */
     for (slot = 0; slot < PORT_SLOT_EXTRA0; slot++) {
-        if (!!(used_slots & (1 << slot))) {
+        if (!(used_slots & (1 << slot))) {
             return slot;
         }
     }
@@ -693,9 +692,8 @@ void port_register(port_t *port) {
         port->unit = strdup(port->unit);
     }
 
-    all_ports = realloc(all_ports, (all_ports_count + 2) * sizeof(port_t *));
+    all_ports = realloc(all_ports, (all_ports_count + 1) * sizeof(port_t *));
     all_ports[all_ports_count++] = port;
-    all_ports[all_ports_count] = NULL;
 
     /* Prepare custom port attrdefs */
     if (port->attrdefs) {
@@ -795,9 +793,7 @@ bool port_unregister(port_t *port) {
         all_ports[i] = all_ports[i + 1];
     }
 
-    all_ports_count--;
-    all_ports = realloc(all_ports, (all_ports_count + 1) * sizeof(port_t *));
-    all_ports[all_ports_count] = NULL;
+    all_ports = realloc(all_ports, --all_ports_count * sizeof(port_t *));
 
     used_slots &= ~(1L << port->slot);
 
@@ -855,8 +851,10 @@ void port_cleanup(port_t *port) {
 }
 
 port_t *port_find_by_id(char *id) {
-    port_t **port = all_ports, *p;
-    while ((p = *port++)) {
+    port_t *p;
+    int i;
+    for (i = 0; i < all_ports_count; i++) {
+        p = all_ports[i];
         if (!strcmp(p->id, id)) {
             return p;
         }
