@@ -383,6 +383,18 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
             RESPOND_NO_SUCH_FUNCTION();
         }
     }
+    else if (!strcmp(part1, "system")) {
+        if (part2) {
+            RESPOND_NO_SUCH_FUNCTION();
+        }
+
+        if (method == HTTP_METHOD_PATCH) {
+            response_json = api_patch_system(query_json, request_json, code);
+        }
+        else {
+            RESPOND_NO_SUCH_FUNCTION();
+        }
+    }
     else {
         RESPOND_NO_SUCH_FUNCTION();
     }
@@ -1196,7 +1208,8 @@ json_t *api_post_reset(json_t *query_json, json_t *request_json, int *code) {
     }
 
     if (factory) {
-        flashcfg_reset();
+        DEBUG_SYSTEM("resetting to factory defaults");
+        flashcfg_reset(FLASH_CONFIG_SLOT_DEFAULT);
         wifi_reset();
     }
 
@@ -2978,6 +2991,97 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
     config_mark_for_saving();
 
     event_push_full_update();
+
+    *code = 200;
+
+    return response_json;
+}
+
+json_t *api_patch_system(json_t *query_json, json_t *request_json, int *code) {
+    json_t *response_json = json_obj_new();
+    json_t *setup_button_json;
+    json_t *status_led_json;
+    json_t *json;
+
+    if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
+        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+    }
+
+    if (json_get_type(request_json) != JSON_TYPE_OBJ) {
+        return API_ERROR(400, "invalid-request");
+    }
+
+    /* Setup button */
+    setup_button_json = json_obj_lookup_key(request_json, "setup_button");
+    if (setup_button_json) {
+        int8 pin;
+        bool level;
+        uint8 hold;
+        uint8 reset_hold;
+
+        if (json_get_type(setup_button_json) != JSON_TYPE_OBJ) {
+            return INVALID_FIELD("setup_button");
+        }
+
+        json = json_obj_lookup_key(setup_button_json, "pin");
+        if (!json || json_get_type(json) != JSON_TYPE_INT) {
+            return INVALID_FIELD("setup_button");
+        }
+        pin = json_int_get(json);
+        if (pin > 16) {
+            pin = -1;
+        }
+
+        json = json_obj_lookup_key(setup_button_json, "level");
+        if (!json || json_get_type(json) != JSON_TYPE_BOOL) {
+            return INVALID_FIELD("setup_button");
+        }
+        level = json_bool_get(json);
+
+        json = json_obj_lookup_key(setup_button_json, "hold");
+        if (!json || json_get_type(json) != JSON_TYPE_INT) {
+            return INVALID_FIELD("setup_button");
+        }
+        hold = json_int_get(json);
+
+        json = json_obj_lookup_key(setup_button_json, "reset_hold");
+        if (!json || json_get_type(json) != JSON_TYPE_INT) {
+            return INVALID_FIELD("setup_button");
+        }
+        reset_hold = json_int_get(json);
+
+        system_setup_button_configure(pin, level, hold, reset_hold);
+    }
+
+    /* Status LED */
+    status_led_json = json_obj_lookup_key(request_json, "status_led");
+    if (status_led_json) {
+        int8 pin;
+        bool level;
+
+        if (json_get_type(status_led_json) != JSON_TYPE_OBJ) {
+            return INVALID_FIELD("status_led");
+        }
+
+        json = json_obj_lookup_key(status_led_json, "pin");
+        if (!json || json_get_type(json) != JSON_TYPE_INT) {
+            return INVALID_FIELD("status_led");
+        }
+        pin = json_int_get(json);
+        if (pin > 16) {
+            pin = -1;
+        }
+
+        json = json_obj_lookup_key(status_led_json, "level");
+        if (!json || json_get_type(json) != JSON_TYPE_BOOL) {
+            return INVALID_FIELD("status_led");
+        }
+        level = json_bool_get(json);
+
+        system_status_led_configure(pin, level);
+    }
+
+    *code = 200;
 
     return response_json;
 }

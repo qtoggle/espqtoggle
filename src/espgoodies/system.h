@@ -38,14 +38,8 @@ typedef void (*system_reset_callback_t)(void);
 typedef void (*system_setup_mode_callback_t)(bool active);
 
 
-extern int8                     system_setup_mode_pin_no;
-extern int8                     system_setup_mode_led_pin_no;
-extern int32                    system_setup_mode_int;
-extern int32                    system_setup_mode_reset_int;
-extern int8                     system_connected_led_pin_no;
-
-
 ICACHE_FLASH_ATTR void          system_init(void);
+ICACHE_FLASH_ATTR void          system_save(void);
 
 ICACHE_FLASH_ATTR uint32        system_uptime(void);
 ICACHE_FLASH_ATTR uint64        system_uptime_ms(void);
@@ -56,12 +50,13 @@ ICACHE_FLASH_ATTR int           system_get_flash_size(void);
 ICACHE_FLASH_ATTR void          system_reset(bool delayed);
 ICACHE_FLASH_ATTR void          system_reset_set_callback(system_reset_callback_t callback);
 
+ICACHE_FLASH_ATTR void          system_setup_button_configure(int8 pin, bool level, uint8 hold, uint8 reset_hold);
+ICACHE_FLASH_ATTR void          system_status_led_configure(int8 pin, bool level);
+
 ICACHE_FLASH_ATTR void          system_setup_mode_set_callback(system_setup_mode_callback_t callback);
 ICACHE_FLASH_ATTR bool          system_setup_mode_active(void);
 ICACHE_FLASH_ATTR void          system_setup_mode_toggle(void);
-ICACHE_FLASH_ATTR void          system_setup_mode_update(void);
 
-ICACHE_FLASH_ATTR void          system_connected_led_update(void);
-
+ICACHE_FLASH_ATTR void          system_update(void);
 
 #endif /* _ESPGOODIES_SYSTEM_H */

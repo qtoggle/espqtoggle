@@ -49,7 +49,7 @@
 static bool                             provisioning = FALSE;
 
 
-ICACHE_FLASH_ATTR void                  device_load(uint8 *data);
+ICACHE_FLASH_ATTR void                  device_load(uint8 *data); // TODO move these to device.{c,h}
 ICACHE_FLASH_ATTR void                  device_save(uint8 *data, uint32 *strings_offs);
 
 ICACHE_FLASH_ATTR void                  on_config_provisioning_response(char *body, int body_len, int status,
@@ -57,7 +57,7 @@ ICACHE_FLASH_ATTR void                  on_config_provisioning_response(char *bo
                                                                         int header_count, uint8 addr[]);
 ICACHE_FLASH_ATTR void                  apply_device_provisioning_config(json_t *device_config);
 ICACHE_FLASH_ATTR void                  apply_peripherals_provisioning_config(json_t *peripherals_config);
-ICACHE_FLASH_ATTR void                  apply_peripheral_provisioning_config(json_t *peripheral_config);
+ICACHE_FLASH_ATTR void                  apply_system_provisioning_config(json_t *system_config);
 ICACHE_FLASH_ATTR void                  apply_ports_provisioning_config(json_t *ports_config);
 ICACHE_FLASH_ATTR void                  apply_port_provisioning_config(json_t *port_config);
 
@@ -267,8 +267,8 @@ void device_save(uint8 *data, uint32 *strings_offs) {
 
 
 void config_init(void) {
-    uint8 *config_data = zalloc(FLASH_CONFIG_SIZE);
-    flashcfg_load(config_data, 0, 0);
+    uint8 *config_data = zalloc(FLASH_CONFIG_SIZE_DEFAULT);
+    flashcfg_load(FLASH_CONFIG_SLOT_DEFAULT, config_data);
 
     /* If config data is full of 0xFF, that usually indicates erased flash. Fill it with 0s in that case, which is what
      * we use for default config. */
@@ -283,8 +283,8 @@ void config_init(void) {
 
     if (erased) {
         DEBUG("detected erased flash config");
-        memset(config_data, 0, FLASH_CONFIG_SIZE);
-        flashcfg_save(config_data);
+        memset(config_data, 0, FLASH_CONFIG_SIZE_DEFAULT);
+        flashcfg_save(FLASH_CONFIG_SLOT_DEFAULT, config_data);
     }
 
     device_load(config_data);
@@ -316,7 +316,7 @@ void config_init(void) {
 
         memset(config_data + legacy_ssid_offs, 0, WIFI_SSID_MAX_LEN);
         memset(config_data + legacy_psk_offs, 0, WIFI_PSK_MAX_LEN);
-        flashcfg_save(config_data);
+        flashcfg_save(FLASH_CONFIG_SLOT_DEFAULT, config_data);
 
         system_reset(/* delayed = */ FALSE);
     }
@@ -371,14 +371,14 @@ void config_init(void) {
 }
 
 void config_save(void) {
-    uint8 *config_data = zalloc(FLASH_CONFIG_SIZE);
+    uint8 *config_data = zalloc(FLASH_CONFIG_SIZE_DEFAULT);
     uint32 strings_offs = 1; /* Address 0 in strings pool represents an unset string, so it's left out */
 
-    flashcfg_load(config_data, 0, 0);
+    flashcfg_load(FLASH_CONFIG_SLOT_DEFAULT, config_data);
     peripherals_save(config_data, &strings_offs);
     ports_save(config_data, &strings_offs);
     device_save(config_data, &strings_offs);
-    flashcfg_save(config_data);
+    flashcfg_save(FLASH_CONFIG_SLOT_DEFAULT, config_data);
     free(config_data);
 
     DEBUG_FLASHCFG("total strings size is %d", strings_offs - 1);
@@ -459,6 +459,11 @@ void on_config_provisioning_response(char *body, int body_len, int status, char 
                 apply_peripherals_provisioning_config(peripherals_config);
             }
 
+            json_t *system_config = json_obj_lookup_key(config, "system");
+            if (system_config) {
+                apply_system_provisioning_config(system_config);
+            }
+
             json_t *ports_config = json_obj_lookup_key(config, "ports");
             if (ports_config) {
                 apply_ports_provisioning_config(ports_config);
@@ -531,6 +536,25 @@ void apply_peripherals_provisioning_config(json_t *peripherals_config) {
     }
     else {
         DEBUG_DEVICE("provisioning: invalid peripherals config");
+    }
+}
+
+void apply_system_provisioning_config(json_t *system_config) {
+    json_t *response_json;
+    int code;
+
+    DEBUG_DEVICE("provisioning: applying system config");
+
+    if (json_get_type(system_config) == JSON_TYPE_OBJ) {
+        code = 200;
+        response_json = api_patch_system(/* query_json = */ NULL, system_config, &code);
+        json_free(response_json);
+        if (code / 100 != 2) {
+            DEBUG_DEVICE("provisioning: api_patch_system() failed with status code %d", code);
+        }
+    }
+    else {
+        DEBUG_DEVICE("provisioning: invalid system config");
     }
 }
 

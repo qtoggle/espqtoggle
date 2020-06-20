@@ -140,11 +140,6 @@ void core_poll(void) {
             continue;
         }
 
-        /* Don't mess with the led while in setup mode */
-        if ((system_setup_mode_led_pin_no == p->slot) && system_setup_mode_active()) {
-            continue;
-        }
-
         if (p->heart_beat && (now_ms - p->last_heart_beat_time >= p->heart_beat_interval)) {
             p->last_heart_beat_time = now_ms;
             p->heart_beat(p);
@@ -239,8 +234,7 @@ void core_task(os_event_t *e) {
         case TASK_UPDATE_SYSTEM: {
             /* Schedule next system update */
             system_os_post(USER_TASK_PRIO_0, TASK_UPDATE_SYSTEM, (os_param_t) NULL);
-            system_setup_mode_update();
-            system_connected_led_update();
+            system_update();
 
             break;
         }

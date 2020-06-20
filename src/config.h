@@ -60,9 +60,19 @@
 #define CONFIG_OFFS_STR_BASE            0x1200 /* 3584 bytes for strings pool */
 
 #define CONFIG_STR_SIZE                 0x0E00 /* 3584 bytes */
-#define CONFIG_PORT_SIZE                0x0060 /*  96 bytes for each port */
-#define CONFIG_PERIPHERAL_SIZE          0x0040 /*  64 bytes for each peripheral */
+#define CONFIG_PORT_SIZE                0x0060 /*   96 bytes for each port */
+#define CONFIG_PERIPHERAL_SIZE          0x0040 /*   64 bytes for each peripheral */
 
+
+/* Following items go into system flash configuration */
+
+#define CONFIG_OFFS_SETUP_BUTTON_PIN    0x0000 /*    1 byte */
+#define CONFIG_OFFS_SETUP_BUTTON_LEVEL  0x0001 /*    1 byte */
+#define CONFIG_OFFS_SETUP_BUTTON_HOLD   0x0002 /*    1 byte */
+#define CONFIG_OFFS_SETUP_BUTTON_HOLDR  0x0003 /*    1 byte */
+
+#define CONFIG_OFFS_STATUS_LED_PIN      0x0004 /*    1 byte */
+#define CONFIG_OFFS_STATUS_LED_LEVEL    0x0005 /*    1 byte */
 
 
 ICACHE_FLASH_ATTR void                  config_init(void);
