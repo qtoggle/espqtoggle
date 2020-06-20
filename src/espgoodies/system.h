@@ -38,11 +38,11 @@ typedef void (*system_reset_callback_t)(void);
 typedef void (*system_setup_mode_callback_t)(bool active);
 
 
-extern int8                     system_setup_mode_gpio_no;
-extern int8                     system_setup_mode_led_gpio_no;
+extern int8                     system_setup_mode_pin_no;
+extern int8                     system_setup_mode_led_pin_no;
 extern int32                    system_setup_mode_int;
 extern int32                    system_setup_mode_reset_int;
-extern int8                     system_connected_led_gpio_no;
+extern int8                     system_connected_led_pin_no;
 
 
 ICACHE_FLASH_ATTR void          system_init(void);

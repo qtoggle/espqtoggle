@@ -468,7 +468,8 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
     if (IS_PORT_VIRTUAL(port)) {
         json_obj_append(json, "virtual", json_bool_new(TRUE));
     }
-    else {
+
+    if (!IS_PORT_VIRTUAL(port) && port->min_sampling_interval < port->max_sampling_interval) {
         json_obj_append(json, "sampling_interval", json_int_new(port->sampling_interval));
     }
 
@@ -538,7 +539,7 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
         json_obj_append(json, "type", json_str_new(API_PORT_TYPE_BOOLEAN));
     }
 
-    /* Specific to output ports */
+    /* Specific to writable ports */
     if (IS_PORT_WRITABLE(port)) {
         if (port->sexpr) {
             json_obj_append(json, "expression", json_str_new(port->sexpr));
@@ -3074,7 +3075,7 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
         }
     }
 
-    if (!IS_PORT_VIRTUAL(port)) {
+    if (!IS_PORT_VIRTUAL(port) && port->min_sampling_interval < port->max_sampling_interval) {
         /* sampling_interval attrdef */
         if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST && json_refs_ctx->sampling_interval_port_index >= 0) {
             attrdef_json = make_json_ref("#/%d/definitions/sampling_interval",

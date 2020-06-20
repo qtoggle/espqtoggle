@@ -42,11 +42,11 @@
 #define _STRING1(x)                 #x
 #define _STRING(x)                  _STRING1(x)
 
-int8                                system_setup_mode_gpio_no = -1;
-int8                                system_setup_mode_led_gpio_no = -1;
+int8                                system_setup_mode_pin_no = -1;
+int8                                system_setup_mode_led_pin_no = -1;
 int32                               system_setup_mode_int = 10;
 int32                               system_setup_mode_reset_int = 20;
-int8                                system_connected_led_gpio_no = -1;
+int8                                system_connected_led_pin_no = -1;
 
 static uint32                       last_time_us = 0;
 static uint64                       uptime_us = 0;
@@ -65,9 +65,9 @@ ICACHE_FLASH_ATTR static void       on_system_reset(void *arg);
 void system_init(void) {
 #ifdef SETUP_MODE_PORT
     /* Skip "gpio" and convert the rest to number */
-    system_setup_mode_gpio_no = strtol(_STRING(SETUP_MODE_PORT) + 4, NULL, 10);
-    gpio_configure_input(system_setup_mode_gpio_no, !SETUP_MODE_LEVEL);
-    DEBUG_SYSTEM("setup mode GPIO set to %d", system_setup_mode_gpio_no);
+    system_setup_mode_pin_no = strtol(_STRING(SETUP_MODE_PORT) + 4, NULL, 10);
+    gpio_configure_input(system_setup_mode_pin_no, !SETUP_MODE_LEVEL);
+    DEBUG_SYSTEM("setup mode GPIO set to %d", system_setup_mode_pin_no);
     DEBUG_SYSTEM("setup mode level set to %d", SETUP_MODE_LEVEL);
 
     system_setup_mode_int = SETUP_MODE_INT;
@@ -77,17 +77,17 @@ void system_init(void) {
     DEBUG_SYSTEM("setup mode reset interval set to %d", system_setup_mode_reset_int);
 
 #ifdef SETUP_MODE_LED_PORT
-    system_setup_mode_led_gpio_no = strtol(_STRING(SETUP_MODE_LED_PORT) + 4, NULL, 10);
-    gpio_configure_output(system_setup_mode_led_gpio_no, FALSE);
-    DEBUG_SYSTEM("setup mode led GPIO set to %d", system_setup_mode_led_gpio_no);
+    system_setup_mode_led_pin_no = strtol(_STRING(SETUP_MODE_LED_PORT) + 4, NULL, 10);
+    gpio_configure_output(system_setup_mode_led_pin_no, FALSE);
+    DEBUG_SYSTEM("setup mode led GPIO set to %d", system_setup_mode_led_pin_no);
 #endif
 
 #endif
 
 #ifdef CONNECTED_LED_PORT
-    system_connected_led_gpio_no = strtol(_STRING(CONNECTED_LED_PORT) + 4, NULL, 10);
-    gpio_configure_output(system_connected_led_gpio_no, !CONNECTED_LED_LEVEL);
-    DEBUG_SYSTEM("connected led GPIO set to %d", system_connected_led_gpio_no);
+    system_connected_led_pin_no = strtol(_STRING(CONNECTED_LED_PORT) + 4, NULL, 10);
+    gpio_configure_output(system_connected_led_pin_no, !CONNECTED_LED_LEVEL);
+    DEBUG_SYSTEM("connected led GPIO set to %d", system_connected_led_pin_no);
     DEBUG_SYSTEM("connected level set to %d", CONNECTED_LED_LEVEL);
 #endif
 }
@@ -184,9 +184,9 @@ void system_setup_mode_update(void) {
     uint32 now = now_us / 1000000;
 
 #ifdef SETUP_MODE_PORT
-    if (system_setup_mode_gpio_no != -1) {
+    if (system_setup_mode_pin_no != -1) {
         /* Read setup mode port state */
-        bool value = gpio_read_value(system_setup_mode_gpio_no);
+        bool value = gpio_read_value(system_setup_mode_pin_no);
         if (value == SETUP_MODE_LEVEL && setup_mode_state == SETUP_MODE_IDLE) {
             DEBUG_SYSTEM("setup mode timer started");
             setup_mode_timer = now;
@@ -217,14 +217,14 @@ void system_setup_mode_update(void) {
         }
     }
 
-    if (system_setup_mode_led_gpio_no != -1) {
+    if (system_setup_mode_led_pin_no != -1) {
         /* Blink the setup mode led */
         int ota_state = ota_current_state();
         if (setup_mode || ota_state == OTA_STATE_DOWNLOADING || ota_state == OTA_STATE_RESTARTING) {
-            bool old_blink_value = gpio_read_value(system_setup_mode_led_gpio_no);
+            bool old_blink_value = gpio_read_value(system_setup_mode_led_pin_no);
             bool new_blink_value = (now_us * 6 / 1000000) % 2;
             if (old_blink_value != new_blink_value) {
-                gpio_write_value(system_setup_mode_led_gpio_no, new_blink_value);
+                gpio_write_value(system_setup_mode_led_pin_no, new_blink_value);
             }
         }
     }
@@ -233,24 +233,24 @@ void system_setup_mode_update(void) {
 void system_connected_led_update(void) {
     static bool old_led_level = FALSE;
 
-    if ((system_connected_led_gpio_no == system_setup_mode_led_gpio_no) && setup_mode) {
+    if ((system_connected_led_pin_no == system_setup_mode_led_pin_no) && setup_mode) {
         /* If we use the same led for both connected status and setup mode, the setup mode led update takes
          * precedence */
         return;
     }
 
-    if (system_connected_led_gpio_no != -1) {
+    if (system_connected_led_pin_no != -1) {
         /* Blink the connected status led if not connected */
         if (!wifi_station_is_connected()) {
             bool new_led_level = (system_uptime_us() * 2 / 1000000) % 2;
             if (old_led_level != new_led_level) {
-                gpio_write_value(system_connected_led_gpio_no, new_led_level);
+                gpio_write_value(system_connected_led_pin_no, new_led_level);
                 old_led_level = new_led_level;
             }
         }
         else {
             if (old_led_level != CONNECTED_LED_LEVEL) {
-                gpio_write_value(system_connected_led_gpio_no, CONNECTED_LED_LEVEL);
+                gpio_write_value(system_connected_led_pin_no, CONNECTED_LED_LEVEL);
                 old_led_level = CONNECTED_LED_LEVEL;
             }
         }

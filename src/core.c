@@ -141,7 +141,7 @@ void core_poll(void) {
         }
 
         /* Don't mess with the led while in setup mode */
-        if ((system_setup_mode_led_gpio_no == p->slot) && system_setup_mode_active()) {
+        if ((system_setup_mode_led_pin_no == p->slot) && system_setup_mode_active()) {
             continue;
         }
 

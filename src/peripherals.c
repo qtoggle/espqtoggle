@@ -161,6 +161,8 @@ void peripheral_init(peripheral_t *peripheral, char *port_ids[], uint8 port_ids_
             }
         }
 
+        port->peripheral = peripheral;
+
         port_register(port);
     }
 

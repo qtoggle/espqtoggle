@@ -32,7 +32,7 @@
 
 typedef struct {
 
-    uint8                               gpio_no;
+    uint8                               pin_no;
     uint8                               rom[8];
     uint8                               last_discrepancy;
     uint8                               last_family_discrepancy;

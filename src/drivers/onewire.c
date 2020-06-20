@@ -33,26 +33,26 @@ ICACHE_FLASH_ATTR static bool       read_bit(one_wire_t *one_wire);
 
 
 void one_wire_setup(one_wire_t *one_wire) {
-    gpio_configure_input(one_wire->gpio_no, FALSE);
+    gpio_configure_input(one_wire->pin_no, FALSE);
 }
 
 bool one_wire_reset(one_wire_t *one_wire) {
     ETS_INTR_LOCK();
 
-    GPIO_OUTPUT_SET(one_wire->gpio_no, 0);
+    GPIO_OUTPUT_SET(one_wire->pin_no, 0);
     os_delay_us(500);
 
-    GPIO_DIS_OUTPUT(one_wire->gpio_no);
+    GPIO_DIS_OUTPUT(one_wire->pin_no);
     os_delay_us(80);
 
-    if (GPIO_INPUT_GET(one_wire->gpio_no)) {
+    if (GPIO_INPUT_GET(one_wire->pin_no)) {
         ETS_INTR_UNLOCK();
         return FALSE;
     }
 
     os_delay_us(300);
 
-    if (!GPIO_INPUT_GET(one_wire->gpio_no)) {
+    if (!GPIO_INPUT_GET(one_wire->pin_no)) {
         ETS_INTR_UNLOCK();
         return FALSE;
     }
@@ -200,7 +200,7 @@ void one_wire_write(one_wire_t *one_wire, uint8 value, bool parasitic) {
     }
 
     if (!parasitic) {
-        GPIO_DIS_OUTPUT(one_wire->gpio_no);
+        GPIO_DIS_OUTPUT(one_wire->pin_no);
     }
 }
 
@@ -211,13 +211,13 @@ void one_wire_write_bytes(one_wire_t *one_wire, uint8 *buf, uint16 len, bool par
     }
 
     if (!parasitic) {
-        GPIO_DIS_OUTPUT(one_wire->gpio_no);
+        GPIO_DIS_OUTPUT(one_wire->pin_no);
     }
 }
 
 void one_wire_parasitic_power_off(one_wire_t *one_wire) {
     /* Set input to floating */
-    GPIO_DIS_OUTPUT(one_wire->gpio_no);
+    GPIO_DIS_OUTPUT(one_wire->pin_no);
 }
 
 uint8 one_wire_crc8(uint8 *buf, int len) {
@@ -244,17 +244,17 @@ void write_bit(one_wire_t *one_wire, bool bit) {
     ETS_INTR_LOCK();
     os_delay_us(1);
 
-    GPIO_OUTPUT_SET(one_wire->gpio_no, 0);
+    GPIO_OUTPUT_SET(one_wire->pin_no, 0);
 
     if (bit) {
         os_delay_us(5);
-        GPIO_DIS_OUTPUT(one_wire->gpio_no);
+        GPIO_DIS_OUTPUT(one_wire->pin_no);
         os_delay_us(55);
         ETS_INTR_UNLOCK();
     }
     else {
         os_delay_us(55);
-        GPIO_DIS_OUTPUT(one_wire->gpio_no);
+        GPIO_DIS_OUTPUT(one_wire->pin_no);
         os_delay_us(5);
         ETS_INTR_UNLOCK();
     }
@@ -266,13 +266,13 @@ bool read_bit(one_wire_t *one_wire) {
     ETS_INTR_LOCK();
     os_delay_us(1);
 
-    GPIO_OUTPUT_SET(one_wire->gpio_no, 0);
+    GPIO_OUTPUT_SET(one_wire->pin_no, 0);
     os_delay_us(3);
 
-    GPIO_DIS_OUTPUT(one_wire->gpio_no);
+    GPIO_DIS_OUTPUT(one_wire->pin_no);
     os_delay_us(10);
 
-    result = GPIO_INPUT_GET(one_wire->gpio_no);
+    result = GPIO_INPUT_GET(one_wire->pin_no);
 
     os_delay_us(47);
     ETS_INTR_UNLOCK();
