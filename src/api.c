@@ -2925,7 +2925,7 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
 
         /* Port IDs */
         port_ids_json = json_obj_lookup_key(peripheral_config, "port_ids");
-        if (json) {
+        if (port_ids_json) {
             if (json_get_type(port_ids_json) != JSON_TYPE_LIST) {
                 return INVALID_FIELD("port_ids");
             }

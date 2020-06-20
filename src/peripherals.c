@@ -102,7 +102,14 @@ void peripheral_unregister(peripheral_t *peripheral) {
         all_peripherals[i] = all_peripherals[i + 1];
     }
 
-    all_peripherals = realloc(all_peripherals, --all_peripherals_count * sizeof(peripheral_t *));
+    if (all_peripherals_count > 1) {
+        all_peripherals = realloc(all_peripherals, --all_peripherals_count * sizeof(peripheral_t *));
+    }
+    else {
+        free(all_peripherals);
+        all_peripherals = NULL;
+        all_peripherals_count = 0;
+    }
 
     DEBUG_PERIPHERAL(peripheral, "unregistered");
 }

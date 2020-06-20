@@ -793,7 +793,14 @@ bool port_unregister(port_t *port) {
         all_ports[i] = all_ports[i + 1];
     }
 
-    all_ports = realloc(all_ports, --all_ports_count * sizeof(port_t *));
+    if (all_ports_count > 1) {
+        all_ports = realloc(all_ports, --all_ports_count * sizeof(port_t *));
+    }
+    else {
+        free(all_ports);
+        all_ports = NULL;
+        all_ports_count = 0;
+    }
 
     used_slots &= ~(1L << port->slot);
 
