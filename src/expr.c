@@ -93,6 +93,7 @@ ICACHE_FLASH_ATTR static double     _time_callback(expr_t *expr, int argc, doubl
 ICACHE_FLASH_ATTR static double     _timems_callback(expr_t *expr, int argc, double *args);
 
 ICACHE_FLASH_ATTR static double     _delay_callback(expr_t *expr, int argc, double *args);
+ICACHE_FLASH_ATTR static double     _freeze_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _held_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _deriv_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _integ_callback(expr_t *expr, int argc, double *args);
@@ -401,6 +402,22 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
     return result;
 }
 
+double _freeze_callback(expr_t *expr, int argc, double *args) {
+    uint64 time_ms = system_uptime_ms();
+    uint64 last_eval_time_ms = expr->aux; /* aux flag is used to store last eval time */
+    uint64 period = args[1];
+
+    /* Don't return newly evaluated value unless required period of time has passed */
+    if (time_ms - last_eval_time_ms < period) {
+        return expr->value;
+    }
+
+    expr->value = args[0];
+    expr->aux = time_ms;
+
+    return expr->value;
+}
+
 double _held_callback(expr_t *expr, int argc, double *args) {
     uint64 time_ms = system_uptime_ms();
     double value = args[0];
@@ -702,6 +719,7 @@ func_t _time =     {.name = "TIME",     .argc = 0,  .callback = _time_callback};
 func_t _timems =   {.name = "TIMEMS",   .argc = 0,  .callback = _timems_callback};
 
 func_t _delay =    {.name = "DELAY",    .argc = 2,  .callback = _delay_callback};
+func_t _freeze =   {.name = "FREEZE",   .argc = 2,  .callback = _freeze_callback};
 func_t _held =     {.name = "HELD",     .argc = 3,  .callback = _held_callback};
 func_t _deriv =    {.name = "DERIV",    .argc = 2,  .callback = _deriv_callback};
 func_t _integ =    {.name = "INTEG",    .argc = 3,  .callback = _integ_callback};
@@ -755,6 +773,7 @@ func_t *funcs[] = {
     &_timems,
 
     &_delay,
+    &_freeze,
     &_held,
     &_deriv,
     &_integ,
@@ -1169,6 +1188,7 @@ bool expr_is_time_dep(expr_t *expr) {
 bool expr_is_time_ms_dep(expr_t *expr) {
     if (expr->func) {
         if (expr->func == &_timems ||
+            expr->func == &_freeze ||
             expr->func == &_held ||
             expr->func == &_delay ||
             expr->func == &_deriv ||
