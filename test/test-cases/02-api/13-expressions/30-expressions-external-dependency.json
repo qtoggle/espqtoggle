@@ -19,7 +19,7 @@
                     "details": {
                         "reason": "external-dependency",
                         "token": "num_port2",
-                        "pos": 7
+                        "pos": 5
                     }
                 }
             }
@@ -42,7 +42,7 @@
                     "details": {
                         "reason": "external-dependency",
                         "token": "num_port2",
-                        "pos": 7
+                        "pos": 5
                     }
                 }
             }
