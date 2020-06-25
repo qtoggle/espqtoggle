@@ -37,7 +37,7 @@
 
 #define SETUP_MODE_IDLE             0
 #define SETUP_MODE_PRESSED          1
-#define SETUP_MODE_ENABLED          2
+#define SETUP_MODE_TRIGGERED        2
 #define SETUP_MODE_RESET            3
 
 int8                                setup_button_pin = -1;
@@ -53,38 +53,87 @@ static os_timer_t                   reset_timer;
 static system_reset_callback_t      reset_callback = NULL;
 static system_setup_mode_callback_t setup_mode_callback;
 
-static int                          setup_mode_time = 0;
-static int                          setup_mode_state = SETUP_MODE_IDLE;
+static uint64                       setup_mode_time = 0;
+static uint8                        setup_mode_state = SETUP_MODE_IDLE;
+static bool                         setup_mode = FALSE;
 
 
 ICACHE_FLASH_ATTR static void       on_system_reset(void *arg);
 
 
 void system_init(void) {
+    /* Load system config from flash */
     uint8 *config_data = zalloc(FLASH_CONFIG_SIZE_SYSTEM);
     flashcfg_load(FLASH_CONFIG_SLOT_SYSTEM, config_data);
 
-    setup_button_pin = config_data[CONFIG_OFFS_SETUP_BUTTON_PIN];
-    setup_button_level = config_data[CONFIG_OFFS_SETUP_BUTTON_LEVEL];
-    setup_button_hold = config_data[CONFIG_OFFS_SETUP_BUTTON_HOLD];
-    setup_button_reset_hold = config_data[CONFIG_OFFS_SETUP_BUTTON_HOLDR];
+    /* If config data is full of 0xFF, that usually indicates erased flash. Fill it with 0s in that case, which is what
+     * we use for default config. */
+    uint16 i;
+    bool erased = TRUE;
+    for (i = 0; i < 32; i++) {
+        if (config_data[i] != 0xFF) {
+            erased = FALSE;
+            break;
+        }
+    }
+
+    if (erased) {
+        DEBUG_SYSTEM("detected erased flash config");
+        memset(config_data, 0, FLASH_CONFIG_SIZE_DEFAULT);
+        flashcfg_save(FLASH_CONFIG_SLOT_DEFAULT, config_data);
+    }
+
+    /* If config data is full of 0x00, that indicates default config */
+    bool null = TRUE;
+    for (i = 0; i < 32; i++) {
+        if (config_data[i] != 0) {
+            null = FALSE;
+            break;
+        }
+    }
+
+    if (null) {
+        DEBUG_SYSTEM("detected default flash config");
+        /* Leave settings as they are initialized */
+    }
+    else {
+        setup_button_pin = config_data[CONFIG_OFFS_SETUP_BUTTON_PIN];
+        setup_button_level = config_data[CONFIG_OFFS_SETUP_BUTTON_LEVEL];
+        setup_button_hold = config_data[CONFIG_OFFS_SETUP_BUTTON_HOLD];
+        setup_button_reset_hold = config_data[CONFIG_OFFS_SETUP_BUTTON_HOLDR];
+
+        status_led_pin = config_data[CONFIG_OFFS_STATUS_LED_PIN];
+        status_led_level = config_data[CONFIG_OFFS_STATUS_LED_LEVEL];
+    }
 
     DEBUG_SYSTEM("loaded setup button: pin = %d, level = %d, hold = %d, reset_hold = %d",
                  setup_button_pin, setup_button_level, setup_button_hold, setup_button_reset_hold);
 
-    status_led_pin = config_data[CONFIG_OFFS_STATUS_LED_PIN];
-    status_led_level = config_data[CONFIG_OFFS_STATUS_LED_LEVEL];
-
     DEBUG_SYSTEM("loaded status LED: pin = %d, level = %d", status_led_pin, status_led_level);
+
+    if (setup_button_pin >= 0) {
+        gpio_configure_input(setup_button_pin, !setup_button_level);
+    }
+    if (status_led_pin >= 0) {
+        gpio_configure_output(status_led_pin, !status_led_level);
+    }
 
     free(config_data);
 }
 
 void system_save(void) {
+    /* Save system config to flash */
+
     uint8 *config_data = zalloc(FLASH_CONFIG_SIZE_SYSTEM);
     flashcfg_load(FLASH_CONFIG_SLOT_SYSTEM, config_data);
 
-    // TODO save config
+    config_data[CONFIG_OFFS_SETUP_BUTTON_PIN] = setup_button_pin;
+    config_data[CONFIG_OFFS_SETUP_BUTTON_LEVEL] = setup_button_level;
+    config_data[CONFIG_OFFS_SETUP_BUTTON_HOLD] = setup_button_hold;
+    config_data[CONFIG_OFFS_SETUP_BUTTON_HOLDR] = setup_button_reset_hold;
+
+    config_data[CONFIG_OFFS_STATUS_LED_PIN] = status_led_pin;
+    config_data[CONFIG_OFFS_STATUS_LED_LEVEL] = status_led_level;
 
     flashcfg_save(FLASH_CONFIG_SLOT_SYSTEM, config_data);
     free(config_data);
@@ -152,6 +201,10 @@ void system_setup_button_configure(int8 pin, bool level, uint8 hold, uint8 reset
     setup_button_hold = hold;
     setup_button_reset_hold = reset_hold;
 
+    if (setup_button_pin >= 0) {
+        gpio_configure_input(setup_button_pin, !setup_button_level);
+    }
+
     system_save();
 }
 
@@ -161,6 +214,10 @@ void system_status_led_configure(int8 pin, bool level) {
     status_led_pin = pin;
     status_led_level = level;
 
+    if (status_led_pin >= 0) {
+        gpio_configure_output(status_led_pin, !status_led_level);
+    }
+
     system_save();
 }
 
@@ -169,11 +226,11 @@ void system_setup_mode_set_callback(system_setup_mode_callback_t callback) {
 }
 
 bool system_setup_mode_active(void) {
-    return setup_mode_state == SETUP_MODE_ENABLED;
+    return setup_mode;
 }
 
 void system_setup_mode_toggle(void) {
-    if (setup_mode_state == SETUP_MODE_ENABLED) {
+    if (setup_mode) {
         DEBUG_SYSTEM("exiting setup mode");
 
         if (setup_mode_callback) {
@@ -183,7 +240,7 @@ void system_setup_mode_toggle(void) {
         system_reset(/* delayed = */ FALSE);
     }
     else {
-        setup_mode_state = SETUP_MODE_ENABLED;
+        setup_mode = TRUE;
 
         DEBUG_SYSTEM("entering setup mode");
 
@@ -200,10 +257,10 @@ void system_setup_mode_toggle(void) {
 
 void system_update(void) {
     uint64 now_us = system_uptime_us();
-    uint32 now = now_us / 1000000;
+    uint64 now_ms = now_us / 1000;
 
     /* Do a factory reset if setup button was held pressed enough */
-    if (setup_mode_state != SETUP_MODE_RESET && now - setup_mode_time > setup_button_reset_hold) {
+    if (setup_mode_time > 0 && now_ms - setup_mode_time > setup_button_reset_hold * 1000) {
         DEBUG_SYSTEM("resetting to factory defaults");
         setup_mode_state = SETUP_MODE_RESET;
 
@@ -214,9 +271,9 @@ void system_update(void) {
         return;
     }
 
-    /* Enter setup mode if setup button was held pressed enough  */
-    if (setup_mode_state == SETUP_MODE_PRESSED && now - setup_mode_time > setup_button_hold) {
-        setup_mode_state = SETUP_MODE_ENABLED;
+    /* Enter setup mode if setup button was held pressed enough */
+    if (setup_mode_state == SETUP_MODE_PRESSED && now_ms - setup_mode_time > setup_button_hold * 1000) {
+        setup_mode_state = SETUP_MODE_TRIGGERED;
         system_setup_mode_toggle();
     }
 
@@ -225,7 +282,7 @@ void system_update(void) {
         bool value = gpio_read_value(setup_button_pin);
         if (value == setup_button_level && setup_mode_state == SETUP_MODE_IDLE) {
             DEBUG_SYSTEM("setup mode timer started");
-            setup_mode_time = now;
+            setup_mode_time = now_ms;
             setup_mode_state = SETUP_MODE_PRESSED;
         }
         else if (value != setup_button_level && setup_mode_state != SETUP_MODE_IDLE) {
@@ -239,12 +296,11 @@ void system_update(void) {
     if (status_led_pin >= 0) {
         int ota_state = ota_current_state();
         bool ota_active = ota_state == OTA_STATE_DOWNLOADING || ota_state == OTA_STATE_RESTARTING;
-        bool setup_mode = setup_mode_state == SETUP_MODE_ENABLED;
         bool current_led_value = gpio_read_value(status_led_pin);
         bool new_led_value = current_led_value;
 
         if (ota_active || setup_mode) {
-            new_led_value = (now_us * 6 / 1000000) % 2;
+            new_led_value = (now_us * 7 / 1000000) % 2;
         }
         else {
             if (!wifi_station_is_connected()) {
