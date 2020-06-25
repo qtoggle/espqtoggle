@@ -34,8 +34,15 @@ typedef struct expr {
 
     double          value;          /* Used for literal expressions, value change detection and caching purposes */
 
-    int64           aux;            /* Auxiliary flag */
-    void          * paux;           /* Auxiliary pointer */
+    union {
+        int64       aux;            /* Auxiliary flag 1 */
+        double      faux;
+    };
+    union {
+        int64       aux2;           /* Auxiliary flag 2 */
+        double      faux2;
+        void      * paux;
+    };
 
     char          * port_id;
     uint16          len;            /* Used for value history queue size */
