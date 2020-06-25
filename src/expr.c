@@ -93,6 +93,7 @@ ICACHE_FLASH_ATTR static double     _time_callback(expr_t *expr, int argc, doubl
 ICACHE_FLASH_ATTR static double     _timems_callback(expr_t *expr, int argc, double *args);
 
 ICACHE_FLASH_ATTR static double     _delay_callback(expr_t *expr, int argc, double *args);
+ICACHE_FLASH_ATTR static double     _sample_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _freeze_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _held_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _deriv_callback(expr_t *expr, int argc, double *args);
@@ -402,18 +403,42 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
     return result;
 }
 
-double _freeze_callback(expr_t *expr, int argc, double *args) {
+double _sample_callback(expr_t *expr, int argc, double *args) {
     uint64 time_ms = system_uptime_ms();
     uint64 last_eval_time_ms = expr->aux; /* aux flag is used to store last eval time */
-    uint64 period = args[1];
+    uint64 duration = args[1];
 
-    /* Don't return newly evaluated value unless required period of time has passed */
-    if (time_ms - last_eval_time_ms < period) {
+    /* Don't return newly evaluated value unless required duration has passed */
+    if (time_ms - last_eval_time_ms < duration) {
         return expr->value;
     }
 
     expr->value = args[0];
     expr->aux = time_ms;
+
+    return expr->value;
+}
+
+double _freeze_callback(expr_t *expr, int argc, double *args) {
+    uint64 time_ms = system_uptime_ms();
+
+    if (expr->aux < 0 || IS_UNDEFINED(expr->value)) { /* Idle || very first call */
+        double value = args[0];
+        int64 duration = args[1];
+
+        if (value != expr->value) {
+            /* Value change detected, starting timer */
+            expr->aux = time_ms;
+            expr->aux2 = duration;
+            expr->value = value;
+        }
+    }
+    else { /* Timer active */
+        int64 delta = time_ms - expr->aux;
+        if (delta > expr->aux2) { /* Timer expired */
+            expr->aux = -1;
+        }
+    }
 
     return expr->value;
 }
@@ -719,6 +744,7 @@ func_t _time =     {.name = "TIME",     .argc = 0,  .callback = _time_callback};
 func_t _timems =   {.name = "TIMEMS",   .argc = 0,  .callback = _timems_callback};
 
 func_t _delay =    {.name = "DELAY",    .argc = 2,  .callback = _delay_callback};
+func_t _sample =   {.name = "SAMPLE",   .argc = 2,  .callback = _sample_callback};
 func_t _freeze =   {.name = "FREEZE",   .argc = 2,  .callback = _freeze_callback};
 func_t _held =     {.name = "HELD",     .argc = 3,  .callback = _held_callback};
 func_t _deriv =    {.name = "DERIV",    .argc = 2,  .callback = _deriv_callback};
@@ -773,6 +799,7 @@ func_t *funcs[] = {
     &_timems,
 
     &_delay,
+    &_sample,
     &_freeze,
     &_held,
     &_deriv,
@@ -1188,6 +1215,7 @@ bool expr_is_time_dep(expr_t *expr) {
 bool expr_is_time_ms_dep(expr_t *expr) {
     if (expr->func) {
         if (expr->func == &_timems ||
+            expr->func == &_sample ||
             expr->func == &_freeze ||
             expr->func == &_held ||
             expr->func == &_delay ||
