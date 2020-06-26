@@ -332,11 +332,16 @@ void port_load(port_t *port, uint8 *config_data) {
     char *strings_ptr = (char *) config_data + CONFIG_OFFS_STR_BASE;
 
     /* id */
-    char *id = string_pool_read(strings_ptr, base_ptr + PORT_CONFIG_OFFS_ID);
-    if (id) {
-        DEBUG_PORT(port, "id = \"%s\"", id);
-        strcpy(port->id, id);
+    if (port->id) {
+        free(port->id);
     }
+    port->id = string_pool_read_dup(strings_ptr, base_ptr + PORT_CONFIG_OFFS_ID);
+    if (!port->id) {
+        char dummy_id[7];
+        snprintf(dummy_id, sizeof(dummy_id), "port%02d", port->slot);
+        port->id = strdup(dummy_id);
+    }
+    DEBUG_PORT(port, "id = \"%s\"", port->id);
 
     DEBUG_PORT(port, "slot = %d", port->slot);
 
@@ -767,8 +772,10 @@ void port_register(port_t *port) {
 
     used_slots |= 1L << port->slot;
 
-    if (!port->id[0]) { /* Port may not have an ID when registered */
-        snprintf(port->id, PORT_MAX_ID_LEN + 1, "port%d", port->slot);
+    if (!port->id) { /* Port may not have an ID when registered */
+        char dummy_id[7];
+        snprintf(dummy_id, sizeof(dummy_id), "port%02d", port->slot);
+        port->id = strdup(dummy_id);
     }
 
     DEBUG_PORT(port, "registered");
@@ -818,11 +825,17 @@ void port_cleanup(port_t *port) {
         port->choices = NULL;
     }
 
-    /* Free display name & unit */
+    /* Free ID */
+    if (port->id) {
+        free(port->id);
+        port->id= NULL;
+    }
+    /* Free display name */
     if (port->display_name) {
         free(port->display_name);
         port->display_name = NULL;
     }
+    /* Free unit */
     if (port->unit) {
         free(port->unit);
         port->unit = NULL;

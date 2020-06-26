@@ -176,7 +176,10 @@ void peripheral_init(peripheral_t *peripheral, char *port_ids[], uint8 port_ids_
             }
 
             DEBUG_PORT(ports[i], "id = \"%s\"", port_ids[i]);
-            strncpy(ports[i]->id, port_ids[i], PORT_MAX_ID_LEN + 1);
+            if (ports[i]->id) {
+                free(ports[i]->id);
+            }
+            ports[i]->id = strdup(port_ids[i]);
         }
     }
 }

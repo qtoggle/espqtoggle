@@ -1406,7 +1406,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
         free(new_port);
         return INVALID_FIELD("id");
     }
-    if (!validate_id(json_str_get(child))) {
+    if (!validate_id(json_str_get(child)) || strlen(json_str_get(child)) > PORT_MAX_ID_LEN) {
         free(new_port);
         return INVALID_FIELD("id");
     }
@@ -1414,7 +1414,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
         free(new_port);
         return API_ERROR(400, "duplicate-port");
     }
-    strncpy(new_port->id, json_str_get(child), PORT_MAX_ID_LEN + 1);
+    new_port->id = strdup(json_str_get(child));
 
     DEBUG_API("adding virtual port: id = \"%s\"", new_port->id);
 

@@ -64,13 +64,10 @@ void init_virtual_port(uint8 *base_ptr, char *strings_ptr, uint32 flags, uint8 i
 
     port->slot = index + PORT_SLOT_VIRTUAL0;
 
-    /* Virtual ports don't have an id before loading */
-    snprintf(port->id, PORT_MAX_ID_LEN + 1, "virtual%d", index);
-
-    char *id = string_pool_read(strings_ptr, base_ptr + PORT_CONFIG_OFFS_ID);
-    if (id) {
-        strncpy(port->id, id, PORT_MAX_ID_LEN + 1);
-    }
+    /* Use a dummy ID until later when port_load() is called */
+    char dummy_id[7];
+    snprintf(dummy_id, sizeof(dummy_id), "port%02d", port->slot);
+    port->id = strdup(dummy_id);
 
     port->type = flags & PORT_FLAG_VIRTUAL_TYPE ? PORT_TYPE_NUMBER : PORT_TYPE_BOOLEAN;
     port->integer = !!(flags & PORT_FLAG_VIRTUAL_INTEGER);

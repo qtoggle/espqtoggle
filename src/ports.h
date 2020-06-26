@@ -123,7 +123,7 @@
 #define PORT_CONFIG_OFFS_TRANS_W            0x38    /*  4 bytes */
 #define PORT_CONFIG_OFFS_TRANS_R            0x3C    /*  4 bytes */
 #define PORT_CONFIG_OFFS_SAMP_INT           0x40    /*  4 bytes */
-                                                    /* 0x45 - 0x60: reserved */
+                                                    /* 0x44 - 0x60: reserved */
 
 #define CHANGE_REASON_NATIVE                'N'
 #define CHANGE_REASON_API                   'A'
@@ -204,7 +204,7 @@ typedef struct port {
     int           * sequence_delays;
 
     /* Common attributes */
-    char            id[PORT_MAX_ID_LEN + 1];
+    char          * id;
     char          * display_name;
     char            type;
     char          * unit;
