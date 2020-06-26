@@ -46,4 +46,8 @@ extern uint32                           device_flags;
 extern uint16                           device_tcp_port;
 
 
+ICACHE_FLASH_ATTR void                  device_load(uint8 *config_data);
+ICACHE_FLASH_ATTR void                  device_save(uint8 *config_data, uint32 *strings_offs);
+
+
 #endif /* _DEVICE_H */
