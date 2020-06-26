@@ -40,12 +40,10 @@ extern char                             device_admin_password_hash[];
 extern char                             device_normal_password_hash[];
 extern char                             device_viewonly_password_hash[];
 extern char                             device_display_name[];
-extern char                             device_config_model[];
+extern char                             device_config_name[];
 extern uint32                           device_flags;
 
 extern uint16                           device_tcp_port;
-
-extern char                           * device_config_model_choices[];
 
 
 #endif /* _DEVICE_H */

@@ -32,16 +32,12 @@
 #define CONFIG_OFFS_TCP_PORT            0x0140 /*    2 bytes */
                                                /* 0x0142 - 0x0143: reserved */
 #define CONFIG_OFFS_DEVICE_FLAGS        0x0144 /*    4 bytes */
-                                               /* 0x0148 - 0x014B: reserved */
+#define CONFIG_OFFS_CONFIG_NAME         0x0148 /*    4 bytes - strings pool pointer */
 #define CONFIG_OFFS_IP_ADDRESS          0x014C /*    4 bytes */
 #define CONFIG_OFFS_GATEWAY             0x0150 /*    4 bytes */
 #define CONFIG_OFFS_DNS                 0x0154 /*    4 bytes */
 #define CONFIG_OFFS_NETMASK             0x0158 /*    1 bytes */
-                                               /* 0x0159 - 0x015B: reserved */
-
-#define CONFIG_OFFS_MODEL               0x015C /*    4 bytes - strings pool pointer */
-                                               /* 0x0160 - 0x016F: reserved */
-
+                                               /* 0x0159 - 0x016F: reserved */
 #define CONFIG_OFFS_WEBHOOKS_HOST       0x0170 /*    4 bytes - strings pool pointer */
 #define CONFIG_OFFS_WEBHOOKS_PORT       0x0174 /*    2 bytes */
 #define CONFIG_OFFS_WEBHOOKS_PATH       0x0176 /*    4 bytes - strings pool pointer */
@@ -50,11 +46,9 @@
 #define CONFIG_OFFS_WEBHOOKS_TIMEOUT    0x0180 /*    2 bytes */
 #define CONFIG_OFFS_WEBHOOKS_RETRIES    0x0182 /*    1 bytes */
                                                /* 0x0183 - 0x018F: reserved */
-
 #define CONFIG_OFFS_WAKE_INTERVAL       0x0190 /*    2 bytes */
 #define CONFIG_OFFS_WAKE_DURATION       0x0192 /*    2 bytes */
                                                /* 0x0194 - 0x019F: reserved */
-
 #define CONFIG_OFFS_PORT_BASE           0x0200 /*   96 bytes for each of the maximum 32 supported ports */
 #define CONFIG_OFFS_PERIPHERALS_BASE    0x0E00 /*   64 bytes for each of the maximum 16 supported peripherals */
 #define CONFIG_OFFS_STR_BASE            0x1200 /* 3584 bytes for strings pool */

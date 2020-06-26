@@ -813,16 +813,8 @@ json_t *device_to_json(void) {
     snprintf(id, 10, "%08x", system_get_chip_id());
     json_obj_append(json, "chip_id", json_str_new(id));
 
-    /* Config name & model */
-    if (!device_config_model[0] || !strcmp(device_config_model, "default")) {
-        json_obj_append(json, "config_name", json_str_new(FW_CONFIG_NAME));
-    }
-    else {
-        char config_name[64];
-        snprintf(config_name, 64, "%s/%s", FW_CONFIG_NAME, device_config_model);
-        json_obj_append(json, "config_name", json_str_new(config_name));
-    }
-    json_obj_append(json, "config_model", json_str_new(device_config_model));
+    /* Configuration name */
+    json_obj_append(json, "config_name", json_str_new(device_config_name));
 
 #ifdef _DEBUG
     json_obj_append(json, "debug", json_bool_new(TRUE));
@@ -885,7 +877,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
 
     int i;
     bool needs_reset = FALSE;
-    bool config_model_changed = FALSE;
+    bool config_name_changed = FALSE;
 #ifdef _SLEEP
     bool needs_sleep_reset = FALSE;
 #endif
@@ -1119,21 +1111,17 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
             }
         }
 #endif
-        else if (!strcmp(key, "config_model")) {
+        else if (!strcmp(key, "config_name")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
                 return INVALID_FIELD(key);
             }
 
-            char *model = json_str_get(child);
-            if (!validate_str(model, device_config_model_choices)) {
-                return INVALID_FIELD(key);
-            }
+            char *config_name = json_str_get(child);
+            strncpy(device_config_name, config_name, API_MAX_DEVICE_CONFIG_NAME_LEN);
+            device_config_name[API_MAX_DEVICE_CONFIG_NAME_LEN - 1] = 0;
 
-            strncpy(device_config_model, model, API_MAX_DEVICE_CONFIG_MODEL_LEN);
-            device_config_model[API_MAX_DEVICE_CONFIG_MODEL_LEN - 1] = 0;
-
-            config_model_changed = TRUE;
-            DEBUG_DEVICE("config model set to \"%s\"", device_config_model);
+            config_name_changed = TRUE;
+            DEBUG_DEVICE("config name set to \"%s\"", device_config_name);
         }
         else if (!strcmp(key, "version") ||
                  !strcmp(key, "api_version") ||
@@ -1151,8 +1139,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
                  !strcmp(key, "flash_size") ||
                  !strcmp(key, "debug") ||
                  !strcmp(key, "chip_id") ||
-                 !strcmp(key, "flash_id") ||
-                 !strcmp(key, "config_name")) {
+                 !strcmp(key, "flash_id")) {
 
             return ATTR_NOT_MODIFIABLE(key);
         }
@@ -1161,8 +1148,8 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
     }
 
-    /* If the configuration model has changed, mark the device unconfigured so that it will automatically reconfigure */
-    if (config_model_changed) {
+    /* If the configuration name has changed, mark the device unconfigured so that it will automatically reconfigure */
+    if (config_name_changed) {
         DEBUG_DEVICE("marking device as unconfigured");
         device_flags &= ~DEVICE_FLAG_CONFIGURED;
         config_start_provisioning();
@@ -3003,9 +2990,7 @@ json_t *api_patch_system(json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = json_obj_new();
     json_t *setup_button_json;
     json_t *status_led_json;
-    json_t *battery_json;
-    json_t *json, *j;
-    int i;
+    json_t *json;
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
         return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
@@ -3086,6 +3071,9 @@ json_t *api_patch_system(json_t *query_json, json_t *request_json, int *code) {
     }
 
     /* Battery */
+#ifdef _BATTERY
+    json_t *battery_json, *j;
+
     battery_json = json_obj_lookup_key(request_json, "battery");
     if (battery_json) {
         uint16 div_factor;
@@ -3106,7 +3094,7 @@ json_t *api_patch_system(json_t *query_json, json_t *request_json, int *code) {
             return INVALID_FIELD("battery");
         }
 
-        for (i = 0; i < BATTERY_LUT_LEN; i++) {
+        for (int i = 0; i < BATTERY_LUT_LEN; i++) {
             j = json_list_value_at(json, i);
             if (json_get_type(j) != JSON_TYPE_INT) {
                 return INVALID_FIELD("battery");
@@ -3117,6 +3105,7 @@ json_t *api_patch_system(json_t *query_json, json_t *request_json, int *code) {
 
         battery_configure(div_factor, voltages);
     }
+#endif
 
     system_save();
 
@@ -3304,12 +3293,6 @@ json_t *device_attrdefs_to_json(void) {
                                    /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
                                    /* reconnect = */ FALSE);
     json_obj_append(json, "chip_id", attrdef_json);
-
-    attrdef_json = attrdef_to_json("Configuration Model", "Device configuration model.", /* unit = */ NULL,
-                                   ATTR_TYPE_STRING, /* modifiable = */ TRUE, /* min = */ UNDEFINED,
-                                   /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0,
-                                   device_config_model_choices, /* reconnect = */ FALSE);
-    json_obj_append(json, "config_model", attrdef_json);
 
 #ifdef _DEBUG
     attrdef_json = attrdef_to_json("Debug", "Indicates that debugging was enabled when the firmware was built.",

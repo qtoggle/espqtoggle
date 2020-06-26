@@ -135,10 +135,11 @@ void device_load(uint8 *data) {
     memcpy(&device_flags, data + CONFIG_OFFS_DEVICE_FLAGS, 4);
     DEBUG_DEVICE("flags = %08X", device_flags);
 
-    /* Config model */
-    char *model = string_pool_read(strings_ptr, data + CONFIG_OFFS_MODEL);
-    if (model) {
-        strncpy(device_config_model, model, API_MAX_DEVICE_CONFIG_MODEL_LEN);
+    /* Configuration name */
+    char *config_name = string_pool_read(strings_ptr, data + CONFIG_OFFS_CONFIG_NAME);
+    if (config_name) {
+        strncpy(device_config_name, config_name, API_MAX_DEVICE_CONFIG_NAME_LEN);
+        device_config_name[API_MAX_DEVICE_CONFIG_NAME_LEN - 1] = 0;
     }
 
     /* Webhooks */
@@ -234,24 +235,24 @@ void device_save(uint8 *data, uint32 *strings_offs) {
     memcpy(data + CONFIG_OFFS_TCP_PORT, &device_tcp_port, 2);
     memcpy(data + CONFIG_OFFS_DEVICE_FLAGS, &device_flags, 4);
 
-    /* Config model */
-    if (!string_pool_write(strings_ptr, strings_offs, device_config_model, data + CONFIG_OFFS_MODEL)) {
-        DEBUG_DEVICE("no more string space to save config model");
+    /* Configuration name */
+    if (!string_pool_write(strings_ptr, strings_offs, device_config_name, data + CONFIG_OFFS_CONFIG_NAME)) {
+        DEBUG_DEVICE("no more strings pool space");
     }
 
     /* Webhooks */
     if (!string_pool_write(strings_ptr, strings_offs, webhooks_host, data + CONFIG_OFFS_WEBHOOKS_HOST)) {
-        DEBUG_WEBHOOKS("no more string space to save host");
+        DEBUG_WEBHOOKS("no more strings pool space");
     }
 
     memcpy(data + CONFIG_OFFS_WEBHOOKS_PORT, &webhooks_port, 2);
 
     if (!string_pool_write(strings_ptr, strings_offs, webhooks_path, data + CONFIG_OFFS_WEBHOOKS_PATH)) {
-        DEBUG_WEBHOOKS("no more string space to save path");
+        DEBUG_WEBHOOKS("no more strings pool space");
     }
 
     if (!string_pool_write(strings_ptr, strings_offs, webhooks_password_hash, data + CONFIG_OFFS_WEBHOOKS_PASSWORD)) {
-        DEBUG_WEBHOOKS("no more string space to save password");
+        DEBUG_WEBHOOKS("no more strings pool space");
     }
 
     memcpy(data + CONFIG_OFFS_WEBHOOKS_EVENTS, &webhooks_events_mask, 2);
@@ -328,17 +329,13 @@ void config_init(void) {
         snprintf(device_name, API_MAX_DEVICE_NAME_LEN, DEFAULT_HOSTNAME, system_get_chip_id());
     }
 
-    DEBUG_DEVICE("hostname is \"%s\"", device_name);
+    DEBUG_DEVICE("hostname = \"%s\"", device_name);
 
     if (!device_tcp_port) {
         device_tcp_port = DEFAULT_TCP_PORT;
     }
 
-    if (!device_config_model[0]) {
-        strncpy(device_config_model, device_config_model_choices[0], API_MAX_DEVICE_CONFIG_MODEL_LEN);
-    }
-
-    DEBUG_DEVICE("config model is \"%s\"", device_config_model);
+    DEBUG_DEVICE("config name = \"%s\"", device_config_name);
 
     peripherals_init(config_data);
     ports_init(config_data);
@@ -390,8 +387,8 @@ void config_start_provisioning(void) {
         return;
     }
 
-    if (!strcmp(device_config_model, "custom")) {
-        DEBUG_DEVICE("provisioning: custom configuration cannot be provisioned");
+    if (!device_config_name[0]) {
+        DEBUG_DEVICE("provisioning: no configuration");
 
         /* Set device configured flag */
         DEBUG_DEVICE("mark device as configured");
@@ -405,14 +402,7 @@ void config_start_provisioning(void) {
     provisioning = TRUE;
 
     char url[256];
-    if (!device_config_model[0] || !strcmp(device_config_model, "default")) {
-        /* Default configuration model has no specific file */
-        snprintf(url, sizeof(url), "%s%s/%s.json", FW_BASE_URL, FW_BASE_CFG_PATH, FW_CONFIG_NAME);
-    }
-    else {
-        snprintf(url, sizeof(url), "%s%s/%s/%s.json",
-                 FW_BASE_URL, FW_BASE_CFG_PATH, FW_CONFIG_NAME, device_config_model);
-    }
+    snprintf(url, sizeof(url), "%s%s/%s.json", FW_BASE_URL, FW_BASE_CFG_PATH, device_config_name);
 
     DEBUG_DEVICE("provisioning: fetching from \"%s\"", url);
 

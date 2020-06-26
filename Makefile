@@ -18,9 +18,6 @@ BATTERY ?= true
 FLASH_MODE ?= qio
 FLASH_FREQ ?= 40
 
-FW_CONFIG_NAME ?= # configuration-name
-FW_CONFIG_MODELS ?= # model1|model2|model3
-
 FW_BASE_URL  ?= http://provisioning.qtoggle.io
 FW_BASE_OTA_PATH ?= /firmware/espqtoggle
 FW_BASE_CFG_PATH ?= /config
@@ -171,16 +168,6 @@ INIT_DATA_HEX_DEF = $(foreach f,$(INIT_DATA_FILES),$(shell \
     echo -D$${def_name}="\{$$(hexdump -ve '"0x%08X,"' $(f))\}"; \
 ))
 
-_COMMA := ,
-ifneq ($(FW_CONFIG_MODELS),)
-	FW_CONFIG_MODELS_PREPARED := $(subst |,\"$(_COMMA)\",$(FW_CONFIG_MODELS))
-	FW_CONFIG_MODELS_PREPARED := \"$(FW_CONFIG_MODELS_PREPARED)\"
-else
-	FW_CONFIG_MODELS_PREPARED := \"default\"
-endif
-
-CFLAGS += -DFW_CONFIG_NAME=\"$(FW_CONFIG_NAME)\"
-CFLAGS += -DFW_CONFIG_MODELS=$(FW_CONFIG_MODELS_PREPARED)
 CFLAGS += -DFW_BASE_URL=\"$(FW_BASE_URL)\"
 CFLAGS += -DFW_BASE_OTA_PATH=\"$(FW_BASE_OTA_PATH)\"
 CFLAGS += -DFW_BASE_CFG_PATH=\"$(FW_BASE_CFG_PATH)\"
@@ -221,8 +208,6 @@ buildinfo:
 	$(vecho) " *" BATTERY = $(BATTERY)
 	$(vecho) " *" FLASH_MODE = $(FLASH_MODE)
 	$(vecho) " *" FLASH_FREQ = $(FLASH_FREQ)
-	$(vecho) " *" CONFIG_NAME = $(FW_CONFIG_NAME)
-	$(vecho) " *" CONFIG_MODELS = "$(FW_CONFIG_MODELS)"
 	$(vecho) " *" FW_BASE_URL = "$(FW_BASE_URL)"
 	$(vecho) " *" FW_BASE_OTA_PATH = "$(FW_BASE_OTA_PATH)"
 	$(vecho) " *" FW_BASE_CFG_PATH = "$(FW_BASE_CFG_PATH)"
@@ -253,7 +238,6 @@ $(BUILD_DIR)/%.html.gz: html/%.html
 	$(Q) $(GZ) $(BUILD_DIR)/$$(basename $^) > $@
 
 $(BUILD_DIR)/user%.bin: $(BUILD_DIR)/$(APP)%.out $(BUILD_DIR)/index.html.gz
-	@echo $(FW_CONFIG_NAME) > $(BUILD_DIR)/.config_name
 	$(vecho) "FW $@"
 	$(Q) $(OC) --only-section .text -O binary $< $(BUILD_DIR)/eagle.app.v6.text.bin
 	$(Q) $(OC) --only-section .data -O binary $< $(BUILD_DIR)/eagle.app.v6.data.bin

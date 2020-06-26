@@ -558,18 +558,18 @@ void port_save(port_t *port, uint8 *config_data, uint32 *strings_offs) {
 
     /* id */
     if (!string_pool_write(strings_ptr, strings_offs, port->id, base_ptr + PORT_CONFIG_OFFS_ID)) {
-        DEBUG_PORT(port, "no more string space to save id");
+        DEBUG_PORT(port, "no more strings pool space");
     }
 
     /* display name */
     if (!string_pool_write(strings_ptr, strings_offs, port->display_name, base_ptr + PORT_CONFIG_OFFS_DISP_NAME)) {
-        DEBUG_PORT(port, "no more string space to save display name");
+        DEBUG_PORT(port, "no more strings pool space");
     }
 
     /* unit */
     if (port->type == PORT_TYPE_NUMBER) {
         if (!string_pool_write(strings_ptr, strings_offs, port->unit, base_ptr + PORT_CONFIG_OFFS_UNIT)) {
-            DEBUG_PORT(port, "no more string space to save unit");
+            DEBUG_PORT(port, "no more strings pool space");
         }
     }
 
@@ -593,17 +593,17 @@ void port_save(port_t *port, uint8 *config_data, uint32 *strings_offs) {
 
     /* value expression */
     if (!string_pool_write(strings_ptr, strings_offs, port->sexpr, base_ptr + PORT_CONFIG_OFFS_EXPR)) {
-        DEBUG_PORT(port, "no more string space to save expression");
+        DEBUG_PORT(port, "no more strings pool space");
     }
 
     /* transform_write */
     if (!string_pool_write(strings_ptr, strings_offs, port->stransform_write, base_ptr + PORT_CONFIG_OFFS_TRANS_W)) {
-        DEBUG_PORT(port, "no more string space to save write transform");
+        DEBUG_PORT(port, "no more strings pool space");
     }
 
     /* transform_read */
     if (!string_pool_write(strings_ptr, strings_offs, port->stransform_read, base_ptr + PORT_CONFIG_OFFS_TRANS_R)) {
-        DEBUG_PORT(port, "no more string space to save read transform");
+        DEBUG_PORT(port, "no more strings pool space");
     }
 
     /* choices */
@@ -623,7 +623,7 @@ void port_save(port_t *port, uint8 *config_data, uint32 *strings_offs) {
         choices_str[len - 1] = 0;
 
         if (!string_pool_write(strings_ptr, strings_offs, choices_str, base_ptr + PORT_CONFIG_OFFS_CHOICES)) {
-            DEBUG_PORT(port, "no more string space to save port choices");
+            DEBUG_PORT(port, "no more strings pool space");
         }
 
         free(choices_str);
