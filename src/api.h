@@ -25,8 +25,9 @@
 
 #include "espgoodies/json.h"
 
-#include "ports.h"
 #include "jsonrefs.h"
+#include "peripherals.h"
+#include "ports.h"
 
 
 #ifdef _DEBUG_API
@@ -110,11 +111,13 @@ ICACHE_FLASH_ATTR json_t                  * api_get_raw_io(char *io, json_t *que
 ICACHE_FLASH_ATTR json_t                  * api_patch_raw_io(char *io, json_t *query_json, json_t *request_json,
                                                              int *code);
 
+ICACHE_FLASH_ATTR json_t                  * api_get_peripherals(json_t *query_json, int *code);
 ICACHE_FLASH_ATTR json_t                  * api_patch_peripherals(json_t *query_json, json_t *request_json, int *code);
 ICACHE_FLASH_ATTR json_t                  * api_patch_system(json_t *query_json, json_t *request_json, int *code);
 
 ICACHE_FLASH_ATTR json_t                  * port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx);
 ICACHE_FLASH_ATTR json_t                  * device_to_json(void);
+ICACHE_FLASH_ATTR json_t                  * peripheral_to_json(peripheral_t *peripheral);
 
 
 #endif /* _API_H */

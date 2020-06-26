@@ -376,7 +376,10 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
             RESPOND_NO_SUCH_FUNCTION();
         }
 
-        if (method == HTTP_METHOD_PATCH) {
+        if (method == HTTP_METHOD_GET) {
+            response_json = api_get_peripherals(query_json, code);
+        }
+        else if (method == HTTP_METHOD_PATCH) {
             response_json = api_patch_peripherals(query_json, request_json, code);
         }
         else {
@@ -845,6 +848,42 @@ json_t *device_to_json(void) {
     json_stringify(json);
 
     return json;
+}
+
+json_t *peripheral_to_json(peripheral_t *peripheral) {
+    json_t *peripheral_json = json_obj_new();
+    json_t *json;
+    char hex[5];
+    int i;
+
+    /* Type */
+    json_obj_append(peripheral_json, "type", json_int_new(peripheral->type_id));
+
+    /* Flags */
+    snprintf(hex, sizeof(hex), "%04X", peripheral->flags);
+    json_obj_append(peripheral_json, "flags", json_str_new(hex));
+
+    /* int8 params */
+    json = json_list_new();
+    json_obj_append(peripheral_json, "int8_params", json);
+    for (i = 0; i < PERIPHERAL_MAX_INT8_PARAMS; i++) {
+        snprintf(hex, sizeof(hex), "%02X", PERIPHERAL_PARAM_UINT8(peripheral, i));
+        json_list_append(json, json_str_new(hex));
+    }
+
+    /* Port IDs */
+    json = json_list_new();
+    json_obj_append(peripheral_json, "port_ids", json);
+    for (i = 0; i < all_ports_count; i++) {
+        port_t *port = all_ports[i];
+        if (port->peripheral != peripheral) {
+            continue; /* Not our port */
+        }
+
+        json_list_append(json, json_str_new(port->id));
+    }
+
+    return peripheral_json;
 }
 
 
@@ -2980,6 +3019,19 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
     config_mark_for_saving();
 
     event_push_full_update();
+
+    *code = 200;
+
+    return response_json;
+}
+
+json_t *api_get_peripherals(json_t *query_json, int *code) {
+    json_t *response_json = json_list_new();
+
+    for (int i = 0; i < all_peripherals_count; i++) {
+        peripheral_t *peripheral = all_peripherals[i];
+        json_list_append(response_json, peripheral_to_json(peripheral));
+    }
 
     *code = 200;
 
