@@ -13,15 +13,7 @@ OTA     ?= true
 SSL     ?= false
 SLEEP   ?= false
 VIRTUAL ?= true
-
-BATTERY ?= false
-BATTERY_DIV_FACTOR ?= 0.166 # 200k / (1000k + 200k)
-BATTERY_VOLT_0   ?= 3000
-BATTERY_VOLT_20  ?= 3650
-BATTERY_VOLT_40  ?= 3710
-BATTERY_VOLT_60  ?= 3760
-BATTERY_VOLT_80  ?= 3880
-BATTERY_VOLT_100 ?= 4250
+BATTERY ?= true
 
 FLASH_MODE ?= qio
 FLASH_FREQ ?= 40
@@ -144,19 +136,6 @@ ifeq ($(BATTERY), true)
     CFLAGS += -D_BATTERY
 endif
 
-ifneq ($(BATTERY_DIV_FACTOR),)
-    CFLAGS += -DBATTERY_DIV_FACTOR=$(BATTERY_DIV_FACTOR)
-endif
-
-ifneq ($(BATTERY_VOLT_0)),)
-    CFLAGS += -DBATTERY_VOLT_0=$(BATTERY_VOLT_0)
-    CFLAGS += -DBATTERY_VOLT_20=$(BATTERY_VOLT_20)
-    CFLAGS += -DBATTERY_VOLT_40=$(BATTERY_VOLT_40)
-    CFLAGS += -DBATTERY_VOLT_60=$(BATTERY_VOLT_60)
-    CFLAGS += -DBATTERY_VOLT_80=$(BATTERY_VOLT_80)
-    CFLAGS += -DBATTERY_VOLT_100=$(BATTERY_VOLT_100)
-endif
-
 INC := $(addprefix -I,$(INC))
 LIB := $(addprefix -l,$(LIB))
 
@@ -240,9 +219,6 @@ buildinfo:
 	$(vecho) " *" SLEEP = $(SLEEP)
 	$(vecho) " *" VIRTUAL = $(VIRTUAL)
 	$(vecho) " *" BATTERY = $(BATTERY)
-	$(vecho) " *" BATTERY_DIV_FACTOR = $(BATTERY_DIV_FACTOR)
-	$(vecho) " *" BATTERY_VOLT = $(BATTERY_VOLT_0) $(BATTERY_VOLT_20) $(BATTERY_VOLT_40) \
-								 $(BATTERY_VOLT_60) $(BATTERY_VOLT_80) $(BATTERY_VOLT_100)
 	$(vecho) " *" FLASH_MODE = $(FLASH_MODE)
 	$(vecho) " *" FLASH_FREQ = $(FLASH_FREQ)
 	$(vecho) " *" CONFIG_NAME = $(FW_CONFIG_NAME)

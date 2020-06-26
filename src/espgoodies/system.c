@@ -21,8 +21,8 @@
 #include <user_interface.h>
 #include <gpio.h>
 
+#include "battery.h"
 #include "common.h"
-#include "config.h"
 #include "dnsserver.h"
 #include "flashcfg.h"
 #include "gpio.h"
@@ -40,12 +40,13 @@
 #define SETUP_MODE_TRIGGERED        2
 #define SETUP_MODE_RESET            3
 
-int8                                setup_button_pin = -1;
-bool                                setup_button_level = FALSE;
-uint8                               setup_button_hold = 5;
-uint8                               setup_button_reset_hold = 20;
-int8                                status_led_pin = -1;
-bool                                status_led_level = TRUE;
+static int8                         setup_button_pin = -1;
+static bool                         setup_button_level = FALSE;
+static uint8                        setup_button_hold = 5;
+static uint8                        setup_button_reset_hold = 20;
+
+static int8                         status_led_pin = -1;
+static bool                         status_led_level = TRUE;
 
 static uint32                       last_time_us = 0;
 static uint64                       uptime_us = 0;
@@ -97,13 +98,13 @@ void system_init(void) {
         /* Leave settings as they are initialized */
     }
     else {
-        setup_button_pin = config_data[CONFIG_OFFS_SETUP_BUTTON_PIN];
-        setup_button_level = config_data[CONFIG_OFFS_SETUP_BUTTON_LEVEL];
-        setup_button_hold = config_data[CONFIG_OFFS_SETUP_BUTTON_HOLD];
-        setup_button_reset_hold = config_data[CONFIG_OFFS_SETUP_BUTTON_HOLDR];
+        setup_button_pin = config_data[SYSTEM_CONFIG_OFFS_SETUP_BUTTON_PIN];
+        setup_button_level = config_data[SYSTEM_CONFIG_OFFS_SETUP_BUTTON_LEVEL];
+        setup_button_hold = config_data[SYSTEM_CONFIG_OFFS_SETUP_BUTTON_HOLD];
+        setup_button_reset_hold = config_data[SYSTEM_CONFIG_OFFS_SETUP_BUTTON_HOLDR];
 
-        status_led_pin = config_data[CONFIG_OFFS_STATUS_LED_PIN];
-        status_led_level = config_data[CONFIG_OFFS_STATUS_LED_LEVEL];
+        status_led_pin = config_data[SYSTEM_CONFIG_OFFS_STATUS_LED_PIN];
+        status_led_level = config_data[SYSTEM_CONFIG_OFFS_STATUS_LED_LEVEL];
     }
 
     DEBUG_SYSTEM("loaded setup button: pin = %d, level = %d, hold = %d, reset_hold = %d",
@@ -118,6 +119,10 @@ void system_init(void) {
         gpio_configure_output(status_led_pin, !status_led_level);
     }
 
+#ifdef _BATTERY
+    battery_init(config_data);
+#endif
+
     free(config_data);
 }
 
@@ -127,13 +132,17 @@ void system_save(void) {
     uint8 *config_data = zalloc(FLASH_CONFIG_SIZE_SYSTEM);
     flashcfg_load(FLASH_CONFIG_SLOT_SYSTEM, config_data);
 
-    config_data[CONFIG_OFFS_SETUP_BUTTON_PIN] = setup_button_pin;
-    config_data[CONFIG_OFFS_SETUP_BUTTON_LEVEL] = setup_button_level;
-    config_data[CONFIG_OFFS_SETUP_BUTTON_HOLD] = setup_button_hold;
-    config_data[CONFIG_OFFS_SETUP_BUTTON_HOLDR] = setup_button_reset_hold;
+    config_data[SYSTEM_CONFIG_OFFS_SETUP_BUTTON_PIN] = setup_button_pin;
+    config_data[SYSTEM_CONFIG_OFFS_SETUP_BUTTON_LEVEL] = setup_button_level;
+    config_data[SYSTEM_CONFIG_OFFS_SETUP_BUTTON_HOLD] = setup_button_hold;
+    config_data[SYSTEM_CONFIG_OFFS_SETUP_BUTTON_HOLDR] = setup_button_reset_hold;
 
-    config_data[CONFIG_OFFS_STATUS_LED_PIN] = status_led_pin;
-    config_data[CONFIG_OFFS_STATUS_LED_LEVEL] = status_led_level;
+    config_data[SYSTEM_CONFIG_OFFS_STATUS_LED_PIN] = status_led_pin;
+    config_data[SYSTEM_CONFIG_OFFS_STATUS_LED_LEVEL] = status_led_level;
+
+#ifdef _BATTERY
+    battery_save(config_data);
+#endif
 
     flashcfg_save(FLASH_CONFIG_SLOT_SYSTEM, config_data);
     free(config_data);
@@ -204,8 +213,6 @@ void system_setup_button_configure(int8 pin, bool level, uint8 hold, uint8 reset
     if (setup_button_pin >= 0) {
         gpio_configure_input(setup_button_pin, !setup_button_level);
     }
-
-    system_save();
 }
 
 void system_status_led_configure(int8 pin, bool level) {
@@ -217,8 +224,6 @@ void system_status_led_configure(int8 pin, bool level) {
     if (status_led_pin >= 0) {
         gpio_configure_output(status_led_pin, !status_led_level);
     }
-
-    system_save();
 }
 
 void system_setup_mode_set_callback(system_setup_mode_callback_t callback) {

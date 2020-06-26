@@ -34,6 +34,20 @@
 #define MAX_AVAILABLE_RAM       (40 * 1024) /* 40k is an upper limit to the available RAM */
 
 
+/* Following items go into system flash configuration */
+
+#define SYSTEM_CONFIG_OFFS_SETUP_BUTTON_PIN     0x0000 /*    1 byte */
+#define SYSTEM_CONFIG_OFFS_SETUP_BUTTON_LEVEL   0x0001 /*    1 byte */
+#define SYSTEM_CONFIG_OFFS_SETUP_BUTTON_HOLD    0x0002 /*    1 byte */
+#define SYSTEM_CONFIG_OFFS_SETUP_BUTTON_HOLDR   0x0003 /*    1 byte */
+
+#define SYSTEM_CONFIG_OFFS_STATUS_LED_PIN       0x0004 /*    1 byte */
+#define SYSTEM_CONFIG_OFFS_STATUS_LED_LEVEL     0x0005 /*    1 byte */
+
+#define SYSTEM_CONFIG_OFFS_BATTERY_DIV_FACTOR   0x0006 /*    2 bytes */
+#define SYSTEM_CONFIG_OFFS_BATTERY_VOLTAGES     0x0008 /*   12 bytes */
+
+
 typedef void (*system_reset_callback_t)(void);
 typedef void (*system_setup_mode_callback_t)(bool active);
 

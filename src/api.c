@@ -841,8 +841,10 @@ json_t *device_to_json(void) {
 
     /* Battery */
 #ifdef _BATTERY
-    json_obj_append(json, "battery_level", json_int_new(battery_get_level()));
-    json_obj_append(json, "battery_voltage", json_int_new(battery_get_voltage()));
+    if (battery_enabled()) {
+        json_obj_append(json, "battery_level", json_int_new(battery_get_level()));
+        json_obj_append(json, "battery_voltage", json_int_new(battery_get_voltage()));
+    }
 #endif
 
     /* Attribute definitions */
@@ -3001,7 +3003,9 @@ json_t *api_patch_system(json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = json_obj_new();
     json_t *setup_button_json;
     json_t *status_led_json;
-    json_t *json;
+    json_t *battery_json;
+    json_t *json, *j;
+    int i;
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
         return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
@@ -3080,6 +3084,41 @@ json_t *api_patch_system(json_t *query_json, json_t *request_json, int *code) {
 
         system_status_led_configure(pin, level);
     }
+
+    /* Battery */
+    battery_json = json_obj_lookup_key(request_json, "battery");
+    if (battery_json) {
+        uint16 div_factor;
+        uint16 voltages[6];
+
+        if (json_get_type(battery_json) != JSON_TYPE_OBJ) {
+            return INVALID_FIELD("battery");
+        }
+
+        json = json_obj_lookup_key(battery_json, "div_factor");
+        if (!json || json_get_type(json) != JSON_TYPE_INT) {
+            return INVALID_FIELD("battery");
+        }
+        div_factor = json_int_get(json);
+
+        json = json_obj_lookup_key(battery_json, "voltages");
+        if (!json || json_get_type(json) != JSON_TYPE_LIST || json_list_get_len(json) != BATTERY_LUT_LEN) {
+            return INVALID_FIELD("battery");
+        }
+
+        for (i = 0; i < BATTERY_LUT_LEN; i++) {
+            j = json_list_value_at(json, i);
+            if (json_get_type(j) != JSON_TYPE_INT) {
+                return INVALID_FIELD("battery");
+            }
+
+            voltages[i] = json_int_get(j);
+        }
+
+        battery_configure(div_factor, voltages);
+    }
+
+    system_save();
 
     *code = 200;
 
@@ -3240,11 +3279,13 @@ json_t *device_attrdefs_to_json(void) {
 #endif
 
 #ifdef _BATTERY
-    attrdef_json = attrdef_to_json("Battery Voltage", "The battery voltage.", "mV", ATTR_TYPE_NUMBER,
-                                   /* modifiable = */ FALSE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
-                                   /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
-                                   /* reconnect = */ FALSE);
-    json_obj_append(json, "battery_voltage", attrdef_json);
+    if (battery_enabled()) {
+        attrdef_json = attrdef_to_json("Battery Voltage", "The battery voltage.", "mV", ATTR_TYPE_NUMBER,
+                                       /* modifiable = */ FALSE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
+                                       /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
+                                       /* reconnect = */ FALSE);
+        json_obj_append(json, "battery_voltage", attrdef_json);
+    }
 #endif
 
     attrdef_json = attrdef_to_json("Flash Size", "Total flash memory size.", "kB", ATTR_TYPE_NUMBER,
