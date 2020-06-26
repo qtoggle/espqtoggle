@@ -65,7 +65,10 @@ ICACHE_FLASH_ATTR void          system_reset(bool delayed);
 ICACHE_FLASH_ATTR void          system_reset_set_callback(system_reset_callback_t callback);
 
 ICACHE_FLASH_ATTR void          system_setup_button_configure(int8 pin, bool level, uint8 hold, uint8 reset_hold);
+ICACHE_FLASH_ATTR void          system_setup_button_get_config(int8 *pin, bool *level, uint8 *hold,
+                                                                      uint8 *reset_hold);
 ICACHE_FLASH_ATTR void          system_status_led_configure(int8 pin, bool level);
+ICACHE_FLASH_ATTR void          system_status_led_get_config(int8 *pin, bool *level);
 
 ICACHE_FLASH_ATTR void          system_setup_mode_set_callback(system_setup_mode_callback_t callback);
 ICACHE_FLASH_ATTR bool          system_setup_mode_active(void);

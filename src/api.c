@@ -391,7 +391,10 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
             RESPOND_NO_SUCH_FUNCTION();
         }
 
-        if (method == HTTP_METHOD_PATCH) {
+        if (method == HTTP_METHOD_GET) {
+            response_json = api_get_system(query_json, code);
+        }
+        else if (method == HTTP_METHOD_PATCH) {
             response_json = api_patch_system(query_json, request_json, code);
         }
         else {
@@ -2720,6 +2723,23 @@ json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int
     return response_json;
 }
 
+json_t *api_get_peripherals(json_t *query_json, int *code) {
+    json_t *response_json = json_list_new();
+
+    if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
+        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+    }
+
+    for (int i = 0; i < all_peripherals_count; i++) {
+        peripheral_t *peripheral = all_peripherals[i];
+        json_list_append(response_json, peripheral_to_json(peripheral));
+    }
+
+    *code = 200;
+
+    return response_json;
+}
+
 json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = json_obj_new();
     json_t *peripheral_config;
@@ -3025,13 +3045,46 @@ json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *cod
     return response_json;
 }
 
-json_t *api_get_peripherals(json_t *query_json, int *code) {
-    json_t *response_json = json_list_new();
+json_t *api_get_system(json_t *query_json, int *code) {
+    json_t *response_json = json_obj_new();
 
-    for (int i = 0; i < all_peripherals_count; i++) {
-        peripheral_t *peripheral = all_peripherals[i];
-        json_list_append(response_json, peripheral_to_json(peripheral));
+    if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
+        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
     }
+
+    /* Setup button */
+    int8 pin;
+    bool level;
+    uint8 hold, reset_hold;
+    system_setup_button_get_config(&pin, &level, &hold, &reset_hold);
+    json_t *setup_button_json = json_obj_new();
+    json_obj_append(response_json, "setup_button", setup_button_json);
+    json_obj_append(setup_button_json, "pin", json_int_new(pin));
+    json_obj_append(setup_button_json, "level", json_bool_new(level));
+    json_obj_append(setup_button_json, "hold", json_int_new(hold));
+    json_obj_append(setup_button_json, "reset_hold", json_int_new(reset_hold));
+
+    /* Status LED */
+    system_status_led_get_config(&pin, &level);
+    json_t *status_led_json = json_obj_new();
+    json_obj_append(response_json, "status_led", status_led_json);
+    json_obj_append(status_led_json, "pin", json_int_new(pin));
+    json_obj_append(status_led_json, "level", json_bool_new(level));
+
+    /* Battery */
+#ifdef _BATTERY
+    uint16 div_factor;
+    uint16 voltages[BATTERY_LUT_LEN];
+    battery_get_config(&div_factor, voltages);
+    json_t *battery_json = json_obj_new();
+    json_obj_append(response_json, "battery", battery_json);
+    json_obj_append(battery_json, "div", json_int_new(div_factor));
+    json_t *voltages_json = json_list_new();
+    json_obj_append(battery_json, "voltages", voltages_json);
+    for (int i = 0; i < BATTERY_LUT_LEN; i++) {
+        json_list_append(voltages_json, json_int_new(voltages[i]));
+    }
+#endif
 
     *code = 200;
 

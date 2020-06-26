@@ -215,6 +215,14 @@ void system_setup_button_configure(int8 pin, bool level, uint8 hold, uint8 reset
     }
 }
 
+void system_setup_button_get_config(int8 *pin, bool *level, uint8 *hold, uint8 *reset_hold) {
+    *pin = setup_button_pin;
+    *level = setup_button_level;
+    *hold = setup_button_hold;
+    *reset_hold = setup_button_reset_hold;
+}
+
+
 void system_status_led_configure(int8 pin, bool level) {
     DEBUG_SYSTEM("configuring status LED: pin = %d, level = %d", pin, level);
 
@@ -224,6 +232,11 @@ void system_status_led_configure(int8 pin, bool level) {
     if (status_led_pin >= 0) {
         gpio_configure_output(status_led_pin, !status_led_level);
     }
+}
+
+void system_status_led_get_config(int8 *pin, bool *level) {
+    *pin = status_led_pin;
+    *level = status_led_level;
 }
 
 void system_setup_mode_set_callback(system_setup_mode_callback_t callback) {

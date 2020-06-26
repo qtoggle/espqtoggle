@@ -48,17 +48,6 @@ static struct {  /* Voltage vs. battery SoC lookup table */
 static uint16 battery_div_factor = 0;
 
 
-void battery_configure(uint16 div_factor, uint16 voltages[]) {
-    battery_div_factor = div_factor;
-    for (int i = 0; i < BATTERY_LUT_LEN; i++) {
-        lut[i].voltage = voltages[i];
-    }
-
-    DEBUG_BATTERY("configuring battery: div_factor = %d/1000, "
-                  "v0 = %d, v20 = %d, v40 = %d, v60 = %d, v80 = %d, v100 = %d",
-                  div_factor, voltages[0], voltages[1], voltages[2], voltages[3], voltages[4], voltages[5]);
-}
-
 void battery_init(uint8 *config_data) {
     memcpy(&battery_div_factor, config_data + SYSTEM_CONFIG_OFFS_BATTERY_DIV_FACTOR, 2);
     for (int i = 0; i < BATTERY_LUT_LEN; i++) {
@@ -75,6 +64,24 @@ void battery_save(uint8 *config_data) {
     memcpy(config_data + SYSTEM_CONFIG_OFFS_BATTERY_DIV_FACTOR, &battery_div_factor, 2);
     for (int i = 0; i < BATTERY_LUT_LEN; i++) {
         memcpy(config_data + SYSTEM_CONFIG_OFFS_BATTERY_VOLTAGES + 2 * i, &lut[i].voltage, 2);
+    }
+}
+
+void battery_configure(uint16 div_factor, uint16 voltages[]) {
+    battery_div_factor = div_factor;
+    for (int i = 0; i < BATTERY_LUT_LEN; i++) {
+        lut[i].voltage = voltages[i];
+    }
+
+    DEBUG_BATTERY("configuring battery: div_factor = %d/1000, "
+                  "v0 = %d, v20 = %d, v40 = %d, v60 = %d, v80 = %d, v100 = %d",
+                  div_factor, voltages[0], voltages[1], voltages[2], voltages[3], voltages[4], voltages[5]);
+}
+
+void battery_get_config(uint16 *div_factor, uint16 *voltages) {
+    *div_factor = battery_div_factor;
+    for (int i = 0; i < BATTERY_LUT_LEN; i++) {
+        memcpy(voltages + i, &lut[i].voltage, 2);
     }
 }
 
