@@ -469,6 +469,14 @@ void on_config_provisioning_response(char *body, int body_len, int status, char 
     }
     else {
         DEBUG_DEVICE("provisioning: got status %d", status);
+
+        if (status == 404) {
+            /* When a corresponding config file does not exist, consider the device configured, preventing further
+             * retries */
+            DEBUG_DEVICE("mark device as configured");
+            device_flags |= DEVICE_FLAG_CONFIGURED;
+            config_mark_for_saving();
+        }
     }
 
     provisioning = FALSE;
@@ -518,7 +526,7 @@ void apply_peripherals_provisioning_config(json_t *peripherals_config) {
 
     if (json_get_type(peripherals_config) == JSON_TYPE_LIST) {
         code = 200;
-        response_json = api_patch_peripherals(/* query_json = */ NULL, peripherals_config, &code);
+        response_json = api_put_peripherals(/* query_json = */ NULL, peripherals_config, &code);
         json_free(response_json);
         if (code / 100 != 2) {
             DEBUG_DEVICE("provisioning: api_patch_peripherals() failed with status code %d", code);
@@ -537,7 +545,7 @@ void apply_system_provisioning_config(json_t *system_config) {
 
     if (json_get_type(system_config) == JSON_TYPE_OBJ) {
         code = 200;
-        response_json = api_patch_system(/* query_json = */ NULL, system_config, &code);
+        response_json = api_put_system(/* query_json = */ NULL, system_config, &code);
         json_free(response_json);
         if (code / 100 != 2) {
             DEBUG_DEVICE("provisioning: api_patch_system() failed with status code %d", code);

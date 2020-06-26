@@ -379,8 +379,8 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
         if (method == HTTP_METHOD_GET) {
             response_json = api_get_peripherals(query_json, code);
         }
-        else if (method == HTTP_METHOD_PATCH) {
-            response_json = api_patch_peripherals(query_json, request_json, code);
+        else if (method == HTTP_METHOD_PUT) {
+            response_json = api_put_peripherals(query_json, request_json, code);
         }
         else {
             RESPOND_NO_SUCH_FUNCTION();
@@ -394,8 +394,8 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
         if (method == HTTP_METHOD_GET) {
             response_json = api_get_system(query_json, code);
         }
-        else if (method == HTTP_METHOD_PATCH) {
-            response_json = api_patch_system(query_json, request_json, code);
+        else if (method == HTTP_METHOD_PUT) {
+            response_json = api_put_system(query_json, request_json, code);
         }
         else {
             RESPOND_NO_SUCH_FUNCTION();
@@ -2740,7 +2740,7 @@ json_t *api_get_peripherals(json_t *query_json, int *code) {
     return response_json;
 }
 
-json_t *api_patch_peripherals(json_t *query_json, json_t *request_json, int *code) {
+json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = json_obj_new();
     json_t *peripheral_config;
     json_t *type_json;
@@ -3091,7 +3091,7 @@ json_t *api_get_system(json_t *query_json, int *code) {
     return response_json;
 }
 
-json_t *api_patch_system(json_t *query_json, json_t *request_json, int *code) {
+json_t *api_put_system(json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = json_obj_new();
     json_t *setup_button_json;
     json_t *status_led_json;
