@@ -69,8 +69,10 @@ void peripherals_init(uint8 *config_data) {
 void peripherals_save(uint8 *config_data, uint32 *strings_offs) {
     DEBUG_PERIPHERALS("saving");
 
-    int i;
-    for (i = 0; i < all_peripherals_count; i++) {
+    /* Clear any pre-existing peripheral config data */
+    memset(config_data + CONFIG_OFFS_PERIPHERALS_BASE, 0, CONFIG_PERIPHERAL_SIZE * PERIPHERAL_MAX_NUM);
+
+    for (int i = 0; i < all_peripherals_count; i++) {
         peripheral_save(all_peripherals[i], config_data, strings_offs);
     }
 }

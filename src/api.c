@@ -3083,7 +3083,7 @@ json_t *api_patch_system(json_t *query_json, json_t *request_json, int *code) {
             return INVALID_FIELD("battery");
         }
 
-        json = json_obj_lookup_key(battery_json, "div_factor");
+        json = json_obj_lookup_key(battery_json, "div");
         if (!json || json_get_type(json) != JSON_TYPE_INT) {
             return INVALID_FIELD("battery");
         }
