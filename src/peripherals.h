@@ -73,7 +73,7 @@ typedef struct peripheral {
     uint8                           index;
     uint16                          type_id;
     uint16                          flags;
-    uint8                           params[PERIPHERAL_PARAMS_SIZE];
+    uint8                           params[PERIPHERAL_PARAMS_SIZE]; // TODO don't keep this in memory all time
 
     void                          * user_data; /* In-memory user state */
 

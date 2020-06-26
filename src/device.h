@@ -35,11 +35,11 @@
 #define DEVICE_FLAG_OTA_BETA_ENABLED    0x00000010
 
 
-extern char                             device_name[];
+extern char                           * device_name;
+extern char                           * device_display_name;
 extern char                             device_admin_password_hash[];
 extern char                             device_normal_password_hash[];
 extern char                             device_viewonly_password_hash[];
-extern char                             device_display_name[];
 extern char                             device_config_name[];
 extern uint32                           device_flags;
 

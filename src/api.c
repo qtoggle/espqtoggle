@@ -935,12 +935,12 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
             }
             
             char *value = json_str_get(child);
-            if (!validate_id(value)) {
+            if (!validate_id(value) || strlen(json_str_get(child)) > API_MAX_DEVICE_NAME_LEN) {
                 return INVALID_FIELD(key);
             }
             
-            strncpy(device_name, value, API_MAX_DEVICE_NAME_LEN);
-            device_name[API_MAX_DEVICE_NAME_LEN - 1] = 0;
+            free(device_name);
+            device_name = strdup(value);
             
             DEBUG_DEVICE("name set to \"%s\"", device_name);
 
@@ -951,8 +951,13 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
                 return INVALID_FIELD(key);
             }
 
-            strncpy(device_display_name, json_str_get(child), API_MAX_DEVICE_DISP_NAME_LEN);
-            device_display_name[API_MAX_DEVICE_DISP_NAME_LEN - 1] = 0;
+            char *value = json_str_get(child);
+            if (strlen(json_str_get(child)) > API_MAX_DEVICE_DISP_NAME_LEN) {
+                return INVALID_FIELD(key);
+            }
+
+            free(device_display_name);
+            device_display_name = strdup(value);
             
             DEBUG_DEVICE("display name set to \"%s\"", device_display_name);
         }

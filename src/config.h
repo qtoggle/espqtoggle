@@ -23,9 +23,9 @@
 #include <c_types.h>
 
 
-#define CONFIG_OFFS_DEVICE_NAME         0x0000 /*   32 bytes */
-#define CONFIG_OFFS_DEVICE_DISP_NAME    0x0020 /*   64 bytes */
-
+#define CONFIG_OFFS_DEVICE_NAME         0x0000 /*    4 bytes - strings pool pointer */
+#define CONFIG_OFFS_DEVICE_DISP_NAME    0x0004 /*    4 bytes - strings pool pointer */
+                                               /* 0x0008 - 0x005F: reserved */
 #define CONFIG_OFFS_ADMIN_PASSWORD      0x0060 /*   32 bytes */
 #define CONFIG_OFFS_NORMAL_PASSWORD     0x0080 /*   32 bytes */
 #define CONFIG_OFFS_VIEWONLY_PASSWORD   0x00A0 /*   32 bytes */

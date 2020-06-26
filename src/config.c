@@ -72,11 +72,19 @@ void device_load(uint8 *data) {
 #endif
 
     /* Device name */
-    memcpy(device_name, data + CONFIG_OFFS_DEVICE_NAME, API_MAX_DEVICE_NAME_LEN);
+    device_name = string_pool_read_dup(strings_ptr, data + CONFIG_OFFS_DEVICE_NAME);
+    if (!device_name) {
+        char default_device_name[16];
+        snprintf(device_name, sizeof(default_device_name), DEFAULT_HOSTNAME, system_get_chip_id());
+        device_name = strdup(default_device_name);
+    }
     DEBUG_DEVICE("device name = \"%s\"", device_name);
 
     /* Device display_name */
-    memcpy(device_display_name, data + CONFIG_OFFS_DEVICE_DISP_NAME, API_MAX_DEVICE_DISP_NAME_LEN);
+    device_display_name = string_pool_read_dup(strings_ptr, data + CONFIG_OFFS_DEVICE_DISP_NAME);
+    if (!device_display_name) {
+        device_display_name = strdup("");
+    }
     DEBUG_DEVICE("device display_name = \"%s\"", device_display_name);
 
     /* Passwords */
@@ -205,8 +213,14 @@ void device_save(uint8 *data, uint32 *strings_offs) {
 #endif
 
     /* Device name */
-    memcpy(data + CONFIG_OFFS_DEVICE_NAME, device_name, API_MAX_DEVICE_NAME_LEN);
-    memcpy(data + CONFIG_OFFS_DEVICE_DISP_NAME, device_display_name, API_MAX_DEVICE_DISP_NAME_LEN);
+    if (!string_pool_write(strings_ptr, strings_offs, device_name, data + CONFIG_OFFS_DEVICE_NAME)) {
+        DEBUG_DEVICE("no more strings pool space");
+    }
+
+    /* Device display name */
+    if (!string_pool_write(strings_ptr, strings_offs, device_display_name, data + CONFIG_OFFS_DEVICE_DISP_NAME)) {
+        DEBUG_DEVICE("no more strings pool space");
+    }
 
     /* Passwords - stored as binary digests */
     uint8 *digest = hex2bin(device_admin_password_hash);
@@ -324,12 +338,6 @@ void config_init(void) {
 
     /* Backwards compatibility code ends */
 
-
-    if (!device_name[0]) {
-        snprintf(device_name, API_MAX_DEVICE_NAME_LEN, DEFAULT_HOSTNAME, system_get_chip_id());
-    }
-
-    DEBUG_DEVICE("hostname = \"%s\"", device_name);
 
     if (!device_tcp_port) {
         device_tcp_port = DEFAULT_TCP_PORT;
