@@ -28,6 +28,8 @@
 #define DEBUG_RTC(...)                  {}
 #endif
 
+#define RTC_USER_ADDR                   130 /* 130 * 4 bytes = 520 */
+
 
 ICACHE_FLASH_ATTR void                  rtc_init(void);
 ICACHE_FLASH_ATTR void                  rtc_reset(void);

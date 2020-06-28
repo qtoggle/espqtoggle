@@ -122,6 +122,10 @@ void system_config_init(void) {
 
     if (setup_button_pin >= 0) {
         gpio_configure_input(setup_button_pin, !setup_button_level);
+        if (gpio_read_value(setup_button_pin) == setup_button_level) {
+            DEBUG_SYSTEM("setup button active at boot time, increasing reset hold time");
+            setup_button_pin = -1;
+        }
     }
     if (status_led_pin >= 0) {
         gpio_configure_output(status_led_pin, !status_led_level);

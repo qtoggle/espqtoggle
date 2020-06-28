@@ -29,8 +29,8 @@
 
 #define WAKE_SHORT_DURATION     60      /* Seconds */
 #define MAX_SLEEP_DURATION      1800    /* Seconds */
-#define RTC_SLEEP_COUNT_ADDR    130     /* 130 * 4 bytes = 520 */
-#define RTC_SLEEP_REM_ADDR      134     /* 131 * 4 bytes = 524 */
+#define RTC_SLEEP_COUNT_ADDR    RTC_USER_ADDR + 1     /* 131 * 4 bytes = 524 */
+#define RTC_SLEEP_REM_ADDR      RTC_USER_ADDR + 2     /* 132 * 4 bytes = 528 */
 
 
 static uint16                   wake_interval = 0;  /* Minutes, 0 - sleep disabled */

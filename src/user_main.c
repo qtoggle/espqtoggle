@@ -58,6 +58,9 @@
 #define FW_LATEST_BETA_FILE         "/latest_beta"
 #define FW_AUTO_MIN_INTERVAL        24  /* Hours */
 
+#define RTC_UNEXP_RESET_COUNT_ADDR  RTC_USER_ADDR + 0  /* 130 * 4 bytes = 520 */
+#define MAX_UNEXP_RESET_COUNT       16
+
 
 static bool                         wifi_first_time_connected = FALSE;
 static os_timer_t                   connect_timeout_timer;
@@ -68,7 +71,9 @@ static uint32                       ota_auto_counter = 1;
 
 
 ICACHE_FLASH_ATTR static void       check_update_fw_config(void);
+ICACHE_FLASH_ATTR static void       check_reboot_loop(void);
 ICACHE_FLASH_ATTR static void       main_init(void);
+
 #ifdef _DEBUG
 ICACHE_FLASH_ATTR static void       debug_putc_func(char c);
 #endif
@@ -89,8 +94,6 @@ ICACHE_FLASH_ATTR static void       on_ota_auto_perform(int code);
 ICACHE_FLASH_ATTR static void       on_wifi_connect(bool connected);
 ICACHE_FLASH_ATTR static void       on_wifi_connect_timeout(void *arg);
 
-
-/* Main/system */
 
 void check_update_fw_config(void) {
     uint8 major, minor, patch, label, type;
@@ -116,6 +119,27 @@ void check_update_fw_config(void) {
         system_set_fw_version(major, minor, patch, label, type);
         system_config_save();
     }
+}
+
+void check_reboot_loop(void) {
+    struct rst_info *reset_info = system_get_rst_info();
+    uint32 unexp_reset_count;
+
+    if (reset_info->reason == REASON_WDT_RST || reset_info->reason == REASON_EXCEPTION_RST) {
+        DEBUG_SYSTEM("unexpected reset detected");
+        unexp_reset_count = rtc_get_value(RTC_UNEXP_RESET_COUNT_ADDR) + 1;
+
+        if (unexp_reset_count == MAX_UNEXP_RESET_COUNT) {
+            DEBUG_SYSTEM("too many unexpected resets, resetting configuration");
+            flashcfg_reset(FLASH_CONFIG_SLOT_DEFAULT);
+        }
+    }
+
+    else {
+        unexp_reset_count = 0;
+    }
+
+    rtc_set_value(RTC_UNEXP_RESET_COUNT_ADDR, unexp_reset_count);
 }
 
 void main_init(void) {
@@ -292,6 +316,7 @@ DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
     system_setup_mode_set_callback(on_setup_mode);
 
     rtc_init();
+    check_reboot_loop();
 #ifdef _SLEEP
     sleep_init();
 #endif
