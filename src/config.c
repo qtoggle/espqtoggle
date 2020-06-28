@@ -72,53 +72,18 @@ void config_init(void) {
     }
 
     if (erased) {
-        DEBUG("detected erased flash config");
+        DEBUG_CONFIG("detected erased flash config");
         memset(config_data, 0, FLASH_CONFIG_SIZE_DEFAULT);
         flashcfg_save(FLASH_CONFIG_SLOT_DEFAULT, config_data);
     }
 
     device_load(config_data);
 
-
-    /* Backwards compatibility code */
-    /* TODO: remove this */
-
-    int legacy_ssid_offs = 0x00C0;
-    int legacy_psk_offs = 0x0100;
-
-    char legacy_ssid[WIFI_SSID_MAX_LEN + 1];
-    char legacy_psk[WIFI_PSK_MAX_LEN + 1];
-
-    memcpy(legacy_ssid, config_data + legacy_ssid_offs, WIFI_SSID_MAX_LEN);
-    memcpy(legacy_psk, config_data + legacy_psk_offs, WIFI_PSK_MAX_LEN);
-
-    legacy_ssid[WIFI_SSID_MAX_LEN] = 0;
-    legacy_psk[WIFI_PSK_MAX_LEN] = 0;
-
-    if (legacy_ssid[0]) {
-        DEBUG_WIFI("detected legacy configuration: SSID=\"%s\", PSK=\"%s\"", legacy_ssid, legacy_psk);
-
-        wifi_set_opmode_current(STATION_MODE);
-
-        wifi_set_ssid(legacy_ssid);
-        wifi_set_psk(legacy_psk);
-        wifi_save_config();
-
-        memset(config_data + legacy_ssid_offs, 0, WIFI_SSID_MAX_LEN);
-        memset(config_data + legacy_psk_offs, 0, WIFI_PSK_MAX_LEN);
-        flashcfg_save(FLASH_CONFIG_SLOT_DEFAULT, config_data);
-
-        system_reset(/* delayed = */ FALSE);
-    }
-
-    /* Backwards compatibility code ends */
-
-
     if (!device_tcp_port) {
         device_tcp_port = DEFAULT_TCP_PORT;
     }
 
-    DEBUG_DEVICE("config name = \"%s\"", device_config_name);
+    DEBUG_CONFIG("config name = \"%s\"", device_config_name);
 
     peripherals_init(config_data);
     ports_init(config_data);
@@ -161,20 +126,20 @@ void config_save(void) {
     flashcfg_save(FLASH_CONFIG_SLOT_DEFAULT, config_data);
     free(config_data);
 
-    DEBUG_FLASHCFG("total strings size is %d", strings_offs - 1);
+    DEBUG_CONFIG("total strings size is %d", strings_offs - 1);
 }
 
 void config_start_provisioning(void) {
     if (provisioning) {
-        DEBUG_DEVICE("provisioning: busy");
+        DEBUG_CONFIG("provisioning: busy");
         return;
     }
 
     if (!device_config_name[0]) {
-        DEBUG_DEVICE("provisioning: no configuration");
+        DEBUG_CONFIG("provisioning: no configuration");
 
         /* Set device configured flag */
-        DEBUG_DEVICE("mark device as configured");
+        DEBUG_CONFIG("mark device as configured");
         device_flags |= DEVICE_FLAG_CONFIGURED;
 
         config_mark_for_saving();
@@ -187,7 +152,7 @@ void config_start_provisioning(void) {
     char url[256];
     snprintf(url, sizeof(url), "%s%s/%s.json", FW_BASE_URL, FW_BASE_CFG_PATH, device_config_name);
 
-    DEBUG_DEVICE("provisioning: fetching from \"%s\"", url);
+    DEBUG_CONFIG("provisioning: fetching from \"%s\"", url);
 
     httpclient_request("GET", url, /* body = */ NULL, /* body_len = */ 0,
                        /* header_names = */ NULL, /* header_values = */ NULL, /* header_count = */ 0,
@@ -204,17 +169,17 @@ void on_config_provisioning_response(char *body, int body_len, int status, char 
     if (status == 200) {
         json_t *config = json_parse(body);
         if (!config) {
-            DEBUG_DEVICE("provisioning: invalid json");
+            DEBUG_CONFIG("provisioning: invalid json");
             provisioning = FALSE;
             return;
         }
 
         if (json_get_type(config) == JSON_TYPE_OBJ) {
-            DEBUG_DEVICE("provisioning: got config");
+            DEBUG_CONFIG("provisioning: got config");
 
             /* Set device configured flag before actual provisioning to prevent endless reboot loops in case of
              * device crash during provisioning */
-            DEBUG_DEVICE("marking device as configured");
+            DEBUG_CONFIG("marking device as configured");
             device_flags |= DEVICE_FLAG_CONFIGURED;
             config_save();
 
@@ -247,16 +212,16 @@ void on_config_provisioning_response(char *body, int body_len, int status, char 
 
         }
         else {
-            DEBUG_DEVICE("provisioning: invalid config");
+            DEBUG_CONFIG("provisioning: invalid config");
         }
     }
     else {
-        DEBUG_DEVICE("provisioning: got status %d", status);
+        DEBUG_CONFIG("provisioning: got status %d", status);
 
         if (status == 404) {
             /* When a corresponding config file does not exist, consider the device configured, preventing further
              * retries */
-            DEBUG_DEVICE("mark device as configured");
+            DEBUG_CONFIG("mark device as configured");
             device_flags |= DEVICE_FLAG_CONFIGURED;
             config_mark_for_saving();
         }
@@ -271,7 +236,7 @@ void apply_device_provisioning_config(json_t *device_config) {
     json_t *attr_json;
     int code;
 
-    DEBUG_DEVICE("provisioning: applying device config");
+    DEBUG_CONFIG("provisioning: applying device config");
 
     /* Never update device name */
     attr_json = json_obj_pop_key(device_config, "name");
@@ -288,16 +253,16 @@ void apply_device_provisioning_config(json_t *device_config) {
     }
 
     if (json_get_type(device_config) == JSON_TYPE_OBJ) {
-        DEBUG_DEVICE("provisioning: setting device attributes");
+        DEBUG_CONFIG("provisioning: setting device attributes");
         code = 200;
         response_json = api_patch_device(/* query_json = */ NULL, device_config, &code);
         json_free(response_json);
         if (code / 100 != 2) {
-            DEBUG_DEVICE("provisioning: api_patch_device() failed with status code %d", code);
+            DEBUG_CONFIG("provisioning: api_patch_device() failed with status code %d", code);
         }
     }
     else {
-        DEBUG_DEVICE("provisioning: invalid device config");
+        DEBUG_CONFIG("provisioning: invalid device config");
     }
 }
 
@@ -305,18 +270,18 @@ void apply_peripherals_provisioning_config(json_t *peripherals_config) {
     json_t *response_json;
     int code;
 
-    DEBUG_DEVICE("provisioning: applying peripherals config");
+    DEBUG_CONFIG("provisioning: applying peripherals config");
 
     if (json_get_type(peripherals_config) == JSON_TYPE_LIST) {
         code = 200;
         response_json = api_put_peripherals(/* query_json = */ NULL, peripherals_config, &code);
         json_free(response_json);
         if (code / 100 != 2) {
-            DEBUG_DEVICE("provisioning: api_patch_peripherals() failed with status code %d", code);
+            DEBUG_CONFIG("provisioning: api_patch_peripherals() failed with status code %d", code);
         }
     }
     else {
-        DEBUG_DEVICE("provisioning: invalid peripherals config");
+        DEBUG_CONFIG("provisioning: invalid peripherals config");
     }
 }
 
@@ -324,18 +289,18 @@ void apply_system_provisioning_config(json_t *system_config) {
     json_t *response_json;
     int code;
 
-    DEBUG_DEVICE("provisioning: applying system config");
+    DEBUG_CONFIG("provisioning: applying system config");
 
     if (json_get_type(system_config) == JSON_TYPE_OBJ) {
         code = 200;
         response_json = api_put_system(/* query_json = */ NULL, system_config, &code);
         json_free(response_json);
         if (code / 100 != 2) {
-            DEBUG_DEVICE("provisioning: api_patch_system() failed with status code %d", code);
+            DEBUG_CONFIG("provisioning: api_patch_system() failed with status code %d", code);
         }
     }
     else {
-        DEBUG_DEVICE("provisioning: invalid system config");
+        DEBUG_CONFIG("provisioning: invalid system config");
     }
 }
 
@@ -343,7 +308,7 @@ void apply_ports_provisioning_config(json_t *ports_config) {
     json_t *port_config;
     int i;
 
-    DEBUG_DEVICE("provisioning: applying ports config");
+    DEBUG_CONFIG("provisioning: applying ports config");
 
     if (json_get_type(ports_config) == JSON_TYPE_LIST) {
         for (i = 0; i < json_list_get_len(ports_config); i++) {
@@ -352,7 +317,7 @@ void apply_ports_provisioning_config(json_t *ports_config) {
         }
     }
     else {
-        DEBUG_DEVICE("provisioning: invalid ports config");
+        DEBUG_CONFIG("provisioning: invalid ports config");
     }
 }
 
@@ -371,22 +336,22 @@ void apply_port_provisioning_config(json_t *port_config) {
         virtual_json = json_obj_pop_key(port_config, "virtual");
         if (port_id_json && json_get_type(port_id_json) == JSON_TYPE_STR) {
             char *port_id = json_str_get(port_id_json);
-            DEBUG_DEVICE("provisioning: applying port %s config", port_id);
+            DEBUG_CONFIG("provisioning: applying port %s config", port_id);
             port = port_find_by_id(port_id);
 
             /* Virtual ports have to be added first */
             if (virtual_json && json_get_type(virtual_json) == JSON_TYPE_BOOL && json_bool_get(virtual_json)) {
                 if (port) {
-                    DEBUG_DEVICE("provisioning: virtual port %s exists, removing it first", port_id);
+                    DEBUG_CONFIG("provisioning: virtual port %s exists, removing it first", port_id);
                     code = 200;
                     response_json = api_delete_port(port, /* query_json = */ NULL, &code);
                     json_free(response_json);
                     if (code / 100 != 2) {
-                        DEBUG_DEVICE("provisioning: api_delete_port() failed with status code %d", code);
+                        DEBUG_CONFIG("provisioning: api_delete_port() failed with status code %d", code);
                     }
                 }
 
-                DEBUG_DEVICE("provisioning: adding virtual port %s", port_id);
+                DEBUG_CONFIG("provisioning: adding virtual port %s", port_id);
                 request_json = json_obj_new();
                 json_obj_append(request_json, "id", json_str_new(port_id));
 
@@ -420,7 +385,7 @@ void apply_port_provisioning_config(json_t *port_config) {
                 response_json = api_post_ports(/* query_json = */ NULL, request_json, &code);
                 json_free(response_json);
                 if (code / 100 != 2) {
-                    DEBUG_DEVICE("provisioning: api_post_ports() failed with status code %d", code);
+                    DEBUG_CONFIG("provisioning: api_post_ports() failed with status code %d", code);
                 }
                 json_free(request_json);
 
@@ -430,29 +395,29 @@ void apply_port_provisioning_config(json_t *port_config) {
 
             value_json = json_obj_pop_key(port_config, "value");
 
-            DEBUG_DEVICE("provisioning: setting port %s attributes", port_id);
+            DEBUG_CONFIG("provisioning: setting port %s attributes", port_id);
 
             code = 200;
             response_json = api_patch_port(port, /* query_json = */ NULL, port_config, &code);
             json_free(response_json);
             if (code / 100 != 2) {
-                DEBUG_DEVICE("provisioning: api_patch_port() failed with status code %d", code);
+                DEBUG_CONFIG("provisioning: api_patch_port() failed with status code %d", code);
             }
 
             if (value_json) { /* If value was also supplied with provisioning */
-                DEBUG_DEVICE("provisioning: setting port %s value", port_id);
+                DEBUG_CONFIG("provisioning: setting port %s value", port_id);
 
                 code = 200;
                 response_json = api_patch_port_value(port, /* query_json = */ NULL, value_json, &code);
                 json_free(response_json);
                 if (code / 100 != 2) {
-                    DEBUG_DEVICE("provisioning: api_patch_port_value() failed with status code %d", code);
+                    DEBUG_CONFIG("provisioning: api_patch_port_value() failed with status code %d", code);
                 }
                 json_free(value_json);
             }
         }
         else {
-            DEBUG_DEVICE("provisioning: invalid or missing port id");
+            DEBUG_CONFIG("provisioning: invalid or missing port id");
         }
 
         if (port_id_json) {
@@ -463,6 +428,6 @@ void apply_port_provisioning_config(json_t *port_config) {
         }
     }
     else {
-        DEBUG_DEVICE("provisioning: invalid port config");
+        DEBUG_CONFIG("provisioning: invalid port config");
     }
 }

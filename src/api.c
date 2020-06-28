@@ -3149,7 +3149,7 @@ json_t *api_put_system(json_t *query_json, json_t *request_json, int *code) {
         }
         reset_hold = json_int_get(json);
 
-        system_setup_button_configure(pin, level, hold, reset_hold);
+        system_setup_button_set_config(pin, level, hold, reset_hold);
     }
 
     /* Status LED */
@@ -3177,7 +3177,7 @@ json_t *api_put_system(json_t *query_json, json_t *request_json, int *code) {
         }
         level = json_bool_get(json);
 
-        system_status_led_configure(pin, level);
+        system_status_led_set_config(pin, level);
     }
 
     /* Battery */
@@ -3217,7 +3217,7 @@ json_t *api_put_system(json_t *query_json, json_t *request_json, int *code) {
     }
 #endif
 
-    system_save();
+    system_config_save();
 
     *code = 200;
 

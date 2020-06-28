@@ -23,6 +23,12 @@
 #include <c_types.h>
 
 
+#ifdef _DEBUG_CONFIG
+#define DEBUG_CONFIG(fmt, ...)          DEBUG("[config        ] " fmt, ##__VA_ARGS__)
+#else
+#define DEBUG_CONFIG(...)               {}
+#endif
+
 #define CONFIG_OFFS_DEVICE_NAME         0x0000 /*    4 bytes - strings pool pointer */
 #define CONFIG_OFFS_DEVICE_DISP_NAME    0x0004 /*    4 bytes - strings pool pointer */
                                                /* 0x0008 - 0x005F: reserved */

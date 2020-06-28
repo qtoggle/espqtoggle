@@ -53,8 +53,8 @@ void device_load(uint8 *data) {
     /* Device name */
     device_name = string_pool_read_dup(strings_ptr, data + CONFIG_OFFS_DEVICE_NAME);
     if (!device_name) {
-        char default_device_name[16];
-        snprintf(device_name, sizeof(default_device_name), DEFAULT_HOSTNAME, system_get_chip_id());
+        char default_device_name[API_MAX_DEVICE_NAME_LEN];
+        snprintf(default_device_name, sizeof(default_device_name), DEFAULT_HOSTNAME, system_get_chip_id());
         device_name = strdup(default_device_name);
     }
     DEBUG_DEVICE("device name = \"%s\"", device_name);

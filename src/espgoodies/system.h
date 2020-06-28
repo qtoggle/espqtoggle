@@ -33,6 +33,12 @@
 
 #define MAX_AVAILABLE_RAM       (40 * 1024) /* 40k is an upper limit to the available RAM */
 
+#define SYSTEM_FW_VERSION_TYPE_PLAIN    0
+#define SYSTEM_FW_VERSION_TYPE_ALPHA    1
+#define SYSTEM_FW_VERSION_TYPE_BETA     2
+#define SYSTEM_FW_VERSION_TYPE_PRE      3
+#define SYSTEM_FW_VERSION_TYPE_UNKNOWN  7
+
 
 /* Following items go into system flash configuration */
 
@@ -46,14 +52,16 @@
 
 #define SYSTEM_CONFIG_OFFS_BATTERY_DIV_FACTOR   0x0006 /*    2 bytes */
 #define SYSTEM_CONFIG_OFFS_BATTERY_VOLTAGES     0x0008 /*   12 bytes */
+                                                       /* 0x0014 - 0x00FF: reserved */
+#define SYSTEM_CONFIG_OFFS_FW_VERSION           0x0100 /*    4 bytes */
 
 
 typedef void (*system_reset_callback_t)(void);
 typedef void (*system_setup_mode_callback_t)(bool active);
 
 
-ICACHE_FLASH_ATTR void          system_init(void);
-ICACHE_FLASH_ATTR void          system_save(void);
+ICACHE_FLASH_ATTR void          system_config_init(void);
+ICACHE_FLASH_ATTR void          system_config_save(void);
 
 ICACHE_FLASH_ATTR uint32        system_uptime(void);
 ICACHE_FLASH_ATTR uint64        system_uptime_ms(void);
@@ -64,10 +72,14 @@ ICACHE_FLASH_ATTR int           system_get_flash_size(void);
 ICACHE_FLASH_ATTR void          system_reset(bool delayed);
 ICACHE_FLASH_ATTR void          system_reset_set_callback(system_reset_callback_t callback);
 
-ICACHE_FLASH_ATTR void          system_setup_button_configure(int8 pin, bool level, uint8 hold, uint8 reset_hold);
+ICACHE_FLASH_ATTR void          system_get_fw_version(uint8 *major, uint8 *minor, uint8 *patch, uint8 *label,
+                                                      uint8 *type);
+ICACHE_FLASH_ATTR void          system_set_fw_version(uint8 major, uint8 minor, uint8 patch, uint8 label, uint8 type);
+
+ICACHE_FLASH_ATTR void          system_setup_button_set_config(int8 pin, bool level, uint8 hold, uint8 reset_hold);
 ICACHE_FLASH_ATTR void          system_setup_button_get_config(int8 *pin, bool *level, uint8 *hold,
-                                                                      uint8 *reset_hold);
-ICACHE_FLASH_ATTR void          system_status_led_configure(int8 pin, bool level);
+                                                               uint8 *reset_hold);
+ICACHE_FLASH_ATTR void          system_status_led_set_config(int8 pin, bool level);
 ICACHE_FLASH_ATTR void          system_status_led_get_config(int8 *pin, bool *level);
 
 ICACHE_FLASH_ATTR void          system_setup_mode_set_callback(system_setup_mode_callback_t callback);

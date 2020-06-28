@@ -48,7 +48,7 @@ static struct {  /* Voltage vs. battery SoC lookup table */
 static uint16 battery_div_factor = 0;
 
 
-void battery_init(uint8 *config_data) {
+void battery_config_init(uint8 *config_data) {
     memcpy(&battery_div_factor, config_data + SYSTEM_CONFIG_OFFS_BATTERY_DIV_FACTOR, 2);
     for (int i = 0; i < BATTERY_LUT_LEN; i++) {
         memcpy(&lut[i].voltage, config_data + SYSTEM_CONFIG_OFFS_BATTERY_VOLTAGES + 2 * i, 2);
@@ -60,7 +60,7 @@ void battery_init(uint8 *config_data) {
                   lut[3].voltage, lut[4].voltage, lut[5].voltage);
 }
 
-void battery_save(uint8 *config_data) {
+void battery_config_save(uint8 *config_data) {
     memcpy(config_data + SYSTEM_CONFIG_OFFS_BATTERY_DIV_FACTOR, &battery_div_factor, 2);
     for (int i = 0; i < BATTERY_LUT_LEN; i++) {
         memcpy(config_data + SYSTEM_CONFIG_OFFS_BATTERY_VOLTAGES + 2 * i, &lut[i].voltage, 2);

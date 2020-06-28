@@ -85,7 +85,7 @@ if [ -n "${EB_REPO}" ]; then
 fi
 
 if [ -d "${SRC_DIR}" ]; then
-    sed -ri "s/(FW_VERSION *)\"unknown\"/\1\"${EB_VERSION}\"/" ${SRC_DIR}/src/ver.h
+    sed -ri "s/(FW_VERSION *)\"0.0.0-unknown.0\"/\1\"${EB_VERSION}\"/" ${SRC_DIR}/src/ver.h
 fi
 
 for conf in ${EB_CONF_FILES}; do

@@ -1,6 +1,6 @@
 
 DEBUG ?= true
-DEBUG_FLAGS ?= battery dnsserver flashcfg gpio html httpclient \
+DEBUG_FLAGS ?= battery dnsserver flashcfg config gpio html httpclient \
                httpserver ota rtc sleep system tcpserver wifi \
                peripherals api core device espqtclient expr ports events sessions virtual webhooks \
                adc pwm uart hspi \
@@ -28,7 +28,28 @@ DEFAULT_SSID ?= qToggleSetup
 # ---- configurable stuff ends here ---- #
 
 SHELL = /bin/bash  # other shells will probably fail
+
+# parse version 
 VERSION = $(shell cat src/ver.h | grep FW_VERSION | head -n 1 | tr -s ' ' | cut -d ' ' -f 3 | tr -d '"')
+_VERSION_PARTS = $(subst -, ,$(subst ., ,$(VERSION)))
+VERSION_MAJOR = $(word 1,$(_VERSION_PARTS))
+VERSION_MINOR = $(word 2,$(_VERSION_PARTS))
+VERSION_PATCH = $(word 3,$(_VERSION_PARTS))
+VERSION_TYPE = $(word 4,$(_VERSION_PARTS))
+VERSION_LABEL = $(word 5,$(_VERSION_PARTS))
+ifeq ($(VERSION_TYPE),)
+	VERSION_TYPE = plain
+endif
+ifeq ($(VERSION_LABEL),)
+	VERSION_LABEL = 0
+endif
+
+CFLAGS += -DFW_VERSION_MAJOR=$(VERSION_MAJOR)
+CFLAGS += -DFW_VERSION_MINOR=$(VERSION_MINOR)
+CFLAGS += -DFW_VERSION_PATCH=$(VERSION_PATCH)
+CFLAGS += -DFW_VERSION_LABEL=$(VERSION_LABEL)
+CFLAGS += -DFW_VERSION_TYPE=SYSTEM_FW_VERSION_TYPE_$(shell echo $(VERSION_TYPE) | tr a-z A-Z)
+
 
 ifeq ($(FLASH_MODE),qio)
 	FLASH_MODE_INT = 0

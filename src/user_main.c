@@ -26,6 +26,7 @@
 #include "espgoodies/common.h"
 #include "espgoodies/wifi.h"
 #include "espgoodies/crypto.h"
+#include "espgoodies/flashcfg.h"
 #include "espgoodies/initdata.h"
 #include "espgoodies/rtc.h"
 #include "espgoodies/system.h"
@@ -66,6 +67,7 @@ static uint32                       ota_auto_counter = 1;
 #endif
 
 
+ICACHE_FLASH_ATTR static void       check_update_fw_config(void);
 ICACHE_FLASH_ATTR static void       main_init(void);
 #ifdef _DEBUG
 ICACHE_FLASH_ATTR static void       debug_putc_func(char c);
@@ -89,6 +91,32 @@ ICACHE_FLASH_ATTR static void       on_wifi_connect_timeout(void *arg);
 
 
 /* Main/system */
+
+void check_update_fw_config(void) {
+    uint8 major, minor, patch, label, type;
+    system_get_fw_version(&major, &minor, &patch, &label, &type);
+    if ((major > FW_VERSION_MAJOR) || (major == 0 && minor == 0 && patch == 0 && label == 0 && type == 0)) {
+        DEBUG_CONFIG("invalid firmware version detected, resetting configuration");
+        flashcfg_reset(FLASH_CONFIG_SLOT_DEFAULT);
+    }
+
+    if (major != FW_VERSION_MAJOR ||
+        minor != FW_VERSION_MINOR ||
+        patch != FW_VERSION_PATCH ||
+        label != FW_VERSION_LABEL ||
+        type != FW_VERSION_TYPE) {
+
+        DEBUG_CONFIG("firmware update detected");
+        major = FW_VERSION_MAJOR;
+        minor = FW_VERSION_MINOR;
+        patch = FW_VERSION_PATCH;
+        label = FW_VERSION_LABEL;
+        type = FW_VERSION_TYPE;
+
+        system_set_fw_version(major, minor, patch, label, type);
+        system_config_save();
+    }
+}
 
 void main_init(void) {
     system_init_done_cb(on_system_ready);
@@ -267,6 +295,8 @@ DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
 #ifdef _SLEEP
     sleep_init();
 #endif
+    system_config_init();
+    check_update_fw_config();
     config_init();
 #ifdef _OTA
     ota_init(/* current_version = */   FW_VERSION,
@@ -279,10 +309,8 @@ DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
     os_timer_setfn(&ota_auto_timer, on_ota_auto_timer, NULL);
     os_timer_arm(&ota_auto_timer, 60 * 1000, /* repeat = */ TRUE);
 #endif
-
     wifi_init();
     client_init();
     core_init();
-    system_init();
     main_init();
 }
