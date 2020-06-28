@@ -58,7 +58,7 @@ static uint64                       setup_mode_time = 0;
 static uint8                        setup_mode_state = SETUP_MODE_IDLE;
 static bool                         setup_mode = FALSE;
 
-static uint32                       fw_version = 0;
+static uint32                       fw_version_int = 0;
 
 
 ICACHE_FLASH_ATTR static void       on_system_reset(void *arg);
@@ -108,12 +108,16 @@ void system_config_init(void) {
         status_led_pin = config_data[SYSTEM_CONFIG_OFFS_STATUS_LED_PIN];
         status_led_level = config_data[SYSTEM_CONFIG_OFFS_STATUS_LED_LEVEL];
 
-        memcpy(&fw_version, config_data + SYSTEM_CONFIG_OFFS_FW_VERSION, 4);
+        memcpy(&fw_version_int, config_data + SYSTEM_CONFIG_OFFS_FW_VERSION, 4);
     }
 
-    uint8 major, minor, patch, label, type;
-    system_get_fw_version(&major, &minor, &patch, &label, &type);
-    DEBUG_SYSTEM("loaded FW version = %d.%d.%d-%d.%d", major, minor, patch, type, label);
+#if defined(_DEBUG_SYSTEM) && defined(_DEBUG)
+    version_t fw_version;
+    system_get_fw_version(&fw_version);
+    char *version_str = version_dump(&fw_version);
+    DEBUG_SYSTEM("loaded FW version = %s", version_str);
+    free(version_str);
+#endif
 
     DEBUG_SYSTEM("loaded setup button: pin = %d, level = %d, hold = %d, reset_hold = %d",
                  setup_button_pin, setup_button_level, setup_button_hold, setup_button_reset_hold);
@@ -152,7 +156,7 @@ void system_config_save(void) {
     config_data[SYSTEM_CONFIG_OFFS_STATUS_LED_PIN] = status_led_pin;
     config_data[SYSTEM_CONFIG_OFFS_STATUS_LED_LEVEL] = status_led_level;
 
-    memcpy(config_data + SYSTEM_CONFIG_OFFS_FW_VERSION, &fw_version, 4);
+    memcpy(config_data + SYSTEM_CONFIG_OFFS_FW_VERSION, &fw_version_int, 4);
 
 #ifdef _BATTERY
     battery_config_save(config_data);
@@ -215,17 +219,18 @@ void system_reset_set_callback(system_reset_callback_t callback) {
     reset_callback = callback;
 }
 
-void system_get_fw_version(uint8 *major, uint8 *minor, uint8 *patch, uint8 *label, uint8 *type) {
-    *major = (fw_version >> 24) & 0xFF;
-    *minor = (fw_version >> 16) & 0xFF;
-    *patch = (fw_version >> 8) & 0xFF;
-    *label = (fw_version & 0xFF) >> 3; /* First 5 bits of last byte represent the label */
-    *type = fw_version & 0x07; /* Last 3 bits of last byte represent the version type */
+void system_get_fw_version(version_t *version) {
+    version_from_int(version, fw_version_int);
 }
 
-void system_set_fw_version(uint8 major, uint8 minor, uint8 patch, uint8 label, uint8 type) {
-    fw_version = (major << 24) | (minor << 16) | (patch << 8) | (label << 3) | type;
-    DEBUG_SYSTEM("setting FW version = %d.%d.%d-%d.%d", major, minor, patch, type, label);
+void system_set_fw_version(version_t *version) {
+    fw_version_int = version_to_int(version);
+
+#if defined(_DEBUG_SYSTEM) && defined(_DEBUG)
+    char *version_str = version_dump(version);
+    DEBUG_SYSTEM("setting FW version = %s", version_str);
+    free(version_str);
+#endif
 }
 
 void system_setup_button_set_config(int8 pin, bool level, uint8 hold, uint8 reset_hold) {

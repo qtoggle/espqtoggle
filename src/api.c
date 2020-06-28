@@ -1195,10 +1195,8 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
     }
 
-    /* If the configuration name has changed, mark the device unconfigured so that it will automatically reconfigure */
     if (config_name_changed) {
-        DEBUG_DEVICE("marking device as unconfigured");
-        device_flags &= ~DEVICE_FLAG_CONFIGURED;
+        /* If a new configuration name as been set, start the provisioning process */
         config_start_provisioning();
     }
 
@@ -2020,10 +2018,6 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
     if (IS_PORT_ENABLED(port)) {
         port_configure(port);
     }
-
-    /* Set device configured flag */
-    DEBUG_DEVICE("mark device as configured");
-    device_flags |= DEVICE_FLAG_CONFIGURED;
 
     config_mark_for_saving();
     event_push_port_update(port);

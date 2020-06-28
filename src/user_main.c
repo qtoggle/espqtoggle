@@ -96,27 +96,33 @@ ICACHE_FLASH_ATTR static void       on_wifi_connect_timeout(void *arg);
 
 
 void check_update_fw_config(void) {
-    uint8 major, minor, patch, label, type;
-    system_get_fw_version(&major, &minor, &patch, &label, &type);
-    if ((major > FW_VERSION_MAJOR) || (major == 0 && minor == 0 && patch == 0 && label == 0 && type == 0)) {
+    version_t fw_version;
+    system_get_fw_version(&fw_version);
+    if ((fw_version.major > FW_VERSION_MAJOR) ||
+        (fw_version.major == 0 &&
+         fw_version.minor == 0 &&
+         fw_version.patch == 0 &&
+         fw_version.label == 0 &&
+         fw_version.type == 0)) {
+
         DEBUG_CONFIG("invalid firmware version detected, resetting configuration");
         flashcfg_reset(FLASH_CONFIG_SLOT_DEFAULT);
     }
 
-    if (major != FW_VERSION_MAJOR ||
-        minor != FW_VERSION_MINOR ||
-        patch != FW_VERSION_PATCH ||
-        label != FW_VERSION_LABEL ||
-        type != FW_VERSION_TYPE) {
+    if (fw_version.major != FW_VERSION_MAJOR ||
+        fw_version.minor != FW_VERSION_MINOR ||
+        fw_version.patch != FW_VERSION_PATCH ||
+        fw_version.label != FW_VERSION_LABEL ||
+        fw_version.type != FW_VERSION_TYPE) {
 
         DEBUG_CONFIG("firmware update detected");
-        major = FW_VERSION_MAJOR;
-        minor = FW_VERSION_MINOR;
-        patch = FW_VERSION_PATCH;
-        label = FW_VERSION_LABEL;
-        type = FW_VERSION_TYPE;
+        fw_version.major = FW_VERSION_MAJOR;
+        fw_version.minor = FW_VERSION_MINOR;
+        fw_version.patch = FW_VERSION_PATCH;
+        fw_version.label = FW_VERSION_LABEL;
+        fw_version.type = FW_VERSION_TYPE;
 
-        system_set_fw_version(major, minor, patch, label, type);
+        system_set_fw_version(&fw_version);
         system_config_save();
     }
 }
@@ -221,12 +227,9 @@ void on_wifi_connect(bool connected) {
     os_timer_disarm(&connect_timeout_timer);
     core_enable_polling();
 
-    if (!(device_flags & DEVICE_FLAG_CONFIGURED)) {
-        DEBUG_SYSTEM("system not configured, starting provisioning");
+    /* Attempt to fetch the latest provisioning configuration at each boot, right after Wi-Fi connection */
+    if (device_provisioning_version > 0) {
         config_start_provisioning();
-    }
-    else {
-        DEBUG_SYSTEM("system configured");
     }
 
 #ifdef _SLEEP

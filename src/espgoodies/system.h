@@ -22,6 +22,8 @@
 
 #include <os_type.h>
 
+#include "version.h"
+
 
 #ifdef _DEBUG_SYSTEM
 #define DEBUG_SYSTEM(fmt, ...)  DEBUG("[system        ] " fmt, ##__VA_ARGS__)
@@ -32,12 +34,6 @@
 #define DEFAULT_HOSTNAME        "esp-%08x"
 
 #define MAX_AVAILABLE_RAM       (40 * 1024) /* 40k is an upper limit to the available RAM */
-
-#define SYSTEM_FW_VERSION_TYPE_PLAIN    0
-#define SYSTEM_FW_VERSION_TYPE_ALPHA    1
-#define SYSTEM_FW_VERSION_TYPE_BETA     2
-#define SYSTEM_FW_VERSION_TYPE_PRE      3
-#define SYSTEM_FW_VERSION_TYPE_UNKNOWN  7
 
 
 /* Following items go into system flash configuration */
@@ -72,9 +68,8 @@ ICACHE_FLASH_ATTR int           system_get_flash_size(void);
 ICACHE_FLASH_ATTR void          system_reset(bool delayed);
 ICACHE_FLASH_ATTR void          system_reset_set_callback(system_reset_callback_t callback);
 
-ICACHE_FLASH_ATTR void          system_get_fw_version(uint8 *major, uint8 *minor, uint8 *patch, uint8 *label,
-                                                      uint8 *type);
-ICACHE_FLASH_ATTR void          system_set_fw_version(uint8 major, uint8 minor, uint8 patch, uint8 label, uint8 type);
+ICACHE_FLASH_ATTR void          system_get_fw_version(version_t *version);
+ICACHE_FLASH_ATTR void          system_set_fw_version(version_t *version);
 
 ICACHE_FLASH_ATTR void          system_setup_button_set_config(int8 pin, bool level, uint8 hold, uint8 reset_hold);
 ICACHE_FLASH_ATTR void          system_setup_button_get_config(int8 *pin, bool *level, uint8 *hold,
@@ -87,5 +82,6 @@ ICACHE_FLASH_ATTR bool          system_setup_mode_active(void);
 ICACHE_FLASH_ATTR void          system_setup_mode_toggle(void);
 
 ICACHE_FLASH_ATTR void          system_update(void);
+
 
 #endif /* _ESPGOODIES_SYSTEM_H */

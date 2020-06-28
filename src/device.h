@@ -31,8 +31,7 @@
 #define DEVICE_FLAG_WEBHOOKS_ENABLED    0x00000001
 #define DEVICE_FLAG_WEBHOOKS_HTTPS      0x00000002
 #define DEVICE_FLAG_OTA_AUTO_UPDATE     0x00000004
-#define DEVICE_FLAG_CONFIGURED          0x00000008
-#define DEVICE_FLAG_OTA_BETA_ENABLED    0x00000010
+#define DEVICE_FLAG_OTA_BETA_ENABLED    0x00000008
 
 
 extern char                           * device_name;
@@ -42,8 +41,8 @@ extern char                             device_normal_password_hash[];
 extern char                             device_viewonly_password_hash[];
 extern char                             device_config_name[];
 extern uint32                           device_flags;
-
 extern uint16                           device_tcp_port;
+extern uint16                           device_provisioning_version;
 
 
 ICACHE_FLASH_ATTR void                  device_load(uint8 *config_data);

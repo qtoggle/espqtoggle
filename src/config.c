@@ -83,8 +83,6 @@ void config_init(void) {
         device_tcp_port = DEFAULT_TCP_PORT;
     }
 
-    DEBUG_CONFIG("config name = \"%s\"", device_config_name);
-
     peripherals_init(config_data);
     ports_init(config_data);
 
@@ -138,9 +136,8 @@ void config_start_provisioning(void) {
     if (!device_config_name[0]) {
         DEBUG_CONFIG("provisioning: no configuration");
 
-        /* Set device configured flag */
-        DEBUG_CONFIG("mark device as configured");
-        device_flags |= DEVICE_FLAG_CONFIGURED;
+        /* Clear the provisioning file version as well, for consistency */
+        device_provisioning_version = 0;
 
         config_mark_for_saving();
 
@@ -177,10 +174,41 @@ void on_config_provisioning_response(char *body, int body_len, int status, char 
         if (json_get_type(config) == JSON_TYPE_OBJ) {
             DEBUG_CONFIG("provisioning: got config");
 
-            /* Set device configured flag before actual provisioning to prevent endless reboot loops in case of
-             * device crash during provisioning */
-            DEBUG_CONFIG("marking device as configured");
-            device_flags |= DEVICE_FLAG_CONFIGURED;
+            /* Verify minimum FW version requirement */
+            json_t *min_fw_version_json = json_obj_lookup_key(config, "min_fw_version");
+            if (min_fw_version_json) {
+                version_t min_fw_version;
+                version_t sys_fw_version;
+                char *min_fw_version_str = json_str_get(min_fw_version_json);
+                version_parse(min_fw_version_str, &min_fw_version);
+                system_get_fw_version(&sys_fw_version);
+
+                if (version_cmp(&min_fw_version, &sys_fw_version) > 0) {
+                    DEBUG_CONFIG("provisioning: ignoring config due to min FW version %s", min_fw_version_str);
+                    provisioning = FALSE;
+                    json_free(config);
+                    return;
+                }
+            }
+
+            json_t *provisioning_version_json = json_obj_lookup_key(config, "version");
+            uint16 provisioning_version = 0;
+            if (provisioning_version_json) {
+                provisioning_version = json_int_get(provisioning_version_json);
+            }
+
+            if (device_provisioning_version == provisioning_version) {
+                DEBUG_CONFIG("provisioning: ignoring config due to same provisioning version %d", provisioning_version);
+                provisioning = FALSE;
+                json_free(config);
+                return;
+            }
+
+            /* Update provisioning version right away (thus marking device as provisioned) before actual provisioning to
+             * prevent endless reboot loops in case of device crash during provisioning */
+
+            DEBUG_CONFIG("provisioning: updating version to %d", provisioning_version);
+            device_provisioning_version = provisioning_version;
             config_save();
 
             /* Temporarily set API access level to admin */
@@ -217,14 +245,6 @@ void on_config_provisioning_response(char *body, int body_len, int status, char 
     }
     else {
         DEBUG_CONFIG("provisioning: got status %d", status);
-
-        if (status == 404) {
-            /* When a corresponding config file does not exist, consider the device configured, preventing further
-             * retries */
-            DEBUG_CONFIG("mark device as configured");
-            device_flags |= DEVICE_FLAG_CONFIGURED;
-            config_mark_for_saving();
-        }
     }
 
     provisioning = FALSE;

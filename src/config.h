@@ -36,7 +36,7 @@
 #define CONFIG_OFFS_NORMAL_PASSWORD     0x0080 /*   32 bytes */
 #define CONFIG_OFFS_VIEWONLY_PASSWORD   0x00A0 /*   32 bytes */
 #define CONFIG_OFFS_TCP_PORT            0x0140 /*    2 bytes */
-                                               /* 0x0142 - 0x0143: reserved */
+#define CONFIG_OFFS_PROVISIONING_VER    0x0142 /*    2 bytes */
 #define CONFIG_OFFS_DEVICE_FLAGS        0x0144 /*    4 bytes */
 #define CONFIG_OFFS_CONFIG_NAME         0x0148 /*    4 bytes - strings pool pointer */
 #define CONFIG_OFFS_IP_ADDRESS          0x014C /*    4 bytes */
