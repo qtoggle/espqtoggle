@@ -35,7 +35,7 @@
 #ifdef _VIRTUAL
 
 
-#define SAMP_INT                        100  /* Milliseconds */ // TODO can we lower this?
+#define SAMP_INT                        10  /* Milliseconds */
 
 #define CONFIG_CUSTOM_DATA_OFFS_MIN     0x00 /* 4 bytes */
 #define RETRIES_DATA_OFFS               0x05 /* 1 bytes */

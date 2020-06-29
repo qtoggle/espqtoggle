@@ -691,6 +691,13 @@ int8 ports_next_slot() {
     return -1;
 }
 
+void ports_rebuild_change_dep_mask(void) {
+    /* Rebuild deps mask for remaining (virtual) ports */
+    for (int i = 0; i < all_ports_count; i++) {
+        port_rebuild_change_dep_mask(all_ports[i]);
+    }
+}
+
 void port_register(port_t *port) {
     /* If a unit is present, it's normally a literal string. Make sure it's a free()-able string. */
     if (port->unit) {
@@ -813,6 +820,12 @@ bool port_unregister(port_t *port) {
 
     DEBUG_PORT(port, "unregistered");
 
+    /* Free ID */
+    if (port->id) {
+        free(port->id);
+        port->id= NULL;
+    }
+
     return TRUE;
 }
 
@@ -825,11 +838,8 @@ void port_cleanup(port_t *port) {
         port->choices = NULL;
     }
 
-    /* Free ID */
-    if (port->id) {
-        free(port->id);
-        port->id= NULL;
-    }
+    /* Don't free ID as it's needed by port_unregister() */
+
     /* Free display name */
     if (port->display_name) {
         free(port->display_name);

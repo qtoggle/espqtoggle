@@ -55,8 +55,8 @@
 #define CONFIG_OFFS_WAKE_INTERVAL       0x0190 /*    2 bytes */
 #define CONFIG_OFFS_WAKE_DURATION       0x0192 /*    2 bytes */
                                                /* 0x0194 - 0x019F: reserved */
-#define CONFIG_OFFS_PORT_BASE           0x0200 /*   96 bytes for each of the maximum 32 supported ports */
-#define CONFIG_OFFS_PERIPHERALS_BASE    0x0E00 /*   64 bytes for each of the maximum 16 supported peripherals */
+#define CONFIG_OFFS_PORT_BASE           0x0200 /*   96 bytes for each 32 supported ports */
+#define CONFIG_OFFS_PERIPHERALS_BASE    0x0E00 /*   64 bytes for each 16 supported peripherals */
 #define CONFIG_OFFS_STR_BASE            0x1200 /* 3584 bytes for strings pool */
 
 #define CONFIG_STR_SIZE                 0x0E00 /* 3584 bytes */

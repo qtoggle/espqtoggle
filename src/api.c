@@ -1604,9 +1604,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
     new_port->flags |= PORT_FLAG_ENABLED;
 
     /* Rebuild deps mask for all ports, as the new port might be among their deps */
-    for (i = 0; i < all_ports_count; i++) {
-        port_rebuild_change_dep_mask(all_ports[i]);
-    }
+    ports_rebuild_change_dep_mask();
 
     config_mark_for_saving();
     event_push_port_add(new_port);
@@ -2057,10 +2055,7 @@ json_t *api_delete_port(port_t *port, json_t *query_json, int *code) {
     free(port);
 
     /* Rebuild deps mask for all ports, as the former port might have been among their deps */
-    int i;
-    for (i = 0; i < all_ports_count; i++) {
-        port_rebuild_change_dep_mask(all_ports[i]);
-    }
+    ports_rebuild_change_dep_mask();
 
     *code = 204;
 
@@ -2807,9 +2802,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
     }
 
     /* Rebuild deps mask for remaining (virtual) ports */
-    for (i = 0; i < all_ports_count; i++) { // TODO these 3 lines are duplicated code
-        port_rebuild_change_dep_mask(all_ports[i]);
-    }
+    ports_rebuild_change_dep_mask();
 
     DEBUG_PERIPHERALS("cleaning up");
 
@@ -3012,6 +3005,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
 
         peripheral->type_id = type_id;
         peripheral->flags = flags;
+        peripheral->params = malloc(PERIPHERAL_PARAMS_SIZE);
 
         if (int8_param_count) {
             memcpy(peripheral->params + PERIPHERAL_CONFIG_OFFS_INT8_PARAMS, int8_params, int8_param_count);
@@ -3322,7 +3316,7 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
 #endif
         }
         else {
-            attrdef_json = attrdef_to_json("Sampling Interval", "Indicates how often to read the port value.",
+            attrdef_json = attrdef_to_json("Sampling Interval", "Indicates how often the port value will be read.",
                                            "ms", ATTR_TYPE_NUMBER, /* modifiable = */ TRUE,
                                            port->min_sampling_interval, port->max_sampling_interval,
                                            /* integer = */ TRUE , /* step = */ 0, /* choices = */ NULL,

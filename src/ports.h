@@ -245,6 +245,7 @@ ICACHE_FLASH_ATTR void      ports_save(uint8 *config_data, uint32 *strings_offs)
 
 ICACHE_FLASH_ATTR bool      ports_slot_busy(uint8 slot);
 ICACHE_FLASH_ATTR int8      ports_next_slot(void);
+ICACHE_FLASH_ATTR void      ports_rebuild_change_dep_mask(void);
 
 ICACHE_FLASH_ATTR void      port_register(port_t *port);
 ICACHE_FLASH_ATTR bool      port_unregister(port_t *port);

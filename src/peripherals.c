@@ -129,6 +129,8 @@ void peripheral_load(peripheral_t *peripheral, uint8 *config_data) {
 
     DEBUG_PERIPHERAL(peripheral, "type %d", type_id);
 
+    peripheral->params = malloc(PERIPHERAL_PARAMS_SIZE);
+
     memcpy(&peripheral->flags, data + PERIPHERAL_CONFIG_OFFS_FLAGS, 2);
     memcpy(peripheral->params, data + PERIPHERAL_CONFIG_OFFS_PARAMS, PERIPHERAL_PARAMS_SIZE);
 }
@@ -195,7 +197,13 @@ void peripheral_cleanup(peripheral_t *peripheral) {
         /* Default cleanup routine will simply free user_data */
         if (peripheral->user_data) {
             free(peripheral->user_data);
+            peripheral->user_data = NULL;
         }
+    }
+
+    if (peripheral->params) {
+        free(peripheral->params);
+        peripheral->params = NULL;
     }
 }
 
