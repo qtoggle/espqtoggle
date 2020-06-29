@@ -307,9 +307,9 @@ void user_init(void) {
     os_delay_us(10000);
 
 printf("\n\n");
-DEBUG("espQToggle  " FW_VERSION);
-DEBUG("API Version " API_VERSION);
-DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
+DEBUG_SYSTEM("espQToggle  " FW_VERSION);
+DEBUG_SYSTEM("API Version " API_VERSION);
+DEBUG_SYSTEM("SDK Version " ESP_SDK_VERSION_STRING);
 
 #else /* !_DEBUG */
     system_set_os_print(0);

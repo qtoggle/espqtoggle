@@ -41,10 +41,18 @@
 #define JSON_FREE_MEMBERS               1
 #define JSON_FREE_EVERYTHING            2
 
-#define JSON_ASSERT_TYPE(json, t)       {\
-    if ((json)->type != t) DEBUG("unexpected JSON type at %s:%d: wanted %c, got %c",\
-                                 __FILE__, __LINE__, t, (json)->type);\
+#define JSON_ASSERT_TYPE(json, t)       {                                                   \
+    if ((json)->type != t) DEBUG_JSON("unexpected JSON type at %s:%d: wanted %c, got %c",   \
+                                      __FILE__, __LINE__, t, (json)->type);                 \
 }
+
+
+#if defined(_DEBUG) && defined(_DEBUG_JSON)
+#define DEBUG_JSON(fmt, ...)            DEBUG("[json          ] " fmt, ##__VA_ARGS__)
+#else
+#define DEBUG_JSON(...)                 {}
+#endif
+
 
 #pragma pack(push, 1)
 

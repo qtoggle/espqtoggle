@@ -79,7 +79,7 @@ json_t *json_parse(char *input) {
 
         /* If root already popped, we don't expect any more characters */
         if (root) {
-            DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+            DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
             json_free(root);
             ctx_free(ctx);
             return NULL;
@@ -88,7 +88,7 @@ json_t *json_parse(char *input) {
         switch (c) {
             case '{':
                 if (!waiting_elem) {
-                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                    DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -106,7 +106,7 @@ json_t *json_parse(char *input) {
                 if (!json || json_get_type(json) != JSON_TYPE_OBJ ||
                     (waiting_elem && json_obj_get_len(json) > 0) || ctx_has_key(ctx)) {
 
-                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                    DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -118,7 +118,7 @@ json_t *json_parse(char *input) {
 
             case '[':
                 if (!waiting_elem) {
-                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                    DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -132,7 +132,7 @@ json_t *json_parse(char *input) {
                 if (!json || json_get_type(json) != JSON_TYPE_LIST ||
                     (waiting_elem && json_list_get_len(json) > 0)) {
 
-                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                    DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -145,7 +145,7 @@ json_t *json_parse(char *input) {
             case ',':
                 json = ctx_get_current(ctx);
                 if (!json || waiting_elem) {
-                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                    DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -160,7 +160,7 @@ json_t *json_parse(char *input) {
             case ':':
                 json = ctx_get_current(ctx);
                 if (!json || json_get_type(json) != JSON_TYPE_OBJ || !ctx_has_key(ctx) || waiting_elem) {
-                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                    DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -186,14 +186,14 @@ json_t *json_parse(char *input) {
                 json = ctx_get_current(ctx);
                 if (json && json_get_type(json) == JSON_TYPE_OBJ) {
                     if (ctx_has_key(ctx) != waiting_elem) {
-                        DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                        DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                         ctx_free(ctx);
                         return NULL;
                     }
                 }
                 else { /* No parent or not an object */
                     if (!waiting_elem) {
-                        DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                        DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                         ctx_free(ctx);
                         return NULL;
                     }
@@ -292,7 +292,7 @@ json_t *json_parse(char *input) {
                 }
 
                 if (!end_found) {
-                    DEBUG("unterminated string at pos %d", pos);
+                    DEBUG_JSON("unterminated string at pos %d", pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -311,7 +311,7 @@ json_t *json_parse(char *input) {
                         ctx_add(ctx, json_str_new(s));
                     }
                     else {
-                        DEBUG("unexpected string at pos %d", pos);
+                        DEBUG_JSON("unexpected string at pos %d", pos);
                         ctx_free(ctx);
                         return NULL;
                     }
@@ -327,7 +327,7 @@ json_t *json_parse(char *input) {
 
                 json = ctx_get_current(ctx);
                 if ((json && json_get_type(json) == JSON_TYPE_OBJ && !ctx_has_key(ctx)) || !waiting_elem) {
-                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                    DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -382,7 +382,7 @@ json_t *json_parse(char *input) {
                     pos += 4;
                 }
                 else {
-                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                    DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -391,13 +391,13 @@ json_t *json_parse(char *input) {
 
     if (!root) {
         if (ctx_get_size(ctx) < 1) {
-            DEBUG("empty input");
+            DEBUG_JSON("empty input");
             ctx_free(ctx);
             return NULL;
         }
 
         if (ctx_get_size(ctx) > 1) {
-            DEBUG("unbalanced brackets");
+            DEBUG_JSON("unbalanced brackets");
             ctx_free(ctx);
             return NULL;
         }
@@ -406,14 +406,14 @@ json_t *json_parse(char *input) {
         if (json_get_type(root) == JSON_TYPE_LIST || json_get_type(root) == JSON_TYPE_OBJ) {
             /* List and object roots should have already been popped as soon as closing brackets were encountered */
             json_free(root);
-            DEBUG("unbalanced brackets");
+            DEBUG_JSON("unbalanced brackets");
             ctx_free(ctx);
             return NULL;
         }
     }
 
     if (json_get_type(root) == JSON_TYPE_OBJ && ctx_has_key(ctx)) {
-        DEBUG("expected element at pos %d", pos);
+        DEBUG_JSON("expected element at pos %d", pos);
         ctx_free(ctx);
         return NULL;
     }
@@ -587,7 +587,7 @@ json_t *json_dup(json_t *json) {
         }
 
         case JSON_TYPE_MEMBERS_FREED:
-            DEBUG("cannot duplicate JSON with freed members");
+            DEBUG_JSON("cannot duplicate JSON with freed members");
             return NULL;
 
         default:
@@ -915,7 +915,7 @@ void json_dump_rec(json_t *json, char **output, int *len, int *size, uint8 free_
             break;
 
         case JSON_TYPE_MEMBERS_FREED:
-            DEBUG("cannot dump JSON with freed members");
+            DEBUG_JSON("cannot dump JSON with freed members");
             break;
     }
 

@@ -28,6 +28,7 @@
 
 #include "common.h"
 #include "rtc.h"
+#include "system.h"
 #include "utils.h"
 
 
@@ -258,7 +259,7 @@ int compare_double(const void *a, const void *b) {
 
 bool call_later(call_later_callback_t callback, void *arg, uint32 delay_ms) {
     if (call_later_timers_count >= MAX_CALL_LATER_TIMERS) {
-        DEBUG("too many call-later timers");
+        DEBUG_SYSTEM("too many call-later timers");
         return FALSE;
     }
 
@@ -291,7 +292,7 @@ void call_later_callback_wrapper(call_later_callback_wrapper_arg_t *arg) {
     }
 
     if (pos < 0) {
-        DEBUG("call-later timer not found");
+        DEBUG_SYSTEM("call-later timer not found");
         return;
     }
 
