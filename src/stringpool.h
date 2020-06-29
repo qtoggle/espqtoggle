@@ -23,9 +23,9 @@
 #include "espgoodies/common.h"
 
 
-ICACHE_FLASH_ATTR char            * string_pool_read(char *pool, void *offs_save);
-ICACHE_FLASH_ATTR char            * string_pool_read_dup(char *pool, void *offs_save);
-ICACHE_FLASH_ATTR bool              string_pool_write(char *pool, uint32 *pool_offs, char *value, void *offs_save);
+ICACHE_FLASH_ATTR char *string_pool_read(char *pool, void *offs_save);
+ICACHE_FLASH_ATTR char *string_pool_read_dup(char *pool, void *offs_save);
+ICACHE_FLASH_ATTR bool  string_pool_write(char *pool, uint32 *pool_offs, char *value, void *offs_save);
 
 
 #endif /* _STRING_POOL_H */

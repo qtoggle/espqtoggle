@@ -27,25 +27,25 @@
 
 
 #ifdef _DEBUG_CORE
-#define DEBUG_CORE(fmt, ...)            DEBUG("[core          ] " fmt, ##__VA_ARGS__)
+#define DEBUG_CORE(fmt, ...) DEBUG("[core          ] " fmt, ##__VA_ARGS__)
 #else
-#define DEBUG_CORE(...)                 {}
+#define DEBUG_CORE(...)      {}
 #endif
 
-#define TIME_EXPR_DEP_BIT               63  /* Used in change masks */
-#define TIME_MS_EXPR_DEP_BIT            62  /* Used in change masks */
+#define TIME_EXPR_DEP_BIT    63  /* Used in change masks */
+#define TIME_MS_EXPR_DEP_BIT 62  /* Used in change masks */
 
 
-ICACHE_FLASH_ATTR void                  core_init(void);
-ICACHE_FLASH_ATTR void                  core_listen_respond(session_t *session);
+ICACHE_FLASH_ATTR void core_init(void);
+ICACHE_FLASH_ATTR void core_listen_respond(session_t *session);
 
-ICACHE_FLASH_ATTR void                  core_enable_polling(void);
-ICACHE_FLASH_ATTR void                  core_disable_polling(void);
-ICACHE_FLASH_ATTR void                  core_poll(void);
+ICACHE_FLASH_ATTR void core_enable_polling(void);
+ICACHE_FLASH_ATTR void core_disable_polling(void);
+ICACHE_FLASH_ATTR void core_poll(void);
 
-ICACHE_FLASH_ATTR void                  update_port_expression(port_t *port);
-ICACHE_FLASH_ATTR void                  config_mark_for_saving(void);
-ICACHE_FLASH_ATTR void                  config_ensure_saved(void);
+ICACHE_FLASH_ATTR void update_port_expression(port_t *port);
+ICACHE_FLASH_ATTR void config_mark_for_saving(void);
+ICACHE_FLASH_ATTR void config_ensure_saved(void);
 
 
 #endif /* _CORE_H */

@@ -25,26 +25,28 @@
 
 
 #ifdef _DEBUG_GPIO
-#define DEBUG_GPIO(fmt, ...)    DEBUG("[gpio          ] " fmt, ##__VA_ARGS__)
+#define DEBUG_GPIO(fmt, ...) DEBUG("[gpio          ] " fmt, ##__VA_ARGS__)
 #else
-#define DEBUG_GPIO(...)         {}
+#define DEBUG_GPIO(...)      {}
 #endif
 
 
-int                             gpio_get_mux(int gpio_no);
-int                             gpio_get_func(int gpio_no);
-void                            gpio_select_func(int gpio_no);
-void                            gpio_set_pull(int gpio_no, bool pull);
+/* Following functions are intentionally not placed into flash so that they can be used from interrupt handlers */
 
-void                            gpio_configure_input(int gpio_no, bool pull);
-void                            gpio_configure_output(int gpio_no, bool initial);
+int  gpio_get_mux(int gpio_no);
+int  gpio_get_func(int gpio_no);
+void gpio_select_func(int gpio_no);
+void gpio_set_pull(int gpio_no, bool pull);
 
-bool                            gpio_is_configured(int gpio_no);
-bool                            gpio_is_output(int gpio_no);
-bool                            gpio_get_pull(int gpio_no);
+void gpio_configure_input(int gpio_no, bool pull);
+void gpio_configure_output(int gpio_no, bool initial);
 
-void                            gpio_write_value(int gpio_no, bool value);
-bool                            gpio_read_value(int gpio_no);
+bool gpio_is_configured(int gpio_no);
+bool gpio_is_output(int gpio_no);
+bool gpio_get_pull(int gpio_no);
+
+void gpio_write_value(int gpio_no, bool value);
+bool gpio_read_value(int gpio_no);
 
 
 #endif /* _ESPGOODIES_GPIO_H */

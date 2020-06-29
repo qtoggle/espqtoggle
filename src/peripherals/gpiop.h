@@ -25,11 +25,11 @@
 
 
 #ifdef _DEBUG_GPIOP
-#define DEBUG_GPIO_PORT             DEBUG_PORT
-#define DEBUG_GPIO_PERI             DEBUG_PERI
+#define DEBUG_GPIO_PORT      DEBUG_PORT
+#define DEBUG_GPIO_PERI      DEBUG_PERI
 #else
-#define DEBUG_GPIO_PORT(...)        {}
-#define DEBUG_GPIO_PERI(...)        {}
+#define DEBUG_GPIO_PORT(...) {}
+#define DEBUG_GPIO_PERI(...) {}
 #endif
 
 

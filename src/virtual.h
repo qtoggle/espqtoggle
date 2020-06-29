@@ -23,20 +23,20 @@
 
 #include "ports.h"
 
-#define VIRTUAL_MAX_PORTS           8
+#define VIRTUAL_MAX_PORTS 8
 
 #ifdef _DEBUG_VIRTUAL
-#define DEBUG_VIRTUAL(fmt, ...)     DEBUG("[virtual       ] " fmt, ##__VA_ARGS__)
+#define DEBUG_VIRTUAL(fmt, ...) DEBUG("[virtual       ] " fmt, ##__VA_ARGS__)
 #else
-#define DEBUG_VIRTUAL(...)          {}
+#define DEBUG_VIRTUAL(...)      {}
 #endif
 
 
-ICACHE_FLASH_ATTR void              virtual_ports_init(uint8 *data);
-ICACHE_FLASH_ATTR void              virtual_ports_save(uint8 *data, uint32 *strings_offs);
-ICACHE_FLASH_ATTR int8              virtual_find_unused_slot(void);
-ICACHE_FLASH_ATTR bool              virtual_port_register(port_t *port);
-ICACHE_FLASH_ATTR bool              virtual_port_unregister(port_t *port);
+ICACHE_FLASH_ATTR void virtual_ports_init(uint8 *data);
+ICACHE_FLASH_ATTR void virtual_ports_save(uint8 *data, uint32 *strings_offs);
+ICACHE_FLASH_ATTR int8 virtual_find_unused_slot(void);
+ICACHE_FLASH_ATTR bool virtual_port_register(port_t *port);
+ICACHE_FLASH_ATTR bool virtual_port_unregister(port_t *port);
 
 
 #endif  /* _VIRTUAL_H */

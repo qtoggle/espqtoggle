@@ -23,8 +23,8 @@
 #include <math.h>
 
 
-#define UNDEFINED               NAN
-#define IS_UNDEFINED(x)         isnan(x)
+#define UNDEFINED       NAN
+#define IS_UNDEFINED(x) isnan(x)
 
 
 #endif /* _COMMON_H */

@@ -24,28 +24,28 @@
 
 
 #ifdef _DEBUG_SLEEP
-#define DEBUG_SLEEP(fmt, ...)           DEBUG("[sleep         ] " fmt, ##__VA_ARGS__)
+#define DEBUG_SLEEP(fmt, ...) DEBUG("[sleep         ] " fmt, ##__VA_ARGS__)
 #else
-#define DEBUG_SLEEP(...)                {}
+#define DEBUG_SLEEP(...)      {}
 #endif
 
-#define SLEEP_WAKE_INTERVAL_MIN         0           /* 0 - sleep disabled */
-#define SLEEP_WAKE_INTERVAL_MAX         (7 * 1440)  /* Minutes */
-#define SLEEP_WAKE_DURATION_MIN         1           /* Seconds */
-#define SLEEP_WAKE_DURATION_MAX         3600        /* Seconds */
-#define SLEEP_WAKE_CONNECT_TIMEOUT      20          /* Seconds */
+#define SLEEP_WAKE_INTERVAL_MIN    0           /* 0 - sleep disabled */
+#define SLEEP_WAKE_INTERVAL_MAX    (7 * 1440)  /* Minutes */
+#define SLEEP_WAKE_DURATION_MIN    1           /* Seconds */
+#define SLEEP_WAKE_DURATION_MAX    3600        /* Seconds */
+#define SLEEP_WAKE_CONNECT_TIMEOUT 20          /* Seconds */
 
 
-ICACHE_FLASH_ATTR void                  sleep_init(void);
-ICACHE_FLASH_ATTR void                  sleep_reset(void);
-ICACHE_FLASH_ATTR bool                  sleep_pending(void);
-ICACHE_FLASH_ATTR bool                  sleep_is_short_wake(void);
+ICACHE_FLASH_ATTR void sleep_init(void);
+ICACHE_FLASH_ATTR void sleep_reset(void);
+ICACHE_FLASH_ATTR bool sleep_pending(void);
+ICACHE_FLASH_ATTR bool sleep_is_short_wake(void);
 
-ICACHE_FLASH_ATTR int                   sleep_get_wake_interval(void);
-ICACHE_FLASH_ATTR void                  sleep_set_wake_interval(int interval);
+ICACHE_FLASH_ATTR int  sleep_get_wake_interval(void);
+ICACHE_FLASH_ATTR void sleep_set_wake_interval(int interval);
 
-ICACHE_FLASH_ATTR int                   sleep_get_wake_duration(void);
-ICACHE_FLASH_ATTR void                  sleep_set_wake_duration(int duration);
+ICACHE_FLASH_ATTR int  sleep_get_wake_duration(void);
+ICACHE_FLASH_ATTR void sleep_set_wake_duration(int duration);
 
 
 #endif /* _ESPGOODIES_SLEEP_H */

@@ -31,94 +31,89 @@
 
 
 #ifdef _DEBUG_API
-#define DEBUG_API(fmt, ...)                 DEBUG("[api           ] " fmt, ##__VA_ARGS__)
+#define DEBUG_API(fmt, ...) DEBUG("[api           ] " fmt, ##__VA_ARGS__)
 #else
-#define DEBUG_API(...)                      {}
+#define DEBUG_API(...)      {}
 #endif
 
-#define API_MAX_FIELD_NAME_LEN              32
-#define API_MAX_FIELD_VALUE_LEN             1024
-#define API_MAX_FIELD_VALUE_LIST_LEN        4096
+#define API_MAX_FIELD_NAME_LEN         32
+#define API_MAX_FIELD_VALUE_LEN        1024
+#define API_MAX_FIELD_VALUE_LIST_LEN   4096
 
-#define API_MAX_EXPR_LEN                    1024
+#define API_MAX_EXPR_LEN               1024
 
-#define API_MAX_DEVICE_NAME_LEN             32
-#define API_MAX_DEVICE_DISP_NAME_LEN        64
-#define API_MAX_DEVICE_CONFIG_NAME_LEN      64
+#define API_MAX_DEVICE_NAME_LEN        32
+#define API_MAX_DEVICE_DISP_NAME_LEN   64
+#define API_MAX_DEVICE_CONFIG_NAME_LEN 64
 
-#define API_MIN_SEQUENCE_DELAY              1
-#define API_MAX_SEQUENCE_DELAY              60000
+#define API_MIN_SEQUENCE_DELAY         1
+#define API_MAX_SEQUENCE_DELAY         60000
 
-#define API_MIN_SEQUENCE_REPEAT             0
-#define API_MAX_SEQUENCE_REPEAT             65535
+#define API_MIN_SEQUENCE_REPEAT        0
+#define API_MAX_SEQUENCE_REPEAT        65535
 
-#define API_DEFAULT_LISTEN_TIMEOUT          60
-#define API_MIN_LISTEN_TIMEOUT              1
-#define API_MAX_LISTEN_TIMEOUT              3600
-#define API_MAX_LISTEN_SESSION_ID_LEN       32
+#define API_DEFAULT_LISTEN_TIMEOUT     60
+#define API_MIN_LISTEN_TIMEOUT         1
+#define API_MAX_LISTEN_TIMEOUT         3600
+#define API_MAX_LISTEN_SESSION_ID_LEN  32
 
-#define API_PORT_TYPE_BOOLEAN               "boolean"
-#define API_PORT_TYPE_NUMBER                "number"
+#define API_PORT_TYPE_BOOLEAN          "boolean"
+#define API_PORT_TYPE_NUMBER           "number"
 
-#define API_ATTR_TYPE_BOOLEAN               "boolean"
-#define API_ATTR_TYPE_NUMBER                "number"
-#define API_ATTR_TYPE_STRING                "string"
+#define API_ATTR_TYPE_BOOLEAN          "boolean"
+#define API_ATTR_TYPE_NUMBER           "number"
+#define API_ATTR_TYPE_STRING           "string"
 
-#define API_ACCESS_LEVEL_ADMIN              30
-#define API_ACCESS_LEVEL_NORMAL             20
-#define API_ACCESS_LEVEL_VIEWONLY           10
-#define API_ACCESS_LEVEL_NONE               0
+#define API_ACCESS_LEVEL_ADMIN         30
+#define API_ACCESS_LEVEL_NORMAL        20
+#define API_ACCESS_LEVEL_VIEWONLY      10
+#define API_ACCESS_LEVEL_NONE          0
 
 
-ICACHE_FLASH_ATTR json_t                  * api_call_handle(int method, char* path, json_t *query_json,
-                                                            json_t *request_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *request_json, int *code);
 
-ICACHE_FLASH_ATTR void                      api_conn_set(struct espconn *conn, int access_level);
-ICACHE_FLASH_ATTR bool                      api_conn_busy(void);
-ICACHE_FLASH_ATTR bool                      api_conn_equal(struct espconn *conn);
-ICACHE_FLASH_ATTR uint8                     api_conn_access_level_get(void);
-ICACHE_FLASH_ATTR void                      api_conn_reset(void);
-ICACHE_FLASH_ATTR void                      api_conn_save(void);
-ICACHE_FLASH_ATTR void                      api_conn_restore(void);
+ICACHE_FLASH_ATTR void    api_conn_set(struct espconn *conn, int access_level);
+ICACHE_FLASH_ATTR bool    api_conn_busy(void);
+ICACHE_FLASH_ATTR bool    api_conn_equal(struct espconn *conn);
+ICACHE_FLASH_ATTR uint8   api_conn_access_level_get(void);
+ICACHE_FLASH_ATTR void    api_conn_reset(void);
+ICACHE_FLASH_ATTR void    api_conn_save(void);
+ICACHE_FLASH_ATTR void    api_conn_restore(void);
 
-ICACHE_FLASH_ATTR json_t                  * api_get_device(json_t *query_json, int *code);
-ICACHE_FLASH_ATTR json_t                  * api_patch_device(json_t *query_json, json_t *request_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_get_device(json_t *query_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code);
 
-ICACHE_FLASH_ATTR json_t                  * api_post_reset(json_t *query_json, json_t *request_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_post_reset(json_t *query_json, json_t *request_json, int *code);
 #ifdef _OTA
-ICACHE_FLASH_ATTR json_t                  * api_get_firmware(json_t *query_json, int *code);
-ICACHE_FLASH_ATTR json_t                  * api_patch_firmware(json_t *query_json, json_t *request_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_get_firmware(json_t *query_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_patch_firmware(json_t *query_json, json_t *request_json, int *code);
 #endif
-ICACHE_FLASH_ATTR json_t                  * api_get_access(json_t *query_json, int *code);
-ICACHE_FLASH_ATTR json_t                  * api_get_ports(json_t *query_json, int *code);
-ICACHE_FLASH_ATTR json_t                  * api_post_ports(json_t *query_json, json_t *request_json, int *code);
-ICACHE_FLASH_ATTR json_t                  * api_patch_port(port_t *port, json_t *query_json, json_t *request_json,
-                                                           int *code);
-ICACHE_FLASH_ATTR json_t                  * api_delete_port(port_t *port, json_t *query_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_get_access(json_t *query_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_get_ports(json_t *query_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_delete_port(port_t *port, json_t *query_json, int *code);
 
-ICACHE_FLASH_ATTR json_t                  * api_get_port_value(port_t *port, json_t *query_json, int *code);
-ICACHE_FLASH_ATTR json_t                  * api_patch_port_value(port_t *port, json_t *query_json, json_t *request_json,
-                                                                 int *code);
-ICACHE_FLASH_ATTR json_t                  * api_patch_port_sequence(port_t *port, json_t *query_json,
-                                                                    json_t *request_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_get_port_value(port_t *port, json_t *query_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_patch_port_value(port_t *port, json_t *query_json, json_t *request_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_patch_port_sequence(port_t *port, json_t *query_json, json_t *request_json, int *code);
 
-ICACHE_FLASH_ATTR json_t                  * api_get_webhooks(json_t *query_json, int *code);
-ICACHE_FLASH_ATTR json_t                  * api_patch_webhooks(json_t *query_json, json_t *request_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_get_webhooks(json_t *query_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code);
 
-ICACHE_FLASH_ATTR json_t                  * api_get_wifi(json_t *query_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_get_wifi(json_t *query_json, int *code);
 
-ICACHE_FLASH_ATTR json_t                  * api_get_raw_io(char *io, json_t *query_json, int *code);
-ICACHE_FLASH_ATTR json_t                  * api_patch_raw_io(char *io, json_t *query_json, json_t *request_json,
-                                                             int *code);
+ICACHE_FLASH_ATTR json_t *api_get_raw_io(char *io, json_t *query_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int *code);
 
-ICACHE_FLASH_ATTR json_t                  * api_get_peripherals(json_t *query_json, int *code);
-ICACHE_FLASH_ATTR json_t                  * api_put_peripherals(json_t *query_json, json_t *request_json, int *code);
-ICACHE_FLASH_ATTR json_t                  * api_get_system(json_t *query_json, int *code);
-ICACHE_FLASH_ATTR json_t                  * api_put_system(json_t *query_json, json_t *request_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_get_peripherals(json_t *query_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_get_system(json_t *query_json, int *code);
+ICACHE_FLASH_ATTR json_t *api_put_system(json_t *query_json, json_t *request_json, int *code);
 
-ICACHE_FLASH_ATTR json_t                  * port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx);
-ICACHE_FLASH_ATTR json_t                  * device_to_json(void);
-ICACHE_FLASH_ATTR json_t                  * peripheral_to_json(peripheral_t *peripheral);
+ICACHE_FLASH_ATTR json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx);
+ICACHE_FLASH_ATTR json_t *device_to_json(void);
+ICACHE_FLASH_ATTR json_t *peripheral_to_json(peripheral_t *peripheral);
 
 
 #endif /* _API_H */

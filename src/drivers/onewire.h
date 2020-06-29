@@ -24,36 +24,36 @@
 #include <c_types.h>
 
 
-#define ONE_WIRE_CMD_SEARCH_ROM         0xF0
-#define ONE_WIRE_CMD_SKIP_ROM           0xCC
-#define ONE_WIRE_CMD_CONVERT_T          0x44
-#define ONE_WIRE_CMD_READ_SCRATCHPAD    0xBE
+#define ONE_WIRE_CMD_SEARCH_ROM      0xF0
+#define ONE_WIRE_CMD_SKIP_ROM        0xCC
+#define ONE_WIRE_CMD_CONVERT_T       0x44
+#define ONE_WIRE_CMD_READ_SCRATCHPAD 0xBE
 
 
 typedef struct {
 
-    uint8                               pin_no;
-    uint8                               rom[8];
-    uint8                               last_discrepancy;
-    uint8                               last_family_discrepancy;
-    bool                                last_device_flag;
+    uint8 pin_no;
+    uint8 rom[8];
+    uint8 last_discrepancy;
+    uint8 last_family_discrepancy;
+    bool  last_device_flag;
 
 } one_wire_t;
 
 
-ICACHE_FLASH_ATTR void                  one_wire_setup(one_wire_t *one_wire);
-ICACHE_FLASH_ATTR bool                  one_wire_reset(one_wire_t *one_wire);
+ICACHE_FLASH_ATTR void  one_wire_setup(one_wire_t *one_wire);
+ICACHE_FLASH_ATTR bool  one_wire_reset(one_wire_t *one_wire);
 
-ICACHE_FLASH_ATTR void                  one_wire_search_reset(one_wire_t *one_wire);
-ICACHE_FLASH_ATTR bool                  one_wire_search(one_wire_t *one_wire, uint8 *addr);
+ICACHE_FLASH_ATTR void  one_wire_search_reset(one_wire_t *one_wire);
+ICACHE_FLASH_ATTR bool  one_wire_search(one_wire_t *one_wire, uint8 *addr);
 
-ICACHE_FLASH_ATTR uint8                 one_wire_read(one_wire_t *one_wire);
-ICACHE_FLASH_ATTR void                  one_wire_write(one_wire_t *one_wire, uint8 value, bool parasitic);
-ICACHE_FLASH_ATTR void                  one_wire_write_bytes(one_wire_t *one_wire, uint8 *buf, uint16 len, bool parasitic);
+ICACHE_FLASH_ATTR uint8 one_wire_read(one_wire_t *one_wire);
+ICACHE_FLASH_ATTR void  one_wire_write(one_wire_t *one_wire, uint8 value, bool parasitic);
+ICACHE_FLASH_ATTR void  one_wire_write_bytes(one_wire_t *one_wire, uint8 *buf, uint16 len, bool parasitic);
 
-ICACHE_FLASH_ATTR void                  one_wire_parasitic_power_off(one_wire_t *one_wire);
+ICACHE_FLASH_ATTR void  one_wire_parasitic_power_off(one_wire_t *one_wire);
 
-ICACHE_FLASH_ATTR uint8                 one_wire_crc8(uint8 *buf, int len);
+ICACHE_FLASH_ATTR uint8 one_wire_crc8(uint8 *buf, int len);
 
 
 #endif /* _ONE_WIRE_H */

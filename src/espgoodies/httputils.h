@@ -23,9 +23,9 @@
 #include "json.h"
 
 
-ICACHE_FLASH_ATTR json_t          * http_parse_url_encoded(char *input);
-ICACHE_FLASH_ATTR char            * http_build_auth_token_header(char *token);
-ICACHE_FLASH_ATTR char            * http_parse_auth_token_header(char *header);
+ICACHE_FLASH_ATTR json_t *http_parse_url_encoded(char *input);
+ICACHE_FLASH_ATTR char   *http_build_auth_token_header(char *token);
+ICACHE_FLASH_ATTR char   *http_parse_auth_token_header(char *header);
 
 
 #endif /* _ESPGOODIES_HTTPUTILS_H */

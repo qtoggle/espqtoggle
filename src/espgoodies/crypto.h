@@ -27,30 +27,30 @@
 #include <c_types.h>
 
 
-#define SHA1_LEN                20
-#define SHA1_HEX_LEN            40
-#define SHA256_LEN              32
-#define SHA256_HEX_LEN          64
+#define SHA1_LEN       20
+#define SHA1_HEX_LEN   40
+#define SHA256_LEN     32
+#define SHA256_HEX_LEN 64
 
 
-    /* Result must be freed after using the following functions */
+/* Result must be freed after using the following functions */
 
-ICACHE_FLASH_ATTR uint8       * sha1(uint8 *data, int len);
-ICACHE_FLASH_ATTR char        * sha1_hex(char *s);
-ICACHE_FLASH_ATTR uint8       * sha256(uint8 *data, int len);
-ICACHE_FLASH_ATTR char        * sha256_hex(char *s);
+ICACHE_FLASH_ATTR uint8 *sha1(uint8 *data, int len);
+ICACHE_FLASH_ATTR char  *sha1_hex(char *s);
+ICACHE_FLASH_ATTR uint8 *sha256(uint8 *data, int len);
+ICACHE_FLASH_ATTR char  *sha256_hex(char *s);
 
-ICACHE_FLASH_ATTR uint8       * hmac_sha256(uint8 *data, int data_len, uint8 *key, int key_len);
-ICACHE_FLASH_ATTR char        * hmac_sha256_hex(char *msg, char *key);
+ICACHE_FLASH_ATTR uint8 *hmac_sha256(uint8 *data, int data_len, uint8 *key, int key_len);
+ICACHE_FLASH_ATTR char  *hmac_sha256_hex(char *msg, char *key);
 
 
-    /* URL & filename safe base64 */
+/* URL & filename safe base64 */
 
-ICACHE_FLASH_ATTR char        * b64_encode(uint8 *data, int len, bool padding);
-ICACHE_FLASH_ATTR uint8       * b64_decode(char *s);
+ICACHE_FLASH_ATTR char  *b64_encode(uint8 *data, int len, bool padding);
+ICACHE_FLASH_ATTR uint8 *b64_decode(char *s);
 
-ICACHE_FLASH_ATTR char        * bin2hex(uint8 *bin, int len);
-ICACHE_FLASH_ATTR uint8       * hex2bin(char *hex);
+ICACHE_FLASH_ATTR char  *bin2hex(uint8 *bin, int len);
+ICACHE_FLASH_ATTR uint8 *hex2bin(char *hex);
 
 
 #endif /* _ESPGOODIES_CRYPTO_H */

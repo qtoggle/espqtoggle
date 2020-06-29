@@ -23,28 +23,28 @@
 #include <os_type.h>
 
 
-#define VERSION_TYPE_ALPHA      1
-#define VERSION_TYPE_BETA       2
-#define VERSION_TYPE_RC         3
-#define VERSION_TYPE_FINAL      6
-#define VERSION_TYPE_UNKNOWN    7
+#define VERSION_TYPE_ALPHA   1
+#define VERSION_TYPE_BETA    2
+#define VERSION_TYPE_RC      3
+#define VERSION_TYPE_FINAL   6
+#define VERSION_TYPE_UNKNOWN 7
 
 
 typedef struct {
-    uint8   major;
-    uint8   minor;
-    uint8   patch;
-    uint8   label;
-    uint8   type;
+    uint8 major;
+    uint8 minor;
+    uint8 patch;
+    uint8 label;
+    uint8 type;
 } version_t;
 
 
-ICACHE_FLASH_ATTR void          version_parse(char *version_str, version_t *version);
-ICACHE_FLASH_ATTR char        * version_dump(version_t *version);
-ICACHE_FLASH_ATTR void          version_from_int(version_t *version, uint32 version_int);
-ICACHE_FLASH_ATTR uint32        version_to_int(version_t *version);
-ICACHE_FLASH_ATTR char        * version_type_str(uint8 type);
-ICACHE_FLASH_ATTR int           version_cmp(version_t *version1, version_t *version2);
+ICACHE_FLASH_ATTR void    version_parse(char *version_str, version_t *version);
+ICACHE_FLASH_ATTR char   *version_dump(version_t *version);
+ICACHE_FLASH_ATTR void    version_from_int(version_t *version, uint32 version_int);
+ICACHE_FLASH_ATTR uint32  version_to_int(version_t *version);
+ICACHE_FLASH_ATTR char   *version_type_str(uint8 type);
+ICACHE_FLASH_ATTR int     version_cmp(version_t *version1, version_t *version2);
 
 
 #endif /* _ESPGOODIES_VERSION_H */
