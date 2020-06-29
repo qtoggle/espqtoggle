@@ -1860,28 +1860,24 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                     return INVALID_EXPRESSION_FROM_ERROR("transform_write");
                 }
 
-                port_t **_ports, **ports, *p;
-                port_t *other_dep = NULL;
-                _ports = ports = expr_port_deps(transform_write);
-                if (ports) {
-                    while ((p = *ports++)) {
-                        if (p == port) {
-                            continue;
-                        }
-                        other_dep = p;
-                        break;
-                    }
-                    free(_ports);
-                }
+                uint32 dep_mask = expr_get_port_deps(transform_write);
+                dep_mask &= ~(1L << port->slot);
 
                 // FIXME: if referenced port is unavailable, external dependency is not detected
-                // FIXME: using strstr() to find reference position may lead to erroneous results when a port id is a
-                //        substring of another
-                if (other_dep) {
-                    DEBUG_PORT(port, "transform expression depends on external port \"%s\"", other_dep->id);
+                if (dep_mask) {
+                    uint8 slot = 0;
+                    while (dep_mask % 2 == 0) {
+                        dep_mask >>= 1;
+                        slot++;
+                    }
+
+                    port_t *other_port = port_find_by_slot(slot); /* port can't be NULL */
+                    DEBUG_PORT(port, "transform expression depends on port \"%s\"", other_port->id);
                     expr_free(transform_write);
-                    int32 pos = strstr(stransform_write, other_dep->id) - stransform_write;
-                    return INVALID_EXPRESSION("transform_write", "external-dependency", other_dep->id, pos);
+                    // FIXME: using strstr() to find reference position may lead to erroneous results when a port id is
+                    //        a substring of another
+                    int32 pos = strstr(stransform_write, other_port->id) - stransform_write;
+                    return INVALID_EXPRESSION("transform_write", "external-dependency", other_port->id, pos);
                 }
 
                 port->stransform_write = strdup(stransform_write);
@@ -1922,28 +1918,24 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                     return INVALID_EXPRESSION_FROM_ERROR("transform_read");
                 }
 
-                port_t **_ports, **ports, *p;
-                port_t *other_dep = NULL;
-                _ports = ports = expr_port_deps(transform_read);
-                if (ports) {
-                    while ((p = *ports++)) {
-                        if (p == port) {
-                            continue;
-                        }
-                        other_dep = p;
-                        break;
-                    }
-                    free(_ports);
-                }
+                uint32 dep_mask = expr_get_port_deps(transform_read);
+                dep_mask &= ~(1L << port->slot);
 
                 // FIXME: if referenced port is unavailable, external dependency is not detected
-                // FIXME: using strstr() to find reference position may lead to erroneous results when a port id is a
-                //        substring of another
-                if (other_dep) {
-                    DEBUG_PORT(port, "transform expression depends on external port \"%s\"", other_dep->id);
+                if (dep_mask) {
+                    uint8 slot = 0;
+                    while (dep_mask % 2 == 0) {
+                        dep_mask >>= 1;
+                        slot++;
+                    }
+
+                    port_t *other_port = port_find_by_slot(slot); /* port can't be NULL */
+                    DEBUG_PORT(port, "transform expression depends on port \"%s\"", other_port->id);
                     expr_free(transform_read);
-                    int32 pos = strstr(stransform_read, other_dep->id) - stransform_read;
-                    return INVALID_EXPRESSION("transform_read", "external-dependency", other_dep->id, pos);
+                    // FIXME: using strstr() to find reference position may lead to erroneous results when a port id is
+                    //        a substring of another
+                    int32 pos = strstr(stransform_read, other_port->id) - stransform_read;
+                    return INVALID_EXPRESSION("transform_read", "external-dependency", other_port->id, pos);
                 }
 
                 port->stransform_read = strdup(stransform_read);

@@ -79,7 +79,7 @@ ICACHE_FLASH_ATTR expr_parse_error_t  * expr_parse_get_error(void);
 ICACHE_FLASH_ATTR double                expr_eval(expr_t *expr);
 ICACHE_FLASH_ATTR void                  expr_free(expr_t *expr);
 ICACHE_FLASH_ATTR int                   expr_check_loops(expr_t *expr, struct port *the_port);
-ICACHE_FLASH_ATTR struct port        ** expr_port_deps(expr_t *expr);
+ICACHE_FLASH_ATTR uint32                expr_get_port_deps(expr_t *expr);
 ICACHE_FLASH_ATTR bool                  expr_is_time_dep(expr_t *expr);
 ICACHE_FLASH_ATTR bool                  expr_is_time_ms_dep(expr_t *expr);
 ICACHE_FLASH_ATTR bool                  expr_is_rounding(expr_t *expr);

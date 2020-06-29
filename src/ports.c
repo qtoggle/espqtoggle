@@ -893,6 +893,19 @@ port_t *port_find_by_id(char *id) {
     return NULL;    
 }
 
+port_t *port_find_by_slot(uint8 slot) {
+    port_t *p;
+    int i;
+    for (i = 0; i < all_ports_count; i++) {
+        p = all_ports[i];
+        if (p->slot == slot) {
+            return p;
+        }
+    }
+
+    return NULL;
+}
+
 void port_rebuild_change_dep_mask(port_t *the_port) {
     the_port->change_dep_mask = 0;
 
@@ -900,14 +913,7 @@ void port_rebuild_change_dep_mask(port_t *the_port) {
         return;
     }
 
-    port_t **ports, **port, *p;
-    port = ports = expr_port_deps(the_port->expr);
-    if (ports) {
-        while ((p = *port++)) {
-            the_port->change_dep_mask |= (1ULL << p->slot);
-        }
-        free(ports);
-    }
+    the_port->change_dep_mask = expr_get_port_deps(the_port->expr);
 
     if (expr_is_time_dep(the_port->expr)) {
         the_port->change_dep_mask |= (1ULL << TIME_EXPR_DEP_BIT);

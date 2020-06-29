@@ -1162,35 +1162,22 @@ int expr_check_loops(expr_t *expr, struct port *the_port) {
     return check_loops_rec(the_port, 1, expr);
 }
 
-struct port **expr_port_deps(expr_t *expr) { // TODO this should return a bitmask of port_ids
-    port_t **ports = NULL, **subports, **port, *p;
-    int i, size = 0;
+uint32 expr_get_port_deps(expr_t *expr) {
+    port_t *port;
 
     if (expr->func) {
-        for (i = 0; i < expr->argc; i++) {
-            subports = expr_port_deps(expr->args[i]);
-            if (subports) {
-                port = subports;
-                while ((p = *port++)) {
-                    ports = realloc(ports, sizeof(port_t *) * (size + 1));
-                    ports[size++] = p;
-                }
-                
-                free(subports);
-            }
+        uint32 dep_mask = 0;
+        for (int i = 0; i < expr->argc; i++) {
+            dep_mask |= expr_get_port_deps(expr->args[i]);
         }
+
+        return dep_mask;
     }
-    else if (expr->port_id && (p = port_find_by_id(expr->port_id))) {
-        ports = malloc(sizeof(port_t *) * (size + 1));
-        ports[size++] = p;
-    }
-    
-    if (ports) {
-        ports = realloc(ports, sizeof(port_t *) * (size + 1));
-        ports[size] = NULL;
+    else if (expr->port_id && (port = port_find_by_id(expr->port_id))) {
+        return 1L << port->slot;
     }
 
-    return ports;
+    return 0;
 }
 
 bool expr_is_time_dep(expr_t *expr) {

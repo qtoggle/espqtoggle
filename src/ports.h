@@ -251,6 +251,7 @@ ICACHE_FLASH_ATTR void      port_register(port_t *port);
 ICACHE_FLASH_ATTR bool      port_unregister(port_t *port);
 ICACHE_FLASH_ATTR void      port_cleanup(port_t *port);
 ICACHE_FLASH_ATTR port_t  * port_find_by_id(char *id);
+ICACHE_FLASH_ATTR port_t  * port_find_by_slot(uint8 slot);
 ICACHE_FLASH_ATTR void      port_rebuild_change_dep_mask(port_t *port);
 ICACHE_FLASH_ATTR void      port_sequence_cancel(port_t *port);
 ICACHE_FLASH_ATTR void      port_expr_remove(port_t *port);
