@@ -246,8 +246,12 @@ void session_push(session_t *session, int type, char *port_id) {
     session->queue = n;
     session->queue_len++;
 
-    DEBUG_SESSION(session->id, "pushing event of type \"%s\" (queue length=%d)", EVENT_TYPES_STR[type],
-                  session->queue_len);
+    DEBUG_SESSION(
+        session->id,
+        "pushing event of type \"%s\" (queue length=%d)",
+        EVENT_TYPES_STR[type],
+        session->queue_len
+    );
 }
 
 void session_free(session_t *session) {

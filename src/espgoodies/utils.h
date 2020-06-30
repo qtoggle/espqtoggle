@@ -44,7 +44,7 @@
 #define ntohl(x)              htonl(x)
 
 
-typedef void (* call_later_callback_t)(void *arg);
+typedef void (*call_later_callback_t)(void *arg);
 
 
 ICACHE_FLASH_ATTR void    append_max_len(char *s, char c, int max_len);

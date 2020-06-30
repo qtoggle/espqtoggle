@@ -556,9 +556,11 @@ json_t *json_dup(json_t *json) {
             json_t *obj = json_obj_new();
             int i;
             for (i = 0; i < json->obj_data.len; i++) {
-                json_obj_append(obj,
-                                json->obj_data.keys[i],
-                                json_dup(json->obj_data.children[i]));
+                json_obj_append(
+                    obj,
+                    json->obj_data.keys[i],
+                    json_dup(json->obj_data.children[i])
+                );
             }
 
             return obj;
@@ -848,8 +850,13 @@ void json_dump_rec(json_t *json, char **output, int *len, int *size, uint8 free_
             *size = realloc_chunks(output, *size, *len + 1);
             (*output)[(*len)++] = '[';
             for (i = 0; i < json->list_data.len; i++) {
-                json_dump_rec(json->list_data.children[i], output, len, size,
-                              free_mode >= JSON_FREE_MEMBERS ? JSON_FREE_EVERYTHING : JSON_FREE_NOTHING);
+                json_dump_rec(
+                    json->list_data.children[i],
+                    output,
+                    len,
+                    size,
+                    free_mode >= JSON_FREE_MEMBERS ? JSON_FREE_EVERYTHING : JSON_FREE_NOTHING
+                );
                 if (i < json->list_data.len - 1) {
                     *size = realloc_chunks(output, *size, *len + 1);
                     (*output)[(*len)++] = ',';
@@ -876,8 +883,13 @@ void json_dump_rec(json_t *json, char **output, int *len, int *size, uint8 free_
                 (*output)[*len - 2] = '"';
                 (*output)[*len - 1] = ':';
 
-                json_dump_rec(json->obj_data.children[i], output, len, size,
-                              free_mode >= JSON_FREE_MEMBERS ? JSON_FREE_EVERYTHING : JSON_FREE_NOTHING);
+                json_dump_rec(
+                    json->obj_data.children[i],
+                    output,
+                    len,
+                    size,
+                    free_mode >= JSON_FREE_MEMBERS ? JSON_FREE_EVERYTHING : JSON_FREE_NOTHING
+                );
                 if (i < json->obj_data.len - 1) {
                     *size = realloc_chunks(output, *size, *len + 1);
                     (*output)[(*len)++] = ',';

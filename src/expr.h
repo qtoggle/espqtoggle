@@ -63,7 +63,7 @@ typedef struct {
 
 struct port;
 
-typedef double (* func_callback_t)(expr_t *expr, int argc, double *args);
+typedef double (*func_callback_t)(expr_t *expr, int argc, double *args);
 
 typedef struct {
 

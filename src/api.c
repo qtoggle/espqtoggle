@@ -780,8 +780,12 @@ json_t *device_to_json(void) {
 
     char current_bssid_str[18] = {0};
     if (wifi_station_is_connected()) {
-        snprintf(current_bssid_str, sizeof(current_bssid_str),
-                "%02X:%02X:%02X:%02X:%02X:%02X", BSSID2STR(wifi_get_bssid_current()));
+        snprintf(
+            current_bssid_str,
+            sizeof(current_bssid_str),
+            "%02X:%02X:%02X:%02X:%02X:%02X",
+            BSSID2STR(wifi_get_bssid_current())
+        );
     }
     json_obj_append(json, "wifi_bssid_current", json_str_new(current_bssid_str));
 
@@ -1978,10 +1982,15 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
             }
 
             int sampling_interval = json_int_get(child);
-            if (!validate_num(sampling_interval,
-                              port->min_sampling_interval,
-                              port->max_sampling_interval, TRUE, 0, NULL)) {
-
+            bool valid = validate_num(
+                sampling_interval,
+                port->min_sampling_interval,
+                port->max_sampling_interval,
+                TRUE,
+                0,
+                NULL
+            );
+            if (!valid) {
                 return INVALID_FIELD(key);
             }
 
@@ -2243,8 +2252,11 @@ json_t *api_get_webhooks(json_t *query_json, int *code) {
     DEBUG_API("returning webhooks parameters");
 
     json_obj_append(response_json, "enabled", json_bool_new(device_flags & DEVICE_FLAG_WEBHOOKS_ENABLED));
-    json_obj_append(response_json, "scheme",
-                    json_str_new(device_flags & DEVICE_FLAG_WEBHOOKS_HTTPS ? "https" : "http"));
+    json_obj_append(
+        response_json,
+        "scheme",
+        json_str_new(device_flags & DEVICE_FLAG_WEBHOOKS_HTTPS ? "https" : "http")
+    );
     json_obj_append(response_json, "host", json_str_new(webhooks_host ? webhooks_host : ""));
     json_obj_append(response_json, "port", json_int_new(webhooks_port));
     json_obj_append(response_json, "path", json_str_new(webhooks_path ? webhooks_path : ""));
@@ -3254,14 +3266,16 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
                 }
             }
 
-            attrdef_json = attrdef_to_json(a->display_name ? a->display_name : "",
-                                           a->description ? a->description : "",
-                                           a->unit, a->type,
-                                           IS_ATTRDEF_MODIFIABLE(a),
-                                           a->min, a->max,
-                                           IS_ATTRDEF_INTEGER(a),
-                                           a->step, choices,
-                                           IS_ATTRDEF_RECONNECT(a));
+            attrdef_json = attrdef_to_json(
+                a->display_name ? a->display_name : "",
+                a->description ? a->description : "",
+                a->unit, a->type,
+                IS_ATTRDEF_MODIFIABLE(a),
+                a->min, a->max,
+                IS_ATTRDEF_INTEGER(a),
+                a->step, choices,
+                IS_ATTRDEF_RECONNECT(a)
+            );
 
             /* If similar choices found, replace with $ref */
             if (found_attrdef_name) {
@@ -3276,8 +3290,11 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
                         break;
 
                     case JSON_REFS_TYPE_LISTEN_EVENTS_LIST:
-                        ref = make_json_ref("#/%d/params/definitions/%s/choices",
-                                            json_refs_ctx->index, found_attrdef_name);
+                        ref = make_json_ref(
+                            "#/%d/params/definitions/%s/choices",
+                            json_refs_ctx->index,
+                            found_attrdef_name
+                        );
                         break;
 
                     case JSON_REFS_TYPE_WEBHOOKS_EVENT:
@@ -3286,8 +3303,12 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
                 }
 #if defined(_DEBUG) && defined(_DEBUG_API)
                 char *ref_str = json_str_get(json_obj_value_at(ref, 0));
-                DEBUG_API("replacing \"%s.definitions.%s.choices\" with $ref \"%s\"",
-                          port->id, found_attrdef_name, ref_str);
+                DEBUG_API(
+                    "replacing \"%s.definitions.%s.choices\" with $ref \"%s\"",
+                    port->id,
+                    found_attrdef_name,
+                    ref_str
+                );
 #endif
                 json_obj_append(attrdef_json, "choices", ref);
             }
@@ -3300,19 +3321,29 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
     if (!IS_PORT_VIRTUAL(port) && port->min_sampling_interval < port->max_sampling_interval) {
         /* sampling_interval attrdef */
         if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST && json_refs_ctx->sampling_interval_port_index >= 0) {
-            attrdef_json = make_json_ref("#/%d/definitions/sampling_interval",
-                                         json_refs_ctx->sampling_interval_port_index);
+            attrdef_json = make_json_ref(
+                "#/%d/definitions/sampling_interval",
+                json_refs_ctx->sampling_interval_port_index
+            );
 #if defined(_DEBUG) && defined(_DEBUG_API)
             char *ref_str = json_str_get(json_obj_value_at(attrdef_json, 0));
             DEBUG_API("replacing \"%s.definitions.sampling_interval\" with $ref \"%s\"", port->id, ref_str);
 #endif
         }
         else {
-            attrdef_json = attrdef_to_json("Sampling Interval", "Indicates how often the port value will be read.",
-                                           "ms", ATTR_TYPE_NUMBER, /* modifiable = */ TRUE,
-                                           port->min_sampling_interval, port->max_sampling_interval,
-                                           /* integer = */ TRUE , /* step = */ 0, /* choices = */ NULL,
-                                           /* reconnect = */ FALSE);
+            attrdef_json = attrdef_to_json(
+                "Sampling Interval",
+                "Indicates how often the port value will be read.",
+                "ms",
+                ATTR_TYPE_NUMBER,
+                /* modifiable = */ TRUE,
+                port->min_sampling_interval,
+                port->max_sampling_interval,
+                /* integer = */ TRUE ,
+                /* step = */ 0,
+                /* choices = */ NULL,
+                /* reconnect = */ FALSE
+            );
             if (json_refs_ctx->type == JSON_REFS_TYPE_PORTS_LIST) {
                 json_refs_ctx->sampling_interval_port_index = json_refs_ctx->index;
             }
@@ -3330,65 +3361,133 @@ json_t *device_attrdefs_to_json(void) {
     json_t *attrdef_json;
 
 #ifdef _SLEEP
-    attrdef_json = attrdef_to_json("Sleep Mode",
-                                   "Controls the sleep mode; format is <wake_interval_minutes>:<wake_duration_seconds>."
-                                   " Interval is between 1 and 10080 minutes; duration is between 10 and 3600 seconds. "
-                                   "Empty string disables sleep mode.", /* unit = */ NULL, ATTR_TYPE_STRING,
-                                   /* modifiable = */ TRUE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
-                                   /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
-                                   /* reconnect = */ FALSE);
+    attrdef_json = attrdef_to_json(
+        "Sleep Mode",
+        "Controls the sleep mode; format is <wake_interval_minutes>:<wake_duration_seconds>. "
+        "Interval is between 1 and 10080 minutes; duration is between 10 and 3600 seconds. "
+        "Empty string disables sleep mode.",
+        /* unit = */ NULL,
+        ATTR_TYPE_STRING,
+        /* modifiable = */ TRUE,
+        /* min = */ UNDEFINED,
+        /* max = */ UNDEFINED,
+        /* integer = */ FALSE,
+        /* step = */ 0,
+        /* choices = */ NULL,
+        /* reconnect = */ FALSE
+    );
     json_obj_append(json, "sleep_mode", attrdef_json);
 #endif
 
 #ifdef _OTA
-    attrdef_json = attrdef_to_json("Firmware Auto-update",
-                                   "Enables automatic firmware update when detecting a newer version.",
-                                   /* unit = */ NULL, ATTR_TYPE_BOOLEAN, /* modifiable = */ TRUE, /* min = */ UNDEFINED,
-                                   /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
-                                   /* reconnect = */ FALSE);
+    attrdef_json = attrdef_to_json(
+        "Firmware Auto-update",
+        "Enables automatic firmware update when detecting a newer version.",
+        /* unit = */ NULL,
+        ATTR_TYPE_BOOLEAN,
+        /* modifiable = */ TRUE,
+        /* min = */ UNDEFINED,
+        /* max = */ UNDEFINED,
+        /* integer = */ FALSE,
+        /* step = */ 0,
+        /* choices = */ NULL,
+        /* reconnect = */ FALSE
+    );
     json_obj_append(json, "firmware_auto_update", attrdef_json);
 
-    attrdef_json = attrdef_to_json("Firmware Beta Versions",
-                                   "Enables access to beta firmware releases. "
-                                   "Leave this disabled unless you know what you're doing.",
-                                   /* unit = */ NULL, ATTR_TYPE_BOOLEAN, /* modifiable = */ TRUE, /* min = */ UNDEFINED,
-                                   /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
-                                   /* reconnect = */ FALSE);
+    attrdef_json = attrdef_to_json(
+        "Firmware Beta Versions",
+        "Enables access to beta firmware releases. Leave this disabled unless you know what you're doing.",
+        /* unit = */ NULL, ATTR_TYPE_BOOLEAN,
+        /* modifiable = */ TRUE,
+        /* min = */ UNDEFINED,
+        /* max = */ UNDEFINED,
+        /* integer = */ FALSE,
+        /* step = */ 0,
+        /* choices = */ NULL,
+        /* reconnect = */ FALSE
+    );
     json_obj_append(json, "firmware_beta_enabled", attrdef_json);
 #endif
 
 #ifdef _BATTERY
     if (battery_enabled()) {
-        attrdef_json = attrdef_to_json("Battery Voltage", "The battery voltage.", "mV", ATTR_TYPE_NUMBER,
-                                       /* modifiable = */ FALSE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
-                                       /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
-                                       /* reconnect = */ FALSE);
+        attrdef_json = attrdef_to_json(
+            "Battery Voltage",
+            "The battery voltage.",
+            "mV",
+            ATTR_TYPE_NUMBER,
+            /* modifiable = */ FALSE,
+            /* min = */ UNDEFINED,
+            /* max = */ UNDEFINED,
+            /* integer = */ FALSE,
+            /* step = */ 0,
+            /* choices = */ NULL,
+            /* reconnect = */ FALSE
+        );
         json_obj_append(json, "battery_voltage", attrdef_json);
     }
 #endif
 
-    attrdef_json = attrdef_to_json("Flash Size", "Total flash memory size.", "kB", ATTR_TYPE_NUMBER,
-                                   /* modifiable = */ FALSE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
-                                   /* integer = */ TRUE, /* step = */ 0, /* choices = */ NULL, /* reconnect = */ FALSE);
+    attrdef_json = attrdef_to_json(
+        "Flash Size",
+        "Total flash memory size.",
+        "kB",
+        ATTR_TYPE_NUMBER,
+        /* modifiable = */ FALSE,
+        /* min = */ UNDEFINED,
+        /* max = */ UNDEFINED,
+        /* integer = */ TRUE,
+        /* step = */ 0,
+        /* choices = */ NULL,
+        /* reconnect = */ FALSE
+    );
     json_obj_append(json, "flash_size", attrdef_json);
 
-    attrdef_json = attrdef_to_json("Flash ID", "Device flash model identifier.", /* unit = */ NULL, ATTR_TYPE_STRING,
-                                   /* modifiable = */ FALSE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
-                                   /* integer = */ FALSE, /* step = */ 0,  /* choices = */ NULL,
-                                   /* reconnect = */ FALSE);
+    attrdef_json = attrdef_to_json(
+        "Flash ID",
+        "Device flash model identifier.",
+        /* unit = */ NULL,
+        ATTR_TYPE_STRING,
+        /* modifiable = */ FALSE,
+        /* min = */ UNDEFINED,
+        /* max = */ UNDEFINED,
+        /* integer = */ FALSE,
+        /* step = */ 0,
+        /* choices = */ NULL,
+        /* reconnect = */ FALSE
+    );
     json_obj_append(json, "flash_id", attrdef_json);
 
-    attrdef_json = attrdef_to_json("Chip ID", "Device chip identifier.", /* unit = */ NULL, ATTR_TYPE_STRING,
-                                   /* modifiable = */ FALSE, /* min = */ UNDEFINED, /* max = */ UNDEFINED,
-                                   /* integer = */ FALSE, /* step = */ 0, /* choices = */ NULL,
-                                   /* reconnect = */ FALSE);
+    attrdef_json = attrdef_to_json(
+        "Chip ID",
+        "Device chip identifier.",
+        /* unit = */ NULL,
+        ATTR_TYPE_STRING,
+        /* modifiable = */ FALSE,
+        /* min = */ UNDEFINED,
+        /* max = */ UNDEFINED,
+        /* integer = */ FALSE,
+        /* step = */ 0,
+        /* choices = */ NULL,
+        /* reconnect = */ FALSE
+    );
     json_obj_append(json, "chip_id", attrdef_json);
 
 #ifdef _DEBUG
-    attrdef_json = attrdef_to_json("Debug", "Indicates that debugging was enabled when the firmware was built.",
-                                   /* unit = */ NULL, ATTR_TYPE_BOOLEAN, /* modifiable = */ FALSE,
-                                   /* min = */ UNDEFINED, /* max = */ UNDEFINED, /* integer = */ FALSE, /* step = */ 0,
-                                   /* choices = */ NULL, /* reconnect = */ FALSE);
+    attrdef_json = attrdef_to_json(
+        "Debug",
+        "Indicates that debugging was enabled when the firmware was built.",
+        /* unit = */ NULL,
+        ATTR_TYPE_BOOLEAN,
+        /* modifiable = */ FALSE,
+        /* min = */ UNDEFINED,
+        /* max = */ UNDEFINED,
+        /* integer = */ FALSE,
+        /* step = */ 0,
+        /* choices = */ NULL,
+        /* reconnect = */ FALSE
+    );
     json_obj_append(json, "debug", attrdef_json);
 #endif
 
@@ -3496,9 +3595,17 @@ void on_wifi_scan(wifi_scan_result_t *results, int len) {
     for (i = 0; i < len; i++) {
         result_json = json_obj_new();
         json_obj_append(result_json, "ssid", json_str_new(results[i].ssid));
-        snprintf(bssid, sizeof(bssid), "%02X:%02X:%02X:%02X:%02X:%02X",
-                 results[i].bssid[0], results[i].bssid[1], results[i].bssid[2],
-                 results[i].bssid[3], results[i].bssid[4], results[i].bssid[5]);
+        snprintf(
+            bssid,
+            sizeof(bssid),
+            "%02X:%02X:%02X:%02X:%02X:%02X",
+            results[i].bssid[0],
+            results[i].bssid[1],
+            results[i].bssid[2],
+            results[i].bssid[3],
+            results[i].bssid[4],
+            results[i].bssid[5]
+        );
         json_obj_append(result_json, "bssid", json_str_new(bssid));
         json_obj_append(result_json, "channel", json_int_new(results[i].channel));
         json_obj_append(result_json, "rssi", json_int_new(results[i].rssi));

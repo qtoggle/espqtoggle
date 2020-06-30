@@ -154,10 +154,15 @@ static void ICACHE_FLASH_ATTR connect_callback(void *arg) {
 
     int len = strlen(req->method) + strlen(req->path) + strlen(req->headers) + 64;
     char buf[len];
-    len = snprintf(buf, len,
-                   "%s %s HTTP/1.1\r\n"
-                   "%s\r\n",
-                   req->method, req->path, req->headers);
+    len = snprintf(
+        buf,
+        len,
+        "%s %s HTTP/1.1\r\n"
+        "%s\r\n",
+        req->method,
+        req->path,
+        req->headers
+    );
 
     if (!req->body) {
         DEBUG_HTTPCLIENT("request (%d bytes):\n----------------\n%s----------------", len, buf);
@@ -372,8 +377,18 @@ static void ICACHE_FLASH_ATTR timeout_callback(void *arg) {
         espconn_disconnect(req->connection);
 }
 
-void http_raw_request(char *hostname, uint16 port, bool secure, char *path, char *method, uint8 *body, int body_len,
-                      char *headers, http_callback_t callback, int timeout) {
+void http_raw_request(
+    char *hostname,
+    uint16 port,
+    bool secure,
+    char *path,
+    char *method,
+    uint8 *body,
+    int body_len,
+    char *headers,
+    http_callback_t callback,
+    int timeout
+) {
 
     DEBUG_HTTPCLIENT("DNS request");
 
@@ -429,10 +444,17 @@ void ICACHE_FLASH_ATTR httpclient_set_user_agent(char *agent) {
     DEBUG_HTTPCLIENT("user agent set to \"%s\"", agent);
 }
 
-void ICACHE_FLASH_ATTR httpclient_request(char *method, char *url, uint8 *body, int body_len,
-                                          char *header_names[], char *header_values[], int header_count,
-                                          http_callback_t callback, int timeout) {
-
+void ICACHE_FLASH_ATTR httpclient_request(
+    char *method,
+    char *url,
+    uint8 *body,
+    int body_len,
+    char *header_names[],
+    char *header_values[],
+    int header_count,
+    http_callback_t callback,
+    int timeout
+) {
     char hostname[128] = "";
     char *h, *headers = NULL;
     int i, hl, headers_len = 0;

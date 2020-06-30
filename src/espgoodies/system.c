@@ -119,8 +119,13 @@ void system_config_init(void) {
     free(version_str);
 #endif
 
-    DEBUG_SYSTEM("loaded setup button: pin = %d, level = %d, hold = %d, reset_hold = %d",
-                 setup_button_pin, setup_button_level, setup_button_hold, setup_button_reset_hold);
+    DEBUG_SYSTEM(
+        "loaded setup button: pin = %d, level = %d, hold = %d, reset_hold = %d",
+        setup_button_pin,
+        setup_button_level,
+        setup_button_hold,
+        setup_button_reset_hold
+    );
 
     DEBUG_SYSTEM("loaded status LED: pin = %d, level = %d", status_led_pin, status_led_level);
 
@@ -234,8 +239,13 @@ void system_set_fw_version(version_t *version) {
 }
 
 void system_setup_button_set_config(int8 pin, bool level, uint8 hold, uint8 reset_hold) {
-    DEBUG_SYSTEM("configuring setup button: pin = %d, level = %d, hold = %d, reset_hold = %d",
-                 pin, level, hold, reset_hold);
+    DEBUG_SYSTEM(
+        "configuring setup button: pin = %d, level = %d, hold = %d, reset_hold = %d",
+        pin,
+        level,
+        hold,
+        reset_hold
+    );
 
     setup_button_pin = pin;
     setup_button_level = level;

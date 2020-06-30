@@ -102,9 +102,16 @@ void handle_request(httpserver_context_t *hc) {
     os_timer_disarm(&hc->timer);
 
     if (hc->request_callback) {
-        hc->request_callback(hc->callback_arg, hc->method, hc->path, hc->query,
-                             hc->header_names, hc->header_values, hc->header_count,
-                             hc->body);
+        hc->request_callback(
+            hc->callback_arg,
+            hc->method,
+            hc->path,
+            hc->query,
+            hc->header_names,
+            hc->header_values,
+            hc->header_count,
+            hc->body
+        );
     }
 }
 
@@ -122,10 +129,13 @@ void httpserver_set_request_timeout(uint32 timeout) {
     DEBUG_HTTPSERVER("request timeout set to %d", request_timeout);
 }
 
-void httpserver_setup_connection(httpserver_context_t *hc, void *arg,
-                                 http_invalid_callback_t ic,
-                                 http_timeout_callback_t tc,
-                                 http_request_callback_t rc) {
+void httpserver_setup_connection(
+    httpserver_context_t *hc,
+    void *arg,
+    http_invalid_callback_t ic,
+    http_timeout_callback_t tc,
+    http_request_callback_t rc
+) {
     hc->callback_arg = arg;
     hc->invalid_callback = ic;
     hc->timeout_callback = tc;
@@ -423,8 +433,15 @@ void httpserver_context_reset(httpserver_context_t *hc) {
     os_timer_disarm(&hc->timer);
 }
 
-uint8 *httpserver_build_response(int status, char *content_type, char *header_names[], char *header_values[],
-                                 int header_count, uint8 *body, int *len) {
+uint8 *httpserver_build_response(
+    int status,
+    char *content_type,
+    char *header_names[],
+    char *header_values[],
+    int header_count,
+    uint8 *body,
+    int *len
+) {
 
     char *status_msg;
     uint8 *response = NULL;
@@ -527,8 +544,18 @@ void DEBUG_HTTPSERVER_CTX(httpserver_context_t *hc, char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
     
-    snprintf(new_fmt, sizeof(new_fmt), "[httpserver    ] [%d.%d.%d.%d:%d/%d] %s",
-             hc->ip[0], hc->ip[1], hc->ip[2], hc->ip[3], hc->port, hc->slot_index, fmt);
+    snprintf(
+        new_fmt,
+        sizeof(new_fmt),
+        "[httpserver    ] [%d.%d.%d.%d:%d/%d] %s",
+        hc->ip[0],
+        hc->ip[1],
+        hc->ip[2],
+        hc->ip[3],
+        hc->port,
+        hc->slot_index,
+        fmt
+    );
 
     vsnprintf(buf, sizeof(buf), new_fmt, args);
     DEBUG("%s", buf);

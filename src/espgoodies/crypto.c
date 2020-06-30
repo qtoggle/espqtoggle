@@ -82,11 +82,13 @@ static const char b64_table[] = {
 
 
 ICACHE_FLASH_ATTR static void   sha1_transform(uint32 state[5], uint8 buffer[64]);
-ICACHE_FLASH_ATTR static void   sha1_update(uint32 state[5],
-                                            uint8 buffer[64],
-                                            uint32 count[2],
-                                            uint8* data,
-                                            uint32 len);
+ICACHE_FLASH_ATTR static void   sha1_update(
+                                    uint32 state[5],
+                                    uint8 buffer[64],
+                                    uint32 count[2],
+                                    uint8* data,
+                                    uint32 len
+                                );
 ICACHE_FLASH_ATTR static uint8 *sha1_final(uint32 state[5], uint8 buffer[64], uint32 count[2]);
 
 ICACHE_FLASH_ATTR static void   sha256_init(sha256_ctx_t *ctx);

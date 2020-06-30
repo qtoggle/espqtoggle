@@ -118,8 +118,12 @@ void on_sleep(void *arg) {
     uint32 sleep_count = wake_interval_seconds / MAX_SLEEP_DURATION;
     uint32 sleep_rem = wake_interval_seconds % MAX_SLEEP_DURATION;
 
-    DEBUG_SLEEP("about to sleep for a total of %d seconds (count = %d, rem = %d)",
-                wake_interval_seconds, sleep_count, sleep_rem);
+    DEBUG_SLEEP(
+        "about to sleep for a total of %d seconds (count = %d, rem = %d)",
+        wake_interval_seconds,
+        sleep_count,
+        sleep_rem
+    );
     about_to_sleep = TRUE;
 
     if (sleep_count > 0) {

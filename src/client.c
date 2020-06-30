@@ -114,10 +114,13 @@ void *on_tcp_conn(struct espconn *conn) {
     memcpy(hc->ip, conn->proto.tcp->remote_ip, 4);
     hc->port = conn->proto.tcp->remote_port;
 
-    httpserver_setup_connection(hc, conn,
-                                (http_invalid_callback_t) on_invalid_http_request,
-                                (http_timeout_callback_t) on_http_request_timeout,
-                                (http_request_callback_t) on_http_request);
+    httpserver_setup_connection(
+        hc,
+        conn,
+        (http_invalid_callback_t) on_invalid_http_request,
+        (http_timeout_callback_t) on_http_request_timeout,
+        (http_request_callback_t) on_http_request
+    );
 
     return hc;
 }
@@ -175,10 +178,16 @@ void on_http_request_timeout(struct espconn *conn) {
     tcp_disconnect(conn);
 }
 
-void on_http_request(struct espconn *conn, int method, char *path, char *query,
-                     char *header_names[], char *header_values[], int header_count,
-                     char *body) {
-
+void on_http_request(
+    struct espconn *conn,
+    int method,
+    char *path,
+    char *query,
+    char *header_names[],
+    char *header_values[],
+    int header_count,
+    char *body
+) {
     json_t *request_json = NULL;
     json_t *query_json = http_parse_url_encoded(query);
     json_t *response_json = NULL;
@@ -193,12 +202,16 @@ void on_http_request(struct espconn *conn, int method, char *path, char *query,
         goto done;
     }
 
-    DEBUG_ESPQTCLIENT_CONN(conn, "processing request %s %s",
-                           method == HTTP_METHOD_GET ? "GET" :
-                           method == HTTP_METHOD_POST ? "POST" :
-                           method == HTTP_METHOD_PUT ? "PUT" :
-                           method == HTTP_METHOD_PATCH ? "PATCH" :
-                           method == HTTP_METHOD_DELETE ? "DELETE" : "OTHER", path);
+    DEBUG_ESPQTCLIENT_CONN(
+        conn,
+        "processing request %s %s",
+        method == HTTP_METHOD_GET ? "GET" :
+        method == HTTP_METHOD_POST ? "POST" :
+        method == HTTP_METHOD_PUT ? "PUT" :
+        method == HTTP_METHOD_PATCH ? "PATCH" :
+        method == HTTP_METHOD_DELETE ? "DELETE" : "OTHER",
+        path
+    );
 
     if (method == HTTP_METHOD_POST || method == HTTP_METHOD_PATCH || method == HTTP_METHOD_PUT) {
         if (body) {
@@ -521,11 +534,13 @@ void client_init(void) {
 
     DEBUG_ESPQTCLIENT("http server can handle %d parallel requests", MAX_PARALLEL_HTTP_REQ);
 
-    tcp_server_init(device_tcp_port,
-                    (tcp_conn_cb_t) on_tcp_conn,
-                    (tcp_recv_cb_t) on_tcp_recv,
-                    (tcp_sent_cb_t) on_tcp_sent,
-                    (tcp_disc_cb_t) on_tcp_disc);
+    tcp_server_init(
+        device_tcp_port,
+        (tcp_conn_cb_t) on_tcp_conn,
+        (tcp_recv_cb_t) on_tcp_recv,
+        (tcp_sent_cb_t) on_tcp_sent,
+        (tcp_disc_cb_t) on_tcp_disc
+    );
 
     httpclient_set_user_agent("espQToggle " FW_VERSION);
     httpserver_set_name(device_name);
@@ -554,10 +569,14 @@ void respond_json(struct espconn *conn, int status, json_t *json) {
     static char free_mem_str[16];
     snprintf(free_mem_str, 16, "%d", system_get_free_heap_size());
     char *extra_header_values[] = {free_mem_str, NULL};
-    response = httpserver_build_response(status, JSON_CONTENT_TYPE,
-                                         extra_header_names,
-                                         extra_header_values,
-                                         /* header_count = */ 1, (uint8 *) body, &len);
+    response = httpserver_build_response(
+        status, JSON_CONTENT_TYPE,
+        extra_header_names,
+        extra_header_values,
+        /* header_count = */ 1,
+        (uint8 *) body,
+        &len
+    );
 
     if (status >= 400) {
         DEBUG_ESPQTCLIENT_CONN(conn, "responding with status %d: %s", status, body);
@@ -572,8 +591,12 @@ void respond_json(struct espconn *conn, int status, json_t *json) {
     int free_mem_after_send = system_get_free_heap_size();
 
     /* Show free memory after sending the response */
-    DEBUG_ESPQTCLIENT("free memory: before dump=%d, after dump=%d, after send=%d",
-                      free_mem_before_dump, free_mem_after_dump, free_mem_after_send);
+    DEBUG_ESPQTCLIENT(
+        "free memory: before dump=%d, after dump=%d, after send=%d",
+        free_mem_before_dump,
+        free_mem_after_dump,
+        free_mem_after_send
+    );
 #endif
 }
 
@@ -598,8 +621,15 @@ void respond_html(struct espconn *conn, int status, uint8 *html, int len) {
     static char *header_names[] = {"Content-Encoding"};
     static char *header_values[] = {"gzip"};
 
-    response = httpserver_build_response(status, HTML_CONTENT_TYPE,
-                                         header_names, header_values, 1, html, &len);
+    response = httpserver_build_response(
+        status,
+        HTML_CONTENT_TYPE,
+        header_names,
+        header_values,
+        1,
+        html,
+        &len
+    );
 
     DEBUG_ESPQTCLIENT_CONN(conn, "responding with status %d", status);
 
@@ -609,7 +639,11 @@ void respond_html(struct espconn *conn, int status, uint8 *html, int len) {
     int free_mem_after_send = system_get_free_heap_size();
 
     /* Show free memory after sending the response */
-    DEBUG_ESPQTCLIENT("free memory: before dump=%d, after dump=%d, after send=%d",
-                      free_mem_before_dump, free_mem_after_dump, free_mem_after_send);
+    DEBUG_ESPQTCLIENT(
+        "free memory: before dump=%d, after dump=%d, after send=%d",
+        free_mem_before_dump,
+        free_mem_after_dump,
+        free_mem_after_send
+    );
 #endif
 }

@@ -305,10 +305,19 @@ bool validate_str_sleep_mode(char *sleep_mode, int *wake_interval, int *wake_dur
 
 #endif
 
-json_t *attrdef_to_json(char *display_name, char *description, char *unit, char type, bool modifiable,
-                        double min, double max, bool integer, double step, char **choices,
-                        bool reconnect) {
-
+json_t *attrdef_to_json(
+    char *display_name,
+    char *description,
+    char *unit,
+    char type,
+    bool modifiable,
+    double min,
+    double max,
+    bool integer,
+    double step,
+    char **choices,
+    bool reconnect
+) {
     json_t *json = json_obj_new();
 
     json_obj_append(json, "display_name", json_str_new(display_name));

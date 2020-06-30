@@ -79,8 +79,16 @@ char *version_dump(version_t *version) {
 
     char *type_str = types_str[version->type];
     if (type_str[0]) {
-        snprintf(version_str, 24, "%d.%d.%d-%s.%d",
-                 version->major, version->minor, version->patch, types_str[version->type], version->label);
+        snprintf(
+            version_str,
+            24,
+            "%d.%d.%d-%s.%d",
+            version->major,
+            version->minor,
+            version->patch,
+            types_str[version->type],
+            version->label
+        );
     }
     else {
         snprintf(version_str, 24, "%d.%d.%d", version->major, version->minor, version->patch);

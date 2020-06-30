@@ -312,8 +312,11 @@ void wifi_station_enable(char *hostname, wifi_connect_callback_t callback) {
     ensure_station_config_read();
     if (cached_station_config.ssid[0]) {
         if (cached_station_config.bssid_set) {
-            DEBUG_WIFI("connecting to SSID=\"%s\", BSSID=" BSSID_FMT,
-                       (char *) cached_station_config.ssid, BSSID2STR(cached_station_config.bssid));
+            DEBUG_WIFI(
+                "connecting to SSID=\"%s\", BSSID=" BSSID_FMT,
+                (char *) cached_station_config.ssid,
+                BSSID2STR(cached_station_config.bssid)
+            );
         }
         else {
             DEBUG_WIFI("connecting to SSID=\"%s\", no particular BSSID", (char *) cached_station_config.ssid);
@@ -383,9 +386,13 @@ void wifi_station_disable(void) {
     }
 }
 
-void wifi_station_temporary_enable(char *ssid, char *psk, uint8 *bssid,
-                                   char *hostname, wifi_connect_callback_t callback) {
-
+void wifi_station_temporary_enable(
+    char *ssid,
+    char *psk,
+    uint8 *bssid,
+    char *hostname,
+    wifi_connect_callback_t callback
+) {
     if (station_enabled) {
         DEBUG_WIFI("station already enabled");
         return;
@@ -702,10 +709,12 @@ void on_wifi_event(System_Event_t *evt) {
          case EVENT_STAMODE_DISCONNECTED:
              station_connected = FALSE;
 
-             DEBUG_WIFI("disconnected from SSID \"%s\", BSSID " BSSID_FMT ", reason %d",
-                        evt->event_info.disconnected.ssid,
-                        BSSID2STR(evt->event_info.disconnected.bssid),
-                        evt->event_info.disconnected.reason);
+             DEBUG_WIFI(
+                 "disconnected from SSID \"%s\", BSSID " BSSID_FMT ", reason %d",
+                 evt->event_info.disconnected.ssid,
+                 BSSID2STR(evt->event_info.disconnected.bssid),
+                 evt->event_info.disconnected.reason
+             );
 
              if (station_connect_callback) {
                  station_connect_callback(FALSE);
@@ -755,9 +764,11 @@ void on_wifi_event(System_Event_t *evt) {
              break;
 
          case EVENT_SOFTAPMODE_DISTRIBUTE_STA_IP:
-             DEBUG_WIFI("AP client with MAC " MAC_FMT " was given IP " IP_FMT,
-                        MAC2STR(evt->event_info.distribute_sta_ip.mac),
-                        IP2STR(&evt->event_info.distribute_sta_ip.ip.addr));
+             DEBUG_WIFI(
+                 "AP client with MAC " MAC_FMT " was given IP " IP_FMT,
+                 MAC2STR(evt->event_info.distribute_sta_ip.mac),
+                 IP2STR(&evt->event_info.distribute_sta_ip.ip.addr)
+             );
 
              if (ap_client_callback) {
                  ap_client_callback(TRUE, evt->event_info.distribute_sta_ip.ip, evt->event_info.distribute_sta_ip.mac);
@@ -800,8 +811,13 @@ void on_wifi_scan_done(void *arg, STATUS status) {
 
     while (result) {
         result->ssid[result->ssid_len] = 0;
-        DEBUG_WIFI("found SSID=\"%s\", channel=%d, RSSI=%d, BSSID=" BSSID_FMT,
-                   result->ssid, result->channel, result->rssi, BSSID2STR(result->bssid));
+        DEBUG_WIFI(
+            "found SSID=\"%s\", channel=%d, RSSI=%d, BSSID=" BSSID_FMT,
+            result->ssid,
+            result->channel,
+            result->rssi,
+            BSSID2STR(result->bssid)
+        );
 
         results = realloc(results, sizeof(wifi_scan_result_t) * (len + 1));
 
@@ -845,8 +861,11 @@ void on_connected_watchdog(void *arg) {
             DEBUG_WIFI("connected watchdog: counter = %d/%d", connected_watchdog_counter, CONNECTED_WATCHDOG_COUNT);
         }
         else {
-            DEBUG_WIFI("connected watchdog: counter = %d/%d, resetting system",
-                       connected_watchdog_counter, CONNECTED_WATCHDOG_COUNT);
+            DEBUG_WIFI(
+                "connected watchdog: counter = %d/%d, resetting system",
+                connected_watchdog_counter,
+                CONNECTED_WATCHDOG_COUNT
+            );
             system_reset(/* delayed = */ FALSE);
         }
     }

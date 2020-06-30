@@ -76,13 +76,17 @@ bool flashcfg_save(uint8 slot, uint8 *data) {
         result = spi_flash_erase_sector(sector);
         ETS_INTR_UNLOCK();
         if (result != SPI_FLASH_RESULT_OK) {
-            DEBUG_FLASHCFG("failed to erase flash sector at 0x%05X",
-                           FLASH_CONFIG_ADDR + offs + SPI_FLASH_SEC_SIZE * i);
+            DEBUG_FLASHCFG(
+                "failed to erase flash sector at 0x%05X",
+                FLASH_CONFIG_ADDR + offs + SPI_FLASH_SEC_SIZE * i
+            );
             return FALSE;
         }
         else {
-            DEBUG_FLASHCFG("flash sector at 0x%05X erased",
-                           FLASH_CONFIG_ADDR + offs + SPI_FLASH_SEC_SIZE * i);
+            DEBUG_FLASHCFG(
+                "flash sector at 0x%05X erased",
+                FLASH_CONFIG_ADDR + offs + SPI_FLASH_SEC_SIZE * i
+            );
         }
     }
 

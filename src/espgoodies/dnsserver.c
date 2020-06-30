@@ -85,16 +85,20 @@ ICACHE_FLASH_ATTR static void   reset(void);
 ICACHE_FLASH_ATTR static void   on_client_recv(void *arg, char *data, uint16 len);
 ICACHE_FLASH_ATTR static void   process_request(uint8 *request, uint16 len, uint8 remote_ip[], uint16 remote_port);
 ICACHE_FLASH_ATTR static uint8 *prepare_response(uint8 *request, uint16 *len);
-ICACHE_FLASH_ATTR static uint8 *prepare_ip_response(dns_header_t *request_header,
-                                                    ip_addr_t ip_addr,
-                                                    uint8 *query,
-                                                    uint16 query_len,
-                                                    uint16 *len);
-ICACHE_FLASH_ATTR static uint8 *prepare_error_response(dns_header_t *request_header,
-                                                       uint8 reply_code,
-                                                       uint8 *query,
-                                                       uint16 query_len,
-                                                       uint16 *len);
+ICACHE_FLASH_ATTR static uint8 *prepare_ip_response(
+                                    dns_header_t *request_header,
+                                    ip_addr_t ip_addr,
+                                    uint8 *query,
+                                    uint16 query_len,
+                                    uint16 *len
+                                );
+ICACHE_FLASH_ATTR static uint8 *prepare_error_response(
+                                    dns_header_t *request_header,
+                                    uint8 reply_code,
+                                    uint8 *query,
+                                    uint16 query_len,
+                                    uint16 *len
+                                );
 
 
 void dnsserver_start_captive(void) {
@@ -157,8 +161,12 @@ void on_client_recv(void *arg, char *data, uint16 len) {
     remot_info *remote_info;
 
     espconn_get_connection_info(conn, &remote_info, 0);
-    DEBUG_DNSSERVER("received %d bytes from " IP_FMT ":%d", len,
-                    IP2STR(remote_info->remote_ip), remote_info->remote_port);
+    DEBUG_DNSSERVER(
+        "received %d bytes from " IP_FMT ":%d",
+        len,
+        IP2STR(remote_info->remote_ip),
+        remote_info->remote_port
+    );
 
     process_request((uint8 *) data, len, remote_info->remote_ip, remote_info->remote_port);
 }
@@ -292,9 +300,13 @@ uint8 *prepare_response(uint8 *request, uint16 *len) {
     return prepare_ip_response(header, ip_info.ip, query, query_len, len);
 }
 
-uint8 *prepare_ip_response(dns_header_t *request_header, ip_addr_t ip_addr,
-                           uint8 *query, uint16 query_len, uint16 *len) {
-
+uint8 *prepare_ip_response(
+    dns_header_t *request_header,
+    ip_addr_t ip_addr,
+    uint8 *query,
+    uint16 query_len,
+    uint16 *len
+) {
     uint8 *response = malloc(DNS_HEADER_SIZE + query_len + 16);
     uint8 *response_p = response + DNS_HEADER_SIZE;
     dns_header_t *response_header = (dns_header_t *) response;
@@ -355,9 +367,13 @@ uint8 *prepare_ip_response(dns_header_t *request_header, ip_addr_t ip_addr,
     return response;
 }
 
-uint8 *prepare_error_response(dns_header_t *request_header, uint8 reply_code,
-                              uint8 *query, uint16 query_len, uint16 *len) {
-
+uint8 *prepare_error_response(
+    dns_header_t *request_header,
+    uint8 reply_code,
+    uint8 *query,
+    uint16 query_len,
+    uint16 *len
+) {
     uint8 *response = malloc(DNS_HEADER_SIZE + query_len);
     uint8 *response_p = response + DNS_HEADER_SIZE;
     dns_header_t *response_header = (dns_header_t *) response;

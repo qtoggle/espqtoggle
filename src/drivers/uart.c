@@ -75,9 +75,13 @@ void uart_setup(uint8 uart_no, uint32 baud, uint8 parity, uint8 stop_bits) {
         /* UART1 has no rx pin */
     }
 
-    DEBUG_UART(uart_no, "baud=%d, parity=%c, stop_bits=%s", baud,
-               parity == UART_PARITY_NONE ? 'N' : parity == UART_PARITY_EVEN ? 'E' : 'O',
-               stop_bits == UART_STOP_BITS_1 ? "1" : stop_bits == UART_STOP_BITS_15 ? "1.5" : "2");
+    DEBUG_UART(
+        uart_no,
+        "baud=%d, parity=%c, stop_bits=%s",
+        baud,
+        parity == UART_PARITY_NONE ? 'N' : parity == UART_PARITY_EVEN ? 'E' : 'O',
+        stop_bits == UART_STOP_BITS_1 ? "1" : stop_bits == UART_STOP_BITS_15 ? "1.5" : "2"
+    );
 }
 
 uint16 uart_read(uint8 uart_no, uint8 *buff, uint16 max_len, uint32 timeout_us) {
@@ -112,8 +116,16 @@ uint16 uart_read(uint8 uart_no, uint8 *buff, uint16 max_len, uint32 timeout_us) 
         snprintf(p, 4, "%02X ", buff[i]);
         p += 3;
     }
-    DEBUG_UART(uart_no, "read %d/%d/%d bytes in %d/%d us: %s",
-               discarded + got, got, max_len, duration, timeout_us, buff_hex_str);
+    DEBUG_UART(
+        uart_no,
+        "read %d/%d/%d bytes in %d/%d us: %s",
+        discarded + got,
+        got,
+        max_len,
+        duration,
+        timeout_us,
+        buff_hex_str
+    );
     free(buff_hex_str);
 #endif
 

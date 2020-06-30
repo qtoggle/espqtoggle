@@ -126,8 +126,13 @@ void hspi_setup(uint8 bit_order, bool cpol, bool cpha, uint32 freq) {
     /* Data bits */
     set_data_bits(8);
 
-    DEBUG_HSPI("bit_order=%c, cpol=%d, cpha=%d, freq=%dHz",
-               bit_order == HSPI_BIT_ORDER_MSB_FIRST ? 'M' : 'L', cpol, cpha, freq);
+    DEBUG_HSPI(
+        "bit_order=%c, cpol=%d, cpha=%d, freq=%dHz",
+        bit_order == HSPI_BIT_ORDER_MSB_FIRST ? 'M' : 'L',
+        cpol,
+        cpha,
+        freq
+    );
 
     current_bit_order = bit_order;
     current_cpol = cpol;

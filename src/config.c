@@ -157,9 +157,17 @@ void config_start_provisioning(void) {
 
     DEBUG_CONFIG("provisioning: fetching from \"%s\"", url);
 
-    httpclient_request("GET", url, /* body = */ NULL, /* body_len = */ 0,
-                       /* header_names = */ NULL, /* header_values = */ NULL, /* header_count = */ 0,
-                       on_config_provisioning_response, HTTP_DEF_TIMEOUT);
+    httpclient_request(
+        "GET",
+        url,
+        /* body = */ NULL,
+        /* body_len = */ 0,
+        /* header_names = */ NULL,
+        /* header_values = */ NULL,
+        /* header_count = */ 0,
+        on_config_provisioning_response,
+        HTTP_DEF_TIMEOUT
+    );
 }
 
 bool config_is_provisioning(void) {
@@ -167,8 +175,15 @@ bool config_is_provisioning(void) {
 }
 
 
-void on_config_provisioning_response(char *body, int body_len, int status, char *header_names[], char *header_values[],
-                                     int header_count, uint8 addr[]) {
+void on_config_provisioning_response(
+    char *body,
+    int body_len,
+    int status,
+    char *header_names[],
+    char *header_values[],
+    int header_count,
+    uint8 addr[]
+) {
     if (status == 200) {
         json_t *config = json_parse(body);
         if (!config) {

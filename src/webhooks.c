@@ -168,9 +168,15 @@ void do_webhook_request(event_t *event) {
         DEBUG_WEBHOOKS("some parameters are not configured");
 
         /* Manually call the callback */
-        on_webhook_response(/* body = */ NULL, /* body_len = */ 0, /* status = */ 200,
-                            /* header_names = */ NULL, /* header_values = */ NULL, /* header_count = */ 0,
-                            /* addr = */ NULL);
+        on_webhook_response(
+            /* body = */ NULL,
+            /* body_len = */ 0,
+            /* status = */ 200,
+            /* header_names = */ NULL,
+            /* header_values = */ NULL,
+            /* header_count = */ 0,
+            /* addr = */ NULL
+        );
 
         return;
     }
@@ -182,9 +188,15 @@ void do_webhook_request(event_t *event) {
     url_len += strlen(webhooks_path); /* /path/to/events */
 
     char url[url_len + 1];
-    snprintf(url, url_len, "%s://%s:%d%s",
-             (device_flags & DEVICE_FLAG_WEBHOOKS_HTTPS) ? "https" : "http",
-             webhooks_host, webhooks_port, webhooks_path);
+    snprintf(
+        url,
+        url_len,
+        "%s://%s:%d%s",
+        (device_flags & DEVICE_FLAG_WEBHOOKS_HTTPS) ? "https" : "http",
+        webhooks_host,
+        webhooks_port,
+        webhooks_path
+    );
 
     /* Add authorization header */
     json_t *claims = json_obj_new();
@@ -214,16 +226,31 @@ void do_webhook_request(event_t *event) {
         DEBUG_WEBHOOKS("request POST %s: %s", url, body);
 
         /* Actual request */
-        httpclient_request("POST", url, (uint8 *) body, strlen(body), header_names, header_values, header_count,
-                           on_webhook_response, webhooks_timeout);
+        httpclient_request(
+            "POST",
+            url,
+            (uint8 *) body,
+            strlen(body),
+            header_names,
+            header_values,
+            header_count,
+            on_webhook_response,
+            webhooks_timeout
+        );
     }
 
     free(auth_header);
 }
 
-void on_webhook_response(char *body, int body_len, int status, char *header_names[], char *header_values[],
-                         int header_count, uint8 addr[]) {
-
+void on_webhook_response(
+    char *body,
+    int body_len,
+    int status,
+    char *header_names[],
+    char *header_values[],
+    int header_count,
+    uint8 addr[]
+) {
     DEBUG_WEBHOOKS("response received: %d", status);
 
     webhooks_queue_node_t *n = queue, *pn = NULL;

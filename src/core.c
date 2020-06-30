@@ -171,12 +171,21 @@ void core_poll(void) {
 
         if (p->value != value) {
             if (IS_UNDEFINED(p->value)) {
-                DEBUG_PORT(p, "detected value change: (undefined) -> %s, reason = %c",
-                           dtostr(value, -1), p->change_reason);
+                DEBUG_PORT(
+                    p,
+                    "detected value change: (undefined) -> %s, reason = %c",
+                    dtostr(value, -1),
+                    p->change_reason
+                );
             }
             else {
-                DEBUG_PORT(p, "detected value change: %s -> %s, reason = %c",
-                           dtostr(p->value, -1), dtostr(value, -1), p->change_reason);
+                DEBUG_PORT(
+                    p,
+                    "detected value change: %s -> %s, reason = %c",
+                    dtostr(p->value, -1),
+                    dtostr(value, -1),
+                    p->change_reason
+                );
             }
 
             p->value = value;
