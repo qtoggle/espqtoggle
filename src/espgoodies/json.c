@@ -597,6 +597,16 @@ json_t *json_dup(json_t *json) {
     }
 }
 
+char json_get_type(json_t *json) {
+    return json->type;
+}
+
+void json_assert_type(json_t *json, char type) {
+    if (json->type != type) {
+        DEBUG_JSON("unexpected JSON type: wanted %c, got %c", type, (json)->type);
+    }
+}
+
 json_t *json_null_new() {
     json_t *json = malloc(sizeof(json_t));
     json->type = JSON_TYPE_NULL;
@@ -612,12 +622,24 @@ json_t *json_bool_new(bool value) {
     return json;
 }
 
+bool json_bool_get(json_t *json) {
+    json_assert_type(json, JSON_TYPE_BOOL);
+
+    return json->bool_value;
+}
+
 json_t *json_int_new(int value) {
     json_t *json = malloc(sizeof(json_t));
     json->type = JSON_TYPE_INT;
     json->int_value = value;
 
     return json;
+}
+
+int32 json_int_get(json_t *json) {
+    json_assert_type(json, JSON_TYPE_INT);
+
+    return json->int_value;
 }
 
 json_t *json_double_new(double value) {
@@ -628,12 +650,24 @@ json_t *json_double_new(double value) {
     return json;
 }
 
+double json_double_get(json_t *json) {
+    json_assert_type(json, JSON_TYPE_DOUBLE);
+
+    return json->double_value;
+}
+
 json_t *json_str_new(char *value) {
     json_t *json = malloc(sizeof(json_t));
     json->type = JSON_TYPE_STR;
     json->str_value = (void *) strdup(value);
 
     return json;
+}
+
+char *json_str_get(json_t *json) {
+    json_assert_type(json, JSON_TYPE_STR);
+
+    return json->str_value;
 }
 
 json_t *json_list_new() {
@@ -647,17 +681,22 @@ json_t *json_list_new() {
 }
 
 void json_list_append(json_t *json, json_t *child) {
-    JSON_ASSERT_TYPE(json, JSON_TYPE_LIST);
+    json_assert_type(json, JSON_TYPE_LIST);
 
     json->list_data.children = realloc(json->list_data.children, sizeof(json_t *) * (json->list_data.len + 1));
     json->list_data.children[(int) json->list_data.len++] = child;
 }
 
+json_t *json_list_value_at(json_t *json, uint32 index) {
+    json_assert_type(json, JSON_TYPE_LIST);
+
+    return json->obj_data.children[index];
+}
+
 json_t *json_list_pop_at(json_t *json, uint32 index) {
     json_t *child = json->obj_data.children[index];
 
-    int i;
-    for (i = index; i < json->list_data.len - 1; i++) {
+    for (int i = index; i < json->list_data.len - 1; i++) {
         json->list_data.children[i] = json->list_data.children[i + 1];
     }
 
@@ -667,8 +706,14 @@ json_t *json_list_pop_at(json_t *json, uint32 index) {
     return child;
 }
 
+uint32 json_list_get_len(json_t *json) {
+    json_assert_type(json, JSON_TYPE_LIST);
+
+    return json->list_data.len;
+}
+
 json_t *json_obj_lookup_key(json_t *json, char *key) {
-    JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ);
+    json_assert_type(json, JSON_TYPE_OBJ);
 
     int i;
     for (i = 0; i < json->obj_data.len; i++) {
@@ -681,7 +726,7 @@ json_t *json_obj_lookup_key(json_t *json, char *key) {
 }
 
 json_t *json_obj_pop_key(json_t *json, char *key) {
-    JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ);
+    json_assert_type(json, JSON_TYPE_OBJ);
 
     int i, p = -1;
     for (i = 0; i < json->obj_data.len; i++) {
@@ -722,12 +767,30 @@ json_t *json_obj_new() {
 }
 
 void json_obj_append(json_t *json, char *key, json_t *child) {
-    JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ);
+    json_assert_type(json, JSON_TYPE_OBJ);
 
     json->obj_data.children = realloc(json->obj_data.children, sizeof(json_t *) * (json->obj_data.len + 1));
     json->obj_data.keys = realloc(json->obj_data.keys, sizeof(char *) * (json->obj_data.len + 1));
     json->obj_data.keys[(int) json->obj_data.len] = strdup(key);
     json->obj_data.children[(int) json->obj_data.len++] = child;
+}
+
+char *json_obj_key_at(json_t *json, uint32 index) {
+    json_assert_type(json, JSON_TYPE_OBJ);
+
+    return json->obj_data.keys[index];
+}
+
+json_t *json_obj_value_at(json_t *json, uint32 index) {
+    json_assert_type(json, JSON_TYPE_OBJ);
+
+    return json->obj_data.children[index];
+}
+
+uint32 json_obj_get_len(json_t *json) {
+    json_assert_type(json, JSON_TYPE_OBJ);
+
+    return json->obj_data.len;
 }
 
 
