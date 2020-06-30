@@ -60,89 +60,64 @@
 #include "apiutils.h"
 
 
-#define _API_ERROR(c, error, field_name, field_value) ({                           \
-    if (response_json) json_free(response_json);                                   \
-    json_obj_append(response_json = json_obj_new(), "error", json_str_new(error)); \
-    if (field_name) {                                                              \
-        json_obj_append(response_json, field_name, json_str_new(field_value));     \
-    }                                                                              \
-    *code = c;                                                                     \
-    response_json;                                                                 \
+#define API_ERROR(response_json, c, error) ({     \
+    *code = c;                                    \
+    _api_error(response_json, error, NULL, NULL); \
 })
 
-#define API_ERROR(c, error) _API_ERROR(c, error, NULL, NULL)
-
-#define FORBIDDEN(level) ({                                                             \
-    if (response_json) json_free(response_json);                                        \
-    json_obj_append(response_json = json_obj_new(), "error",                            \
-            json_str_new("forbidden"));                                                 \
-                                                                                        \
-    switch (level) {                                                                    \
-        case API_ACCESS_LEVEL_ADMIN:                                                    \
-            json_obj_append(response_json, "required_level", json_str_new("admin"));    \
-            break;                                                                      \
-                                                                                        \
-        case API_ACCESS_LEVEL_NORMAL:                                                   \
-            json_obj_append(response_json, "required_level", json_str_new("normal"));   \
-            break;                                                                      \
-                                                                                        \
-        case API_ACCESS_LEVEL_VIEWONLY:                                                 \
-            json_obj_append(response_json, "required_level", json_str_new("viewonly")); \
-            break;                                                                      \
-                                                                                        \
-        default:                                                                        \
-            json_obj_append(response_json, "required_level", json_str_new("none"));     \
-            break;                                                                      \
-    }                                                                                   \
-                                                                                        \
-    *code = 403;                                                                        \
-    response_json;                                                                      \
+#define FORBIDDEN(response_json, level) ({  \
+    *code = 403;                            \
+    _forbidden_error(response_json, level); \
 })
 
-#define INVALID_EXPRESSION(field, reason, token, pos) ({                    \
-    if (response_json) json_free(response_json);                            \
-    response_json = json_obj_new();                                         \
-    json_obj_append(response_json, "error", json_str_new("invalid-field")); \
-    json_obj_append(response_json, "field", json_str_new(field));           \
-    json_t *details_json = json_obj_new();                                  \
-    json_obj_append(details_json, "reason", json_str_new(reason));          \
-    if (token) {                                                            \
-        json_obj_append(details_json, "token", json_str_new(token));        \
-    }                                                                       \
-    if (pos >= 1) {                                                         \
-        json_obj_append(details_json, "pos", json_int_new(pos));            \
-    }                                                                       \
-    json_obj_append(response_json, "details", details_json);                \
-    *code = 400;                                                            \
-    response_json;                                                          \
+#define MISSING_FIELD(response_json, field) ({                  \
+    *code = 400;                                                \
+    _api_error(response_json, "missing-field", "field", field); \
 })
 
-#define INVALID_EXPRESSION_FROM_ERROR(field) ({               \
-    expr_parse_error_t *parse_error = expr_parse_get_error(); \
-    INVALID_EXPRESSION(field,                                 \
-                       parse_error->reason,                   \
-                       parse_error->token,                    \
-                       parse_error->pos);                     \
+#define INVALID_FIELD(response_json, field) ({                  \
+    *code = 400;                                                \
+    _api_error(response_json, "invalid-field", "field", field); \
 })
 
-#define MISSING_FIELD(field) _API_ERROR(400, "missing-field", "field", field)
-#define INVALID_FIELD(field) _API_ERROR(400, "invalid-field", "field", field)
-
-#define SEQ_INVALID_FIELD(field) ({ \
-    free(port->sequence_values);    \
-    free(port->sequence_delays);    \
-    port->sequence_pos = -1;        \
-    port->sequence_repeat = -1;     \
-    INVALID_FIELD(field);           \
+#define ATTR_NOT_MODIFIABLE(response_json, attr) ({                           \
+    *code = 400;                                                              \
+    _api_error(response_json, "attribute-not-modifiable", "attribute", attr); \
 })
 
-#define ATTR_NOT_MODIFIABLE(attr) _API_ERROR(400, "attribute-not-modifiable", "attribute", attr)
+#define NO_SUCH_ATTR(response_json, attr) ({                           \
+    *code = 400;                                                       \
+    _api_error(response_json, "no-such-attribute", "attribute", attr); \
+})
 
-#define NO_SUCH_ATTRIBUTE(attr) _API_ERROR(400, "no-such-attribute", "attribute", attr)
+#define SEQ_INVALID_FIELD(response_json, field) ({ \
+    free(port->sequence_values);                   \
+    free(port->sequence_delays);                   \
+    port->sequence_pos = -1;                       \
+    port->sequence_repeat = -1;                    \
+    INVALID_FIELD(response_json, field);           \
+})
 
-#define RESPOND_NO_SUCH_FUNCTION() {    \
-    API_ERROR(404, "no-such-function"); \
-    goto response;                      \
+#define INVALID_EXPRESSION(response_json, field, reason, token, pos) ({   \
+    *code = 400;                                                          \
+    _invalid_expression_error(response_json, field, reason, token, pos);  \
+})
+
+#define INVALID_EXPRESSION_FROM_ERROR(response_json, field) ({ \
+    expr_parse_error_t *parse_error = expr_parse_get_error();  \
+    INVALID_EXPRESSION(                                        \
+        response_json,                                         \
+        field,                                                 \
+        parse_error->reason,                                   \
+        parse_error->token,                                    \
+        parse_error->pos                                       \
+    );                                                         \
+})
+
+
+#define RESPOND_NO_SUCH_FUNCTION(response_json) {                      \
+    response_json = API_ERROR(response_json, 404, "no-such-function"); \
+    goto response;                                                     \
 }
 
 #define WIFI_RSSI_EXCELLENT -55
@@ -160,6 +135,15 @@ static struct espconn *api_conn_saved;
 static char *ota_states_str[] = {"idle", "checking", "downloading", "restarting"};
 #endif
 
+ICACHE_FLASH_ATTR static json_t *_api_error(json_t *response_json, char *error, char *field_name, char *field_value);
+ICACHE_FLASH_ATTR static json_t *_forbidden_error(json_t *response_json, uint8 level);
+ICACHE_FLASH_ATTR static json_t *_invalid_expression_error(
+                                     json_t *response_json,
+                                     char *field,
+                                     char *reason,
+                                     char *token,
+                                     uint32 pos
+                                 );
 
 ICACHE_FLASH_ATTR static json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx);
 ICACHE_FLASH_ATTR static json_t *device_attrdefs_to_json(void);
@@ -183,7 +167,7 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
     port_t *port;
 
     if (method == HTTP_METHOD_OTHER) {
-        RESPOND_NO_SUCH_FUNCTION();
+        RESPOND_NO_SUCH_FUNCTION(response_json);
     }
 
     /* Remove the leading & trailing slashes */
@@ -202,7 +186,7 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
 
     token = strtok(path, "/");
     if (!token) {
-        RESPOND_NO_SUCH_FUNCTION();
+        RESPOND_NO_SUCH_FUNCTION(response_json);
     }
     part1 = strdup(token);
 
@@ -218,7 +202,7 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
 
     token = strtok(NULL, "/");
     if (token) {
-        RESPOND_NO_SUCH_FUNCTION();
+        RESPOND_NO_SUCH_FUNCTION(response_json);
     }
 
 
@@ -226,7 +210,7 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
 
     if (!strcmp(part1, "device")) {
         if (part2) {
-            RESPOND_NO_SUCH_FUNCTION();
+            RESPOND_NO_SUCH_FUNCTION(response_json);
         }
         else {
             if (method == HTTP_METHOD_GET) {
@@ -236,7 +220,7 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
                 response_json = api_patch_device(query_json, request_json, code);
             }
             else {
-                RESPOND_NO_SUCH_FUNCTION();
+                RESPOND_NO_SUCH_FUNCTION(response_json);
             }
         }
     }
@@ -252,7 +236,7 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
             response_json = api_patch_firmware(query_json, request_json, code);
         }
         else {
-            RESPOND_NO_SUCH_FUNCTION();
+            RESPOND_NO_SUCH_FUNCTION(response_json);
         }
     }
 #endif
@@ -261,14 +245,14 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
             response_json = api_get_access(query_json, code);
         }
         else {
-            RESPOND_NO_SUCH_FUNCTION();
+            RESPOND_NO_SUCH_FUNCTION(response_json);
         }
     }
     else if (!strcmp(part1, "ports")) {
         if (part2) {
             port = port_find_by_id(part2);
             if (!port) {
-                API_ERROR(404, "no-such-port");
+                response_json = API_ERROR(response_json, 404, "no-such-port");
                 goto response;
             }
 
@@ -281,7 +265,7 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
                         response_json = api_patch_port_value(port, query_json, request_json, code);
                     }
                     else {
-                        RESPOND_NO_SUCH_FUNCTION();
+                        RESPOND_NO_SUCH_FUNCTION(response_json);
                     }
                 }
                 else if (!strcmp(part3, "sequence")) { /* /ports/{id}/sequence */
@@ -289,11 +273,11 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
                         response_json = api_patch_port_sequence(port, query_json, request_json, code);
                     }
                     else {
-                        RESPOND_NO_SUCH_FUNCTION();
+                        RESPOND_NO_SUCH_FUNCTION(response_json);
                     }
                 }
                 else {
-                    RESPOND_NO_SUCH_FUNCTION();
+                    RESPOND_NO_SUCH_FUNCTION(response_json);
                 }
             }
             else { /* /ports/{id} */
@@ -306,7 +290,7 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
                 }
 #endif
                 else {
-                    RESPOND_NO_SUCH_FUNCTION();
+                    RESPOND_NO_SUCH_FUNCTION(response_json);
                 }
             }
         }
@@ -320,13 +304,13 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
             }
 #endif
             else {
-                RESPOND_NO_SUCH_FUNCTION();
+                RESPOND_NO_SUCH_FUNCTION(response_json);
             }
         }
     }
     else if (!strcmp(part1, "webhooks")) {
         if (part2) {
-            RESPOND_NO_SUCH_FUNCTION();
+            RESPOND_NO_SUCH_FUNCTION(response_json);
         }
 
         if (method == HTTP_METHOD_GET) {
@@ -336,25 +320,25 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
             response_json = api_patch_webhooks(query_json, request_json, code);
         }
         else {
-            RESPOND_NO_SUCH_FUNCTION();
+            RESPOND_NO_SUCH_FUNCTION(response_json);
         }
     }
     else if (!strcmp(part1, "wifi")) {
         if (part2) {
-            RESPOND_NO_SUCH_FUNCTION();
+            RESPOND_NO_SUCH_FUNCTION(response_json);
         }
 
         if (method == HTTP_METHOD_GET) {
             response_json = api_get_wifi(query_json, code);
         }
         else {
-            RESPOND_NO_SUCH_FUNCTION();
+            RESPOND_NO_SUCH_FUNCTION(response_json);
         }
     }
     else if (!strcmp(part1, "rawio")) {
         if (part2) {
             if (part3) {
-                RESPOND_NO_SUCH_FUNCTION();
+                RESPOND_NO_SUCH_FUNCTION(response_json);
             }
 
             if (method == HTTP_METHOD_GET) {
@@ -364,16 +348,16 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
                 response_json = api_patch_raw_io(part2, query_json, request_json, code);
             }
             else {
-                RESPOND_NO_SUCH_FUNCTION();
+                RESPOND_NO_SUCH_FUNCTION(response_json);
             }
         }
         else {
-            RESPOND_NO_SUCH_FUNCTION();
+            RESPOND_NO_SUCH_FUNCTION(response_json);
         }
     }
     else if (!strcmp(part1, "peripherals")) {
         if (part2) {
-            RESPOND_NO_SUCH_FUNCTION();
+            RESPOND_NO_SUCH_FUNCTION(response_json);
         }
 
         if (method == HTTP_METHOD_GET) {
@@ -383,12 +367,12 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
             response_json = api_put_peripherals(query_json, request_json, code);
         }
         else {
-            RESPOND_NO_SUCH_FUNCTION();
+            RESPOND_NO_SUCH_FUNCTION(response_json);
         }
     }
     else if (!strcmp(part1, "system")) {
         if (part2) {
-            RESPOND_NO_SUCH_FUNCTION();
+            RESPOND_NO_SUCH_FUNCTION(response_json);
         }
 
         if (method == HTTP_METHOD_GET) {
@@ -398,11 +382,11 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
             response_json = api_put_system(query_json, request_json, code);
         }
         else {
-            RESPOND_NO_SUCH_FUNCTION();
+            RESPOND_NO_SUCH_FUNCTION(response_json);
         }
     }
     else {
-        RESPOND_NO_SUCH_FUNCTION();
+        RESPOND_NO_SUCH_FUNCTION(response_json);
     }
 
     response:
@@ -898,7 +882,7 @@ json_t *api_get_device(json_t *query_json, int *code) {
     json_t *response_json = NULL;
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
-        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
 
     DEBUG_API("returning device attributes");
@@ -914,11 +898,11 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = json_obj_new();
     
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
-        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
 
     if (json_get_type(request_json) != JSON_TYPE_OBJ) {
-        return API_ERROR(400, "invalid-request");
+        return API_ERROR(response_json, 400, "invalid-request");
     }
 
     int i;
@@ -935,12 +919,12 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
 
         if (!strcmp(key, "name")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
             
             char *value = json_str_get(child);
             if (!validate_id(value) || strlen(json_str_get(child)) > API_MAX_DEVICE_NAME_LEN) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
             
             free(device_name);
@@ -952,12 +936,12 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
         else if (!strcmp(key, "display_name")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             char *value = json_str_get(child);
             if (strlen(json_str_get(child)) > API_MAX_DEVICE_DISP_NAME_LEN) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             free(device_display_name);
@@ -967,7 +951,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
         else if (!strcmp(key, "admin_password")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
             
             char *password = json_str_get(child);
@@ -978,7 +962,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
         else if (!strcmp(key, "normal_password")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
             
             char *password = json_str_get(child);
@@ -989,7 +973,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
         else if (!strcmp(key, "viewonly_password")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
             
             char *password = json_str_get(child);
@@ -1000,7 +984,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
         else if (!strcmp(key, "ip_address")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             char *ip_address_str = json_str_get(child);
@@ -1008,7 +992,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
             if (ip_address_str[0]) { /* Manual */
                 uint8 bytes[4];
                 if (!validate_ip_address(ip_address_str, bytes)) {
-                    return INVALID_FIELD(key);
+                    return INVALID_FIELD(response_json, key);
                 }
 
                 IP4_ADDR(&ip_address, bytes[0], bytes[1], bytes[2], bytes[3]);
@@ -1019,12 +1003,12 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
         else if (!strcmp(key, "ip_netmask")) {
             if (json_get_type(child) != JSON_TYPE_INT) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             int netmask = json_int_get(child);
             if (!validate_num(netmask, 0, 31, /* integer = */ TRUE, /* step = */ 0, /* choices = */ NULL)) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             wifi_set_netmask(netmask);
@@ -1032,7 +1016,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
         else if (!strcmp(key, "ip_gateway")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             char *gateway_str = json_str_get(child);
@@ -1040,7 +1024,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
             if (gateway_str[0]) { /* Manual */
                 uint8 bytes[4];
                 if (!validate_ip_address(gateway_str, bytes)) {
-                    return INVALID_FIELD(key);
+                    return INVALID_FIELD(response_json, key);
                 }
 
                 IP4_ADDR(&gateway, bytes[0], bytes[1], bytes[2], bytes[3]);
@@ -1051,7 +1035,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
         else if (!strcmp(key, "ip_dns")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             char *dns_str = json_str_get(child);
@@ -1059,7 +1043,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
             if (dns_str[0]) { /* Manual */
                 uint8 bytes[4];
                 if (!validate_ip_address(dns_str, bytes)) {
-                    return INVALID_FIELD(key);
+                    return INVALID_FIELD(response_json, key);
                 }
 
                 IP4_ADDR(&dns, bytes[0], bytes[1], bytes[2], bytes[3]);
@@ -1070,12 +1054,12 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
         else if (!strcmp(key, "wifi_ssid")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             char *ssid = json_str_get(child);
             if (!validate_wifi_ssid(ssid)) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             wifi_set_ssid(ssid);
@@ -1083,12 +1067,12 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
         else if (!strcmp(key, "wifi_key")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             char *psk = json_str_get(child);
             if (!validate_wifi_key(psk)) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             wifi_set_psk(psk);
@@ -1096,13 +1080,13 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
         else if (!strcmp(key, "wifi_bssid")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             char *bssid_str = json_str_get(child);
             uint8 bssid[WIFI_BSSID_LEN];
             if (!validate_wifi_bssid(bssid_str, bssid)) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             wifi_set_bssid(bssid);
@@ -1111,7 +1095,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
 #ifdef _SLEEP
         else if (!strcmp(key, "sleep_mode")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             char *sleep_mode_str = json_str_get(child);
@@ -1119,7 +1103,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
                 int wake_interval;
                 int wake_duration;
                 if (!validate_str_sleep_mode(sleep_mode_str, &wake_interval, &wake_duration)) {
-                    return INVALID_FIELD(key);
+                    return INVALID_FIELD(response_json, key);
                 }
 
                 sleep_set_wake_interval(wake_interval);
@@ -1135,7 +1119,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
 #ifdef _OTA
         else if (!strcmp(key, "firmware_auto_update")) {
             if (json_get_type(child) != JSON_TYPE_BOOL) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             if (json_bool_get(child)) {
@@ -1149,7 +1133,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
         }
         else if (!strcmp(key, "firmware_beta_enabled")) {
             if (json_get_type(child) != JSON_TYPE_BOOL) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             if (json_bool_get(child)) {
@@ -1164,7 +1148,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
 #endif
         else if (!strcmp(key, "config_name")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             char *config_name = json_str_get(child);
@@ -1192,10 +1176,10 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
                  !strcmp(key, "chip_id") ||
                  !strcmp(key, "flash_id")) {
 
-            return ATTR_NOT_MODIFIABLE(key);
+            return ATTR_NOT_MODIFIABLE(response_json, key);
         }
         else {
-            return NO_SUCH_ATTRIBUTE(key);
+            return NO_SUCH_ATTR(response_json, key);
         }
     }
 
@@ -1229,18 +1213,18 @@ json_t *api_post_reset(json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = json_obj_new();
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
-        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
 
     if (json_get_type(request_json) != JSON_TYPE_OBJ) {
-        return API_ERROR(400, "invalid-request");
+        return API_ERROR(response_json, 400, "invalid-request");
     }
 
     json_t *factory_json = json_obj_lookup_key(request_json, "factory");
     bool factory = FALSE;
     if (factory_json) {
         if (json_get_type(factory_json) != JSON_TYPE_BOOL) {
-            return INVALID_FIELD("factory");
+            return INVALID_FIELD(response_json, "factory");
         }
         factory = json_bool_get(factory_json);
     }
@@ -1264,7 +1248,7 @@ json_t *api_get_firmware(json_t *query_json, int *code) {
     json_t *response_json = NULL;
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
-        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
 
     int ota_state = ota_current_state();
@@ -1297,29 +1281,29 @@ json_t *api_patch_firmware(json_t *query_json, json_t *request_json, int *code) 
     json_t *response_json = NULL;
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
-        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
 
     if (json_get_type(request_json) != JSON_TYPE_OBJ) {
-        return API_ERROR(400, "invalid-request");
+        return API_ERROR(response_json, 400, "invalid-request");
     }
     
     json_t *version_json = json_obj_lookup_key(request_json, "version");
     json_t *url_json = json_obj_lookup_key(request_json, "url");
     if (!version_json && !url_json) {
-        return MISSING_FIELD("version");
+        return MISSING_FIELD(response_json, "version");
     }
 
     if (url_json) {  /* URL given */
         if (json_get_type(url_json) != JSON_TYPE_STR) {
-            return INVALID_FIELD("url");
+            return INVALID_FIELD(response_json, "url");
         }
 
         ota_perform_url(json_str_get(url_json), on_ota_perform);
     }
     else { /* Assuming version_json */
         if (json_get_type(version_json) != JSON_TYPE_STR) {
-            return INVALID_FIELD("version");
+            return INVALID_FIELD(response_json, "version");
         }
 
         ota_perform_version(json_str_get(version_json), on_ota_perform);
@@ -1360,7 +1344,7 @@ json_t *api_get_ports(json_t *query_json, int *code) {
     json_t *response_json = json_list_new();
 
     if (api_access_level < API_ACCESS_LEVEL_VIEWONLY) {
-        return FORBIDDEN(API_ACCESS_LEVEL_VIEWONLY);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_VIEWONLY);
     }
 
     port_t *p;
@@ -1383,16 +1367,16 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = json_obj_new();
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
-        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
 
     if (json_get_type(request_json) != JSON_TYPE_OBJ) {
-        return API_ERROR(400, "invalid-request");
+        return API_ERROR(response_json, 400, "invalid-request");
     }
 
     if (virtual_find_unused_slot() < 0) {
         DEBUG_API("adding virtual port: no more free slots");
-        return API_ERROR(400, "too-many-ports");
+        return API_ERROR(response_json, 400, "too-many-ports");
     }
 
     int i;
@@ -1407,19 +1391,19 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
     child = json_obj_lookup_key(request_json, "id");
     if (!child) {
         free(new_port);
-        return MISSING_FIELD("id");
+        return MISSING_FIELD(response_json, "id");
     }
     if (json_get_type(child) != JSON_TYPE_STR) {
         free(new_port);
-        return INVALID_FIELD("id");
+        return INVALID_FIELD(response_json, "id");
     }
     if (!validate_id(json_str_get(child)) || strlen(json_str_get(child)) > PORT_MAX_ID_LEN) {
         free(new_port);
-        return INVALID_FIELD("id");
+        return INVALID_FIELD(response_json, "id");
     }
     if (port_find_by_id(json_str_get(child))) {
         free(new_port);
-        return API_ERROR(400, "duplicate-port");
+        return API_ERROR(response_json, 400, "duplicate-port");
     }
     new_port->id = strdup(json_str_get(child));
 
@@ -1429,11 +1413,11 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
     child = json_obj_lookup_key(request_json, "type");
     if (!child) {
         free(new_port);
-        return MISSING_FIELD("type");
+        return MISSING_FIELD(response_json, "type");
     }
     if (json_get_type(child) != JSON_TYPE_STR) {
         free(new_port);
-        return INVALID_FIELD("type");
+        return INVALID_FIELD(response_json, "type");
     }
     char *type = json_str_get(child);
 
@@ -1445,7 +1429,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
     }
     else {
         free(new_port);
-        return INVALID_FIELD("type");
+        return INVALID_FIELD(response_json, "type");
     }
 
     DEBUG_API("adding virtual port: type = \"%s\"", type);
@@ -1461,7 +1445,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
         }
         else {
             free(new_port);
-            return INVALID_FIELD("min");
+            return INVALID_FIELD(response_json, "min");
         }
 
         DEBUG_API("adding virtual port: min = %s", dtostr(new_port->min, -1));
@@ -1481,13 +1465,13 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
         }
         else {
             free(new_port);
-            return INVALID_FIELD("max");
+            return INVALID_FIELD(response_json, "max");
         }
 
         /* min must be <= max */
         if (!IS_UNDEFINED(new_port->min) && new_port->min > new_port->max) {
             free(new_port);
-            return INVALID_FIELD("max");
+            return INVALID_FIELD(response_json, "max");
         }
 
         DEBUG_API("adding virtual port: max = %s", dtostr(new_port->max, -1));
@@ -1501,7 +1485,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
     if (child) {
         if (json_get_type(child) != JSON_TYPE_BOOL) {
             free(new_port);
-            return INVALID_FIELD("integer");
+            return INVALID_FIELD(response_json, "integer");
         }
 
         new_port->integer = json_bool_get(child);
@@ -1520,7 +1504,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
         }
         else {
             free(new_port);
-            return INVALID_FIELD("step");
+            return INVALID_FIELD(response_json, "step");
         }
 
         DEBUG_API("adding virtual port: step = %s", dtostr(new_port->step, -1));
@@ -1534,13 +1518,13 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
     if (child && new_port->type == PORT_TYPE_NUMBER) {
         if (json_get_type(child) != JSON_TYPE_LIST) {
             free(new_port);
-            return INVALID_FIELD("choices");
+            return INVALID_FIELD(response_json, "choices");
         }
 
         int len = json_list_get_len(child);
         if (len < 1 || len > 256) {
             free(new_port);
-            return INVALID_FIELD("choices");
+            return INVALID_FIELD(response_json, "choices");
         }
 
         new_port->choices = zalloc((json_list_get_len(child) + 1) * sizeof(char *));
@@ -1549,7 +1533,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
             if (json_get_type(c) != JSON_TYPE_OBJ) {
                 free_choices(new_port->choices);
                 free(new_port);
-                return INVALID_FIELD("choices");
+                return INVALID_FIELD(response_json, "choices");
             }
 
             /* value */
@@ -1557,7 +1541,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
             if (!c2) {
                 free_choices(new_port->choices);
                 free(new_port);
-                return INVALID_FIELD("choices");
+                return INVALID_FIELD(response_json, "choices");
             }
 
             if (json_get_type(c2) == JSON_TYPE_INT) {
@@ -1569,7 +1553,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
             else {
                 free_choices(new_port->choices);
                 free(new_port);
-                return INVALID_FIELD("choices");
+                return INVALID_FIELD(response_json, "choices");
             }
 
             /* display_name */
@@ -1578,7 +1562,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
                 if (json_get_type(c2) != JSON_TYPE_STR) {
                     free_choices(new_port->choices);
                     free(new_port);
-                    return INVALID_FIELD("choices");
+                    return INVALID_FIELD(response_json, "choices");
                 }
 
                 choice = new_port->choices[i];
@@ -1599,7 +1583,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
     new_port->sequence_pos = -1;
 
     if (!virtual_port_register(new_port)) {
-        return API_ERROR(500, "port-register-error");
+        return API_ERROR(response_json, 500, "port-register-error");
     }
 
     port_register(new_port);
@@ -1627,11 +1611,11 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
     json_t *response_json = json_obj_new();
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
-        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
 
     if (json_get_type(request_json) != JSON_TYPE_OBJ) {
-        return API_ERROR(400, "invalid-request");
+        return API_ERROR(response_json, 400, "invalid-request");
     }
 
     int i;
@@ -1644,7 +1628,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
     if (child) {
         if (json_get_type(child) != JSON_TYPE_BOOL) {
             json_free(child);
-            return INVALID_FIELD(key);
+            return INVALID_FIELD(response_json, key);
         }
 
         if (json_bool_get(child) && !IS_PORT_ENABLED(port)) {
@@ -1666,14 +1650,14 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
             if (child) {
                 if (!IS_ATTRDEF_MODIFIABLE(a)) {
                     json_free(child);
-                    return ATTR_NOT_MODIFIABLE(key);
+                    return ATTR_NOT_MODIFIABLE(response_json, key);
                 }
 
                 switch (a->type) {
                     case ATTR_TYPE_BOOLEAN: {
                         if (json_get_type(child) != JSON_TYPE_BOOL) {
                             json_free(child);
-                            return INVALID_FIELD(key);
+                            return INVALID_FIELD(response_json, key);
                         }
 
                         bool value = json_bool_get(child);
@@ -1690,7 +1674,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                             (json_get_type(child) != JSON_TYPE_DOUBLE || IS_ATTRDEF_INTEGER(a))) {
 
                             json_free(child);
-                            return INVALID_FIELD(key);
+                            return INVALID_FIELD(response_json, key);
                         }
 
                         double value = json_get_type(child) == JSON_TYPE_INT ?
@@ -1698,7 +1682,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                         int idx = validate_num(value, a->min, a->max, IS_ATTRDEF_INTEGER(a), a->step, a->choices);
                         if (!idx) {
                             json_free(child);
-                            return INVALID_FIELD(key);
+                            return INVALID_FIELD(response_json, key);
                         }
 
                         if (a->choices) {
@@ -1721,14 +1705,14 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                     case ATTR_TYPE_STRING: {
                         if (json_get_type(child) != JSON_TYPE_STR) {
                             json_free(child);
-                            return INVALID_FIELD(key);
+                            return INVALID_FIELD(response_json, key);
                         }
 
                         char *value = json_str_get(child);
                         int idx = validate_str(value, a->choices);
                         if (!idx) {
                             json_free(child);
-                            return INVALID_FIELD(key);
+                            return INVALID_FIELD(response_json, key);
                         }
 
                         if (a->choices) {
@@ -1756,7 +1740,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
 
         if (!strcmp(key, "display_name")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             free(port->display_name);
@@ -1769,7 +1753,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
         }
         else if (!strcmp(key, "unit") && (port->type == PORT_TYPE_NUMBER)) {
             if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             free(port->unit);
@@ -1782,7 +1766,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
         }
         else if (IS_PORT_WRITABLE(port) && !strcmp(key, "expression")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             if (port->sexpr) {
@@ -1804,18 +1788,30 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 /* Parse & validate expression */
                 if (strlen(sexpr) > API_MAX_EXPR_LEN) {
                     DEBUG_PORT(port, "expression is too long");
-                    return INVALID_EXPRESSION("expression", "too-long", /* token = */ NULL, /* pos = */ -1);
+                    return INVALID_EXPRESSION(
+                        response_json,
+                        "expression",
+                        "too-long",
+                        /* token = */ NULL,
+                        /* pos = */ -1
+                    );
                 }
 
                 expr_t *expr = expr_parse(port->id, sexpr, strlen(sexpr));
                 if (!expr) {
-                    return INVALID_EXPRESSION_FROM_ERROR("expression");
+                    return INVALID_EXPRESSION_FROM_ERROR(request_json, "expression");
                 }
 
                 if (expr_check_loops(expr, port) > 1) {
                     DEBUG_API("loop detected in expression \"%s\"", sexpr);
                     expr_free(expr);
-                    return INVALID_EXPRESSION("expression", "circular-dependency", /* token = */ NULL, /* pos = */ -1);
+                    return INVALID_EXPRESSION(
+                        response_json,
+                        "expression",
+                        "circular-dependency",
+                        /* token = */ NULL,
+                        /* pos = */ -1
+                    );
                 }
 
                 port->sexpr = strdup(sexpr);
@@ -1834,7 +1830,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
         }
         else if (IS_PORT_WRITABLE(port) && !strcmp(key, "transform_write")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             if (port->transform_write) {
@@ -1856,12 +1852,18 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 /* Parse & validate expression */
                 if (strlen(stransform_write) > API_MAX_EXPR_LEN) {
                     DEBUG_PORT(port, "expression is too long");
-                    return INVALID_EXPRESSION("transform_write", "too-long", /* token = */ NULL, /* pos = */ -1);
+                    return INVALID_EXPRESSION(
+                        response_json,
+                        "transform_write",
+                        "too-long",
+                        /* token = */ NULL,
+                        /* pos = */ -1
+                    );
                 }
 
                 expr_t *transform_write = expr_parse(port->id, stransform_write, strlen(stransform_write));
                 if (!transform_write) {
-                    return INVALID_EXPRESSION_FROM_ERROR("transform_write");
+                    return INVALID_EXPRESSION_FROM_ERROR(response_json, "transform_write");
                 }
 
                 uint32 dep_mask = expr_get_port_deps(transform_write);
@@ -1881,7 +1883,12 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                     // FIXME: using strstr() to find reference position may lead to erroneous results when a port id is
                     //        a substring of another
                     int32 pos = strstr(stransform_write, other_port->id) - stransform_write;
-                    return INVALID_EXPRESSION("transform_write", "external-dependency", other_port->id, pos);
+                    return INVALID_EXPRESSION(
+                        response_json,
+                        "transform_write",
+                        "external-dependency",
+                        other_port->id, pos
+                    );
                 }
 
                 port->stransform_write = strdup(stransform_write);
@@ -1892,7 +1899,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
         }
         else if (!strcmp(key, "transform_read")) {
             if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             if (port->transform_read) {
@@ -1914,12 +1921,18 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 /* Parse & validate expression */
                 if (strlen(stransform_read) > API_MAX_EXPR_LEN) {
                     DEBUG_PORT(port, "expression is too long");
-                    return INVALID_EXPRESSION("transform_read", "too-long", /* token = */ NULL, /* pos = */ -1);
+                    return INVALID_EXPRESSION(
+                        response_json,
+                        "transform_read",
+                        "too-long",
+                        /* token = */ NULL,
+                        /* pos = */ -1
+                    );
                 }
 
                 expr_t *transform_read = expr_parse(port->id, stransform_read, strlen(stransform_read));
                 if (!transform_read) {
-                    return INVALID_EXPRESSION_FROM_ERROR("transform_read");
+                    return INVALID_EXPRESSION_FROM_ERROR(response_json, "transform_read");
                 }
 
                 uint32 dep_mask = expr_get_port_deps(transform_read);
@@ -1939,7 +1952,13 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                     // FIXME: using strstr() to find reference position may lead to erroneous results when a port id is
                     //        a substring of another
                     int32 pos = strstr(stransform_read, other_port->id) - stransform_read;
-                    return INVALID_EXPRESSION("transform_read", "external-dependency", other_port->id, pos);
+                    return INVALID_EXPRESSION(
+                        response_json,
+                        "transform_read",
+                        "external-dependency",
+                        other_port->id,
+                        pos
+                    );
                 }
 
                 port->stransform_read = strdup(stransform_read);
@@ -1950,7 +1969,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
         }
         else if (!strcmp(key, "persisted")) {
             if (json_get_type(child) != JSON_TYPE_BOOL) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             if (json_bool_get(child)) {
@@ -1964,7 +1983,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
         }
         else if (!strcmp(key, "internal")) {
             if (json_get_type(child) != JSON_TYPE_BOOL) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             if (json_bool_get(child)) {
@@ -1978,7 +1997,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
         }
         else if (!IS_PORT_VIRTUAL(port) && !strcmp(key, "sampling_interval")) {
             if (json_get_type(child) != JSON_TYPE_INT) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             int sampling_interval = json_int_get(child);
@@ -1991,7 +2010,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 NULL
             );
             if (!valid) {
-                return INVALID_FIELD(key);
+                return INVALID_FIELD(response_json, key);
             }
 
             port->sampling_interval = sampling_interval;
@@ -2007,10 +2026,10 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                  !strcmp(key, "step") ||
                  !strcmp(key, "choices")) {
 
-            return ATTR_NOT_MODIFIABLE(key);
+            return ATTR_NOT_MODIFIABLE(response_json, key);
         }
         else {
-            return NO_SUCH_ATTRIBUTE(key);
+            return NO_SUCH_ATTR(response_json, key);
         }
     }
     
@@ -2032,11 +2051,11 @@ json_t *api_delete_port(port_t *port, json_t *query_json, int *code) {
     json_t *response_json = json_obj_new();
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
-        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
 
     if (!IS_PORT_VIRTUAL(port)) {
-        return API_ERROR(400, "port-not-removable");  /* Can't unregister a non-virtual port */
+        return API_ERROR(response_json, 400, "port-not-removable");  /* Can't unregister a non-virtual port */
     }
 
     event_push_port_remove(port);
@@ -2044,11 +2063,11 @@ json_t *api_delete_port(port_t *port, json_t *query_json, int *code) {
     port_cleanup(port);
 
     if (!virtual_port_unregister(port)) {
-        return API_ERROR(500, "port-unregister-error");
+        return API_ERROR(response_json, 500, "port-unregister-error");
     }
 
     if (!port_unregister(port)) {
-        return API_ERROR(500, "port-unregister-error");
+        return API_ERROR(response_json, 500, "port-unregister-error");
     }
 
     config_mark_for_saving();
@@ -2067,7 +2086,7 @@ json_t *api_get_port_value(port_t *port, json_t *query_json, int *code) {
     json_t *response_json = NULL;
 
     if (api_access_level < API_ACCESS_LEVEL_VIEWONLY) {
-        return FORBIDDEN(API_ACCESS_LEVEL_VIEWONLY);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_VIEWONLY);
     }
 
     /* Poll ports before retrieving current port value, ensuring value is as up-to-date as possible */
@@ -2084,42 +2103,42 @@ json_t *api_patch_port_value(port_t *port, json_t *query_json, json_t *request_j
     json_t *response_json = json_obj_new();
 
     if (api_access_level < API_ACCESS_LEVEL_NORMAL) {
-        return FORBIDDEN(API_ACCESS_LEVEL_NORMAL);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_NORMAL);
     }
 
     if (!IS_PORT_ENABLED(port)) {
-        return API_ERROR(400, "port-disabled");
+        return API_ERROR(response_json, 400, "port-disabled");
     }
 
     if (!IS_PORT_WRITABLE(port)) {
-        return API_ERROR(400, "read-only-port");
+        return API_ERROR(response_json, 400, "read-only-port");
     }
 
     if (port->type == PORT_TYPE_BOOLEAN) {
         if (json_get_type(request_json) != JSON_TYPE_BOOL) {
-            return API_ERROR(400, "invalid-value");
+            return API_ERROR(response_json, 400, "invalid-value");
         }
 
         if (!port_set_value(port, json_bool_get(request_json), CHANGE_REASON_API)) {
-            return API_ERROR(400, "invalid-value");
+            return API_ERROR(response_json, 400, "invalid-value");
         }
     }
     else if (port->type == PORT_TYPE_NUMBER) {
         if (json_get_type(request_json) != JSON_TYPE_INT &&
             (json_get_type(request_json) != JSON_TYPE_DOUBLE || port->integer)) {
 
-            return API_ERROR(400, "invalid-value");
+            return API_ERROR(response_json, 400, "invalid-value");
         }
 
         double value = json_get_type(request_json) == JSON_TYPE_INT ?
                        json_int_get(request_json) : json_double_get(request_json);
 
         if (!validate_num(value, port->min, port->max, port->integer, port->step, port->choices)) {
-            return API_ERROR(400, "invalid-value");
+            return API_ERROR(response_json, 400, "invalid-value");
         }
 
         if (!port_set_value(port, value, CHANGE_REASON_API)) {
-            return API_ERROR(400, "invalid-value");
+            return API_ERROR(response_json, 400, "invalid-value");
         }
     }
 
@@ -2132,50 +2151,50 @@ json_t *api_patch_port_sequence(port_t *port, json_t *query_json, json_t *reques
     json_t *response_json = NULL;
 
     if (api_access_level < API_ACCESS_LEVEL_NORMAL) {
-        return FORBIDDEN(API_ACCESS_LEVEL_NORMAL);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_NORMAL);
     }
 
     if (!IS_PORT_ENABLED(port)) {
-        return API_ERROR(400, "port-disabled");
+        return API_ERROR(response_json, 400, "port-disabled");
     }
 
     if (!IS_PORT_WRITABLE(port)) {
-        return API_ERROR(400, "read-only-port");
+        return API_ERROR(response_json, 400, "read-only-port");
     }
 
     if (port->expr) {
-        return API_ERROR(400, "port-with-expression");
+        return API_ERROR(response_json, 400, "port-with-expression");
     }
 
     json_t *values_json = json_obj_lookup_key(request_json, "values");
     if (!values_json) {
-        return MISSING_FIELD("values");
+        return MISSING_FIELD(response_json, "values");
     }
     if (json_get_type(values_json) != JSON_TYPE_LIST || !json_list_get_len(values_json)) {
-        return INVALID_FIELD("values");
+        return INVALID_FIELD(response_json, "values");
     }    
 
     json_t *delays_json = json_obj_lookup_key(request_json, "delays");
     if (!delays_json) {
-        return MISSING_FIELD("delays");
+        return MISSING_FIELD(response_json, "delays");
     }
     if (json_get_type(delays_json) != JSON_TYPE_LIST || !json_list_get_len(delays_json)) {
-        return INVALID_FIELD("delays");
+        return INVALID_FIELD(response_json, "delays");
     }
     if (json_list_get_len(delays_json) != json_list_get_len(values_json)) {
-        return INVALID_FIELD("delays");
+        return INVALID_FIELD(response_json, "delays");
     }
 
     json_t *repeat_json = json_obj_lookup_key(request_json, "repeat");
     if (!repeat_json) {
-        return MISSING_FIELD("repeat");
+        return MISSING_FIELD(response_json, "repeat");
     }
     if (json_get_type(repeat_json) != JSON_TYPE_INT) {
-        return INVALID_FIELD("repeat");
+        return INVALID_FIELD(response_json, "repeat");
     }
     int repeat = json_int_get(repeat_json);
     if (repeat < API_MIN_SEQUENCE_REPEAT || repeat > API_MAX_SEQUENCE_REPEAT) {
-        return INVALID_FIELD("repeat");
+        return INVALID_FIELD(response_json, "repeat");
     }
 
     int i;
@@ -2196,7 +2215,7 @@ json_t *api_patch_port_sequence(port_t *port, json_t *query_json, json_t *reques
         j = json_list_value_at(values_json, i);
         if (port->type == PORT_TYPE_BOOLEAN) {
             if (json_get_type(j) != JSON_TYPE_BOOL) {
-                return SEQ_INVALID_FIELD("values");
+                return SEQ_INVALID_FIELD(response_json, "values");
             }
 
             port->sequence_values[i] = json_bool_get(j);
@@ -2205,12 +2224,12 @@ json_t *api_patch_port_sequence(port_t *port, json_t *query_json, json_t *reques
             if (json_get_type(j) != JSON_TYPE_INT &&
                 (json_get_type(j) != JSON_TYPE_DOUBLE || port->integer)) {
 
-                return SEQ_INVALID_FIELD("values");
+                return SEQ_INVALID_FIELD(response_json, "values");
             }
 
             double value = json_get_type(j) == JSON_TYPE_INT ? json_int_get(j) : json_double_get(j);
             if (!validate_num(value, port->min, port->max, port->integer, port->step, port->choices)) {
-                return SEQ_INVALID_FIELD("values");
+                return SEQ_INVALID_FIELD(response_json, "values");
             }
 
             port->sequence_values[i] = value;
@@ -2221,13 +2240,13 @@ json_t *api_patch_port_sequence(port_t *port, json_t *query_json, json_t *reques
     for (i = 0; i < json_list_get_len(delays_json); i++) {
         j = json_list_value_at(delays_json, i);
         if (json_get_type(j) != JSON_TYPE_INT) {
-            return SEQ_INVALID_FIELD("delays");
+            return SEQ_INVALID_FIELD(response_json, "delays");
         }
         
         port->sequence_delays[i] = json_int_get(j);
         
         if (port->sequence_delays[i] < API_MIN_SEQUENCE_DELAY || port->sequence_delays[i] > API_MAX_SEQUENCE_DELAY) {
-            return SEQ_INVALID_FIELD("delays");
+            return SEQ_INVALID_FIELD(response_json, "delays");
         }
     }
     
@@ -2246,7 +2265,7 @@ json_t *api_get_webhooks(json_t *query_json, int *code) {
     json_t *response_json = json_obj_new();
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
-        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
 
     DEBUG_API("returning webhooks parameters");
@@ -2285,18 +2304,18 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
     json_t *response_json = json_obj_new();
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
-        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
 
     if (json_get_type(request_json) != JSON_TYPE_OBJ) {
-        return API_ERROR(400, "invalid-request");
+        return API_ERROR(response_json, 400, "invalid-request");
     }
 
     /* Scheme */
     json_t *scheme_json = json_obj_lookup_key(request_json, "scheme");
     if (scheme_json) {
         if (json_get_type(scheme_json) != JSON_TYPE_STR) {
-            return INVALID_FIELD("scheme");
+            return INVALID_FIELD(response_json, "scheme");
         }
 
 #ifdef _SSL
@@ -2311,7 +2330,7 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
             device_flags &= ~DEVICE_FLAG_WEBHOOKS_HTTPS;
         }
         else {
-            return INVALID_FIELD("scheme");
+            return INVALID_FIELD(response_json, "scheme");
         }
     }
 
@@ -2319,10 +2338,10 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
     json_t *host_json = json_obj_lookup_key(request_json, "host");
     if (host_json) {
         if (json_get_type(host_json) != JSON_TYPE_STR) {
-            return INVALID_FIELD("host");
+            return INVALID_FIELD(response_json, "host");
         }
         if (strlen(json_str_get(host_json)) == 0) {
-            return INVALID_FIELD("host");
+            return INVALID_FIELD(response_json, "host");
         }
 
         if (webhooks_host) {
@@ -2337,11 +2356,11 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
     json_t *port_json = json_obj_lookup_key(request_json, "port");
     if (port_json) {
         if (json_get_type(port_json) != JSON_TYPE_INT) {
-            return INVALID_FIELD("port");
+            return INVALID_FIELD(response_json, "port");
         }
 
         if (json_int_get(port_json) < 0 || json_int_get(port_json) > 65535) {
-            return INVALID_FIELD("port");
+            return INVALID_FIELD(response_json, "port");
         }
 
         webhooks_port = json_int_get(port_json);
@@ -2352,10 +2371,10 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
     json_t *path_json = json_obj_lookup_key(request_json, "path");
     if (path_json) {
         if (json_get_type(path_json) != JSON_TYPE_STR) {
-            return INVALID_FIELD("path");
+            return INVALID_FIELD(response_json, "path");
         }
         if (strlen(json_str_get(path_json)) == 0) {
-            return INVALID_FIELD("path");
+            return INVALID_FIELD(response_json, "path");
         }
 
         if (webhooks_path) {
@@ -2370,7 +2389,7 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
     json_t *password_json = json_obj_lookup_key(request_json, "password");
     if (password_json) {
         if (json_get_type(password_json) != JSON_TYPE_STR) {
-            return INVALID_FIELD("password");
+            return INVALID_FIELD(response_json, "password");
         }
 
         char *password = json_str_get(password_json);
@@ -2384,7 +2403,7 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
     json_t *event_json, *events_json = json_obj_lookup_key(request_json, "events");
     if (events_json) {
         if (json_get_type(events_json) != JSON_TYPE_LIST) {
-            return INVALID_FIELD("events");
+            return INVALID_FIELD(response_json, "events");
         }
 
         int i, e, len = json_list_get_len(events_json);
@@ -2392,7 +2411,7 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
         for (i = 0; i < len; i++) {
             event_json = json_list_value_at(events_json, i);
             if (json_get_type(event_json) != JSON_TYPE_STR) {
-                return INVALID_FIELD("events");
+                return INVALID_FIELD(response_json, "events");
             }
 
             for (e = EVENT_TYPE_MIN; e <= EVENT_TYPE_MAX; e++) {
@@ -2403,7 +2422,7 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
             }
 
             if (e > EVENT_TYPE_MAX) {
-                return INVALID_FIELD("events");
+                return INVALID_FIELD(response_json, "events");
             }
 
             DEBUG_WEBHOOKS("event mask includes %s", EVENT_TYPES_STR[e]);
@@ -2416,11 +2435,11 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
     json_t *timeout_json = json_obj_lookup_key(request_json, "timeout");
     if (timeout_json) {
         if (json_get_type(timeout_json) != JSON_TYPE_INT) {
-            return INVALID_FIELD("timeout");
+            return INVALID_FIELD(response_json, "timeout");
         }
 
         if (json_int_get(timeout_json) < WEBHOOKS_MIN_TIMEOUT || json_int_get(timeout_json) > WEBHOOKS_MAX_TIMEOUT) {
-            return INVALID_FIELD("timeout");
+            return INVALID_FIELD(response_json, "timeout");
         }
 
         webhooks_timeout = json_int_get(timeout_json);
@@ -2431,11 +2450,11 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
     json_t *retries_json = json_obj_lookup_key(request_json, "retries");
     if (retries_json) {
         if (json_get_type(retries_json) != JSON_TYPE_INT) {
-            return INVALID_FIELD("retries");
+            return INVALID_FIELD(response_json, "retries");
         }
 
         if (json_int_get(retries_json) < WEBHOOKS_MIN_RETRIES || json_int_get(retries_json) > WEBHOOKS_MAX_RETRIES) {
-            return INVALID_FIELD("retries");
+            return INVALID_FIELD(response_json, "retries");
         }
 
         webhooks_retries = json_int_get(retries_json);
@@ -2446,17 +2465,17 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
     json_t *enabled_json = json_obj_lookup_key(request_json, "enabled");
     if (enabled_json) {
         if (json_get_type(enabled_json) != JSON_TYPE_BOOL) {
-            return INVALID_FIELD("enabled");
+            return INVALID_FIELD(response_json, "enabled");
         }
 
         bool enabled = json_bool_get(enabled_json);
         if (enabled) {
             /* We can't enable webhooks unless we have a host and a path */
             if (!webhooks_host || !webhooks_host[0]) {
-                return MISSING_FIELD("host");
+                return MISSING_FIELD(response_json, "host");
             }
             if (!webhooks_path || !webhooks_path[0]) {
-                return MISSING_FIELD("path");
+                return MISSING_FIELD(response_json, "path");
             }
 
             device_flags |= DEVICE_FLAG_WEBHOOKS_ENABLED;
@@ -2479,7 +2498,7 @@ json_t *api_get_wifi(json_t *query_json, int *code) {
     json_t *response_json = NULL;
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
-        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
 
     if (!wifi_scan(on_wifi_scan)) {
@@ -2497,7 +2516,7 @@ json_t *api_get_raw_io(char *io, json_t *query_json, int *code) {
     json_t *response_json = json_obj_new();
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
-        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
 
     DEBUG_API("returning raw value for %s", io);
@@ -2505,7 +2524,7 @@ json_t *api_get_raw_io(char *io, json_t *query_json, int *code) {
     if (!strncmp(io, "gpio", 4)) {
         int gpio_no = strtol(io + 4, NULL, 10);
         if (gpio_no < 0 || gpio_no > 16) {
-            return API_ERROR(404, "no-such-io");
+            return API_ERROR(response_json, 404, "no-such-io");
         }
 
         json_obj_append(response_json, "value", json_bool_new(gpio_read_value(gpio_no)));
@@ -2535,7 +2554,7 @@ json_t *api_get_raw_io(char *io, json_t *query_json, int *code) {
         json_obj_append(response_json, "configured", json_bool_new(configured));
     }
     else {
-        return API_ERROR(404, "no-such-io");
+        return API_ERROR(response_json, 404, "no-such-io");
     }
 
     *code = 200;
@@ -2549,24 +2568,24 @@ json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int
     uint32 len, i;
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
-        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
 
     if (json_get_type(request_json) != JSON_TYPE_OBJ) {
-        return API_ERROR(400, "invalid-request");
+        return API_ERROR(response_json, 400, "invalid-request");
     }
 
     if (!strncmp(io, "gpio", 4)) {
         int gpio_no = strtol(io + 4, NULL, 10);
         if (gpio_no < 0 || gpio_no > 16) {
-            return API_ERROR(404, "no-such-io");
+            return API_ERROR(response_json, 404, "no-such-io");
         }
 
         json_t *value_json = json_obj_lookup_key(request_json, "value");
         bool value = gpio_read_value(gpio_no);
         if (value_json) {
             if (json_get_type(value_json) != JSON_TYPE_BOOL) {
-                return INVALID_FIELD("value");
+                return INVALID_FIELD(response_json, "value");
             }
 
             value = json_bool_get(value_json);
@@ -2576,7 +2595,7 @@ json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int
         bool output = gpio_is_output(gpio_no);
         if (output_json) {
             if (json_get_type(output_json) != JSON_TYPE_BOOL) {
-                return INVALID_FIELD("output");
+                return INVALID_FIELD(response_json, "output");
             }
 
             output = json_bool_get(output_json);
@@ -2586,7 +2605,7 @@ json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int
         bool pull_up = gpio_get_pull(gpio_no);
         if (pull_up_json) {
             if (json_get_type(pull_up_json) != JSON_TYPE_BOOL) {
-                return INVALID_FIELD("pull_up");
+                return INVALID_FIELD(response_json, "pull_up");
             }
 
             pull_up = json_bool_get(pull_up_json);
@@ -2596,7 +2615,7 @@ json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int
         bool pull_down = !gpio_get_pull(gpio_no);
         if (pull_down_json) {
             if (json_get_type(pull_down_json) != JSON_TYPE_BOOL) {
-                return INVALID_FIELD("pull_down");
+                return INVALID_FIELD(response_json, "pull_down");
             }
 
             pull_down = json_bool_get(pull_down_json);
@@ -2615,13 +2634,13 @@ json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int
         }
     }
     else if (!strcmp(io, "adc0")) {
-        return API_ERROR(400, "read-only-io");
+        return API_ERROR(response_json, 400, "read-only-io");
     }
     else if (!strcmp(io, "hspi")) {
         value_json = json_obj_lookup_key(request_json, "value");
         if (value_json) {
             if (json_get_type(value_json) != JSON_TYPE_LIST) {
-                return INVALID_FIELD("value");
+                return INVALID_FIELD(response_json, "value");
             }
 
             json_t *v_json;
@@ -2638,7 +2657,7 @@ json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int
                     hex = TRUE;
                 }
                 else {
-                    return INVALID_FIELD("value");
+                    return INVALID_FIELD(response_json, "value");
                 }
             }
 
@@ -2671,7 +2690,7 @@ json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int
         param_json = json_obj_lookup_key(request_json, "freq");
         if (param_json) {
             if (json_get_type(param_json) != JSON_TYPE_INT) {
-                return INVALID_FIELD("freq");
+                return INVALID_FIELD(response_json, "freq");
             }
 
             freq = json_int_get(param_json);
@@ -2681,7 +2700,7 @@ json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int
         param_json = json_obj_lookup_key(request_json, "cpol");
         if (param_json) {
             if (json_get_type(param_json) != JSON_TYPE_BOOL) {
-                return INVALID_FIELD("cpol");
+                return INVALID_FIELD(response_json, "cpol");
             }
 
             cpol = json_bool_get(param_json);
@@ -2691,7 +2710,7 @@ json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int
         param_json = json_obj_lookup_key(request_json, "cpha");
         if (param_json) {
             if (json_get_type(param_json) != JSON_TYPE_BOOL) {
-                return INVALID_FIELD("cpha");
+                return INVALID_FIELD(response_json, "cpha");
             }
 
             cpha = json_bool_get(param_json);
@@ -2701,7 +2720,7 @@ json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int
         param_json = json_obj_lookup_key(request_json, "bit_order");
         if (param_json) {
             if (json_get_type(param_json) != JSON_TYPE_STR) {
-                return INVALID_FIELD("bit_order");
+                return INVALID_FIELD(response_json, "bit_order");
             }
 
             bit_order = !strcmp(json_str_get(param_json), "lsb_first");
@@ -2713,7 +2732,7 @@ json_t *api_patch_raw_io(char *io, json_t *query_json, json_t *request_json, int
         }
     }
     else {
-        return API_ERROR(404, "no-such-io");
+        return API_ERROR(response_json, 404, "no-such-io");
     }
 
     *code = 204;
@@ -2725,7 +2744,7 @@ json_t *api_get_peripherals(json_t *query_json, int *code) {
     json_t *response_json = json_list_new();
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
-        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
 
     for (int i = 0; i < all_peripherals_count; i++) {
@@ -2775,15 +2794,15 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
     uint8 double_param_count;
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
-        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
 
     if (json_get_type(request_json) != JSON_TYPE_LIST) {
-        return API_ERROR(400, "invalid-request");
+        return API_ERROR(response_json, 400, "invalid-request");
     }
 
     if (json_list_get_len(request_json) > PERIPHERAL_MAX_NUM) {
-        return API_ERROR(400, "too-many-peripherals");
+        return API_ERROR(response_json, 400, "too-many-peripherals");
     }
 
     /* Unregister all (non-virtual) ports */
@@ -2797,7 +2816,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
         port_cleanup(p);
 
         if (!port_unregister(p)) {
-            return API_ERROR(500, "port-unregister-error");
+            return API_ERROR(response_json, 500, "port-unregister-error");
         }
 
         free(p);
@@ -2829,17 +2848,17 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
         port_ids_len = 0;
 
         if (json_get_type(peripheral_config) != JSON_TYPE_OBJ) {
-            return API_ERROR(400, "invalid-request");
+            return API_ERROR(response_json, 400, "invalid-request");
         }
 
         /* Type */
         type_json = json_obj_lookup_key(peripheral_config, "type");
         if (!type_json || json_get_type(type_json) != JSON_TYPE_INT) {
-            return INVALID_FIELD("type");
+            return INVALID_FIELD(response_json, "type");
         }
         type_id = json_int_get(type_json);
         if (type_id > PERIPHERAL_MAX_TYPE_ID) {
-            return INVALID_FIELD("type");
+            return INVALID_FIELD(response_json, "type");
         }
 
         /* Flags */
@@ -2852,7 +2871,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
                 flags = json_int_get(flags_json);
             }
             else {
-                return INVALID_FIELD("flags");
+                return INVALID_FIELD(response_json, "flags");
             }
         }
 
@@ -2862,7 +2881,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
             if ((json_get_type(params_json) != JSON_TYPE_LIST) ||
                 (json_list_get_len(params_json) > PERIPHERAL_MAX_INT8_PARAMS)) {
 
-                return INVALID_FIELD("int8_params");
+                return INVALID_FIELD(response_json, "int8_params");
             }
 
             for (i = 0; i < json_list_get_len(params_json); i++) {
@@ -2874,7 +2893,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
                     int8_param = json_int_get(json);
                 }
                 else {
-                    return INVALID_FIELD("int8_params");
+                    return INVALID_FIELD(response_json, "int8_params");
                 }
 
                 int8_params[int8_param_count++] = int8_param;
@@ -2887,7 +2906,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
             if ((json_get_type(params_json) != JSON_TYPE_LIST) ||
                 (json_list_get_len(params_json) > PERIPHERAL_MAX_INT16_PARAMS)) {
 
-                return INVALID_FIELD("int16_params");
+                return INVALID_FIELD(response_json, "int16_params");
             }
 
             for (i = 0; i < json_list_get_len(params_json); i++) {
@@ -2899,7 +2918,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
                     int16_param = json_int_get(json);
                 }
                 else {
-                    return INVALID_FIELD("int16_params");
+                    return INVALID_FIELD(response_json, "int16_params");
                 }
 
                 int16_params[int16_param_count++] = int16_param;
@@ -2912,7 +2931,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
             if ((json_get_type(params_json) != JSON_TYPE_LIST) ||
                 (json_list_get_len(params_json) > PERIPHERAL_MAX_INT32_PARAMS)) {
 
-                return INVALID_FIELD("int32_params");
+                return INVALID_FIELD(response_json, "int32_params");
             }
 
             for (i = 0; i < json_list_get_len(params_json); i++) {
@@ -2924,7 +2943,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
                     int32_param = json_int_get(json);
                 }
                 else {
-                    return INVALID_FIELD("int32_params");
+                    return INVALID_FIELD(response_json, "int32_params");
                 }
 
                 int32_params[int32_param_count++] = int32_param;
@@ -2937,7 +2956,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
             if ((json_get_type(params_json) != JSON_TYPE_LIST) ||
                 (json_list_get_len(params_json) > PERIPHERAL_MAX_INT64_PARAMS)) {
 
-                return INVALID_FIELD("int64_params");
+                return INVALID_FIELD(response_json, "int64_params");
             }
 
             for (i = 0; i < json_list_get_len(params_json); i++) {
@@ -2949,7 +2968,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
                     int64_param = json_int_get(json);
                 }
                 else {
-                    return INVALID_FIELD("int64_params");
+                    return INVALID_FIELD(response_json, "int64_params");
                 }
 
                 int64_params[int64_param_count++] = int64_param;
@@ -2962,7 +2981,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
             if ((json_get_type(params_json) != JSON_TYPE_LIST) ||
                 (json_list_get_len(params_json) > PERIPHERAL_MAX_DOUBLE_PARAMS)) {
 
-                return INVALID_FIELD("double_params");
+                return INVALID_FIELD(response_json, "double_params");
             }
 
             for (i = 0; i < json_list_get_len(params_json); i++) {
@@ -2974,7 +2993,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
                     double_param = json_double_get(json);
                 }
                 else {
-                    return INVALID_FIELD("double_params");
+                    return INVALID_FIELD(response_json, "double_params");
                 }
 
                 double_params[double_param_count++] = double_param;
@@ -2985,7 +3004,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
         port_ids_json = json_obj_lookup_key(peripheral_config, "port_ids");
         if (port_ids_json) {
             if (json_get_type(port_ids_json) != JSON_TYPE_LIST) {
-                return INVALID_FIELD("port_ids");
+                return INVALID_FIELD(response_json, "port_ids");
             }
 
             port_ids_len = json_list_get_len(port_ids_json);
@@ -2994,7 +3013,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
                 json = json_list_value_at(port_ids_json, i);
                 if (json_get_type(json) != JSON_TYPE_STR) {
                     free(port_ids);
-                    return INVALID_FIELD("port_ids");
+                    return INVALID_FIELD(response_json, "port_ids");
                 }
 
                 port_ids[i] = json_str_get(json);
@@ -3046,7 +3065,7 @@ json_t *api_get_system(json_t *query_json, int *code) {
     json_t *response_json = json_obj_new();
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
-        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
 
     /* Setup button */
@@ -3095,11 +3114,11 @@ json_t *api_put_system(json_t *query_json, json_t *request_json, int *code) {
     json_t *json;
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
-        return FORBIDDEN(API_ACCESS_LEVEL_ADMIN);
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
 
     if (json_get_type(request_json) != JSON_TYPE_OBJ) {
-        return API_ERROR(400, "invalid-request");
+        return API_ERROR(response_json, 400, "invalid-request");
     }
 
     /* Setup button */
@@ -3111,12 +3130,12 @@ json_t *api_put_system(json_t *query_json, json_t *request_json, int *code) {
         uint8 reset_hold;
 
         if (json_get_type(setup_button_json) != JSON_TYPE_OBJ) {
-            return INVALID_FIELD("setup_button");
+            return INVALID_FIELD(response_json, "setup_button");
         }
 
         json = json_obj_lookup_key(setup_button_json, "pin");
         if (!json || json_get_type(json) != JSON_TYPE_INT) {
-            return INVALID_FIELD("setup_button");
+            return INVALID_FIELD(response_json, "setup_button");
         }
         pin = json_int_get(json);
         if (pin > 16) {
@@ -3125,19 +3144,19 @@ json_t *api_put_system(json_t *query_json, json_t *request_json, int *code) {
 
         json = json_obj_lookup_key(setup_button_json, "level");
         if (!json || json_get_type(json) != JSON_TYPE_BOOL) {
-            return INVALID_FIELD("setup_button");
+            return INVALID_FIELD(response_json, "setup_button");
         }
         level = json_bool_get(json);
 
         json = json_obj_lookup_key(setup_button_json, "hold");
         if (!json || json_get_type(json) != JSON_TYPE_INT) {
-            return INVALID_FIELD("setup_button");
+            return INVALID_FIELD(response_json, "setup_button");
         }
         hold = json_int_get(json);
 
         json = json_obj_lookup_key(setup_button_json, "reset_hold");
         if (!json || json_get_type(json) != JSON_TYPE_INT) {
-            return INVALID_FIELD("setup_button");
+            return INVALID_FIELD(response_json, "setup_button");
         }
         reset_hold = json_int_get(json);
 
@@ -3151,12 +3170,12 @@ json_t *api_put_system(json_t *query_json, json_t *request_json, int *code) {
         bool level;
 
         if (json_get_type(status_led_json) != JSON_TYPE_OBJ) {
-            return INVALID_FIELD("status_led");
+            return INVALID_FIELD(response_json, "status_led");
         }
 
         json = json_obj_lookup_key(status_led_json, "pin");
         if (!json || json_get_type(json) != JSON_TYPE_INT) {
-            return INVALID_FIELD("status_led");
+            return INVALID_FIELD(response_json, "status_led");
         }
         pin = json_int_get(json);
         if (pin > 16) {
@@ -3165,7 +3184,7 @@ json_t *api_put_system(json_t *query_json, json_t *request_json, int *code) {
 
         json = json_obj_lookup_key(status_led_json, "level");
         if (!json || json_get_type(json) != JSON_TYPE_BOOL) {
-            return INVALID_FIELD("status_led");
+            return INVALID_FIELD(response_json, "status_led");
         }
         level = json_bool_get(json);
 
@@ -3182,24 +3201,24 @@ json_t *api_put_system(json_t *query_json, json_t *request_json, int *code) {
         uint16 voltages[6];
 
         if (json_get_type(battery_json) != JSON_TYPE_OBJ) {
-            return INVALID_FIELD("battery");
+            return INVALID_FIELD(response_json, "battery");
         }
 
         json = json_obj_lookup_key(battery_json, "div");
         if (!json || json_get_type(json) != JSON_TYPE_INT) {
-            return INVALID_FIELD("battery");
+            return INVALID_FIELD(response_json, "battery");
         }
         div_factor = json_int_get(json);
 
         json = json_obj_lookup_key(battery_json, "voltages");
         if (!json || json_get_type(json) != JSON_TYPE_LIST || json_list_get_len(json) != BATTERY_LUT_LEN) {
-            return INVALID_FIELD("battery");
+            return INVALID_FIELD(response_json, "battery");
         }
 
         for (int i = 0; i < BATTERY_LUT_LEN; i++) {
             j = json_list_value_at(json, i);
             if (json_get_type(j) != JSON_TYPE_INT) {
-                return INVALID_FIELD("battery");
+                return INVALID_FIELD(response_json, "battery");
             }
 
             voltages[i] = json_int_get(j);
@@ -3215,6 +3234,60 @@ json_t *api_put_system(json_t *query_json, json_t *request_json, int *code) {
 
     return response_json;
 }
+
+json_t *_api_error(json_t *response_json, char *error, char *field_name, char *field_value) {
+    json_free(response_json);
+    response_json = json_obj_new();
+    json_obj_append(response_json, "error", json_str_new(error));
+    if (field_name) {
+        json_obj_append(response_json, field_name, json_str_new(field_value));
+    }
+    return response_json;
+}
+
+json_t *_forbidden_error(json_t *response_json, uint8 level) {
+    char *field_value;
+
+    switch (level) {
+        case API_ACCESS_LEVEL_ADMIN:
+            field_value = "admin";
+            break;
+
+        case API_ACCESS_LEVEL_NORMAL:
+            field_value = "normal";
+            break;
+
+        case API_ACCESS_LEVEL_VIEWONLY:
+            field_value = "viewonly";
+            break;
+
+        default:
+            field_value = "none";
+            break;
+    }
+
+    return _api_error(response_json, "forbidden", "required_level", field_value);
+}
+
+json_t *_invalid_expression_error(json_t *response_json, char *field, char *reason, char *token, uint32 pos) {
+    json_free(response_json);
+    response_json = json_obj_new();
+    json_obj_append(response_json, "error", json_str_new("invalid-field"));
+    json_obj_append(response_json, "field", json_str_new(field));
+
+    json_t *details_json = json_obj_new();
+    json_obj_append(details_json, "reason", json_str_new(reason));
+    if (token) {
+        json_obj_append(details_json, "token", json_str_new(token));
+    }
+    if (pos >= 1) {
+        json_obj_append(details_json, "pos", json_int_new(pos));
+    }
+    json_obj_append(response_json, "details", details_json);
+
+    return response_json;
+}
+
 
 json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
     json_t *json = json_obj_new();
