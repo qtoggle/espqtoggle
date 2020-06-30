@@ -82,8 +82,8 @@ void system_config_init(void) {
 
     if (erased) {
         DEBUG_SYSTEM("detected erased flash config");
-        memset(config_data, 0, FLASH_CONFIG_SIZE_DEFAULT);
-        flashcfg_save(FLASH_CONFIG_SLOT_DEFAULT, config_data);
+        memset(config_data, 0, FLASH_CONFIG_SIZE_SYSTEM);
+        flashcfg_save(FLASH_CONFIG_SLOT_SYSTEM, config_data);
     }
 
     /* If config data is full of 0x00, that indicates default config */

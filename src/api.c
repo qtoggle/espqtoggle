@@ -3236,7 +3236,9 @@ json_t *api_put_system(json_t *query_json, json_t *request_json, int *code) {
 }
 
 json_t *_api_error(json_t *response_json, char *error, char *field_name, char *field_value) {
-    json_free(response_json);
+    if (response_json) {
+        json_free(response_json);
+    }
     response_json = json_obj_new();
     json_obj_append(response_json, "error", json_str_new(error));
     if (field_name) {
@@ -3270,7 +3272,9 @@ json_t *_forbidden_error(json_t *response_json, uint8 level) {
 }
 
 json_t *_invalid_expression_error(json_t *response_json, char *field, char *reason, char *token, uint32 pos) {
-    json_free(response_json);
+    if (response_json) {
+        json_free(response_json);
+    }
     response_json = json_obj_new();
     json_obj_append(response_json, "error", json_str_new("invalid-field"));
     json_obj_append(response_json, "field", json_str_new(field));

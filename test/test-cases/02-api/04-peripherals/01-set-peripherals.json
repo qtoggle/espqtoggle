@@ -1,0 +1,113 @@
+{
+    "name": "set-peripherals",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PUT",
+                "path": "/peripherals",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": [
+                    {
+                        "type": 1,
+                        "flags": "0002",
+                        "int8_params": [0],
+                        "port_ids": ["gpio0"]
+                    },
+                    {
+                        "type": 1,
+                        "flags": "0001",
+                        "int8_params": [2],
+                        "port_ids": ["gpio2"]
+                    }
+                ],
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "array",
+                    "additionalItems": true,
+                    "items": [
+                        {
+                            "type": "object",
+                            "required": [
+                                "id",
+                                "display_name",
+                                "writable",
+                                "enabled",
+                                "persisted",
+                                "internal",
+                                "sampling_interval",
+                                "transform_read",
+                                "pull_up",
+                                "output"
+                            ],
+                            "properties": {
+                                "id": {
+                                    "enum": ["gpio0"]
+                                },
+                                "display_name": {
+                                    "enum": ["test display name"]
+                                },
+                                "writable": {
+                                    "enum": [true]
+                                },
+                                "enabled": {
+                                    "enum": [true]
+                                },
+                                "persisted": {
+                                    "enum": [true]
+                                },
+                                "internal": {
+                                    "enum": [true]
+                                },
+                                "sampling_interval": {
+                                    "enum": [10]
+                                },
+                                "transform_read": {
+                                    "enum": ["NOT(${DOLLAR}gpio0)"]
+                                },
+                                "pull_up": {
+                                    "enum": [true]
+                                },
+                                "output": {
+                                    "enum": [true]
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "transform_read": "",
+                    "persisted": false,
+                    "internal": false
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        }
+    ]
+}
+
