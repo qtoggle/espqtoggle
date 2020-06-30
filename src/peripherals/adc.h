@@ -16,22 +16,22 @@
  *
  */
 
-#ifndef _PERIPHERALS_GPIOP_H
-#define _PERIPHERALS_GPIOP_H
+#ifndef _PERIPHERALS_ADC_H
+#define _PERIPHERALS_ADC_H
 
 #include <c_types.h>
 
 #include "peripherals.h"
 
 
-#ifdef _DEBUG_GPIOP
-#define DEBUG_GPIO_PORT      DEBUG_PORT
+#ifdef _DEBUG_ADC
+#define DEBUG_ADC_PORT      DEBUG_PORT
 #else
-#define DEBUG_GPIO_PORT(...) {}
+#define DEBUG_ADC_PORT(...) {}
 #endif
 
 
-extern peripheral_type_t peripheral_type_gpio;
+extern peripheral_type_t peripheral_type_adc;
 
 
-#endif /* _PERIPHERALS_GPIOP_H */
+#endif /* _PERIPHERALS_ADC_H */

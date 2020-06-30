@@ -690,7 +690,7 @@ void json_list_append(json_t *json, json_t *child) {
 json_t *json_list_value_at(json_t *json, uint32 index) {
     json_assert_type(json, JSON_TYPE_LIST);
 
-    return json->obj_data.children[index];
+    return json->list_data.children[index];
 }
 
 json_t *json_list_pop_at(json_t *json, uint32 index) {

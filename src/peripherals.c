@@ -26,11 +26,13 @@
 #include "peripherals.h"
 
 #include "peripherals/gpiop.h"
+#include "peripherals/adc.h"
 
 
 static peripheral_type_t *all_peripheral_types[] = {
 
-    &peripheral_type_gpio       /* Type 1 */
+    &peripheral_type_gpio, /* Type 1 */
+    &peripheral_type_adc,  /* Type 2 */
 
 };
 
@@ -141,10 +143,14 @@ void peripheral_init(peripheral_t *peripheral, char *port_ids[], uint8 port_ids_
     uint8 ports_len = 0;
 
     DEBUG_PERIPHERAL(peripheral, "initializing");
-    type->init(peripheral);
+    if (type->init) {
+        type->init(peripheral);
+    }
 
     DEBUG_PERIPHERAL(peripheral, "making ports");
-    type->make_ports(peripheral, ports, &ports_len);
+    if (type->make_ports) {
+        type->make_ports(peripheral, ports, &ports_len);
+    }
 
     /* Allocate slots and register new ports */
     int i;
