@@ -20,26 +20,26 @@
 #include "httpclient.h"
 
 
-#define BUFFER_SIZE_MAX             5000    /* Size of http responses that will cause an error */
+#define BUFFER_SIZE_MAX 5000 /* Size of http responses that will cause an error */
 
 
 /* Internal request state */
 typedef struct {
 
-    char              * path;
-    uint16              port;
-    char              * method;
-    uint8             * body;
-    int                 body_len;
-    char              * headers;
-    char              * hostname;
-    char              * buffer;
-    int                 buffer_size;
-    uint8               ip_addr[4];
-    bool                secure;
-    http_callback_t     callback;
-    os_timer_t          timer;
-    struct espconn    * connection;
+    char            *path;
+    uint16           port;
+    char            *method;
+    uint8           *body;
+    int              body_len;
+    char            *headers;
+    char            *hostname;
+    char            *buffer;
+    int              buffer_size;
+    uint8            ip_addr[4];
+    bool             secure;
+    http_callback_t  callback;
+    os_timer_t       timer;
+    struct espconn  *connection;
 
 } request_args_t;
 
@@ -47,9 +47,18 @@ typedef struct {
 static char *user_agent = NULL;
 
 
-void ICACHE_FLASH_ATTR http_raw_request(char *hostname, uint16 port, bool secure, char *path, char *method,
-                                        uint8 *body, int body_len, char *headers, http_callback_t callback,
-                                        int timeout);
+void ICACHE_FLASH_ATTR http_raw_request(
+                           char *hostname,
+                           uint16 port,
+                           bool secure,
+                           char *path,
+                           char *method,
+                           uint8 *body,
+                           int body_len,
+                           char *headers,
+                           http_callback_t callback,
+                           int timeout
+                       );
 
 
 static int ICACHE_FLASH_ATTR chunked_decode(char *chunked, int size) {

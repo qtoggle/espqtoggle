@@ -26,38 +26,38 @@
 #include "json.h"
 
 
-#define ctx_get_size(ctx)           ((ctx)->stack_size)
-#define ctx_has_key(ctx)            ((ctx)->stack_size > 0 && (ctx)->stack[(ctx)->stack_size - 1].key != NULL)
-#define ctx_get_key(ctx)            ((ctx)->stack_size > 0 ? (ctx)->stack[(ctx)->stack_size - 1].key : NULL)
+#define ctx_get_size(ctx) ((ctx)->stack_size)
+#define ctx_has_key(ctx)  ((ctx)->stack_size > 0 && (ctx)->stack[(ctx)->stack_size - 1].key != NULL)
+#define ctx_get_key(ctx)  ((ctx)->stack_size > 0 ? (ctx)->stack[(ctx)->stack_size - 1].key : NULL)
 
-#define STRINGIFIED_CHUNK_SIZE      128
+#define STRINGIFIED_CHUNK_SIZE 128
 
 
 typedef struct {
 
-    json_t    * json;
-    char      * key;
+    json_t *json;
+    char   *key;
 
 } stack_t;
 
 typedef struct {
 
-    uint32      stack_size;
-    stack_t   * stack;
+    uint32   stack_size;
+    stack_t *stack;
 
 } ctx_t;
 
 
-ICACHE_FLASH_ATTR static void       json_dump_rec(json_t *json, char **output, int *len, int *size, uint8 free_mode);
+ICACHE_FLASH_ATTR static void    json_dump_rec(json_t *json, char **output, int *len, int *size, uint8 free_mode);
 
-ICACHE_FLASH_ATTR static ctx_t    * ctx_new(char *input);
-ICACHE_FLASH_ATTR static void       ctx_set_key(ctx_t *ctx, char *key);
-ICACHE_FLASH_ATTR static void       ctx_clear_key(ctx_t *ctx);
-ICACHE_FLASH_ATTR static json_t   * ctx_get_current(ctx_t *ctx);
-ICACHE_FLASH_ATTR static bool       ctx_add(ctx_t *ctx, json_t *json);
-ICACHE_FLASH_ATTR static void       ctx_push(ctx_t *ctx, json_t *json);
-ICACHE_FLASH_ATTR static json_t   * ctx_pop(ctx_t *ctx);
-ICACHE_FLASH_ATTR static void       ctx_free(ctx_t *ctx);
+ICACHE_FLASH_ATTR static ctx_t  *ctx_new(char *input);
+ICACHE_FLASH_ATTR static void    ctx_set_key(ctx_t *ctx, char *key);
+ICACHE_FLASH_ATTR static void    ctx_clear_key(ctx_t *ctx);
+ICACHE_FLASH_ATTR static json_t *ctx_get_current(ctx_t *ctx);
+ICACHE_FLASH_ATTR static bool    ctx_add(ctx_t *ctx, json_t *json);
+ICACHE_FLASH_ATTR static void    ctx_push(ctx_t *ctx, json_t *json);
+ICACHE_FLASH_ATTR static json_t *ctx_pop(ctx_t *ctx);
+ICACHE_FLASH_ATTR static void    ctx_free(ctx_t *ctx);
 
 
 json_t *json_parse(char *input) {

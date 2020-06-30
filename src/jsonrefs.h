@@ -43,12 +43,14 @@ typedef struct {
 
 
 ICACHE_FLASH_ATTR json_t *make_json_ref(const char *target_fmt, ...);
-ICACHE_FLASH_ATTR void    lookup_port_attrdef_choices(char **choices,
-                                                      port_t *port,
-                                                      attrdef_t *attrdef,
-                                                      int8 *found_port_index,
-                                                      char **found_attrdef_name,
-                                                      json_refs_ctx_t *json_refs_ctx);
+ICACHE_FLASH_ATTR void    lookup_port_attrdef_choices(
+                              char **choices,
+                              port_t *port,
+                              attrdef_t *attrdef,
+                              int8 *found_port_index,
+                              char **found_attrdef_name,
+                              json_refs_ctx_t *json_refs_ctx
+                          );
 
 ICACHE_FLASH_ATTR void    json_refs_ctx_init(json_refs_ctx_t *json_refs_ctx, uint8 type);
 

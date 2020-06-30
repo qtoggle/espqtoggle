@@ -28,42 +28,40 @@
 #include "httpserver.h"
 
 
-#define RESPONSE_TEMPLATE_NO_BODY                           \
-        "HTTP/1.1 %d %s\r\n"                                \
-        "Server: %s\r\n"                                    \
-        "Connection: close\r\n"
+#define RESPONSE_TEMPLATE_NO_BODY "HTTP/1.1 %d %s\r\n"          \
+                                  "Server: %s\r\n"              \
+                                  "Connection: close\r\n"
 
-#define RESPONSE_TEMPLATE                                   \
-        "HTTP/1.1 %d %s\r\n"                                \
-        "Content-Type: %s\r\n"                              \
-        "Cache-Control: no-cache\r\n"                       \
-        "Server: %s\r\n"                                    \
-        "Content-Length: %d\r\n"                            \
-        "Connection: close\r\n"
+#define RESPONSE_TEMPLATE         "HTTP/1.1 %d %s\r\n"          \
+                                  "Content-Type: %s\r\n"        \
+                                  "Cache-Control: no-cache\r\n" \
+                                  "Server: %s\r\n"              \
+                                  "Content-Length: %d\r\n"      \
+                                  "Connection: close\r\n"
 
-#define DEF_REQUEST_TIMEOUT         8
+#define DEF_REQUEST_TIMEOUT 8
 
-#define STATUS_MSG_200              "OK"
-#define STATUS_MSG_201              "Created"
-#define STATUS_MSG_204              "No Content"
+#define STATUS_MSG_200 "OK"
+#define STATUS_MSG_201 "Created"
+#define STATUS_MSG_204 "No Content"
 
-#define STATUS_MSG_400              "Bad Request"
-#define STATUS_MSG_401              "Unauthorized"
-#define STATUS_MSG_403              "Forbidden"
-#define STATUS_MSG_404              "Not Found"
+#define STATUS_MSG_400 "Bad Request"
+#define STATUS_MSG_401 "Unauthorized"
+#define STATUS_MSG_403 "Forbidden"
+#define STATUS_MSG_404 "Not Found"
 
-#define STATUS_MSG_500              "Internal Server Error"
-#define STATUS_MSG_503              "Service Unavailable"
+#define STATUS_MSG_500 "Internal Server Error"
+#define STATUS_MSG_503 "Service Unavailable"
 
 
-static char                       * server_name = NULL;
-static uint32                       request_timeout = 8;
+static char   *server_name = NULL;
+static uint32  request_timeout = 8;
 
 
-ICACHE_FLASH_ATTR static void       handle_header_value_ready(httpserver_context_t *hc);
-ICACHE_FLASH_ATTR static void       handle_invalid(httpserver_context_t *hc, char c);
-ICACHE_FLASH_ATTR static void       handle_request(httpserver_context_t *hc);
-ICACHE_FLASH_ATTR static void       handle_request_timeout(void *arg);
+ICACHE_FLASH_ATTR static void handle_header_value_ready(httpserver_context_t *hc);
+ICACHE_FLASH_ATTR static void handle_invalid(httpserver_context_t *hc, char c);
+ICACHE_FLASH_ATTR static void handle_request(httpserver_context_t *hc);
+ICACHE_FLASH_ATTR static void handle_request_timeout(void *arg);
 
 
 void handle_header_value_ready(httpserver_context_t *hc) {

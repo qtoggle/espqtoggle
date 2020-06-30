@@ -35,18 +35,18 @@
 #ifdef _VIRTUAL
 
 
-#define SAMP_INT                        10  /* Milliseconds */
+#define SAMP_INT                    10  /* Milliseconds */
 
-#define CONFIG_CUSTOM_DATA_OFFS_MIN     0x00 /* 4 bytes */
-#define RETRIES_DATA_OFFS               0x05 /* 1 bytes */
-
-
-ICACHE_FLASH_ATTR static double         read_value(port_t *port);
-ICACHE_FLASH_ATTR static bool           write_value(port_t *port, double value);
-ICACHE_FLASH_ATTR static void           init_virtual_port(uint8 *data, char *strings_ptr, uint32 flags, uint8 rel_slot);
+#define CONFIG_CUSTOM_DATA_OFFS_MIN 0x00 /* 4 bytes */
+#define RETRIES_DATA_OFFS           0x05 /* 1 bytes */
 
 
-static double                           virtual_values[VIRTUAL_MAX_PORTS];
+ICACHE_FLASH_ATTR static double read_value(port_t *port);
+ICACHE_FLASH_ATTR static bool   write_value(port_t *port, double value);
+ICACHE_FLASH_ATTR static void   init_virtual_port(uint8 *data, char *strings_ptr, uint32 flags, uint8 rel_slot);
+
+
+static double virtual_values[VIRTUAL_MAX_PORTS];
 
 
 double read_value(port_t *port) {

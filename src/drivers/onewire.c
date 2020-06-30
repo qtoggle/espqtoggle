@@ -28,8 +28,8 @@
 #include "onewire.h"
 
 
-ICACHE_FLASH_ATTR static void       write_bit(one_wire_t *one_wire, bool value);
-ICACHE_FLASH_ATTR static bool       read_bit(one_wire_t *one_wire);
+ICACHE_FLASH_ATTR static void write_bit(one_wire_t *one_wire, bool value);
+ICACHE_FLASH_ATTR static bool read_bit(one_wire_t *one_wire);
 
 
 void one_wire_setup(one_wire_t *one_wire) {

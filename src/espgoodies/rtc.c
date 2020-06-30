@@ -22,13 +22,13 @@
 #include "rtc.h"
 
 
-#define FULL_BOOT_MAGIC         0xdeadbeef
-#define FULL_BOOT_TEST_ADDR     128     /* 128 * 4 bytes = 512 */
-#define BOOT_COUNT_ADDR         129     /* 129 * 4 bytes = 516 */
+#define FULL_BOOT_MAGIC     0xdeadbeef
+#define FULL_BOOT_TEST_ADDR 128        /* 128 * 4 bytes = 512 */
+#define BOOT_COUNT_ADDR     129        /* 129 * 4 bytes = 516 */
 
 
-static bool                     full_boot = TRUE;
-static uint32                   boot_count = 0;
+static bool   full_boot = TRUE;
+static uint32 boot_count = 0;
 
 
 void rtc_init(void) {

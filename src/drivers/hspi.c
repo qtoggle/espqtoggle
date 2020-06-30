@@ -26,42 +26,42 @@
 #include "drivers/hspi.h"
 
 
-#define ESP8266_REG(addr)     * ((volatile uint32 *)(0x60000000 + (addr)))
-#define ESP8266_CLOCK           80000000UL
+#define ESP8266_REG(addr)*((volatile uint32 *)(0x60000000 + (addr)))
+#define ESP8266_CLOCK     80000000UL
 
-#define SPI1CMD                 ESP8266_REG(0x100)
-#define SPI1C                   ESP8266_REG(0x108)
-#define SPI1C1                  ESP8266_REG(0x10C)
-#define SPI1CLK                 ESP8266_REG(0x118)
-#define SPI1U                   ESP8266_REG(0x11C)
-#define SPI1U1                  ESP8266_REG(0x120)
-#define SPI1P                   ESP8266_REG(0x12C)
-#define SPI1W0                  ESP8266_REG(0x140)
+#define SPI1CMD ESP8266_REG(0x100)
+#define SPI1C   ESP8266_REG(0x108)
+#define SPI1C1  ESP8266_REG(0x10C)
+#define SPI1CLK ESP8266_REG(0x118)
+#define SPI1U   ESP8266_REG(0x11C)
+#define SPI1U1  ESP8266_REG(0x120)
+#define SPI1P   ESP8266_REG(0x12C)
+#define SPI1W0  ESP8266_REG(0x140)
 
-#define GPMUX                   ESP8266_REG(0x800)
+#define GPMUX ESP8266_REG(0x800)
 
-#define SPIUDUMMY               (1 << 29) /* DUMMY phase */
-#define SPIUMOSI                (1 << 27) /* MOSI phase */
-#define SPICWBO                 (1 << 26) /* SPI_WR_BIT_ORDER */
-#define SPICRBO                 (1 << 25) /* SPI_RD_BIT_ODER */
-#define SPIBUSY                 (1 << 18) /* SPI_USR */
-#define SPIUSME                 (1 << 7)  /* SPI_CK_OUT_EDGE, SPI master edge (0: falling, 1: rising) */
-#define SPIUSSE                 (1 << 6)  /* SPI Slave Edge (0:falling, 1:rising), SPI_CK_I_EDGE */
-#define SPIUCSSETUP             (1 << 5)  /* SPI_CS_SETUP */
-#define SPIUCSHOLD              (1 << 4)  /* SPI_CS_HOLD */
-#define SPIUDUPLEX              (1 << 0)  /* SPI_DOUTDIN */
+#define SPIUDUMMY   (1 << 29) /* DUMMY phase */
+#define SPIUMOSI    (1 << 27) /* MOSI phase */
+#define SPICWBO     (1 << 26) /* SPI_WR_BIT_ORDER */
+#define SPICRBO     (1 << 25) /* SPI_RD_BIT_ODER */
+#define SPIBUSY     (1 << 18) /* SPI_USR */
+#define SPIUSME     (1 << 7)  /* SPI_CK_OUT_EDGE, SPI master edge (0: falling, 1: rising) */
+#define SPIUSSE     (1 << 6)  /* SPI Slave Edge (0:falling, 1:rising), SPI_CK_I_EDGE */
+#define SPIUCSSETUP (1 << 5)  /* SPI_CS_SETUP */
+#define SPIUCSHOLD  (1 << 4)  /* SPI_CS_HOLD */
+#define SPIUDUPLEX  (1 << 0)  /* SPI_DOUTDIN */
 
-#define SPILMISO                8
-#define SPILMOSI                17
-#define SPIMMISO                0x1FF
-#define SPIMMOSI                0x1FF
+#define SPILMISO 8
+#define SPILMOSI 17
+#define SPIMMISO 0x1FF
+#define SPIMMOSI 0x1FF
 
-#define MIN_FREQ_REG_VALUE      0x7FFFF020
+#define MIN_FREQ_REG_VALUE 0x7FFFF020
 
 
 typedef union {
 
-    uint32_t reg_value;
+    uint32 reg_value;
     struct {
         unsigned reg_l: 6;
         unsigned reg_h: 6;
@@ -73,10 +73,10 @@ typedef union {
 } spi_clock_t;
 
 
-static uint8                    current_bit_order;
-static bool                     current_cpol;
-static bool                     current_cpha;
-static uint32                   current_freq;
+static uint8  current_bit_order;
+static bool   current_cpol;
+static bool   current_cpha;
+static uint32 current_freq;
 
 
 ICACHE_FLASH_ATTR static uint32 clock_reg_to_freq(spi_clock_t *reg);

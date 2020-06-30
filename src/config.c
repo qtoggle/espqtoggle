@@ -43,17 +43,23 @@
 #include "config.h"
 
 
-static bool                             provisioning = FALSE;
+static bool provisioning = FALSE;
 
 
-ICACHE_FLASH_ATTR void                  on_config_provisioning_response(char *body, int body_len, int status,
-                                                                        char *header_names[], char *header_values[],
-                                                                        int header_count, uint8 addr[]);
-ICACHE_FLASH_ATTR void                  apply_device_provisioning_config(json_t *device_config);
-ICACHE_FLASH_ATTR void                  apply_peripherals_provisioning_config(json_t *peripherals_config);
-ICACHE_FLASH_ATTR void                  apply_system_provisioning_config(json_t *system_config);
-ICACHE_FLASH_ATTR void                  apply_ports_provisioning_config(json_t *ports_config);
-ICACHE_FLASH_ATTR void                  apply_port_provisioning_config(json_t *port_config);
+ICACHE_FLASH_ATTR void on_config_provisioning_response(
+                           char *body,
+                           int body_len,
+                           int status,
+                           char *header_names[],
+                           char *header_values[],
+                           int header_count,
+                           uint8 addr[]
+                       );
+ICACHE_FLASH_ATTR void apply_device_provisioning_config(json_t *device_config);
+ICACHE_FLASH_ATTR void apply_peripherals_provisioning_config(json_t *peripherals_config);
+ICACHE_FLASH_ATTR void apply_system_provisioning_config(json_t *system_config);
+ICACHE_FLASH_ATTR void apply_ports_provisioning_config(json_t *ports_config);
+ICACHE_FLASH_ATTR void apply_port_provisioning_config(json_t *port_config);
 
 
 void config_init(void) {

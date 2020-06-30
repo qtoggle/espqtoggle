@@ -38,45 +38,46 @@
 #include "ports.h"
 
 
-port_t                           ** all_ports = NULL;
-int                                 all_ports_count = 0;
-static uint32                       used_slots = 0;
+port_t        **all_ports = NULL;
+int             all_ports_count = 0;
+
+static uint32   used_slots = 0;
 
 
-ICACHE_FLASH_ATTR static int64      attr_get_param_uint8(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_param_uint8(port_t *port, attrdef_t *attrdef, int64 value);
+ICACHE_FLASH_ATTR static int64  attr_get_param_uint8(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void   attr_set_param_uint8(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static int64      attr_get_param_sint8(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_param_sint8(port_t *port, attrdef_t *attrdef, int64 value);
+ICACHE_FLASH_ATTR static int64  attr_get_param_sint8(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void   attr_set_param_sint8(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static int64      attr_get_param_uint16(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_param_uint16(port_t *port, attrdef_t *attrdef, int64 value);
+ICACHE_FLASH_ATTR static int64  attr_get_param_uint16(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void   attr_set_param_uint16(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static int64      attr_get_param_sint16(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_param_sint16(port_t *port, attrdef_t *attrdef, int64 value);
+ICACHE_FLASH_ATTR static int64  attr_get_param_sint16(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void   attr_set_param_sint16(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static int64      attr_get_param_uint32(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_param_uint32(port_t *port, attrdef_t *attrdef, int64 value);
+ICACHE_FLASH_ATTR static int64  attr_get_param_uint32(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void   attr_set_param_uint32(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static int64      attr_get_param_sint32(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_param_sint32(port_t *port, attrdef_t *attrdef, int64 value);
+ICACHE_FLASH_ATTR static int64  attr_get_param_sint32(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void   attr_set_param_sint32(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static int64      attr_get_param_sint64(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_param_sint64(port_t *port, attrdef_t *attrdef, int64 value);
+ICACHE_FLASH_ATTR static int64  attr_get_param_sint64(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void   attr_set_param_sint64(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static double     attr_get_param_double(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_param_double(port_t *port, attrdef_t *attrdef, double value);
+ICACHE_FLASH_ATTR static double attr_get_param_double(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void   attr_set_param_double(port_t *port, attrdef_t *attrdef, double value);
 
-ICACHE_FLASH_ATTR static int        attr_get_flag(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_flag(port_t *port, attrdef_t *attrdef, int value);
+ICACHE_FLASH_ATTR static int    attr_get_flag(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void   attr_set_flag(port_t *port, attrdef_t *attrdef, int value);
 
-ICACHE_FLASH_ATTR static int        attr_get_param_num_choices(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_param_num_choices(port_t *port, attrdef_t *attrdef, int index);
+ICACHE_FLASH_ATTR static int    attr_get_param_num_choices(port_t *port, attrdef_t *attrdef);
+ICACHE_FLASH_ATTR static void   attr_set_param_num_choices(port_t *port, attrdef_t *attrdef, int index);
 
-ICACHE_FLASH_ATTR static void       attr_set_user_data_cache(port_t *port, attrdef_t *attrdef, double value);
+ICACHE_FLASH_ATTR static void   attr_set_user_data_cache(port_t *port, attrdef_t *attrdef, double value);
 
-ICACHE_FLASH_ATTR static void       port_load(port_t *port, uint8 *config_data);
-ICACHE_FLASH_ATTR static void       port_save(port_t *port, uint8 *config_data, uint32 *strings_offs);
+ICACHE_FLASH_ATTR static void   port_load(port_t *port, uint8 *config_data);
+ICACHE_FLASH_ATTR static void   port_save(port_t *port, uint8 *config_data, uint32 *strings_offs);
 
 
 int64 attr_get_param_uint8(port_t *port, attrdef_t *attrdef) {

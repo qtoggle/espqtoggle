@@ -44,11 +44,13 @@ typedef void  (*tcp_recv_cb_t) (struct espconn* conn, void *app_info, uint8 *dat
 typedef void  (*tcp_sent_cb_t) (struct espconn* conn, void *app_info);
 typedef void  (*tcp_disc_cb_t) (struct espconn* conn, void *app_info);
 
-ICACHE_FLASH_ATTR void tcp_server_init(int tcp_port,
-                                       tcp_conn_cb_t conn_cb,
-                                       tcp_recv_cb_t recv_cb,
-                                       tcp_sent_cb_t sent_cb,
-                                       tcp_disc_cb_t disc_cb);
+ICACHE_FLASH_ATTR void tcp_server_init(
+                           int tcp_port,
+                           tcp_conn_cb_t conn_cb,
+                           tcp_recv_cb_t recv_cb,
+                           tcp_sent_cb_t sent_cb,
+                           tcp_disc_cb_t disc_cb
+                       );
 
 ICACHE_FLASH_ATTR void tcp_server_stop(void);
 ICACHE_FLASH_ATTR void tcp_send(struct espconn *conn, uint8 *data, int len, bool free_on_sent);

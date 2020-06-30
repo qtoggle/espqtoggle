@@ -46,16 +46,16 @@ char *EVENT_TYPES_STR[] = {
 
 int EVENT_ACCESS_LEVELS[] = {
     0, /* offset */
-    API_ACCESS_LEVEL_VIEWONLY,    /* value-change */
-    API_ACCESS_LEVEL_VIEWONLY,    /* port-update */
-    API_ACCESS_LEVEL_VIEWONLY,    /* port-add */
-    API_ACCESS_LEVEL_VIEWONLY,    /* port-remove */
-    API_ACCESS_LEVEL_ADMIN,       /* device-update */
-    API_ACCESS_LEVEL_VIEWONLY     /* full-update */
+    API_ACCESS_LEVEL_VIEWONLY, /* value-change */
+    API_ACCESS_LEVEL_VIEWONLY, /* port-update */
+    API_ACCESS_LEVEL_VIEWONLY, /* port-add */
+    API_ACCESS_LEVEL_VIEWONLY, /* port-remove */
+    API_ACCESS_LEVEL_ADMIN,    /* device-update */
+    API_ACCESS_LEVEL_VIEWONLY  /* full-update */
 };
 
 
-ICACHE_FLASH_ATTR static void   event_push(int type, char *port_id);
+ICACHE_FLASH_ATTR static void event_push(int type, char *port_id);
 
 
 void event_push_value_change(port_t *port) {

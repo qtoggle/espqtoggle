@@ -26,7 +26,7 @@
 #include "httputils.h"
 
 
-ICACHE_FLASH_ATTR static void       unescape_url_encoded_value(char *value);
+ICACHE_FLASH_ATTR static void unescape_url_encoded_value(char *value);
 
 
 json_t *http_parse_url_encoded(char *input) {

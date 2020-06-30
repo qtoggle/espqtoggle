@@ -29,25 +29,25 @@
 #include "peripherals/gpiop.h"
 
 
-#define FLAG_NO_OUTPUT              0
-#define FLAG_NO_PULL_UP             1
-#define FLAG_NO_PULL_DOWN           2
-#define PARAM_NO_PIN                0
+#define FLAG_NO_OUTPUT    0
+#define FLAG_NO_PULL_UP   1
+#define FLAG_NO_PULL_DOWN 2
+#define PARAM_NO_PIN      0
 
 
-ICACHE_FLASH_ATTR static void       configure(port_t *port);
-ICACHE_FLASH_ATTR static double     read_value(port_t *port);
-ICACHE_FLASH_ATTR static bool       write_value(port_t *port, double value);
+ICACHE_FLASH_ATTR static void   configure(port_t *port);
+ICACHE_FLASH_ATTR static double read_value(port_t *port);
+ICACHE_FLASH_ATTR static bool   write_value(port_t *port, double value);
 
-ICACHE_FLASH_ATTR static void       init(peripheral_t *peripheral);
-ICACHE_FLASH_ATTR static void       make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len);
+ICACHE_FLASH_ATTR static void   init(peripheral_t *peripheral);
+ICACHE_FLASH_ATTR static void   make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len);
 
 
 typedef struct {
 
-    uint8           pin;
-    bool            output;
-    bool            value;
+    uint8 pin;
+    bool  output;
+    bool  value;
 
 } user_data_t;
 

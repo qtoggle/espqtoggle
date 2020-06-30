@@ -28,18 +28,18 @@
 #include "device.h"
 
 
-#define NULL_HASH       "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+#define NULL_HASH "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 
 
-char                  * device_name = NULL;
-char                  * device_display_name = NULL;
-char                    device_admin_password_hash[SHA256_HEX_LEN + 1] = {0};
-char                    device_normal_password_hash[SHA256_HEX_LEN + 1] = {0};
-char                    device_viewonly_password_hash[SHA256_HEX_LEN + 1] = {0};
-char                    device_config_name[API_MAX_DEVICE_CONFIG_NAME_LEN + 1] = {0};
-uint32                  device_flags = 0;
-uint16                  device_tcp_port = 0;
-uint16                  device_provisioning_version = 0;
+char   *device_name = NULL;
+char   *device_display_name = NULL;
+char    device_admin_password_hash[SHA256_HEX_LEN + 1] = {0};
+char    device_normal_password_hash[SHA256_HEX_LEN + 1] = {0};
+char    device_viewonly_password_hash[SHA256_HEX_LEN + 1] = {0};
+char    device_config_name[API_MAX_DEVICE_CONFIG_NAME_LEN + 1] = {0};
+uint32  device_flags = 0;
+uint16  device_tcp_port = 0;
+uint16  device_provisioning_version = 0;
 
 
 void device_load(uint8 *config_data) {

@@ -41,39 +41,38 @@
 #define TEMPORARY_CONNECT_INTERVAL  10000   /* How often to attempt to connect, in temporary station mode */
 
 
-static bool                         station_connected = FALSE;
-static bool                         scanning = FALSE;
-static wifi_scan_callback_t         scan_callback = NULL;
-static wifi_connect_callback_t      station_connect_callback = NULL;
-static wifi_ap_client_callback_t    ap_client_callback = NULL;
-static os_timer_t                   connected_watchdog_timer;
-static os_timer_t                   temporary_connect_timer;
-static int                          connected_watchdog_counter = 0;
+static bool                      station_connected = FALSE;
+static bool                      scanning = FALSE;
+static wifi_scan_callback_t      scan_callback = NULL;
+static wifi_connect_callback_t   station_connect_callback = NULL;
+static wifi_ap_client_callback_t ap_client_callback = NULL;
+static os_timer_t                connected_watchdog_timer;
+static os_timer_t                temporary_connect_timer;
+static int                       connected_watchdog_counter = 0;
 
-static ip_addr_t                    manual_ip_address = {0};
-static uint8                        manual_netmask = 0;
-static ip_addr_t                    manual_gateway = {0};
-static ip_addr_t                    manual_dns = {0};
+static ip_addr_t                 manual_ip_address = {0};
+static uint8                     manual_netmask = 0;
+static ip_addr_t                 manual_gateway = {0};
+static ip_addr_t                 manual_dns = {0};
 
-static uint8                        current_bssid[WIFI_BSSID_LEN];
-static struct station_config        cached_station_config;
-static bool                         cached_station_config_changed = FALSE;
-static bool                         cached_station_config_read = FALSE;
-static struct ip_info               cached_ip_info;
+static uint8                     current_bssid[WIFI_BSSID_LEN];
+static struct station_config     cached_station_config;
+static bool                      cached_station_config_changed = FALSE;
+static bool                      cached_station_config_read = FALSE;
+static struct ip_info            cached_ip_info;
 
-static bool                         ap_enabled = FALSE;
-static bool                         station_enabled = FALSE;
-static bool                         temporary_station_enabled = FALSE;
-static bool                         temporary_connect_timer_armed = FALSE;
+static bool                      ap_enabled = FALSE;
+static bool                      station_enabled = FALSE;
+static bool                      temporary_station_enabled = FALSE;
+static bool                      temporary_connect_timer_armed = FALSE;
 
 
-ICACHE_FLASH_ATTR static void       ensure_station_config_read(void);
-
-ICACHE_FLASH_ATTR static void       on_wifi_event(System_Event_t *evt);
-ICACHE_FLASH_ATTR static void       on_wifi_scan_done(void *arg, STATUS status);
-ICACHE_FLASH_ATTR static void       on_connected_watchdog(void *arg);
-ICACHE_FLASH_ATTR static void       on_temporary_connect(void *arg);
-ICACHE_FLASH_ATTR static int        compare_wifi_rssi(const void *a, const void *b);
+ICACHE_FLASH_ATTR static void ensure_station_config_read(void);
+ICACHE_FLASH_ATTR static void on_wifi_event(System_Event_t *evt);
+ICACHE_FLASH_ATTR static void on_wifi_scan_done(void *arg, STATUS status);
+ICACHE_FLASH_ATTR static void on_connected_watchdog(void *arg);
+ICACHE_FLASH_ATTR static void on_temporary_connect(void *arg);
+ICACHE_FLASH_ATTR static int  compare_wifi_rssi(const void *a, const void *b);
 
 
 char *wifi_get_ssid(void) {

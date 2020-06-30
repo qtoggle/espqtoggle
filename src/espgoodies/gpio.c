@@ -28,9 +28,9 @@
 #include "gpio.h"
 
 
-static uint32                   gpio_configured_state;
-static uint32                   gpio_output_state;
-static uint32                   gpio_pull_state;
+static uint32 gpio_configured_state;
+static uint32 gpio_output_state;
+static uint32 gpio_pull_state;
 
 
 int gpio_get_mux(int gpio_no) {

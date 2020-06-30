@@ -60,14 +60,14 @@
 #include "apiutils.h"
 
 
-#define _API_ERROR(c, error, field_name, field_value) ({                                                          \
-    if (response_json) json_free(response_json);                                        \
-    json_obj_append(response_json = json_obj_new(), "error", json_str_new(error));      \
-    if (field_name) {                                                                   \
-        json_obj_append(response_json, field_name, json_str_new(field_value));          \
-    }                                                                                   \
-    *code = c;                                                                          \
-    response_json;                                                                      \
+#define _API_ERROR(c, error, field_name, field_value) ({                           \
+    if (response_json) json_free(response_json);                                   \
+    json_obj_append(response_json = json_obj_new(), "error", json_str_new(error)); \
+    if (field_name) {                                                              \
+        json_obj_append(response_json, field_name, json_str_new(field_value));     \
+    }                                                                              \
+    *code = c;                                                                     \
+    response_json;                                                                 \
 })
 
 #define API_ERROR(c, error) _API_ERROR(c, error, NULL, NULL)
@@ -99,79 +99,79 @@
     response_json;                                                                      \
 })
 
-#define INVALID_EXPRESSION(field, reason, token, pos) ({                                \
-    if (response_json) json_free(response_json);                                        \
-    response_json = json_obj_new();                                                     \
-    json_obj_append(response_json, "error", json_str_new("invalid-field"));             \
-    json_obj_append(response_json, "field", json_str_new(field));                       \
-    json_t *details_json = json_obj_new();                                              \
-    json_obj_append(details_json, "reason", json_str_new(reason));                      \
-    if (token) {                                                                        \
-        json_obj_append(details_json, "token", json_str_new(token));                    \
-    }                                                                                   \
-    if (pos >= 1) {                                                                     \
-        json_obj_append(details_json, "pos", json_int_new(pos));                        \
-    }                                                                                   \
-    json_obj_append(response_json, "details", details_json);                            \
-    *code = 400;                                                                        \
-    response_json;                                                                      \
+#define INVALID_EXPRESSION(field, reason, token, pos) ({                    \
+    if (response_json) json_free(response_json);                            \
+    response_json = json_obj_new();                                         \
+    json_obj_append(response_json, "error", json_str_new("invalid-field")); \
+    json_obj_append(response_json, "field", json_str_new(field));           \
+    json_t *details_json = json_obj_new();                                  \
+    json_obj_append(details_json, "reason", json_str_new(reason));          \
+    if (token) {                                                            \
+        json_obj_append(details_json, "token", json_str_new(token));        \
+    }                                                                       \
+    if (pos >= 1) {                                                         \
+        json_obj_append(details_json, "pos", json_int_new(pos));            \
+    }                                                                       \
+    json_obj_append(response_json, "details", details_json);                \
+    *code = 400;                                                            \
+    response_json;                                                          \
 })
 
-#define INVALID_EXPRESSION_FROM_ERROR(field) ({                                         \
-    expr_parse_error_t *parse_error = expr_parse_get_error();                           \
-    INVALID_EXPRESSION(field,                                                           \
-                       parse_error->reason,                                             \
-                       parse_error->token,                                              \
-                       parse_error->pos);                                               \
+#define INVALID_EXPRESSION_FROM_ERROR(field) ({               \
+    expr_parse_error_t *parse_error = expr_parse_get_error(); \
+    INVALID_EXPRESSION(field,                                 \
+                       parse_error->reason,                   \
+                       parse_error->token,                    \
+                       parse_error->pos);                     \
 })
 
 #define MISSING_FIELD(field) _API_ERROR(400, "missing-field", "field", field)
 #define INVALID_FIELD(field) _API_ERROR(400, "invalid-field", "field", field)
 
-#define SEQ_INVALID_FIELD(field) ({                                                     \
-    free(port->sequence_values);                                                        \
-    free(port->sequence_delays);                                                        \
-    port->sequence_pos = -1;                                                            \
-    port->sequence_repeat = -1;                                                         \
-    INVALID_FIELD(field);                                                               \
+#define SEQ_INVALID_FIELD(field) ({ \
+    free(port->sequence_values);    \
+    free(port->sequence_delays);    \
+    port->sequence_pos = -1;        \
+    port->sequence_repeat = -1;     \
+    INVALID_FIELD(field);           \
 })
 
 #define ATTR_NOT_MODIFIABLE(attr) _API_ERROR(400, "attribute-not-modifiable", "attribute", attr)
 
 #define NO_SUCH_ATTRIBUTE(attr) _API_ERROR(400, "no-such-attribute", "attribute", attr)
 
-#define RESPOND_NO_SUCH_FUNCTION() {                                                    \
-    API_ERROR(404, "no-such-function");                                                 \
-    goto response;                                                                      \
+#define RESPOND_NO_SUCH_FUNCTION() {    \
+    API_ERROR(404, "no-such-function"); \
+    goto response;                      \
 }
 
-#define WIFI_RSSI_EXCELLENT     -55
-#define WIFI_RSSI_GOOD          -65
-#define WIFI_RSSI_FAIR          -75
+#define WIFI_RSSI_EXCELLENT -55
+#define WIFI_RSSI_GOOD      -65
+#define WIFI_RSSI_FAIR      -75
 
 
-static uint8                    api_access_level;
-static uint8                    api_access_level_saved;
-static struct espconn         * api_conn;
-static struct espconn         * api_conn_saved;
+static uint8           api_access_level;
+static uint8           api_access_level_saved;
+static struct espconn *api_conn;
+static struct espconn *api_conn_saved;
 
 
 #ifdef _OTA
-static char                   * ota_states_str[] = {"idle", "checking", "downloading", "restarting"};
+static char *ota_states_str[] = {"idle", "checking", "downloading", "restarting"};
 #endif
 
 
-ICACHE_FLASH_ATTR static json_t       * port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx);
-ICACHE_FLASH_ATTR static json_t       * device_attrdefs_to_json(void);
+ICACHE_FLASH_ATTR static json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx);
+ICACHE_FLASH_ATTR static json_t *device_attrdefs_to_json(void);
 
-ICACHE_FLASH_ATTR static void           on_sequence_timer(void *arg);
+ICACHE_FLASH_ATTR static void    on_sequence_timer(void *arg);
 
 #ifdef _OTA
-ICACHE_FLASH_ATTR static void           on_ota_latest(char *version, char *date, char *url);
-ICACHE_FLASH_ATTR static void           on_ota_perform(int code);
+ICACHE_FLASH_ATTR static void    on_ota_latest(char *version, char *date, char *url);
+ICACHE_FLASH_ATTR static void    on_ota_perform(int code);
 #endif
 
-ICACHE_FLASH_ATTR static void           on_wifi_scan(wifi_scan_result_t *results, int len);
+ICACHE_FLASH_ATTR static void    on_wifi_scan(wifi_scan_result_t *results, int len);
 
 
 json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *request_json, int *code) {

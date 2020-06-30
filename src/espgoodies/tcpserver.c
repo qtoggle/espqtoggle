@@ -26,29 +26,29 @@
 #include "tcpserver.h"
 
 
-#define SEND_PACKET_SIZE        1024
+#define SEND_PACKET_SIZE 1024
 
 typedef struct {
 
-    void *                      app_info;
-    uint8 *                     send_buffer;
-    int                         send_len;
-    int                         send_offs;
-    bool                        free_on_sent;
+    void  *app_info;
+    uint8 *send_buffer;
+    int    send_len;
+    int    send_offs;
+    bool   free_on_sent;
 
 } conn_info_t;
 
-static struct espconn *         tcp_server_conn = NULL;
-static tcp_conn_cb_t            tcp_conn_cb = NULL;
-static tcp_recv_cb_t            tcp_recv_cb = NULL;
-static tcp_sent_cb_t            tcp_sent_cb = NULL;
-static tcp_disc_cb_t            tcp_disc_cb = NULL;
+static struct espconn *tcp_server_conn = NULL;
+static tcp_conn_cb_t   tcp_conn_cb = NULL;
+static tcp_recv_cb_t   tcp_recv_cb = NULL;
+static tcp_sent_cb_t   tcp_sent_cb = NULL;
+static tcp_disc_cb_t   tcp_disc_cb = NULL;
 
-ICACHE_FLASH_ATTR static void   on_client_connection(void *arg);
-ICACHE_FLASH_ATTR static void   on_client_recv(void *arg, char *data, uint16 len);
-ICACHE_FLASH_ATTR static void   on_client_sent(void *arg);
-ICACHE_FLASH_ATTR static void   on_client_disconnect(void *arg);
-ICACHE_FLASH_ATTR static void   on_client_error(void *arg, int8 err);
+ICACHE_FLASH_ATTR static void on_client_connection(void *arg);
+ICACHE_FLASH_ATTR static void on_client_recv(void *arg, char *data, uint16 len);
+ICACHE_FLASH_ATTR static void on_client_sent(void *arg);
+ICACHE_FLASH_ATTR static void on_client_disconnect(void *arg);
+ICACHE_FLASH_ATTR static void on_client_error(void *arg, int8 err);
 
 
 #if defined(_DEBUG) && defined(_DEBUG_TCPSERVER)

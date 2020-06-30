@@ -72,10 +72,12 @@ ICACHE_FLASH_ATTR void   system_get_fw_version(version_t *version);
 ICACHE_FLASH_ATTR void   system_set_fw_version(version_t *version);
 
 ICACHE_FLASH_ATTR void   system_setup_button_set_config(int8 pin, bool level, uint8 hold, uint8 reset_hold);
-ICACHE_FLASH_ATTR void   system_setup_button_get_config(int8 *pin,
-                                                        bool *level,
-                                                        uint8 *hold,
-                                                        uint8 *reset_hold);
+ICACHE_FLASH_ATTR void   system_setup_button_get_config(
+                             int8 *pin,
+                             bool *level,
+                             uint8 *hold,
+                             uint8 *reset_hold
+                         );
 ICACHE_FLASH_ATTR void   system_status_led_set_config(int8 pin, bool level);
 ICACHE_FLASH_ATTR void   system_status_led_get_config(int8 *pin, bool *level);
 

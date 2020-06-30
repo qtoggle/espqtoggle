@@ -38,38 +38,45 @@
 #include "webhooks.h"
 
 
-#define CONTENT_TYPE_HEADER         "Content-Type: application/json; charset=utf-8\r\n"
-#define CONTENT_TYPE_HEADER_LEN     47
+#define CONTENT_TYPE_HEADER     "Content-Type: application/json; charset=utf-8\r\n"
+#define CONTENT_TYPE_HEADER_LEN 47
 
 
 typedef struct webhooks_queue_node {
 
-    event_t                       * event;
-    char                            retries_left;
-    struct webhooks_queue_node    * next;
+    event_t                    *event;
+    char                        retries_left;
+    struct webhooks_queue_node *next;
 
 } webhooks_queue_node_t;
 
 
-char *                          webhooks_host = NULL;
-uint16                          webhooks_port = 80;
-char *                          webhooks_path = NULL;
-char                            webhooks_password_hash[SHA256_HEX_LEN + 1] = {0};
-uint8                           webhooks_events_mask = 0;
-int                             webhooks_timeout = 0;
-int                             webhooks_retries = 3;
+char   *webhooks_host = NULL;
+uint16  webhooks_port = 80;
+char   *webhooks_path = NULL;
+char    webhooks_password_hash[SHA256_HEX_LEN + 1] = {0};
+uint8   webhooks_events_mask = 0;
+int     webhooks_timeout = 0;
+int     webhooks_retries = 3;
 
-static webhooks_queue_node_t  * queue = NULL;
-static int                      queue_len = 0;
-os_timer_t                      later_timer;
+static webhooks_queue_node_t *queue = NULL;
+static int                    queue_len = 0;
+static os_timer_t             later_timer;
 
 
 ICACHE_FLASH_ATTR static void   process_queue(void);
 ICACHE_FLASH_ATTR static void   process_queue_later(void);
 ICACHE_FLASH_ATTR static void   on_process_queue_later(void *arg);
 ICACHE_FLASH_ATTR static void   do_webhook_request(event_t *event);
-ICACHE_FLASH_ATTR static void   on_webhook_response(char *body, int body_len, int status, char *header_names[],
-                                                    char *header_values[], int header_count, uint8 addr[]);
+ICACHE_FLASH_ATTR static void   on_webhook_response(
+                                    char *body,
+                                    int body_len,
+                                    int status,
+                                    char *header_names[],
+                                    char *header_values[],
+                                    int header_count,
+                                    uint8 addr[]
+                                );
 
 
 void webhooks_push_event(int type, char *port_id) {

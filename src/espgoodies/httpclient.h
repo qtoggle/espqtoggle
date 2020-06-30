@@ -34,14 +34,16 @@ typedef void (*http_callback_t)(
 );
 
 void ICACHE_FLASH_ATTR httpclient_set_user_agent(char *agent);
-void ICACHE_FLASH_ATTR httpclient_request(char *method,
-                                          char *url,
-                                          uint8 *body,
-                                          int body_len,
-                                          char *header_names[],
-                                          char *header_values[],
-                                          int header_count,
-                                          http_callback_t callback,
-                                          int timeout);
+void ICACHE_FLASH_ATTR httpclient_request(
+                           char *method,
+                           char *url,
+                           uint8 *body,
+                           int body_len,
+                           char *header_names[],
+                           char *header_values[],
+                           int header_count,
+                           http_callback_t callback,
+                           int timeout
+                       );
 
 #endif /* _ESPGOODIES_HTTPCLIENT_H */

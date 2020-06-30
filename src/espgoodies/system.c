@@ -33,12 +33,12 @@
 #include "system.h"
 
 
-#define RESET_DELAY                 3000    /* Milliseconds */
+#define RESET_DELAY          3000    /* Milliseconds */
 
-#define SETUP_MODE_IDLE             0
-#define SETUP_MODE_PRESSED          1
-#define SETUP_MODE_TRIGGERED        2
-#define SETUP_MODE_RESET            3
+#define SETUP_MODE_IDLE      0
+#define SETUP_MODE_PRESSED   1
+#define SETUP_MODE_TRIGGERED 2
+#define SETUP_MODE_RESET     3
 
 static int8                         setup_button_pin = -1;
 static bool                         setup_button_level = FALSE;
@@ -61,7 +61,7 @@ static bool                         setup_mode = FALSE;
 static uint32                       fw_version_int = 0;
 
 
-ICACHE_FLASH_ATTR static void       on_system_reset(void *arg);
+ICACHE_FLASH_ATTR static void on_system_reset(void *arg);
 
 
 void system_config_init(void) {

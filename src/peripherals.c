@@ -34,8 +34,8 @@ static peripheral_type_t *all_peripheral_types[] = {
 
 };
 
-peripheral_t  ** all_peripherals = NULL;
-uint8            all_peripherals_count = 0;
+peripheral_t **all_peripherals = NULL;
+uint8          all_peripherals_count = 0;
 
 
 ICACHE_FLASH_ATTR static void peripheral_load(peripheral_t *peripheral, uint8 *config_data);

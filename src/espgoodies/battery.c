@@ -29,7 +29,7 @@
 #include "battery.h"
 
 
-static struct {  /* Voltage vs. battery SoC lookup table */
+static struct { /* Voltage vs. battery SoC lookup table */
 
     uint16 voltage;
     uint16 level;

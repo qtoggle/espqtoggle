@@ -32,29 +32,29 @@
 #include "utils.h"
 
 
-#define REALLOC_CHUNK_SIZE      8
-#define DTOSTR_BUF_LEN          32
-#define MAX_CALL_LATER_TIMERS   16
+#define REALLOC_CHUNK_SIZE    8
+#define DTOSTR_BUF_LEN        32
+#define MAX_CALL_LATER_TIMERS 16
 
 #if defined(_DEBUG) && defined(_DEBUG_IP)
-static struct espconn         * debug_udp_conn = NULL;
-ICACHE_FLASH_ATTR static void   debug_udp_send(char *buf, int len);
+static struct espconn         *debug_udp_conn = NULL;
+ICACHE_FLASH_ATTR static void  debug_udp_send(char *buf, int len);
 #endif
 
-static os_timer_t            ** call_later_timers = NULL;
-static uint8                    call_later_timers_count = 0;
+static os_timer_t **call_later_timers = NULL;
+static uint8        call_later_timers_count = 0;
 
 
 typedef struct {
 
-    os_timer_t                * timer;
-    call_later_callback_t       callback;
-    void                      * arg;
+    os_timer_t            *timer;
+    call_later_callback_t  callback;
+    void                  *arg;
 
 } call_later_callback_wrapper_arg_t;
 
 
-ICACHE_FLASH_ATTR static void   call_later_callback_wrapper(call_later_callback_wrapper_arg_t *arg);
+ICACHE_FLASH_ATTR static void call_later_callback_wrapper(call_later_callback_wrapper_arg_t *arg);
 
 
 void append_max_len(char *s, char c, int max_len) {

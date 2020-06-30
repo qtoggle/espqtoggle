@@ -51,30 +51,36 @@
 #define HTTP_SERVER_REQUEST_TIMEOUT 4
 #define MIN_HTTP_FREE_MEM           4096  /* At least 4k of free heap to serve an HTTP request */
 
-#define JSON_CONTENT_TYPE           "application/json; charset=utf-8"
-#define HTML_CONTENT_TYPE           "text/html; charset=utf-8"
+#define JSON_CONTENT_TYPE "application/json; charset=utf-8"
+#define HTML_CONTENT_TYPE "text/html; charset=utf-8"
 
-#define RESPOND_UNAUTHENTICATED()   respond_error(conn, 401, "authentication-required");
-
-
-static httpserver_context_t         http_contexts[MAX_PARALLEL_HTTP_REQ];
-
-static char                       * unprotected_paths[] = {"/access", NULL};
-static char                       * extra_header_names[] = {"ESP-Free-Memory", NULL};
+#define RESPOND_UNAUTHENTICATED() respond_error(conn, 401, "authentication-required");
 
 
-ICACHE_FLASH_ATTR static void     * on_tcp_conn(struct espconn *conn);
-ICACHE_FLASH_ATTR static void       on_tcp_recv(struct espconn *conn, httpserver_context_t *hc, uint8 *data, int len);
-ICACHE_FLASH_ATTR static void       on_tcp_sent(struct espconn *conn, httpserver_context_t *hc);
-ICACHE_FLASH_ATTR static void       on_tcp_disc(struct espconn *conn, httpserver_context_t *hc);
+static httpserver_context_t  http_contexts[MAX_PARALLEL_HTTP_REQ];
+static char                 *unprotected_paths[] = {"/access", NULL};
+static char                 *extra_header_names[] = {"ESP-Free-Memory", NULL};
 
-ICACHE_FLASH_ATTR static void       on_invalid_http_request(struct espconn *conn);
-ICACHE_FLASH_ATTR static void       on_http_request_timeout(struct espconn *conn);
-ICACHE_FLASH_ATTR static void       on_http_request(struct espconn *conn, int method, char *path, char *query,
-                                                    char *header_names[], char *header_values[], int header_count,
-                                                    char *body);
 
-ICACHE_FLASH_ATTR static void       respond_error_field(struct espconn *conn, int status, char *error, char *field);
+ICACHE_FLASH_ATTR static void *on_tcp_conn(struct espconn *conn);
+ICACHE_FLASH_ATTR static void  on_tcp_recv(struct espconn *conn, httpserver_context_t *hc, uint8 *data, int len);
+ICACHE_FLASH_ATTR static void  on_tcp_sent(struct espconn *conn, httpserver_context_t *hc);
+ICACHE_FLASH_ATTR static void  on_tcp_disc(struct espconn *conn, httpserver_context_t *hc);
+
+ICACHE_FLASH_ATTR static void  on_invalid_http_request(struct espconn *conn);
+ICACHE_FLASH_ATTR static void  on_http_request_timeout(struct espconn *conn);
+ICACHE_FLASH_ATTR static void  on_http_request(
+                                   struct espconn *conn,
+                                   int method,
+                                   char *path,
+                                   char *query,
+                                   char *header_names[],
+                                   char *header_values[],
+                                   int header_count,
+                                   char *body
+                               );
+
+ICACHE_FLASH_ATTR static void respond_error_field(struct espconn *conn, int status, char *error, char *field);
 
 
 void *on_tcp_conn(struct espconn *conn) {

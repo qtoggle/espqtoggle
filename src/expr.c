@@ -32,22 +32,22 @@
 #include "expr.h"
 
 
-#define MAX_NAME_LEN    16
-#define MAX_ARGS        16
-#define MAX_HIST_LEN    32
+#define MAX_NAME_LEN 16
+#define MAX_ARGS     16
+#define MAX_HIST_LEN 32
 
 
 typedef struct {
 
-    double      value;
-    uint64      time_ms;
+    double value;
+    uint64 time_ms;
 
 } value_hist_t;
 
 typedef struct {
 
-    char          * name;
-    double          value;
+    char   *name;
+    double  value;
 
 } literal_t;
 
@@ -107,12 +107,12 @@ ICACHE_FLASH_ATTR static double     _accinc_callback(expr_t *expr, int argc, dou
 ICACHE_FLASH_ATTR static double     _hyst_callback(expr_t *expr, int argc, double *args);
 ICACHE_FLASH_ATTR static double     _sequence_callback(expr_t *expr, int argc, double *args);
 
-ICACHE_FLASH_ATTR expr_t          * parse_rec(char *port_id, char *input, int len, int abs_pos);
-ICACHE_FLASH_ATTR static expr_t   * parse_port_id_expr(char *port_id, char *input, int abs_pos);
-ICACHE_FLASH_ATTR static expr_t   * parse_literal_expr(char *input, int abs_pos);
+ICACHE_FLASH_ATTR expr_t           *parse_rec(char *port_id, char *input, int len, int abs_pos);
+ICACHE_FLASH_ATTR static expr_t    *parse_port_id_expr(char *port_id, char *input, int abs_pos);
+ICACHE_FLASH_ATTR static expr_t    *parse_literal_expr(char *input, int abs_pos);
 ICACHE_FLASH_ATTR static void       set_parse_error(char *reason, char *token, int32 pos);
-ICACHE_FLASH_ATTR static literal_t* find_literal_by_name(char *name);
-ICACHE_FLASH_ATTR static func_t   * find_func_by_name(char *name);
+ICACHE_FLASH_ATTR static literal_t *find_literal_by_name(char *name);
+ICACHE_FLASH_ATTR static func_t    *find_func_by_name(char *name);
 ICACHE_FLASH_ATTR static int        check_loops_rec(port_t *the_port, int level, expr_t *expr);
 ICACHE_FLASH_ATTR static bool       func_needs_free(expr_t *expr);
 
@@ -126,7 +126,7 @@ static literal_t *literals[] = {
     NULL
 };
 
-static expr_parse_error_t           parse_error;
+static expr_parse_error_t parse_error;
 
 
 double _add_callback(expr_t *expr, int argc, double *args) {

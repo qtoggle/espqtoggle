@@ -117,22 +117,26 @@ ICACHE_FLASH_ATTR void             DEBUG_HTTPSERVER_CTX(httpserver_context_t *hc
 
 ICACHE_FLASH_ATTR void   httpserver_set_name(char *name);
 ICACHE_FLASH_ATTR void   httpserver_set_request_timeout(uint32 timeout);
-ICACHE_FLASH_ATTR void   httpserver_setup_connection(httpserver_context_t *hc,
-                                                     void *arg,
-                                                     http_invalid_callback_t ic,
-                                                     http_timeout_callback_t tc,
-                                                     http_request_callback_t rc);
+ICACHE_FLASH_ATTR void   httpserver_setup_connection(
+                             httpserver_context_t *hc,
+                             void *arg,
+                             http_invalid_callback_t ic,
+                             http_timeout_callback_t tc,
+                             http_request_callback_t rc
+                         );
 ICACHE_FLASH_ATTR void   httpserver_parse_req_char(httpserver_context_t *hc, int c);
 ICACHE_FLASH_ATTR void   httpserver_context_reset(httpserver_context_t *hc);
 
     /* The response returned by this function must be freed after use */
-ICACHE_FLASH_ATTR uint8 *httpserver_build_response(int status,
-                                                   char *content_type,
-                                                   char *header_names[],
-                                                   char *header_values[],
-                                                   int header_count,
-                                                   uint8 *body,
-                                                   int *len);
+ICACHE_FLASH_ATTR uint8 *httpserver_build_response(
+                             int status,
+                             char *content_type,
+                             char *header_names[],
+                             char *header_values[],
+                             int header_count,
+                             uint8 *body,
+                             int *len
+                         );
 
 
 #endif /* _ESPGOODIES_HTTPSERVER_H */

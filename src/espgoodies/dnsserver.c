@@ -31,65 +31,70 @@
 #include "dnsserver.h"
 
 
-#define DNS_PORT                        53
-#define DNS_TTL                         60
+#define DNS_PORT                   53
+#define DNS_TTL                    60
 
-#define DNS_MAX_PACKET_SIZE             512
-#define DNS_HEADER_SIZE                 sizeof(dns_header_t)
+#define DNS_MAX_PACKET_SIZE        512
+#define DNS_HEADER_SIZE            sizeof(dns_header_t)
 
-#define DNS_FLAGS_TYPE_MASK             0x8000
-#define DNS_FLAGS_TYPE_SHIFT            15
-#define DNS_FLAGS_OP_CODE_MASK          0x7800
-#define DNS_FLAGS_OP_CODE_SHIFT         11
-#define DNS_FLAGS_REPLY_CODE_MASK       0x000F
-#define DNS_FLAGS_REPLY_CODE_SHIFT      0
+#define DNS_FLAGS_TYPE_MASK        0x8000
+#define DNS_FLAGS_TYPE_SHIFT       15
+#define DNS_FLAGS_OP_CODE_MASK     0x7800
+#define DNS_FLAGS_OP_CODE_SHIFT    11
+#define DNS_FLAGS_REPLY_CODE_MASK  0x000F
+#define DNS_FLAGS_REPLY_CODE_SHIFT 0
 
-#define DNS_QR_QUERY                    0
-#define DNS_QR_RESPONSE                 1
-#define DNS_OP_CODE_QUERY               0
+#define DNS_QR_QUERY               0
+#define DNS_QR_RESPONSE            1
+#define DNS_OP_CODE_QUERY          0
 
-#define DNS_QCLASS_IN                   1
-#define DNS_QCLASS_ANY                  255
+#define DNS_QCLASS_IN              1
+#define DNS_QCLASS_ANY             255
 
-#define DNS_QTYPE_A                     1
-#define DNS_QTYPE_ANY                   255
+#define DNS_QTYPE_A                1
+#define DNS_QTYPE_ANY              255
 
-#define DNS_REPLY_NO_ERROR              0
-#define DNS_REPLY_FORMAT_ERROR          1
-#define DNS_REPLY_SERVER_FAILURE        2
-#define DNS_REPLY_NX_DOMAIN             3
-#define DNS_REPLY_NOT_IMPLEMENTED       4
-#define DNS_REPLY_REFUSED               5
-#define DNS_REPLY_XY_DOMAIN             6
-#define DNS_REPLY_XY_RRSET              7
-#define DNS_REPLY_NX_RRSET              8
+#define DNS_REPLY_NO_ERROR         0
+#define DNS_REPLY_FORMAT_ERROR     1
+#define DNS_REPLY_SERVER_FAILURE   2
+#define DNS_REPLY_NX_DOMAIN        3
+#define DNS_REPLY_NOT_IMPLEMENTED  4
+#define DNS_REPLY_REFUSED          5
+#define DNS_REPLY_XY_DOMAIN        6
+#define DNS_REPLY_XY_RRSET         7
+#define DNS_REPLY_NX_RRSET         8
 
 
 typedef struct {
 
-    uint16                              id;  /* Identification number */
-    uint16                              flags;
-    uint16                              qd_count;  /* Number of question entries */
-    uint16                              an_count;  /* Number of answer entries */
-    uint16                              ns_count;  /* Number of authority entries */
-    uint16                              ar_count;  /* Number of resource entries */
+    uint16 id;       /* Identification number */
+    uint16 flags;
+    uint16 qd_count; /* Number of question entries */
+    uint16 an_count; /* Number of answer entries */
+    uint16 ns_count; /* Number of authority entries */
+    uint16 ar_count; /* Number of resource entries */
 
 } dns_header_t;
 
-static struct espconn                 * conn;
-static bool                             started = FALSE;
+static struct espconn *conn;
+static bool            started = FALSE;
 
 
-ICACHE_FLASH_ATTR static void           listen(void);
-ICACHE_FLASH_ATTR static void           reset(void);
-ICACHE_FLASH_ATTR static void           on_client_recv(void *arg, char *data, uint16 len);
-ICACHE_FLASH_ATTR static void           process_request(uint8 *request, uint16 len,
-                                                        uint8 remote_ip[], uint16 remote_port);
-ICACHE_FLASH_ATTR static uint8        * prepare_response(uint8 *request, uint16 *len);
-ICACHE_FLASH_ATTR static uint8        * prepare_ip_response(dns_header_t *request_header, ip_addr_t ip_addr,
-                                                            uint8 *query, uint16 query_len, uint16 *len);
-ICACHE_FLASH_ATTR static uint8        * prepare_error_response(dns_header_t *request_header, uint8 reply_code,
-                                                               uint8 *query, uint16 query_len, uint16 *len);
+ICACHE_FLASH_ATTR static void   listen(void);
+ICACHE_FLASH_ATTR static void   reset(void);
+ICACHE_FLASH_ATTR static void   on_client_recv(void *arg, char *data, uint16 len);
+ICACHE_FLASH_ATTR static void   process_request(uint8 *request, uint16 len, uint8 remote_ip[], uint16 remote_port);
+ICACHE_FLASH_ATTR static uint8 *prepare_response(uint8 *request, uint16 *len);
+ICACHE_FLASH_ATTR static uint8 *prepare_ip_response(dns_header_t *request_header,
+                                                    ip_addr_t ip_addr,
+                                                    uint8 *query,
+                                                    uint16 query_len,
+                                                    uint16 *len);
+ICACHE_FLASH_ATTR static uint8 *prepare_error_response(dns_header_t *request_header,
+                                                       uint8 reply_code,
+                                                       uint8 *query,
+                                                       uint16 query_len,
+                                                       uint16 *len);
 
 
 void dnsserver_start_captive(void) {

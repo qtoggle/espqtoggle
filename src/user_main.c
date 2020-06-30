@@ -50,49 +50,49 @@
 #include "ver.h"
 
 
-#define CONNECT_TIMEOUT             20000   /* Milliseconds */
+#define CONNECT_TIMEOUT             20000  /* Milliseconds */
 #define DEBUG_BAUD                  115200
+
+#define RTC_UNEXP_RESET_COUNT_ADDR  RTC_USER_ADDR + 0 /* 130 * 4 bytes = 520 */
+#define MAX_UNEXP_RESET_COUNT       16
 
 #define FW_LATEST_FILE              "/latest"
 #define FW_LATEST_STABLE_FILE       "/latest_stable"
 #define FW_LATEST_BETA_FILE         "/latest_beta"
-#define FW_AUTO_MIN_INTERVAL        24  /* Hours */
-
-#define RTC_UNEXP_RESET_COUNT_ADDR  RTC_USER_ADDR + 0  /* 130 * 4 bytes = 520 */
-#define MAX_UNEXP_RESET_COUNT       16
+#define FW_AUTO_MIN_INTERVAL        24                /* Hours */
 
 
-static bool                         wifi_first_time_connected = FALSE;
-static os_timer_t                   connect_timeout_timer;
+static bool       wifi_first_time_connected = FALSE;
+static os_timer_t connect_timeout_timer;
 #ifdef _OTA
-static os_timer_t                   ota_auto_timer;
-static uint32                       ota_auto_counter = 1;
+static os_timer_t ota_auto_timer;
+static uint32     ota_auto_counter = 1;
 #endif
 
 
-ICACHE_FLASH_ATTR static void       check_update_fw_config(void);
-ICACHE_FLASH_ATTR static void       check_reboot_loop(void);
-ICACHE_FLASH_ATTR static void       main_init(void);
+ICACHE_FLASH_ATTR static void check_update_fw_config(void);
+ICACHE_FLASH_ATTR static void check_reboot_loop(void);
+ICACHE_FLASH_ATTR static void main_init(void);
 
 #ifdef _DEBUG
-ICACHE_FLASH_ATTR static void       debug_putc_func(char c);
+ICACHE_FLASH_ATTR static void debug_putc_func(char c);
 #endif
-ICACHE_FLASH_ATTR void              user_init(void);
-ICACHE_FLASH_ATTR void              user_rf_pre_init(void);
-ICACHE_FLASH_ATTR int               user_rf_cal_sector_set(void);
+ICACHE_FLASH_ATTR void        user_init(void);
+ICACHE_FLASH_ATTR void        user_rf_pre_init(void);
+ICACHE_FLASH_ATTR int         user_rf_cal_sector_set(void);
 
-ICACHE_FLASH_ATTR static void       on_system_ready(void);
-ICACHE_FLASH_ATTR static void       on_system_reset(void);
+ICACHE_FLASH_ATTR static void on_system_ready(void);
+ICACHE_FLASH_ATTR static void on_system_reset(void);
 
-ICACHE_FLASH_ATTR static void       on_setup_mode(bool active);
+ICACHE_FLASH_ATTR static void on_setup_mode(bool active);
 
 #ifdef _OTA
-ICACHE_FLASH_ATTR static void       on_ota_auto_timer(void *arg);
-ICACHE_FLASH_ATTR static void       on_ota_auto_perform(int code);
+ICACHE_FLASH_ATTR static void on_ota_auto_timer(void *arg);
+ICACHE_FLASH_ATTR static void on_ota_auto_perform(int code);
 #endif
 
-ICACHE_FLASH_ATTR static void       on_wifi_connect(bool connected);
-ICACHE_FLASH_ATTR static void       on_wifi_connect_timeout(void *arg);
+ICACHE_FLASH_ATTR static void on_wifi_connect(bool connected);
+ICACHE_FLASH_ATTR static void on_wifi_connect_timeout(void *arg);
 
 
 void check_update_fw_config(void) {

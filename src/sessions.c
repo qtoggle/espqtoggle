@@ -32,13 +32,13 @@
 #include "sessions.h"
 
 
-session_t                               sessions[SESSION_COUNT];
+session_t sessions[SESSION_COUNT];
 
 
-ICACHE_FLASH_ATTR static void           session_push(session_t *session, int type, char *port_id);
-ICACHE_FLASH_ATTR static void           session_free(session_t *session);
-ICACHE_FLASH_ATTR static event_t **     pop_all_events(session_t *session);
-ICACHE_FLASH_ATTR static void           on_session_timeout(void *arg);
+ICACHE_FLASH_ATTR static void      session_push(session_t *session, int type, char *port_id);
+ICACHE_FLASH_ATTR static void      session_free(session_t *session);
+ICACHE_FLASH_ATTR static event_t **pop_all_events(session_t *session);
+ICACHE_FLASH_ATTR static void      on_session_timeout(void *arg);
 
 
 session_t *session_find_by_id(char *id) {

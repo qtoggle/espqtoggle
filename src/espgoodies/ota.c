@@ -29,35 +29,48 @@
 #include "ota.h"
 
 
-#define OTA_PERFORM_DELAY       2000  /* Milliseconds */
+#define OTA_PERFORM_DELAY 2000  /* Milliseconds */
 
 
-static os_timer_t               ota_timer;
-static char                   * ota_url;
-static uint8                    ota_ip_addr[4];
-static ota_latest_callback_t    ota_latest_callback = NULL;
-static ota_perform_callback_t   ota_perform_callback = NULL;
-static ota_perform_callback_t   ota_auto_perform_callback = NULL;
-static bool                     ota_auto_update_checking = FALSE;
+static os_timer_t              ota_timer;
+static char                   *ota_url;
+static uint8                   ota_ip_addr[4];
+static ota_latest_callback_t   ota_latest_callback = NULL;
+static ota_perform_callback_t  ota_perform_callback = NULL;
+static ota_perform_callback_t  ota_auto_perform_callback = NULL;
+static bool                    ota_auto_update_checking = FALSE;
 
-static char                   * latest_url = NULL;
-static char                   * latest_stable_url = NULL;
-static char                   * latest_beta_url = NULL;
-static char                   * url_template = NULL;
-static char                   * current_version = NULL;
+static char                   *latest_url = NULL;
+static char                   *latest_stable_url = NULL;
+static char                   *latest_beta_url = NULL;
+static char                   *url_template = NULL;
+static char                   *current_version = NULL;
 
 
-ICACHE_FLASH_ATTR int           ota_next_slot(void);
+ICACHE_FLASH_ATTR int         ota_next_slot(void);
 
-ICACHE_FLASH_ATTR static void   on_ota_start(void *arg);
-ICACHE_FLASH_ATTR static void   on_ota_finish_check(void *arg);
-ICACHE_FLASH_ATTR static void   on_ota_latest_response(char *body, int body_len, int status, char *header_names[],
-                                                       char *header_values[], int header_count, uint8 addr[]);
-ICACHE_FLASH_ATTR static void   on_ota_head_response(char *body, int body_len, int status, char *header_names[],
-                                                     char *header_values[], int header_count, uint8 addr[]);
+ICACHE_FLASH_ATTR static void on_ota_start(void *arg);
+ICACHE_FLASH_ATTR static void on_ota_finish_check(void *arg);
+ICACHE_FLASH_ATTR static void on_ota_latest_response(
+                                  char *body,
+                                  int body_len,
+                                  int status,
+                                  char *header_names[],
+                                  char *header_values[],
+                                  int header_count,
+                                  uint8 addr[]
+                              );
+ICACHE_FLASH_ATTR static void on_ota_head_response(
+                                  char *body,
+                                  int body_len,
+                                  int status,
+                                  char *header_names[],
+                                  char *header_values[],
+                                  int header_count,
+                                  uint8 addr[]
+                              );
 
-ICACHE_FLASH_ATTR static void   on_ota_auto_latest(char *version, char *date, char *url);
-
+ICACHE_FLASH_ATTR static void on_ota_auto_latest(char *version, char *date, char *url);
 
 
 void ota_init(char *cv, char *lu, char *lsu, char *lbu, char *ut) {

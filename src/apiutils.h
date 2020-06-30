@@ -50,17 +50,19 @@ ICACHE_FLASH_ATTR bool    validate_wifi_bssid(char *bssid_str, uint8 *bssid);
 ICACHE_FLASH_ATTR bool    validate_str_sleep_mode(char *sleep_mode, int *wake_interval, int *wake_duration);
 #endif
 
-ICACHE_FLASH_ATTR json_t *attrdef_to_json(char *display_name,
-                                          char *description,
-                                          char *unit,
-                                          char type,
-                                          bool modifiable,
-                                          double min,
-                                          double max,
-                                          bool integer,
-                                          double step,
-                                          char **choices,
-                                          bool reconnect);
+ICACHE_FLASH_ATTR json_t *attrdef_to_json(
+                              char *display_name,
+                              char *description,
+                              char *unit,
+                              char type,
+                              bool modifiable,
+                              double min,
+                              double max,
+                              bool integer,
+                              double step,
+                              char **choices,
+                              bool reconnect
+                          );
 
 
 #endif /* _API_UTILS_H */

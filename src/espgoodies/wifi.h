@@ -123,11 +123,13 @@ ICACHE_FLASH_ATTR void       wifi_set_dns(ip_addr_t dns);
 ICACHE_FLASH_ATTR void       wifi_station_enable(char *hostname, wifi_connect_callback_t callback);
 ICACHE_FLASH_ATTR void       wifi_station_disable(void);
 ICACHE_FLASH_ATTR bool       wifi_station_is_connected(void);
-ICACHE_FLASH_ATTR void       wifi_station_temporary_enable(char *ssid,
-                                                           char *psk,
-                                                           uint8 *bssid,
-                                                           char *hostname,
-                                                           wifi_connect_callback_t callback);
+ICACHE_FLASH_ATTR void       wifi_station_temporary_enable(
+                                 char *ssid,
+                                 char *psk,
+                                 uint8 *bssid,
+                                 char *hostname,
+                                 wifi_connect_callback_t callback
+                             );
 ICACHE_FLASH_ATTR void       wifi_station_temporary_disable(void);
 
 ICACHE_FLASH_ATTR void       wifi_ap_enable(char *ssid, char *psk, wifi_ap_client_callback_t callback);

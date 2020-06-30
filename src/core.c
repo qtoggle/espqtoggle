@@ -37,36 +37,36 @@
 #include "core.h"
 
 
-#define TASK_QUEUE_SIZE             8
+#define TASK_QUEUE_SIZE      8
 
-#define TASK_POLL                   0x02
-#define TASK_LISTEN_RESPOND         0x03
-#define TASK_UPDATE_SYSTEM          0x04
+#define TASK_POLL            0x02
+#define TASK_LISTEN_RESPOND  0x03
+#define TASK_UPDATE_SYSTEM   0x04
 
-#define CONFIG_SAVE_INTERVAL        5  /* Seconds */
+#define CONFIG_SAVE_INTERVAL 5    /* Seconds */
 
 
-static uint32                       last_expr_time = 0;
-static uint32                       last_config_save_time = 0;
-static uint32                       now;
-static uint64                       now_ms;
-static uint64                       now_us;
+static uint32     last_expr_time = 0;
+static uint32     last_config_save_time = 0;
+static uint32     now;
+static uint64     now_ms;
+static uint64     now_us;
 
-static uint32                       force_eval_expressions_mask = 0;
-static bool                         config_needs_saving = FALSE;
-static uint32                       poll_started_time_ms = 0;
-static bool                         polling_enabled = FALSE;
+static uint32     force_eval_expressions_mask = 0;
+static bool       config_needs_saving = FALSE;
+static uint32     poll_started_time_ms = 0;
+static bool       polling_enabled = FALSE;
 
 #ifdef _SLEEP
 /* Used to prevent more than one value-change per port when using sleep mode with short wakes */
-static uint32                       value_change_trigger_mask = 0;
+static uint32     value_change_trigger_mask = 0;
 #endif
 
-static os_event_t                   task_queue[TASK_QUEUE_SIZE];
+static os_event_t task_queue[TASK_QUEUE_SIZE];
 
 
-ICACHE_FLASH_ATTR static void       core_task(os_event_t *e);
-ICACHE_FLASH_ATTR static void       handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_mask);
+ICACHE_FLASH_ATTR static void core_task(os_event_t *e);
+ICACHE_FLASH_ATTR static void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_mask);
 
 
 void core_init(void) {

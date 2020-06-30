@@ -27,19 +27,19 @@
 #endif
 
 
-#define WAKE_SHORT_DURATION     60      /* Seconds */
-#define MAX_SLEEP_DURATION      1800    /* Seconds */
-#define RTC_SLEEP_COUNT_ADDR    RTC_USER_ADDR + 1     /* 131 * 4 bytes = 524 */
-#define RTC_SLEEP_REM_ADDR      RTC_USER_ADDR + 2     /* 132 * 4 bytes = 528 */
+#define WAKE_SHORT_DURATION  60                /* Seconds */
+#define MAX_SLEEP_DURATION   1800              /* Seconds */
+#define RTC_SLEEP_COUNT_ADDR RTC_USER_ADDR + 1 /* 131 * 4 bytes = 524 */
+#define RTC_SLEEP_REM_ADDR   RTC_USER_ADDR + 2 /* 132 * 4 bytes = 528 */
 
 
-static uint16                   wake_interval = 0;  /* Minutes, 0 - sleep disabled */
-static uint16                   wake_duration = 0;  /* Seconds */
-static os_timer_t               sleep_timer;
-static bool                     about_to_sleep = FALSE;
+static uint16     wake_interval = 0;      /* Minutes, 0 - sleep disabled */
+static uint16     wake_duration = 0;      /* Seconds */
+static os_timer_t sleep_timer;
+static bool       about_to_sleep = FALSE;
 
 
-ICACHE_FLASH_ATTR static void   on_sleep(void *arg);
+ICACHE_FLASH_ATTR static void on_sleep(void *arg);
 
 
 void sleep_init(void) {

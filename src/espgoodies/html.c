@@ -25,9 +25,9 @@
 #include "espgoodies/html.h"
 
 
-#define USER1_FLASH_HTML_ADDR       0x78000
-#define USER2_FLASH_HTML_ADDR       0xF8000
-#define MAX_HTML_LEN                16384
+#define USER1_FLASH_HTML_ADDR 0x78000
+#define USER2_FLASH_HTML_ADDR 0xF8000
+#define MAX_HTML_LEN          16384
 
 
 uint8 *html_load(uint32 *len) {
