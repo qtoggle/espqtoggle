@@ -64,10 +64,7 @@
 #define PORT_MAX_DISP_NAME_LEN 64
 #define PORT_MAX_UNIT_LEN      16
 
-#define PORT_MAX_SAMP_INT 86400000 /* Milliseconds */
-#define PORT_DEF_SAMP_INT 0        /* Milliseconds */
-
-#define PORT_DEF_HEART_BEAT_INT 0 /* Milliseconds */
+#define PORT_DEF_HEART_BEAT_INT 0  /* Milliseconds */
 
 #define PORT_TYPE_BOOLEAN 'B'
 #define PORT_TYPE_NUMBER  'N'

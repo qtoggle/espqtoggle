@@ -159,6 +159,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
         freq_port->min = MIN_FREQ;
         freq_port->max = MAX_FREQ;
         freq_port->integer = TRUE;
+        freq_port->unit = "Hz";
 
         freq_port->configure = configure_freq;
         freq_port->read_value = read_value_freq;
@@ -175,6 +176,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
     port->min = 0;
     port->max = 100;
     port->integer = TRUE;
+    port->unit = "%";
 
     port->configure = configure_duty;
     port->read_value = read_value_duty;

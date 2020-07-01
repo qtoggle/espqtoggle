@@ -14,10 +14,7 @@
                     "enabled": true,
                     "persisted": true,
                     "internal": true,
-                    "sampling_interval": 10,
-                    "transform_read": "NOT(${DOLLAR}gpio0)",
-                    "pull_up": true,
-                    "output": true
+                    "transform_read": "NOT(${DOLLAR}gpio0)"
                 },
                 "expected_status": 204,
                 "expected_body": null
@@ -45,10 +42,8 @@
                                 "enabled",
                                 "persisted",
                                 "internal",
-                                "sampling_interval",
                                 "transform_read",
-                                "pull_up",
-                                "output"
+                                "transform_write"
                             ],
                             "properties": {
                                 "id": {
@@ -69,17 +64,11 @@
                                 "internal": {
                                     "enum": [true]
                                 },
-                                "sampling_interval": {
-                                    "enum": [10]
-                                },
                                 "transform_read": {
                                     "enum": ["NOT(${DOLLAR}gpio0)"]
                                 },
-                                "pull_up": {
-                                    "enum": [true]
-                                },
-                                "output": {
-                                    "enum": [true]
+                                "transform_write": {
+                                    "enum": [""]
                                 }
                             }
                         }
@@ -106,4 +95,3 @@
         }
     ]
 }
-

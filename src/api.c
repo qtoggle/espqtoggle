@@ -2855,7 +2855,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
             return INVALID_FIELD(response_json, "type");
         }
         type_id = json_int_get(type_json);
-        if (type_id > PERIPHERAL_MAX_TYPE_ID) {
+        if (type_id > PERIPHERAL_MAX_TYPE_ID || type_id < 1) {
             return INVALID_FIELD(response_json, "type");
         }
 
@@ -3026,7 +3026,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
 
         peripheral->type_id = type_id;
         peripheral->flags = flags;
-        peripheral->params = malloc(PERIPHERAL_PARAMS_SIZE);
+        peripheral->params = zalloc(PERIPHERAL_PARAMS_SIZE);
 
         if (int8_param_count) {
             memcpy(peripheral->params + PERIPHERAL_CONFIG_OFFS_INT8_PARAMS, int8_params, int8_param_count);
@@ -3054,7 +3054,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
 
     event_push_full_update();
 
-    *code = 200;
+    *code = 204;
 
     return response_json;
 }
@@ -3228,7 +3228,7 @@ json_t *api_put_system(json_t *query_json, json_t *request_json, int *code) {
 
     system_config_save();
 
-    *code = 200;
+    *code = 204;
 
     return response_json;
 }

@@ -5,7 +5,7 @@
             "name": "json-http-client",
             "params": {
                 "method": "PATCH",
-                "path": "/ports/gpio2/sequence",
+                "path": "/ports/pwm4/sequence",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },

@@ -14,40 +14,16 @@
 				    {
 				        "id": "gpio0",
 				        "display_name": "",
-				        "writable": false,
+				        "writable": true,
 				        "enabled": false,
 				        "persisted": false,
 				        "internal": false,
-				        "sampling_interval": 0,
 				        "transform_read": "",
+				        "transform_write": "",
+				        "expression": "",
 				        "type": "boolean",
-				        "output": false,
-				        "pull_up": false,
 				        "value": null,
-				        "definitions": {
-				            "output": {
-				                "display_name": "Output Mode",
-				                "description": "Makes this GPIO an output pin.",
-				                "modifiable": true,
-				                "type": "boolean"
-				            },
-				            "pull_up": {
-				                "display_name": "Pull-Up",
-				                "description": "Enables the internal pull-up.",
-				                "modifiable": true,
-				                "type": "boolean"
-				            },
-				            "sampling_interval": {
-				                "display_name": "Sampling Interval",
-				                "description": "Indicates how often to read the port value.",
-				                "unit": "ms",
-				                "modifiable": true,
-				                "type": "number",
-				                "min": 0,
-				                "max": 86400000,
-				                "integer": true
-				            }
-				        }
+				        "definitions": {}
 				    },
 				    {
 				        "id": "gpio2",
@@ -56,169 +32,14 @@
 				        "enabled": false,
 				        "persisted": false,
 				        "internal": false,
-				        "sampling_interval": 0,
 				        "transform_read": "",
 				        "type": "boolean",
-				        "output": false,
-				        "pull_up": false,
 				        "value": null,
-				        "definitions": {
-				            "${DOLLAR}ref": "#/0/definitions"
-				        }
-				    },
-				    {
-				        "id": "gpio4",
-				        "display_name": "",
-				        "writable": false,
-				        "enabled": false,
-				        "persisted": false,
-				        "internal": false,
-				        "sampling_interval": 0,
-				        "transform_read": "",
-				        "type": "boolean",
-				        "output": false,
-				        "pull_up": false,
-				        "value": null,
-				        "definitions": {
-				            "${DOLLAR}ref": "#/0/definitions"
-				        }
-				    },
-				    {
-				        "id": "gpio5",
-				        "display_name": "",
-				        "writable": false,
-				        "enabled": false,
-				        "persisted": false,
-				        "internal": false,
-				        "sampling_interval": 0,
-				        "transform_read": "",
-				        "type": "boolean",
-				        "output": false,
-				        "pull_up": false,
-				        "value": null,
-				        "definitions": {
-				            "${DOLLAR}ref": "#/0/definitions"
-				        }
-				    },
-				    {
-				        "id": "pwm_freq",
-				        "display_name": "",
-				        "unit": "Hz",
-				        "writable": true,
-				        "enabled": false,
-				        "persisted": false,
-				        "internal": false,
-				        "sampling_interval": 0,
-				        "transform_read": "",
-				        "type": "number",
-				        "min": 1,
-				        "max": 50000,
-				        "integer": true,
-				        "expression": "",
-				        "transform_write": "",
-				        "value": null,
-				        "definitions": {
-				            "sampling_interval": {
-				                "${DOLLAR}ref": "#/0/definitions/sampling_interval"
-				            }
-				        }
-				    },
-				    {
-				        "id": "pwm12",
-				        "display_name": "",
-				        "unit": "%",
-				        "writable": true,
-				        "enabled": false,
-				        "persisted": false,
-				        "internal": false,
-				        "sampling_interval": 0,
-				        "transform_read": "",
-				        "type": "number",
-				        "min": 0,
-				        "max": 100,
-				        "integer": true,
-				        "expression": "",
-				        "transform_write": "",
-				        "value": null,
-				        "definitions": {
-				            "sampling_interval": {
-				                "${DOLLAR}ref": "#/0/definitions/sampling_interval"
-				            }
-				        }
-				    },
-				    {
-				        "id": "pwm13",
-				        "display_name": "",
-				        "unit": "%",
-				        "writable": true,
-				        "enabled": false,
-				        "persisted": false,
-				        "internal": false,
-				        "sampling_interval": 0,
-				        "transform_read": "",
-				        "type": "number",
-				        "min": 0,
-				        "max": 100,
-				        "integer": true,
-				        "expression": "",
-				        "transform_write": "",
-				        "value": null,
-				        "definitions": {
-				            "sampling_interval": {
-				                "${DOLLAR}ref": "#/0/definitions/sampling_interval"
-				            }
-				        }
-				    },
-				    {
-				        "id": "pwm14",
-				        "display_name": "",
-				        "unit": "%",
-				        "writable": true,
-				        "enabled": false,
-				        "persisted": false,
-				        "internal": false,
-				        "sampling_interval": 0,
-				        "transform_read": "",
-				        "type": "number",
-				        "min": 0,
-				        "max": 100,
-				        "integer": true,
-				        "expression": "",
-				        "transform_write": "",
-				        "value": null,
-				        "definitions": {
-				            "sampling_interval": {
-				                "${DOLLAR}ref": "#/0/definitions/sampling_interval"
-				            }
-				        }
-				    },
-				    {
-				        "id": "pwm15",
-				        "display_name": "",
-				        "unit": "%",
-				        "writable": true,
-				        "enabled": false,
-				        "persisted": false,
-				        "internal": false,
-				        "sampling_interval": 0,
-				        "transform_read": "",
-				        "type": "number",
-				        "min": 0,
-				        "max": 100,
-				        "integer": true,
-				        "expression": "",
-				        "transform_write": "",
-				        "value": null,
-				        "definitions": {
-				            "sampling_interval": {
-				                "${DOLLAR}ref": "#/0/definitions/sampling_interval"
-				            }
-				        }
+				        "definitions": {}
 				    },
 				    {
 				        "id": "adc0",
 				        "display_name": "",
-				        "unit": "mV",
 				        "writable": false,
 				        "enabled": false,
 				        "persisted": false,
@@ -229,16 +50,59 @@
 				        "min": 0,
 				        "max": 1000,
 				        "integer": true,
+				        "unit": "mV",
 				        "value": null,
-				        "definitions": {
-				            "sampling_interval": {
-				                "${DOLLAR}ref": "#/0/definitions/sampling_interval"
-				            }
-				        }
+                        "definitions": {
+                            "sampling_interval": {
+                                "display_name": "Sampling Interval",
+                                "description": "Indicates how often the port value will be read.",
+                                "unit": "ms",
+                                "modifiable": true,
+                                "type": "number",
+                                "min": 0,
+                                "max": 60000,
+                                "integer": true
+                            }
+                        }
+				    },
+				    {
+				        "id": "pwm_freq",
+				        "display_name": "",
+				        "writable": true,
+				        "enabled": false,
+				        "persisted": false,
+				        "internal": false,
+				        "transform_read": "",
+				        "transform_write": "",
+				        "expression": "",
+				        "type": "number",
+				        "unit": "Hz",
+				        "min": 1,
+				        "max": 50000,
+				        "integer": true,
+				        "value": null,
+				        "definitions": {}
+				    },
+				    {
+				        "id": "pwm4",
+				        "display_name": "",
+				        "writable": true,
+				        "enabled": false,
+				        "persisted": false,
+				        "internal": false,
+				        "transform_read": "",
+				        "transform_write": "",
+				        "expression": "",
+				        "type": "number",
+				        "unit": "%",
+				        "min": 0,
+				        "max": 100,
+				        "integer": true,
+				        "value": null,
+				        "definitions": {}
 				    }
 				]
             }
         }
     ]
 }
-

@@ -393,15 +393,6 @@ void port_load(port_t *port, uint8 *config_data) {
 
     /* sampling_interval */
     memcpy(&port->sampling_interval, base_ptr + PORT_CONFIG_OFFS_SAMP_INT, 4);
-    if (!port->def_sampling_interval) {
-        port->def_sampling_interval = PORT_DEF_SAMP_INT;
-    }
-    if (!port->sampling_interval) {
-        port->sampling_interval = port->def_sampling_interval;
-    }
-    if (!port->max_sampling_interval) {
-        port->max_sampling_interval = PORT_MAX_SAMP_INT;
-    }
     port->last_sample_time = -LLONG_MAX;
 
     DEBUG_PORT(port, "sampling_interval = %d ms", port->sampling_interval);
@@ -711,6 +702,11 @@ void port_register(port_t *port) {
     /* step has no sense without min */
     if (IS_UNDEFINED(port->min) || port->step == 0) {
         port->step = UNDEFINED;
+    }
+
+    /* Set default sampling interval */
+    if (!port->sampling_interval) {
+        port->sampling_interval = port->def_sampling_interval;
     }
 
     all_ports = realloc(all_ports, (all_ports_count + 1) * sizeof(port_t *));
