@@ -523,9 +523,7 @@ void port_load(port_t *port, uint8 *config_data) {
     }
 
     /* Port can now be configured */
-    if (IS_PORT_ENABLED(port)) {
-        port_configure(port);
-    }
+    port_configure(port);
 
     /* Initial port value */
     port->value = UNDEFINED;
@@ -705,6 +703,16 @@ void port_register(port_t *port) {
         port->unit = strdup(port->unit);
     }
 
+    /* Set min/max to UNDEFINED, by default */
+    if (port->min == 0 && port->max == 0) {
+        port->min = port->max = UNDEFINED;
+    }
+
+    /* step has no sense without min */
+    if (IS_UNDEFINED(port->min) || port->step == 0) {
+        port->step = UNDEFINED;
+    }
+
     all_ports = realloc(all_ports, (all_ports_count + 1) * sizeof(port_t *));
     all_ports[all_ports_count++] = port;
 
@@ -715,6 +723,11 @@ void port_register(port_t *port) {
             /* Set min/max to UNDEFINED, by default */
             if (a->min == 0 && a->max == 0) {
                 a->min = a->max = UNDEFINED;
+            }
+
+            /* step has no sense without min */
+            if (IS_UNDEFINED(a->min) || a->step == 0) {
+                a->step = UNDEFINED;
             }
 
             /* Set default getter/setter */
@@ -1049,6 +1062,6 @@ void port_configure(port_t *port) {
     }
 
     if (port->configure) {
-        port->configure(port);
+        port->configure(port, IS_PORT_ENABLED(port));
     }
 }

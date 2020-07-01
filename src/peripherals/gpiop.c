@@ -35,7 +35,7 @@
 #define PARAM_NO_PIN      0
 
 
-ICACHE_FLASH_ATTR static void   configure(port_t *port);
+ICACHE_FLASH_ATTR static void   configure(port_t *port, bool enabled);
 ICACHE_FLASH_ATTR static double read_value(port_t *port);
 ICACHE_FLASH_ATTR static bool   write_value(port_t *port, double value);
 
@@ -51,7 +51,7 @@ typedef struct {
 
 } user_data_t;
 
-peripheral_type_t peripheral_type_gpio = {
+peripheral_type_t peripheral_type_gpiop = {
 
     .init = init,
     .make_ports = make_ports
@@ -59,35 +59,42 @@ peripheral_type_t peripheral_type_gpio = {
 };
 
 
-void configure(port_t *port) {
+void configure(port_t *port, bool enabled) {
     user_data_t *user_data = port->peripheral->user_data;
+
+    /* If port disabled, leave GPIO as input, pulled down (probably floating) */
+    if (!enabled) {
+        gpio_configure_input(user_data->pin, /* pull = */ FALSE);
+        return;
+    }
+
     bool pull_up = PERIPHERAL_GET_FLAG(port->peripheral, FLAG_NO_PULL_UP);
     bool pull_down = PERIPHERAL_GET_FLAG(port->peripheral, FLAG_NO_PULL_DOWN);
 
     bool value;
     if (user_data->pin == 16) {
         if (pull_down) {
-            DEBUG_GPIO_PORT(port, "pull-down enabled");
+            DEBUG_GPIOP_PORT(port, "pull-down enabled");
             value = FALSE;
         }
         else {
-            DEBUG_GPIO_PORT(port, "pull-down disabled");
+            DEBUG_GPIOP_PORT(port, "pull-down disabled");
             value = TRUE;
         }
     }
     else {
         if (pull_up) {
-            DEBUG_GPIO_PORT(port, "pull-up enabled");
+            DEBUG_GPIOP_PORT(port, "pull-up enabled");
             value = TRUE;
         }
         else {
-            DEBUG_GPIO_PORT(port, "pull-up disabled");
+            DEBUG_GPIOP_PORT(port, "pull-up disabled");
             value = FALSE;
         }
     }
 
     if (user_data->output) {
-        DEBUG_GPIO_PORT(port, "output enabled");
+        DEBUG_GPIOP_PORT(port, "output enabled");
 
         /* Set initial value to current GPIO value */
         value = gpio_read_value(user_data->pin);
@@ -95,7 +102,7 @@ void configure(port_t *port) {
         user_data->value = value;
     }
     else {
-        DEBUG_GPIO_PORT(port, "output disabled");
+        DEBUG_GPIOP_PORT(port, "output disabled");
         gpio_configure_input(user_data->pin, value);
     }
 }
@@ -115,7 +122,7 @@ bool write_value(port_t *port, double value) {
     user_data_t *user_data = port->peripheral->user_data;
     bool v = !!value;
 
-    DEBUG_GPIO_PORT(port, "writing %d", v);
+    DEBUG_GPIOP_PORT(port, "writing %d", v);
     gpio_write_value(user_data->pin, v);
     user_data->value = v;
 

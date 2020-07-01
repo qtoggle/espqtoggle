@@ -2033,9 +2033,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
         }
     }
     
-    if (IS_PORT_ENABLED(port)) {
-        port_configure(port);
-    }
+    port_configure(port);
 
     config_mark_for_saving();
     event_push_port_update(port);
@@ -2827,14 +2825,14 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
     /* Rebuild deps mask for remaining (virtual) ports */
     ports_rebuild_change_dep_mask();
 
-    DEBUG_PERIPHERALS("cleaning up");
-
     while (all_peripherals_count) {
         peripheral = all_peripherals[0];
         peripheral_unregister(peripheral);
         peripheral_cleanup(peripheral);
         free(peripheral);
     }
+
+    DEBUG_PERIPHERALS("creating newly supplied peripherals");
 
     for (index = 0; index < json_list_get_len(request_json); index++) {
         peripheral_config = json_list_value_at(request_json, index);
@@ -3346,11 +3344,14 @@ json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
             attrdef_json = attrdef_to_json(
                 a->display_name ? a->display_name : "",
                 a->description ? a->description : "",
-                a->unit, a->type,
+                a->unit,
+                a->type,
                 IS_ATTRDEF_MODIFIABLE(a),
-                a->min, a->max,
+                a->min,
+                a->max,
                 IS_ATTRDEF_INTEGER(a),
-                a->step, choices,
+                a->step,
+                choices,
                 IS_ATTRDEF_RECONNECT(a)
             );
 

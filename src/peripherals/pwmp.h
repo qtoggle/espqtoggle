@@ -16,22 +16,24 @@
  *
  */
 
-#ifndef _PERIPHERALS_GPIOP_H
-#define _PERIPHERALS_GPIOP_H
+#ifndef _PERIPHERALS_PWMP_H
+#define _PERIPHERALS_PWMP_H
 
 #include <c_types.h>
 
 #include "peripherals.h"
 
 
-#ifdef _DEBUG_GPIOP
-#define DEBUG_GPIOP_PORT      DEBUG_PORT
+#ifdef _DEBUG_PWMP
+#define DEBUG_PWMP           DEBUG_PERIPHERAL
+#define DEBUG_PWMP_PORT      DEBUG_PORT
 #else
-#define DEBUG_GPIOP_PORT(...) {}
+#define DEBUG_PWMP(...)      {}
+#define DEBUG_PWMP_PORT(...) {}
 #endif
 
 
-extern peripheral_type_t peripheral_type_gpiop;
+extern peripheral_type_t peripheral_type_pwmp;
 
 
-#endif /* _PERIPHERALS_GPIOP_H */
+#endif /* _PERIPHERALS_PWMP_H */

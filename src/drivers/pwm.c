@@ -1,152 +1,347 @@
 /*
- * Copyright (C) 2016 Stefan Brüns <stefan.bruens@rwth-aachen.de>
+ * Copyright 2019 The qToggle Team
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Inspired from https://github.com/StefanBruens/ESP8266_new_pwm
  */
 
-#ifndef SDK_PWM_PERIOD_COMPAT_MODE
-#define SDK_PWM_PERIOD_COMPAT_MODE 0
-#endif
-#ifndef PWM_MAX_CHANNELS
-#define PWM_MAX_CHANNELS 10
-#endif
-#define PWM_DEBUG 0
-#define PWM_USE_NMI 0
-
-#define DEBUG_PWM(fmt, ...)         DEBUG("[pwm           ] " fmt, ##__VA_ARGS__)
-
-/* No user serviceable parts beyond this point */
-
-#define PWM_MAX_TICKS 0x7fffff
-#if SDK_PWM_PERIOD_COMPAT_MODE
-#define PWM_PERIOD_TO_TICKS(x) (x * 0.2)
-#define PWM_DUTY_TO_TICKS(x) (x * 5)
-#define PWM_MAX_DUTY (PWM_MAX_TICKS * 0.2)
-#define PWM_MAX_PERIOD (PWM_MAX_TICKS * 5)
-#else
-#define PWM_PERIOD_TO_TICKS(x) (x)
-#define PWM_DUTY_TO_TICKS(x) (x)
-#define PWM_MAX_DUTY PWM_MAX_TICKS
-#define PWM_MAX_PERIOD PWM_MAX_TICKS
-#endif
 
 #include <c_types.h>
-#include <pwm.h>
 #include <eagle_soc.h>
 #include <ets_sys.h>
 
 #include "espgoodies/common.h"
+#include "espgoodies/gpio.h"
 
 #include "common.h"
+#include "pwm.h"
 
 
-/* From SDK hw_timer.c */
-#define TIMER1_DIVIDE_BY_16             0x0004
-#define TIMER1_ENABLE_TIMER             0x0080
+#define USE_NMI FALSE
 
-struct pwm_phase {
+#define MAX_PERIOD 0x7FFFFF
 
-	uint32 ticks;    ///< delay until next phase, in 200ns units
-	uint16 on_mask;  ///< GPIO mask to switch on
-	uint16 off_mask; ///< GPIO mask to switch off
+#define TIMER1_DIVIDE_BY_16 0x0004
+#define TIMER1_ENABLE_TIMER 0x0080
 
-};
 
-/* Three sets of PWM phases, the active one, the one used starting with the next cycle, and the one updated by
- * pwm_start. After the update pwm_next_set is set to the last updated set. pwm_current_set is set to pwm_next_set from
- * the interrupt routine during the first pwm phase */
-typedef struct pwm_phase (pwm_phase_array)[PWM_MAX_CHANNELS + 2];
-static pwm_phase_array pwm_phases[3];
+typedef struct {
 
-static struct {
+	uint32 ticks;    /* Delay until next phase, in 200ns units */
+	uint16 on_mask;  /* GPIO mask to switch on */
+	uint16 off_mask; /* GPIO mask to switch off */
 
-	struct  pwm_phase* next_set;
-	struct  pwm_phase* current_set;
-	uint8   current_phase;
+} pwm_phase_t;
 
-} pwm_state;
+typedef struct {
 
-static uint32 pwm_period;
-static uint32 pwm_period_ticks;
-static uint32 pwm_duty[PWM_MAX_CHANNELS];
-static uint16 gpio_mask[PWM_MAX_CHANNELS];
-static uint8 pwm_channels;
+    uint32 out;         /* 0x60000300 */
+    uint32 out_w1ts;    /* 0x60000304 */
+    uint32 out_w1tc;    /* 0x60000308 */
+    uint32 enable;      /* 0x6000030C */
+    uint32 enable_w1ts; /* 0x60000310 */
+    uint32 enable_w1tc; /* 0x60000314 */
+    uint32 in;          /* 0x60000318 */
+    uint32 status;      /* 0x6000031C */
+    uint32 status_w1ts; /* 0x60000320 */
+    uint32 status_w1tc; /* 0x60000324 */
 
-// 3-tuples of MUX_REGISTER, MUX_VALUE and GPIO number
-typedef uint32 (pin_info_type)[3];
+} gpio_regs_t;
 
-struct gpio_regs {
-	uint32 out;         /* 0x60000300 */
-	uint32 out_w1ts;    /* 0x60000304 */
-	uint32 out_w1tc;    /* 0x60000308 */
-	uint32 enable;      /* 0x6000030C */
-	uint32 enable_w1ts; /* 0x60000310 */
-	uint32 enable_w1tc; /* 0x60000314 */
-	uint32 in;          /* 0x60000318 */
-	uint32 status;      /* 0x6000031C */
-	uint32 status_w1ts; /* 0x60000320 */
-	uint32 status_w1tc; /* 0x60000324 */
-};
-static struct gpio_regs* gpio = (struct gpio_regs*)(0x60000300);
+typedef struct {
 
-struct timer_regs {
-	uint32 frc1_load;   /* 0x60000600 */
-	uint32 frc1_count;  /* 0x60000604 */
-	uint32 frc1_ctrl;   /* 0x60000608 */
-	uint32 frc1_int;    /* 0x6000060C */
-	uint8  pad[16];
-	uint32 frc2_load;   /* 0x60000620 */
-	uint32 frc2_count;  /* 0x60000624 */
-	uint32 frc2_ctrl;   /* 0x60000628 */
-	uint32 frc2_int;    /* 0x6000062C */
-	uint32 frc2_alarm;  /* 0x60000630 */
-};
-static struct timer_regs* timer = (struct timer_regs*)(0x60000600);
+    uint32 frc1_load;  /* 0x60000600 */
+    uint32 frc1_count; /* 0x60000604 */
+    uint32 frc1_ctrl;  /* 0x60000608 */
+    uint32 frc1_int;   /* 0x6000060C */
+    uint8  pad[16];
+    uint32 frc2_load;  /* 0x60000620 */
+    uint32 frc2_count; /* 0x60000624 */
+    uint32 frc2_ctrl;  /* 0x60000628 */
+    uint32 frc2_int;   /* 0x6000062C */
+    uint32 frc2_alarm; /* 0x60000630 */
 
-static void pwm_intr_handler(void)
-{
-	if ((pwm_state.current_set[pwm_state.current_phase].off_mask == 0) &&
-	    (pwm_state.current_set[pwm_state.current_phase].on_mask == 0)) {
-		pwm_state.current_set = pwm_state.next_set;
-		pwm_state.current_phase = 0;
+} timer_regs_t;
+
+
+/* Three sets of PWM phases, the active one, the one used starting with the next cycle, and the one updated. After the
+ * update next_phase is set to the last updated set. current_phase is set to next_phase from the interrupt routine
+ * during the first PWM phase */
+static pwm_phase_t  *phase_sets[3];
+
+static uint8         current_phase_no;
+static pwm_phase_t  *current_phase;
+static pwm_phase_t  *next_phase;
+
+static uint32        current_period;
+static uint32       *current_duties;
+static uint32       *gpio_masks;
+static uint8        *gpio_channel_mapping;
+static uint8         channel_count;
+
+static gpio_regs_t  *gpio_regs = (gpio_regs_t *) 0x60000300;
+static timer_regs_t *timer_regs = (timer_regs_t *) 0x60000600;
+
+static bool          intr_handler_attached = FALSE;
+static bool          enabled = FALSE;
+
+
+ICACHE_FLASH_ATTR static void                             apply_config(void);
+static void                                               intr_handler(void);
+ICACHE_FLASH_ATTR static uint8 __attribute__ ((noinline)) prepare_phases(pwm_phase_t *phases);
+
+
+void pwm_setup(uint32 gpio_mask) {
+    int i;
+    uint32 mask = gpio_mask;
+
+    /* Count number of channels used */
+    channel_count = 0;
+    uint8 gpio_no = 0;
+    while (mask) {
+        if (mask % 2) {
+            channel_count++;
+        }
+        mask >>= 1;
+        gpio_no++;
+    }
+
+    /* Free any previously allocated memory for PWM channels */
+    for (i = 0; i < 3; i++) {
+        free(phase_sets[i]);
+        phase_sets[i] = NULL;
+    }
+
+    free(current_duties);
+    free(gpio_masks);
+    free(gpio_channel_mapping);
+
+    current_duties = NULL;
+    gpio_masks = NULL;
+    gpio_channel_mapping = NULL;
+
+    if (!channel_count) {
+        return;
+    }
+
+    DEBUG_PWM("setting up with GPIO mask %08X (%d channels)", gpio_mask, channel_count);
+
+    /* Allocate memory for channels */
+    for (i = 0; i < 3; i++) {
+        phase_sets[i] = zalloc(sizeof(pwm_phase_t) * (channel_count + 2));
+    }
+
+    current_duties = zalloc(sizeof(uint32) * channel_count);
+    gpio_masks = zalloc(sizeof(uint32) * channel_count);
+
+    /* Allocate mapping array according to gpio_no which is the highest GPIO used */
+    gpio_channel_mapping = zalloc(sizeof(uint8) * (gpio_no + 1));
+
+    /* Setup GPIOs */
+    gpio_no = 0;
+    mask = gpio_mask;
+    i = 0;
+    while (mask) {
+        if (mask % 2) {
+            gpio_configure_output(gpio_no, /* initial = */ FALSE);
+            gpio_masks[i] = 1UL << gpio_no;
+            gpio_channel_mapping[gpio_no] = i;
+            i++;
+        }
+        gpio_no++;
+        mask >>= 1;
+    }
+
+    current_phase_no = 0;
+    current_phase = NULL;
+    next_phase = NULL;
+
+    current_period = 5000; /* 5e6 / 1000 Hz */
+
+    /* Attach interrupt handler, but only once, upon first pwm_setup() call */
+    if (!intr_handler_attached) {
+        intr_handler_attached = TRUE;
+#if USE_NMI
+        ETS_FRC_TIMER1_NMI_INTR_ATTACH((ets_isr_t) intr_handler);
+#else
+        ETS_FRC_TIMER1_INTR_ATTACH((ets_isr_t) intr_handler, NULL);
+#endif
+    }
+
+    TM1_EDGE_INT_ENABLE();
+
+    timer_regs->frc1_int &= ~FRC1_INT_CLR_MASK;
+    timer_regs->frc1_ctrl = 0;
+
+    apply_config();
+}
+
+void pwm_enable(void) {
+    if (enabled) {
+        return;
+    }
+
+    DEBUG_PWM("enabling");
+
+    enabled = TRUE;
+}
+
+void pwm_disable(void) {
+    if (!enabled) {
+        return;
+    }
+
+    DEBUG_PWM("disabling");
+
+    enabled = FALSE;
+}
+
+void pwm_set_duty(uint8 gpio_no, uint8 duty) {
+    uint8 channel = gpio_channel_mapping[gpio_no];
+    if (channel > channel_count || duty > 100) {
+        return;
+    }
+
+    current_duties[channel] = duty * current_period / 100;
+
+    DEBUG_PWM("setting duty for GPIO%d to %d%% (%d ms)", gpio_no, duty, current_duties[channel]);
+
+    apply_config();
+}
+
+uint8 pwm_get_duty(uint8 gpio_no) {
+    uint8 channel = gpio_channel_mapping[gpio_no];
+    if (channel > channel_count) {
+        return 0;
+    }
+
+    return current_duties[channel] * 100 / current_period;
+}
+
+void pwm_set_freq(uint32 freq) {
+    uint32 new_period;
+    if (freq == 0) {
+        new_period = 0;
+    }
+    else {
+        new_period = 5000000 / freq;
+    }
+    if (new_period > MAX_PERIOD) {
+        new_period = MAX_PERIOD;
+    }
+
+    DEBUG_PWM("setting freq to %d Hz (%d ms)", freq, new_period);
+
+    /* Recalculate duties as they are relative to current period */
+    uint8 duty_percent;
+    for (int i = 0; i < channel_count; i++) {
+        duty_percent = current_period ? current_duties[i] * 100 / current_period : 0;
+        current_duties[i] = duty_percent * new_period / 100;
+        DEBUG_PWM("updating duty for channel %d to %d%% (%d ms)", i, duty_percent, current_duties[i]);
+    }
+
+    current_period = new_period;
+
+    apply_config();
+}
+
+uint32 pwm_get_freq(void) {
+    if (current_period == 0) {
+        return 0;
+    }
+
+    return 5000000 / current_period;
+}
+
+
+void apply_config(void) {
+    pwm_phase_t **phase = phase_sets;
+
+    DEBUG_PWM("applying config");
+
+    if ((*phase == next_phase) || (*phase == current_phase)) {
+        phase++;
+    }
+    if ((*phase == next_phase) || (*phase == current_phase)) {
+        phase++;
+    }
+
+    uint8 phase_count = prepare_phases(*phase);
+
+    /* All with 0% / 100% duty - stop timer */
+    if (phase_count == 1) {
+        if (next_phase) {
+            timer_regs->frc1_ctrl = 0;
+            ETS_FRC1_INTR_DISABLE();
+        }
+        next_phase = NULL;
+
+        GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, (*phase)[0].on_mask);
+        GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, (*phase)[0].off_mask);
+
+        return;
+    }
+
+    /* Start if not already started */
+    if (!next_phase) {
+        current_phase = next_phase = *phase;
+        current_phase_no = phase_count - 1;
+        ETS_FRC1_INTR_ENABLE();
+        RTC_REG_WRITE(FRC1_LOAD_ADDRESS, 0);
+        timer_regs->frc1_ctrl = TIMER1_DIVIDE_BY_16 | TIMER1_ENABLE_TIMER;
+        return;
+    }
+
+    next_phase = *phase;
+}
+
+void intr_handler(void) {
+    if (!channel_count || !current_period || !enabled) {
+        return;
+    }
+
+	if ((current_phase[current_phase_no].off_mask == 0) &&
+	    (current_phase[current_phase_no].on_mask == 0)) {
+
+		current_phase = next_phase;
+		current_phase_no = 0;
 	}
 
 	do {
-		// force write to GPIO registers on each loop
+		/* Force write to GPIO registers on each loop */
 		__asm__ __volatile__ ("" : : : "memory");
 
-		gpio->out_w1ts = (uint32)(pwm_state.current_set[pwm_state.current_phase].on_mask);
-		gpio->out_w1tc = (uint32)(pwm_state.current_set[pwm_state.current_phase].off_mask);
+		gpio_regs->out_w1ts = (uint32) (current_phase[current_phase_no].on_mask);
+		gpio_regs->out_w1tc = (uint32) (current_phase[current_phase_no].off_mask);
 
-		uint32 ticks = pwm_state.current_set[pwm_state.current_phase].ticks;
+		uint32 ticks = current_phase[current_phase_no].ticks;
 
-		pwm_state.current_phase++;
+		current_phase_no++;
 
 		if (ticks) {
 			if (ticks >= 16) {
-				// constant interrupt overhead
+				/* Constant interrupt overhead */
 				ticks -= 9;
-				timer->frc1_int &= ~FRC1_INT_CLR_MASK;
-				WRITE_PERI_REG(&timer->frc1_load, ticks);
+				timer_regs->frc1_int &= ~FRC1_INT_CLR_MASK;
+				WRITE_PERI_REG(&timer_regs->frc1_load, ticks);
 				return;
 			}
 
 			ticks *= 4;
 			do {
 				ticks -= 1;
-				// stop compiler from optimizing delay loop to noop
+				/* Stop compiler from optimizing delay loop to noop */
 				__asm__ __volatile__ ("" : : : "memory");
 			} while (ticks > 0);
 		}
@@ -154,129 +349,67 @@ static void pwm_intr_handler(void)
 	} while (1);
 }
 
-/**
- * period: initial period (base unit 1us OR 200ns)
- * duty: array of initial duty values, may be NULL, may be freed after pwm_init
- * pwm_channel_num: number of channels to use
- * pin_info_list: array of pin_info
- */
-void ICACHE_FLASH_ATTR
-pwm_init(uint32 period, uint32 *duty, uint32 pwm_channel_num,
-              uint32 (*pin_info_list)[3])
-{
-	int i, j, n;
+uint8 prepare_phases(pwm_phase_t *phases) {
+	uint8 i, phase_count;
 
-	pwm_channels = pwm_channel_num;
-	if (pwm_channels > PWM_MAX_CHANNELS)
-		pwm_channels = PWM_MAX_CHANNELS;
-
-	for (i = 0; i < 3; i++) {
-		for (j = 0; j < (PWM_MAX_CHANNELS + 2); j++) {
-			pwm_phases[i][j].ticks = 0;
-			pwm_phases[i][j].on_mask = 0;
-			pwm_phases[i][j].off_mask = 0;
-		}
+	for (i = 0; i < channel_count + 2; i++) {
+	    memset(phases + i, 0, sizeof(pwm_phase_t));
 	}
-	pwm_state.current_set = pwm_state.next_set = 0;
-	pwm_state.current_phase = 0;
-
-	uint32 all = 0;
-	// PIN info: MUX-Register, Mux-Setting, PIN-Nr
-	for (n = 0; n < pwm_channels; n++) {
-		pin_info_type* pin_info = &pin_info_list[n];
-		if ((*pin_info)[0]) {
-		    PIN_FUNC_SELECT((*pin_info)[0], (*pin_info)[1]);
-		}
-		gpio_mask[n] = 1UL << (*pin_info)[2];
-		all |= 1UL << (*pin_info)[2];
-		if (duty)
-			pwm_set_duty(duty[n], n);
-	}
-	GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, all);
-	GPIO_REG_WRITE(GPIO_ENABLE_W1TS_ADDRESS, all);
-
-	pwm_set_period(period);
-
-#if PWM_USE_NMI
-	ETS_FRC_TIMER1_NMI_INTR_ATTACH(pwm_intr_handler);
-#else
-	ETS_FRC_TIMER1_INTR_ATTACH((ets_isr_t) pwm_intr_handler, NULL);
-#endif
-	TM1_EDGE_INT_ENABLE();
-
-	timer->frc1_int &= ~FRC1_INT_CLR_MASK;
-	timer->frc1_ctrl = 0;
-
-	pwm_start();
-}
-
-__attribute__ ((noinline))
-static uint8 ICACHE_FLASH_ATTR
-_pwm_phases_prep(struct pwm_phase* pwm)
-{
-	uint8 n, phases;
-
-	for (n = 0; n < pwm_channels + 2; n++) {
-		pwm[n].ticks = 0;
-		pwm[n].on_mask = 0;
-		pwm[n].off_mask = 0;
-	}
-	phases = 1;
-	for (n = 0; n < pwm_channels; n++) {
-		uint32 ticks = PWM_DUTY_TO_TICKS(pwm_duty[n]);
+	phase_count = 1;
+	for (i = 0; i < channel_count; i++) {
+		uint32 ticks = current_duties[i];
 		if (ticks == 0) {
-			pwm[0].off_mask |= gpio_mask[n];
-		} else if (ticks >= pwm_period_ticks) {
-			pwm[0].on_mask |= gpio_mask[n];
-		} else {
-			if (ticks < (pwm_period_ticks/2)) {
-				pwm[phases].ticks = ticks;
-				pwm[0].on_mask |= gpio_mask[n];
-				pwm[phases].off_mask = gpio_mask[n];
-			} else {
-				pwm[phases].ticks = pwm_period_ticks - ticks;
-				pwm[phases].on_mask = gpio_mask[n];
-				pwm[0].off_mask |= gpio_mask[n];
+			phases[0].off_mask |= gpio_masks[i];
+		}
+		else if (ticks >= current_period) {
+			phases[0].on_mask |= gpio_masks[i];
+		}
+		else {
+			if (ticks < (current_period / 2)) {
+				phases[phase_count].ticks = ticks;
+				phases[0].on_mask |= gpio_masks[i];
+				phases[phase_count].off_mask = gpio_masks[i];
 			}
-			phases++;
+			else {
+				phases[phase_count].ticks = current_period - ticks;
+				phases[phase_count].on_mask = gpio_masks[i];
+				phases[0].off_mask |= gpio_masks[i];
+			}
+			phase_count++;
 		}
 	}
-	pwm[phases].ticks = pwm_period_ticks;
+	phases[phase_count].ticks = current_period;
 
-	// bubble sort, lowest to hightest duty
-	n = 2;
-	while (n < phases) {
-		if (pwm[n].ticks < pwm[n - 1].ticks) {
-			struct pwm_phase t = pwm[n];
-			pwm[n] = pwm[n - 1];
-			pwm[n - 1] = t;
-			if (n > 2)
-				n--;
-		} else {
-			n++;
+	/* Bubble sort, lowest to highest duty */
+	i = 2;
+	while (i < phase_count) {
+		if (phases[i].ticks < phases[i - 1].ticks) {
+			pwm_phase_t p = phases[i];
+			phases[i] = phases[i - 1];
+			phases[i - 1] = p;
+			if (i > 2) {
+				i--;
+			}
+		}
+		else {
+			i++;
 		}
 	}
 
-#if PWM_DEBUG
-        int t = 0;
-	for (t = 0; t <= phases; t++) {
-		DEBUG_PWM("%d @%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
-	}
-#endif
-
-	// shift left to align right edge;
+	/* Shift left to align right edge */
 	uint8 l = 0, r = 1;
-	while (r <= phases) {
-		uint32 diff = pwm[r].ticks - pwm[l].ticks;
+	while (r <= phase_count) {
+		uint32 diff = phases[r].ticks - phases[l].ticks;
 		if (diff && (diff <= 16)) {
-			uint16 mask = pwm[r].on_mask | pwm[r].off_mask;
-			pwm[l].off_mask ^= pwm[r].off_mask;
-			pwm[l].on_mask ^= pwm[r].on_mask;
-			pwm[0].off_mask ^= pwm[r].on_mask;
-			pwm[0].on_mask ^= pwm[r].off_mask;
-			pwm[r].ticks = pwm_period_ticks - diff;
-			pwm[r].on_mask ^= mask;
-			pwm[r].off_mask ^= mask;
+			uint16 mask = phases[r].on_mask | phases[r].off_mask;
+
+			phases[l].off_mask ^= phases[r].off_mask;
+			phases[l].on_mask ^= phases[r].on_mask;
+			phases[0].off_mask ^= phases[r].on_mask;
+			phases[0].on_mask ^= phases[r].off_mask;
+			phases[r].ticks = current_period - diff;
+			phases[r].on_mask ^= mask;
+			phases[r].off_mask ^= mask;
 		}
 		else {
 			l = r;
@@ -284,173 +417,59 @@ _pwm_phases_prep(struct pwm_phase* pwm)
 		r++;
 	}
 
-#if PWM_DEBUG
-	for (t = 0; t <= phases; t++) {
-	    DEBUG_PWM("%d @%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
-	}
-#endif
-
-	// sort again
-	n = 2;
-	while (n <= phases) {
-		if (pwm[n].ticks < pwm[n - 1].ticks) {
-			struct pwm_phase t = pwm[n];
-			pwm[n] = pwm[n - 1];
-			pwm[n - 1] = t;
-			if (n > 2)
-				n--;
-		} else {
-			n++;
+	/* Sort again */
+	i = 2;
+	while (i <= phase_count) {
+		if (phases[i].ticks < phases[i - 1].ticks) {
+			pwm_phase_t p = phases[i];
+			phases[i] = phases[i - 1];
+			phases[i - 1] = p;
+			if (i > 2) {
+				i--;
+			}
+		}
+		else {
+			i++;
 		}
 	}
 
-	// merge same duty
+	/* Merge same duty */
 	l = 0, r = 1;
-	while (r <= phases) {
-		if (pwm[r].ticks == pwm[l].ticks) {
-			pwm[l].off_mask |= pwm[r].off_mask;
-			pwm[l].on_mask |= pwm[r].on_mask;
-			pwm[r].on_mask = 0;
-			pwm[r].off_mask = 0;
-		} else {
+	while (r <= phase_count) {
+		if (phases[r].ticks == phases[l].ticks) {
+			phases[l].off_mask |= phases[r].off_mask;
+			phases[l].on_mask |= phases[r].on_mask;
+			phases[r].on_mask = 0;
+			phases[r].off_mask = 0;
+		}
+		else {
 			l++;
 			if (l != r) {
-				struct pwm_phase t = pwm[l];
-				pwm[l] = pwm[r];
-				pwm[r] = t;
+				pwm_phase_t p = phases[l];
+				phases[l] = phases[r];
+				phases[r] = p;
 			}
 		}
 		r++;
 	}
-	phases = l;
+	phase_count = l;
 
-#if PWM_DEBUG
-	for (t = 0; t <= phases; t++) {
-	    DEBUG_PWM("%d @%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
+	/* Transform absolute end time to phase durations */
+	for (i = 0; i < phase_count; i++) {
+		phases[i].ticks = phases[i + 1].ticks - phases[i].ticks;
+		/* Subtract common overhead */
+		phases[i].ticks--;
 	}
-#endif
+	phases[phase_count].ticks = 0;
 
-	// transform absolute end time to phase durations
-	for (n = 0; n < phases; n++) {
-		pwm[n].ticks =
-			pwm[n + 1].ticks - pwm[n].ticks;
-		// subtract common overhead
-		pwm[n].ticks--;
-	}
-	pwm[phases].ticks = 0;
-
-	// do a cyclic shift if last phase is short
-	if (pwm[phases - 1].ticks < 16) {
-		for (n = 0; n < phases - 1; n++) {
-			struct pwm_phase t = pwm[n];
-			pwm[n] = pwm[n + 1];
-			pwm[n + 1] = t;
+	/* Do a cyclic shift if last phase is short */
+	if (phases[phase_count - 1].ticks < 16) {
+		for (i = 0; i < phase_count - 1; i++) {
+			pwm_phase_t p = phases[i];
+			phases[i] = phases[i + 1];
+			phases[i + 1] = p;
 		}
 	}
 
-#if PWM_DEBUG
-	for (t = 0; t <= phases; t++) {
-	    DEBUG_PWM("%d +%d:   %04x %04x\n", t, pwm[t].ticks, pwm[t].on_mask, pwm[t].off_mask);
-	}
-	DEBUG_PWM("\n");
-#endif
-
-	return phases;
+	return phase_count;
 }
-
-void ICACHE_FLASH_ATTR
-pwm_start(void)
-{
-	pwm_phase_array* pwm = &pwm_phases[0];
-
-	if ((*pwm == pwm_state.next_set) ||
-	    (*pwm == pwm_state.current_set))
-		pwm++;
-	if ((*pwm == pwm_state.next_set) ||
-	    (*pwm == pwm_state.current_set))
-		pwm++;
-
-	uint8 phases = _pwm_phases_prep(*pwm);
-
-        // all with 0% / 100% duty - stop timer
-	if (phases == 1) {
-		if (pwm_state.next_set) {
-#if PWM_DEBUG
-		    DEBUG_PWM("PWM stop\n");
-#endif
-			timer->frc1_ctrl = 0;
-			ETS_FRC1_INTR_DISABLE();
-		}
-		pwm_state.next_set = NULL;
-
-		GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, (*pwm)[0].on_mask);
-		GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, (*pwm)[0].off_mask);
-
-		return;
-	}
-
-	// start if not running
-	if (!pwm_state.next_set) {
-#if PWM_DEBUG
-	    DEBUG_PWM("PWM start\n");
-#endif
-		pwm_state.current_set = pwm_state.next_set = *pwm;
-		pwm_state.current_phase = phases - 1;
-		ETS_FRC1_INTR_ENABLE();
-		RTC_REG_WRITE(FRC1_LOAD_ADDRESS, 0);
-		timer->frc1_ctrl = TIMER1_DIVIDE_BY_16 | TIMER1_ENABLE_TIMER;
-		return;
-	}
-
-	pwm_state.next_set = *pwm;
-}
-
-void ICACHE_FLASH_ATTR
-pwm_set_duty(uint32 duty, uint8 channel)
-{
-	if (channel > PWM_MAX_CHANNELS)
-		return;
-
-	if (duty > PWM_MAX_DUTY)
-		duty = PWM_MAX_DUTY;
-
-	pwm_duty[channel] = duty;
-}
-
-uint32 ICACHE_FLASH_ATTR
-pwm_get_duty(uint8 channel)
-{
-	if (channel > PWM_MAX_CHANNELS)
-		return 0;
-	return pwm_duty[channel];
-}
-
-void ICACHE_FLASH_ATTR
-pwm_set_period(uint32 period)
-{
-	pwm_period = period;
-
-	if (pwm_period > PWM_MAX_PERIOD)
-		pwm_period = PWM_MAX_PERIOD;
-
-	pwm_period_ticks = PWM_PERIOD_TO_TICKS(period);
-}
-
-uint32 ICACHE_FLASH_ATTR
-pwm_get_period(void)
-{
-	return pwm_period;
-}
-
-uint32 ICACHE_FLASH_ATTR
-get_pwm_version(void)
-{
-	return 1;
-}
-
-void ICACHE_FLASH_ATTR
-set_pwm_debug_en(uint8 print_en)
-{
-	(void) print_en;
-}
-

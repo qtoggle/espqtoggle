@@ -27,12 +27,14 @@
 
 #include "peripherals/gpiop.h"
 #include "peripherals/adc.h"
+#include "peripherals/pwmp.h"
 
 
 static peripheral_type_t *all_peripheral_types[] = {
 
-    &peripheral_type_gpio, /* Type 1 */
-    &peripheral_type_adc,  /* Type 2 */
+    &peripheral_type_gpiop, /* Type 1 */
+    &peripheral_type_adc,   /* Type 2 */
+    &peripheral_type_pwmp,  /* Type 3 */
 
 };
 
@@ -199,12 +201,10 @@ void peripheral_cleanup(peripheral_t *peripheral) {
     if (type->cleanup) {
         type->cleanup(peripheral);
     }
-    else {
-        /* Default cleanup routine will simply free user_data */
-        if (peripheral->user_data) {
-            free(peripheral->user_data);
-            peripheral->user_data = NULL;
-        }
+
+    if (peripheral->user_data) {
+        free(peripheral->user_data);
+        peripheral->user_data = NULL;
     }
 
     if (peripheral->params) {

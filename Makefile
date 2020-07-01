@@ -4,7 +4,7 @@ DEBUG_FLAGS ?= battery dnsserver flashcfg gpio html httpclient httpserver json o
                api config core device espqtclient events expr peripherals ports sessions virtual webhooks 			\
                peripherals api core device espqtclient expr ports events sessions virtual webhooks 					\
                hspi onewire pwm uart 																				\
-               bl0940 dallastemp dht gpiop hlw8012 kr102 sht v9821
+               adc bl0940 dallastemp dht gpiop hlw8012 kr102 pwmp sht v9821
 DEBUG_IP ?= # 192.168.0.1
 DEBUG_PORT ?= 48879
 DEBUG_UART_NO ?= 0

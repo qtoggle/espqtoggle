@@ -217,7 +217,7 @@ typedef struct port {
     /* Callbacks */
     double             (*read_value)(struct port *port);
     bool               (*write_value)(struct port *port, double value);
-    void               (*configure)(struct port *port);
+    void               (*configure)(struct port *port, bool enabled);
     void               (*heart_beat)(struct port *port);
 
     /* Extra attribute definitions */
