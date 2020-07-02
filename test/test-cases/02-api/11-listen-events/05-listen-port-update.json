@@ -46,8 +46,8 @@
                                         "enabled",
                                         "persisted",
                                         "internal",
-                                        "sampling_interval",
                                         "transform_read",
+                                        "transform_write",
                                         "type",
                                         "value",
                                         "definitions"
@@ -71,9 +71,6 @@
                                         "internal": {
                                             "type": "boolean"
                                         },
-                                        "sampling_interval": {
-                                            "type": "integer"
-                                        },
                                         "transform_read": {
                                             "type": "string"
                                         },
@@ -85,12 +82,6 @@
                                         },
                                         "expression": {
                                             "type": "string"
-                                        },
-                                        "pull_up": {
-                                            "type": "boolean"
-                                        },
-                                        "output": {
-                                            "type": "boolean"
                                         },
                                         "value": {
                                             "oneOf": [
@@ -118,4 +109,3 @@
         }
     ]
 }
-

@@ -17,6 +17,7 @@
  */
 
 #include "espgoodies/crypto.h"
+#include "espgoodies/sleep.h"
 #include "espgoodies/wifi.h"
 
 #include "api.h"

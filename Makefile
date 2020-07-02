@@ -11,7 +11,7 @@ DEBUG_UART_NO ?= 0
 
 OTA     ?= true
 SSL     ?= false
-SLEEP   ?= false
+SLEEP   ?= true
 VIRTUAL ?= true
 BATTERY ?= true
 

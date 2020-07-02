@@ -29,10 +29,8 @@
                     "display_name": "test display name 2",
                     "enabled": true,
                     "persisted": true,
-                    "sampling_interval": 150,
-                    "transform_read": "",
-                    "pull_up": true,
-                    "output": true
+                    "transform_read": "NOT(${DOLLAR})",
+                    "transform_write": "NOT(${DOLLAR})"
                 },
                 "expected_status": 204,
                 "expected_body": null
@@ -107,10 +105,8 @@
                                 "display_name",
                                 "enabled",
                                 "persisted",
-                                "sampling_interval",
                                 "transform_read",
-                                "pull_up",
-                                "output"
+                                "transform_write"
                             ],
                             "properties": {
                                 "id": {
@@ -125,17 +121,11 @@
                                 "persisted": {
                                     "enum": [true]
                                 },
-                                "sampling_interval": {
-                                    "enum": [150]
-                                },
                                 "transform_read": {
-                                    "enum": [""]
+                                    "enum": ["NOT(${DOLLAR})"]
                                 },
-                                "pull_up": {
-                                    "enum": [true]
-                                },
-                                "output": {
-                                    "enum": [true]
+                                "transform_write": {
+                                    "enum": ["NOT(${DOLLAR})"]
                                 }
                             }
                         }
@@ -157,4 +147,3 @@
         }
     ]
 }
-

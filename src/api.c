@@ -142,7 +142,7 @@ ICACHE_FLASH_ATTR static json_t *_invalid_expression_error(
                                      char *field,
                                      char *reason,
                                      char *token,
-                                     uint32 pos
+                                     int32 pos
                                  );
 
 ICACHE_FLASH_ATTR static json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx);
@@ -3269,7 +3269,7 @@ json_t *_forbidden_error(json_t *response_json, uint8 level) {
     return _api_error(response_json, "forbidden", "required_level", field_value);
 }
 
-json_t *_invalid_expression_error(json_t *response_json, char *field, char *reason, char *token, uint32 pos) {
+json_t *_invalid_expression_error(json_t *response_json, char *field, char *reason, char *token, int32 pos) {
     if (response_json) {
         json_free(response_json);
     }
