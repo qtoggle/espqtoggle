@@ -1,18 +1,15 @@
 {
-    "name": "gpio-output-pull",
+    "name": "gpio-write",
     "instructions": [
         {
             "name": "json-http-client",
             "params": {
                 "method": "PATCH",
-                "path": "/ports/gpio4",
+                "path": "/ports/gpio4/value",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
                 },
-                "body": {
-                    "output": true,
-                    "pull_up": true
-                },
+                "body": false,
                 "expected_status": 204
             }
         },
@@ -20,35 +17,18 @@
             "name": "device-check-gpio",
             "params": {
                 "gpio": 4,
-                "value": true
+                "value": false
             }
         },
         {
             "name": "json-http-client",
             "params": {
                 "method": "PATCH",
-                "path": "/ports/gpio4",
+                "path": "/ports/gpio4/value",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
                 },
-                "body": {
-                    "output": false
-                },
-                "expected_status": 204
-            }
-        },
-        {
-            "name": "json-http-client",
-            "params": {
-                "method": "PATCH",
-                "path": "/ports/gpio4",
-                "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
-                },
-                "body": {
-                    "output": true,
-                    "pull_up": false
-                },
+                "body": true,
                 "expected_status": 204
             }
         },

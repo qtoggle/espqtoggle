@@ -1,0 +1,25 @@
+{
+    "name": "set-config-name",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "config_name": "test/provisioning-test-config"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "sleep",
+            "params": {
+                "duration": 5000
+            }
+        }
+    ]
+}

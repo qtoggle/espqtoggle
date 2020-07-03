@@ -1,0 +1,49 @@
+{
+    "name": "set-gpio-peripherals",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PUT",
+                "path": "/peripherals",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": [
+                    {
+                        "type": 1,
+                        "flags": "0001",
+                        "int8_params": [4],
+                        "port_ids": ["gpio4"]
+                    },
+                    {
+                        "type": 1,
+                        "flags": "0000",
+                        "int8_params": [5],
+                        "port_ids": ["gpio5"]
+                    },
+                    {
+                        "type": 1,
+                        "flags": "0001",
+                        "int8_params": [14],
+                        "port_ids": ["gpio14"]
+                    },
+                    {
+                        "type": 1,
+                        "flags": "0002",
+                        "int8_params": [15],
+                        "port_ids": ["gpio15"]
+                    },
+                    {
+                        "type": 1,
+                        "flags": "0004",
+                        "int8_params": [16],
+                        "port_ids": ["gpio16"]
+                    }
+                ],
+                "expected_status": 204,
+                "expected_body": null
+            }
+        }
+    ]
+}

@@ -4,7 +4,7 @@
         {
             "name": "device-write-gpio",
             "params": {
-                "gpio": 4,
+                "gpio": 5,
                 "value": false
             }
         },
@@ -12,7 +12,7 @@
             "name": "json-http-client",
             "params": {
                 "method": "GET",
-                "path": "/ports/gpio4/value",
+                "path": "/ports/gpio5/value",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
                 },
@@ -23,7 +23,7 @@
         {
             "name": "device-write-gpio",
             "params": {
-                "gpio": 4,
+                "gpio": 5,
                 "value": true
             }
         },
@@ -31,7 +31,7 @@
             "name": "json-http-client",
             "params": {
                 "method": "GET",
-                "path": "/ports/gpio4/value",
+                "path": "/ports/gpio5/value",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
                 },
@@ -41,4 +41,3 @@
         }
     ]
 }
-

@@ -132,7 +132,7 @@ void system_config_init(void) {
     if (setup_button_pin >= 0) {
         gpio_configure_input(setup_button_pin, !setup_button_level);
         if (gpio_read_value(setup_button_pin) == setup_button_level) {
-            DEBUG_SYSTEM("setup button active at boot time, increasing reset hold time");
+            DEBUG_SYSTEM("setup button active at boot time, disabling");
             setup_button_pin = -1;
         }
     }
@@ -318,6 +318,11 @@ void system_setup_mode_toggle(void) {
 void system_update(void) {
     uint64 now_us = system_uptime_us();
     uint64 now_ms = now_us / 1000;
+
+    /* If system reset has been triggered, stop polling setup button/blinking status LED */
+    if (setup_mode_state == SETUP_MODE_RESET) {
+        return;
+    }
 
     /* Do a factory reset if setup button was held pressed enough */
     if (setup_mode_time > 0 && now_ms - setup_mode_time > setup_button_reset_hold * 1000) {

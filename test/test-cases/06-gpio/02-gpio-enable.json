@@ -5,34 +5,6 @@
             "name": "json-http-client",
             "params": {
                 "method": "PATCH",
-                "path": "/ports/gpio0",
-                "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
-                },
-                "body": {
-                    "enabled": true
-                },
-                "expected_status": 204
-            }
-        },
-        {
-            "name": "json-http-client",
-            "params": {
-                "method": "PATCH",
-                "path": "/ports/gpio2",
-                "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
-                },
-                "body": {
-                    "enabled": true
-                },
-                "expected_status": 204
-            }
-        },
-        {
-            "name": "json-http-client",
-            "params": {
-                "method": "PATCH",
                 "path": "/ports/gpio4",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
@@ -48,34 +20,6 @@
             "params": {
                 "method": "PATCH",
                 "path": "/ports/gpio5",
-                "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
-                },
-                "body": {
-                    "enabled": true
-                },
-                "expected_status": 204
-            }
-        },
-        {
-            "name": "json-http-client",
-            "params": {
-                "method": "PATCH",
-                "path": "/ports/gpio12",
-                "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
-                },
-                "body": {
-                    "enabled": true
-                },
-                "expected_status": 204
-            }
-        },
-        {
-            "name": "json-http-client",
-            "params": {
-                "method": "PATCH",
-                "path": "/ports/gpio13",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
                 },
@@ -112,7 +56,20 @@
                 },
                 "expected_status": 204
             }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio16",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": {
+                    "enabled": true
+                },
+                "expected_status": 204
+            }
         }
     ]
 }
-

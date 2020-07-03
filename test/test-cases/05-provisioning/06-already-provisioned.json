@@ -5,7 +5,7 @@
             "name": "json-http-client",
             "params": {
                 "method": "PATCH",
-                "path": "/ports/gpio4",
+                "path": "/ports/test_adc",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
                 },
@@ -53,7 +53,6 @@
                 "duration": 5000
             }
         },
-
         {
             "name": "json-http-client",
             "params": {
@@ -64,45 +63,47 @@
                 },
                 "expected_status": 200,
                 "expected_body": [
-                    {
-                        "id": "gpio4",
-                        "display_name": "Already Provisioned",
-                        "writable": false,
-                        "enabled": true,
-                        "persisted": false,
-                        "internal": false,
-                        "sampling_interval": 10,
-                        "transform_read": "NOT(${DOLLAR})",
-                        "type": "boolean",
-                        "output": false,
-                        "pull_up": true,
-                        "value": false,
+				    {
+				        "id": "test_adc",
+				        "display_name": "Already Provisioned",
+				        "writable": false,
+				        "enabled": false,
+				        "persisted": false,
+				        "internal": false,
+				        "sampling_interval": 10000,
+				        "transform_read": "",
+				        "type": "number",
+				        "min": 0,
+				        "max": 1000,
+				        "integer": true,
+				        "unit": "mV",
+				        "value": null,
                         "definitions": {
-                            "output": {
-                                "display_name": "Output Mode",
-                                "description": "Makes this GPIO an output pin.",
-                                "modifiable": true,
-                                "type": "boolean"
-                            },
-                            "pull_up": {
-                                "display_name": "Pull-Up",
-                                "description": "Enables the internal pull-up.",
-                                "modifiable": true,
-                                "type": "boolean"
-                            },
                             "sampling_interval": {
                                 "display_name": "Sampling Interval",
-                                "description": "Indicates how often to read the port value.",
+                                "description": "Indicates how often the port value will be read.",
                                 "unit": "ms",
                                 "modifiable": true,
                                 "type": "number",
                                 "min": 0,
-                                "max": 86400000,
+                                "max": 60000,
                                 "integer": true
                             }
                         }
-                    }
-                ]
+				    },
+				    {
+				        "id": "test_gpio",
+				        "display_name": "",
+				        "writable": false,
+				        "enabled": true,
+				        "persisted": false,
+				        "internal": false,
+				        "transform_read": "",
+				        "type": "boolean",
+				        "value": true,
+				        "definitions": {}
+				    }
+				]
             }
         }
     ]

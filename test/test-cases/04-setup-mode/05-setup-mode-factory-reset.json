@@ -2,6 +2,24 @@
     "name": "setup-mode-factory-reset",
     "instructions": [
         {
+            "name": "json-http-client",
+            "params": {
+                "method": "POST",
+                "path": "/reset",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "sleep",
+            "params": {
+                "duration": 5000
+            }
+        },
+        {
             "name": "device-write-gpio",
             "params": {
                 "gpio": 12,
