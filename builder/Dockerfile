@@ -1,7 +1,7 @@
 # Build with:
 #     docker build -t qtoggle/espqtoggle-builder .
 
-FROM ubuntu:19.04
+FROM ubuntu:20.04
 
 MAINTAINER Calin Crisan ccrisan@gmail.com
 
@@ -16,7 +16,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -yq \
     git \
     xz-utils \
     python \
-    python-serial \
+    python3-serial \
     s3cmd \
     wget \
     jq \
@@ -39,5 +39,6 @@ RUN git clone https://github.com/espressif/ESP8266_NONOS_SDK.git /opt/esp-nonos-
     rm -rf .git
 
 ADD ./builder.sh /opt
+ADD ./makever.sh /opt
 
 CMD /opt/builder.sh
