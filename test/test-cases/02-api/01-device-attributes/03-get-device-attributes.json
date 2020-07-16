@@ -38,7 +38,6 @@
                         "wifi_bssid",
                         "wifi_bssid_current",
                         "wifi_signal_strength",
-                        "frequency",
                         "mem_usage",
                         "flash_size",
                         "firmware_auto_update",
@@ -46,7 +45,11 @@
                         "flash_id",
                         "chip_id",
                         "config_name",
-                        "config_model",
+                        "battery_level",
+                        "battery_voltage",
+                        "sleep_wake_interval",
+                        "sleep_wake_duration",
+                        "debug",
                         "definitions"
                     ],
                     "properties": {
@@ -133,9 +136,6 @@
                         "wifi_signal_strength": {
                             "enum": [-1, 0, 1, 2, 3]
                         },
-                        "frequency": {
-                            "enum": [80]
-                        },
                         "mem_usage": {
                             "type": "integer"
                         },
@@ -159,8 +159,17 @@
                         "config_name": {
                             "enum": ["${FW_CONFIG_NAME}"]
                         },
-                        "config_model": {
-                            "enum": ["default"]
+                        "battery_level": {
+                            "type": "integer"
+                        },
+                        "battery_voltage": {
+                            "type": "integer"
+                        },
+                        "sleep_wake_interval": {
+                            "type": "integer"
+                        },
+                        "sleep_wake_duration": {
+                            "type": "integer"
                         },
                         "debug": {
                             "enum": [true]
@@ -169,67 +178,17 @@
                             "type": "object",
                             "additionalProperties": false,
                             "required": [
-                                "frequency",
                                 "firmware_auto_update",
                                 "firmware_beta_enabled",
                                 "flash_size",
                                 "flash_id",
                                 "chip_id",
-                                "debug",
-                                "config_model"
+                                "battery_voltage",
+                                "sleep_wake_interval",
+                                "sleep_wake_duration",
+                                "debug"
                             ],
                             "properties": {
-                                "frequency": {
-                                    "type": "object",
-                                    "additionalProperties": false,
-                                    "required": [
-                                        "display_name",
-                                        "description",
-                                        "unit",
-                                        "modifiable",
-                                        "type",
-                                        "integer",
-                                        "choices"
-                                    ],
-                                    "properties": {
-                                        "display_name": {
-                                            "type": "string"
-                                        },
-                                        "description": {
-                                            "type": "string"
-                                        },
-                                        "unit": {
-                                            "enum": ["MHz"]
-                                        },
-                                        "modifiable": {
-                                            "enum": [true]
-                                        },  
-                                        "type": {
-                                            "enum": ["number"]
-                                        },
-                                        "integer": {
-                                            "enum": [true]
-                                        },
-                                        "choices": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "additionalProperties": false,
-                                                "required": [
-                                                    "value"
-                                                ],
-                                                "properties": {
-                                                    "value": {
-                                                        "enum": [80, 160]
-                                                    },
-                                                    "display_name": {
-                                                        "type": "string"
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
                                 "firmware_auto_update": {
                                     "type": "object",
                                     "additionalProperties": false,
@@ -358,6 +317,109 @@
                                         }
                                     }
                                 },
+                                "battery_voltage": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "display_name",
+                                        "description",
+                                        "modifiable",
+                                        "type"
+                                    ],
+                                    "properties": {
+                                        "display_name": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "modifiable": {
+                                            "enum": [false]
+                                        },
+                                        "type": {
+                                            "enum": ["number"]
+                                        },
+                                        "unit": {
+                                            "enum": ["mV"]
+                                        }
+                                    }
+                                },
+                                "sleep_wake_interval": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "display_name",
+                                        "description",
+                                        "modifiable",
+                                        "type",
+                                        "min",
+                                        "max",
+                                        "unit",
+                                        "integer"
+                                    ],
+                                    "properties": {
+                                        "display_name": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "modifiable": {
+                                            "enum": [true]
+                                        },
+                                        "type": {
+                                            "enum": ["number"]
+                                        },
+                                        "min": {
+                                            "type": "integer"
+                                        },
+                                        "max": {
+                                            "type": "integer"
+                                        },
+                                        "unit": {
+                                            "enum": ["min"]
+                                        },
+                                        "integer": {
+                                            "enum": [true]
+                                        }
+                                    }
+                                },
+                                "sleep_wake_duration": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                        "display_name",
+                                        "description",
+                                        "modifiable",
+                                        "type"
+                                    ],
+                                    "properties": {
+                                        "display_name": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "modifiable": {
+                                            "enum": [true]
+                                        },
+                                        "type": {
+                                            "enum": ["number"]
+                                        },
+                                        "min": {
+                                            "type": "integer"
+                                        },
+                                        "max": {
+                                            "type": "integer"
+                                        },
+                                        "unit": {
+                                            "enum": ["s"]
+                                        },
+                                        "integer": {
+                                            "enum": [true]
+                                        }
+                                    }
+                                },
                                 "debug": {
                                     "type": "object",
                                     "additionalProperties": false,
@@ -379,34 +441,6 @@
                                         },
                                         "type": {
                                             "enum": ["boolean"]
-                                        }
-                                    }
-                                },
-                                "config_model": {
-                                    "type": "object",
-                                    "additionalProperties": false,
-                                    "required": [
-                                        "display_name",
-                                        "description",
-                                        "modifiable",
-                                        "type",
-                                        "choices"
-                                    ],
-                                    "properties": {
-                                        "display_name": {
-                                            "type": "string"
-                                        },
-                                        "description": {
-                                            "type": "string"
-                                        },
-                                        "modifiable": {
-                                            "enum": [true]
-                                        },
-                                        "type": {
-                                            "enum": ["string"]
-                                        },
-                                        "choices": {
-                                            "type": "array"
                                         }
                                     }
                                 }

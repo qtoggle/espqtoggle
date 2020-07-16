@@ -25,14 +25,14 @@
 
 
 #ifdef _DEBUG_DNSSERVER
-#define DEBUG_DNSSERVER(fmt, ...)       DEBUG("[dnsserver     ] " fmt, ##__VA_ARGS__)
+#define DEBUG_DNSSERVER(fmt, ...) DEBUG("[dnsserver     ] " fmt, ##__VA_ARGS__)
 #else
-#define DEBUG_DNSSERVER(...)            {}
+#define DEBUG_DNSSERVER(...)      {}
 #endif
 
 
-ICACHE_FLASH_ATTR void                  dnsserver_start_captive(void);
-ICACHE_FLASH_ATTR void                  dnsserver_stop(void);
+void ICACHE_FLASH_ATTR dnsserver_start_captive(void);
+void ICACHE_FLASH_ATTR dnsserver_stop(void);
 
 
 #endif /* _ESPGOODIES_DNSSERVER_H */

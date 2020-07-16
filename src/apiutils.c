@@ -21,11 +21,9 @@
 #include <mem.h>
 
 #include "espgoodies/common.h"
+#include "espgoodies/sleep.h"
 #include "espgoodies/utils.h"
 #include "espgoodies/wifi.h"
-#ifdef _SLEEP
-#include "espgoodies/sleep.h"
-#endif
 
 #include "api.h"
 #include "common.h"
@@ -257,58 +255,19 @@ bool validate_wifi_bssid(char *bssid_str, uint8 *bssid) {
     return TRUE;
 }
 
-
-#ifdef _SLEEP
-
-bool validate_str_sleep_mode(char *sleep_mode, int *wake_interval, int *wake_duration) {
-    char *s = sleep_mode;
-    int c, wi = 0, wd = 0;
-
-    while ((c = *s++)) {
-        if (c == ':') {
-            break;
-        }
-        else if (isdigit(c)) {
-            wi = wi * 10 + (c - '0');
-        }
-        else {
-            return FALSE;
-        }
-    }
-
-    if (!c) {
-        return FALSE;
-    }
-
-    while ((c = *s++)) {
-        if (isdigit(c)) {
-            wd = wd * 10 + (c - '0');
-        }
-        else {
-            return FALSE;
-        }
-    }
-
-    if (wi < SLEEP_WAKE_INTERVAL_MIN || wi > SLEEP_WAKE_INTERVAL_MAX) {
-        return FALSE;
-    }
-
-    if (wd < SLEEP_WAKE_DURATION_MIN || wd > SLEEP_WAKE_DURATION_MAX) {
-        return FALSE;
-    }
-
-    *wake_interval = wi;
-    *wake_duration = wd;
-
-    return TRUE;
-}
-
-#endif
-
-json_t *attrdef_to_json(char *display_name, char *description, char *unit, char type, bool modifiable,
-                        double min, double max, bool integer, double step, char **choices,
-                        bool reconnect) {
-
+json_t *attrdef_to_json(
+    char *display_name,
+    char *description,
+    char *unit,
+    char type,
+    bool modifiable,
+    double min,
+    double max,
+    bool integer,
+    double step,
+    char **choices,
+    bool reconnect
+) {
     json_t *json = json_obj_new();
 
     json_obj_append(json, "display_name", json_str_new(display_name));

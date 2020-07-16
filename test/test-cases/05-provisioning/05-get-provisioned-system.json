@@ -1,0 +1,32 @@
+{
+    "name": "get-provisioned-system",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/system",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "expected_status": 200,
+                "expected_body": {
+                    "setup_button": {
+                        "pin": 15,
+                        "level": true,
+                        "hold": 50,
+                        "reset_hold": 100
+                    },
+                    "status_led": {
+                        "pin": 4,
+                        "level": true
+                    },
+                    "battery": {
+                        "div": 200,
+                        "voltages": [500, 600, 700, 800, 900, 1000]
+                    }
+                }
+            }
+        }
+    ]
+}

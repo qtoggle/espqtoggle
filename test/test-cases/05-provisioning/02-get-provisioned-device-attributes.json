@@ -22,7 +22,7 @@
                             "enum": ["esp-{{DEVICE_SERIAL_NUMBER}}"]
                         },
                         "display_name": {
-                            "enum": ["Test"]
+                            "enum": ["Provisioning Test"]
                         }
                     }
                 }
@@ -30,4 +30,3 @@
         }
     ]
 }
-

@@ -17,14 +17,16 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
+#include <strings.h> /* for strcasecmp */
 #include <mem.h>
 
-#include "common.h"
-#include "utils.h"
-#include "httputils.h"
+#include "espgoodies/common.h"
+#include "espgoodies/utils.h"
+#include "espgoodies/httputils.h"
 
 
-ICACHE_FLASH_ATTR static void       unescape_url_encoded_value(char *value);
+static void ICACHE_FLASH_ATTR unescape_url_encoded_value(char *value);
 
 
 json_t *http_parse_url_encoded(char *input) {

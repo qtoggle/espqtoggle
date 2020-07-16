@@ -21,43 +21,43 @@
 #include <ctype.h>
 #include <mem.h>
 
-#include "common.h"
-#include "utils.h"
-#include "json.h"
+#include "espgoodies/common.h"
+#include "espgoodies/utils.h"
+#include "espgoodies/json.h"
 
 
-#define ctx_get_size(ctx)           ((ctx)->stack_size)
-#define ctx_has_key(ctx)            ((ctx)->stack_size > 0 && (ctx)->stack[(ctx)->stack_size - 1].key != NULL)
-#define ctx_get_key(ctx)            ((ctx)->stack_size > 0 ? (ctx)->stack[(ctx)->stack_size - 1].key : NULL)
+#define ctx_get_size(ctx) ((ctx)->stack_size)
+#define ctx_has_key(ctx)  ((ctx)->stack_size > 0 && (ctx)->stack[(ctx)->stack_size - 1].key != NULL)
+#define ctx_get_key(ctx)  ((ctx)->stack_size > 0 ? (ctx)->stack[(ctx)->stack_size - 1].key : NULL)
 
-#define STRINGIFIED_CHUNK_SIZE      128
+#define STRINGIFIED_CHUNK_SIZE 128
 
 
 typedef struct {
 
-    json_t    * json;
-    char      * key;
+    json_t *json;
+    char   *key;
 
 } stack_t;
 
 typedef struct {
 
-    uint32      stack_size;
-    stack_t   * stack;
+    uint32   stack_size;
+    stack_t *stack;
 
 } ctx_t;
 
 
-ICACHE_FLASH_ATTR static void       json_dump_rec(json_t *json, char **output, int *len, int *size, uint8 free_mode);
+static void   ICACHE_FLASH_ATTR  json_dump_rec(json_t *json, char **output, int *len, int *size, uint8 free_mode);
 
-ICACHE_FLASH_ATTR static ctx_t    * ctx_new(char *input);
-ICACHE_FLASH_ATTR static void       ctx_set_key(ctx_t *ctx, char *key);
-ICACHE_FLASH_ATTR static void       ctx_clear_key(ctx_t *ctx);
-ICACHE_FLASH_ATTR static json_t   * ctx_get_current(ctx_t *ctx);
-ICACHE_FLASH_ATTR static bool       ctx_add(ctx_t *ctx, json_t *json);
-ICACHE_FLASH_ATTR static void       ctx_push(ctx_t *ctx, json_t *json);
-ICACHE_FLASH_ATTR static json_t   * ctx_pop(ctx_t *ctx);
-ICACHE_FLASH_ATTR static void       ctx_free(ctx_t *ctx);
+static ctx_t  ICACHE_FLASH_ATTR *ctx_new(char *input);
+static void   ICACHE_FLASH_ATTR  ctx_set_key(ctx_t *ctx, char *key);
+static void   ICACHE_FLASH_ATTR  ctx_clear_key(ctx_t *ctx);
+static json_t ICACHE_FLASH_ATTR *ctx_get_current(ctx_t *ctx);
+static bool   ICACHE_FLASH_ATTR  ctx_add(ctx_t *ctx, json_t *json);
+static void   ICACHE_FLASH_ATTR  ctx_push(ctx_t *ctx, json_t *json);
+static json_t ICACHE_FLASH_ATTR *ctx_pop(ctx_t *ctx);
+static void   ICACHE_FLASH_ATTR  ctx_free(ctx_t *ctx);
 
 
 json_t *json_parse(char *input) {
@@ -79,7 +79,7 @@ json_t *json_parse(char *input) {
 
         /* If root already popped, we don't expect any more characters */
         if (root) {
-            DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+            DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
             json_free(root);
             ctx_free(ctx);
             return NULL;
@@ -88,7 +88,7 @@ json_t *json_parse(char *input) {
         switch (c) {
             case '{':
                 if (!waiting_elem) {
-                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                    DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -106,7 +106,7 @@ json_t *json_parse(char *input) {
                 if (!json || json_get_type(json) != JSON_TYPE_OBJ ||
                     (waiting_elem && json_obj_get_len(json) > 0) || ctx_has_key(ctx)) {
 
-                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                    DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -118,7 +118,7 @@ json_t *json_parse(char *input) {
 
             case '[':
                 if (!waiting_elem) {
-                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                    DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -132,7 +132,7 @@ json_t *json_parse(char *input) {
                 if (!json || json_get_type(json) != JSON_TYPE_LIST ||
                     (waiting_elem && json_list_get_len(json) > 0)) {
 
-                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                    DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -145,7 +145,7 @@ json_t *json_parse(char *input) {
             case ',':
                 json = ctx_get_current(ctx);
                 if (!json || waiting_elem) {
-                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                    DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -160,7 +160,7 @@ json_t *json_parse(char *input) {
             case ':':
                 json = ctx_get_current(ctx);
                 if (!json || json_get_type(json) != JSON_TYPE_OBJ || !ctx_has_key(ctx) || waiting_elem) {
-                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                    DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -186,14 +186,14 @@ json_t *json_parse(char *input) {
                 json = ctx_get_current(ctx);
                 if (json && json_get_type(json) == JSON_TYPE_OBJ) {
                     if (ctx_has_key(ctx) != waiting_elem) {
-                        DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                        DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                         ctx_free(ctx);
                         return NULL;
                     }
                 }
                 else { /* No parent or not an object */
                     if (!waiting_elem) {
-                        DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                        DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                         ctx_free(ctx);
                         return NULL;
                     }
@@ -292,7 +292,7 @@ json_t *json_parse(char *input) {
                 }
 
                 if (!end_found) {
-                    DEBUG("unterminated string at pos %d", pos);
+                    DEBUG_JSON("unterminated string at pos %d", pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -311,7 +311,7 @@ json_t *json_parse(char *input) {
                         ctx_add(ctx, json_str_new(s));
                     }
                     else {
-                        DEBUG("unexpected string at pos %d", pos);
+                        DEBUG_JSON("unexpected string at pos %d", pos);
                         ctx_free(ctx);
                         return NULL;
                     }
@@ -327,7 +327,7 @@ json_t *json_parse(char *input) {
 
                 json = ctx_get_current(ctx);
                 if ((json && json_get_type(json) == JSON_TYPE_OBJ && !ctx_has_key(ctx)) || !waiting_elem) {
-                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                    DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -360,7 +360,7 @@ json_t *json_parse(char *input) {
                     }
 
                     strncpy(s, input + pos, i - pos + 1);
-                    s[i - pos + 1] = 0;
+                    s[i - pos] = 0;
                     if (point_seen) { /* floating point */
                         ctx_add(ctx, json_double_new(strtod(s, NULL)));
                     }
@@ -382,7 +382,7 @@ json_t *json_parse(char *input) {
                     pos += 4;
                 }
                 else {
-                    DEBUG("unexpected character \"%c\" at pos %d", c, pos);
+                    DEBUG_JSON("unexpected character \"%c\" at pos %d", c, pos);
                     ctx_free(ctx);
                     return NULL;
                 }
@@ -391,13 +391,13 @@ json_t *json_parse(char *input) {
 
     if (!root) {
         if (ctx_get_size(ctx) < 1) {
-            DEBUG("empty input");
+            DEBUG_JSON("empty input");
             ctx_free(ctx);
             return NULL;
         }
 
         if (ctx_get_size(ctx) > 1) {
-            DEBUG("unbalanced brackets");
+            DEBUG_JSON("unbalanced brackets");
             ctx_free(ctx);
             return NULL;
         }
@@ -406,14 +406,14 @@ json_t *json_parse(char *input) {
         if (json_get_type(root) == JSON_TYPE_LIST || json_get_type(root) == JSON_TYPE_OBJ) {
             /* List and object roots should have already been popped as soon as closing brackets were encountered */
             json_free(root);
-            DEBUG("unbalanced brackets");
+            DEBUG_JSON("unbalanced brackets");
             ctx_free(ctx);
             return NULL;
         }
     }
 
     if (json_get_type(root) == JSON_TYPE_OBJ && ctx_has_key(ctx)) {
-        DEBUG("expected element at pos %d", pos);
+        DEBUG_JSON("expected element at pos %d", pos);
         ctx_free(ctx);
         return NULL;
     }
@@ -556,9 +556,11 @@ json_t *json_dup(json_t *json) {
             json_t *obj = json_obj_new();
             int i;
             for (i = 0; i < json->obj_data.len; i++) {
-                json_obj_append(obj,
-                                json->obj_data.keys[i],
-                                json_dup(json->obj_data.children[i]));
+                json_obj_append(
+                    obj,
+                    json->obj_data.keys[i],
+                    json_dup(json->obj_data.children[i])
+                );
             }
 
             return obj;
@@ -587,11 +589,21 @@ json_t *json_dup(json_t *json) {
         }
 
         case JSON_TYPE_MEMBERS_FREED:
-            DEBUG("cannot duplicate JSON with freed members");
+            DEBUG_JSON("cannot duplicate JSON with freed members");
             return NULL;
 
         default:
             return NULL;
+    }
+}
+
+char json_get_type(json_t *json) {
+    return json->type;
+}
+
+void json_assert_type(json_t *json, char type) {
+    if (json->type != type) {
+        DEBUG_JSON("unexpected JSON type: wanted %c, got %c", type, (json)->type);
     }
 }
 
@@ -610,12 +622,24 @@ json_t *json_bool_new(bool value) {
     return json;
 }
 
+bool json_bool_get(json_t *json) {
+    json_assert_type(json, JSON_TYPE_BOOL);
+
+    return json->bool_value;
+}
+
 json_t *json_int_new(int value) {
     json_t *json = malloc(sizeof(json_t));
     json->type = JSON_TYPE_INT;
     json->int_value = value;
 
     return json;
+}
+
+int32 json_int_get(json_t *json) {
+    json_assert_type(json, JSON_TYPE_INT);
+
+    return json->int_value;
 }
 
 json_t *json_double_new(double value) {
@@ -626,12 +650,24 @@ json_t *json_double_new(double value) {
     return json;
 }
 
+double json_double_get(json_t *json) {
+    json_assert_type(json, JSON_TYPE_DOUBLE);
+
+    return json->double_value;
+}
+
 json_t *json_str_new(char *value) {
     json_t *json = malloc(sizeof(json_t));
     json->type = JSON_TYPE_STR;
     json->str_value = (void *) strdup(value);
 
     return json;
+}
+
+char *json_str_get(json_t *json) {
+    json_assert_type(json, JSON_TYPE_STR);
+
+    return json->str_value;
 }
 
 json_t *json_list_new() {
@@ -645,17 +681,22 @@ json_t *json_list_new() {
 }
 
 void json_list_append(json_t *json, json_t *child) {
-    JSON_ASSERT_TYPE(json, JSON_TYPE_LIST);
+    json_assert_type(json, JSON_TYPE_LIST);
 
     json->list_data.children = realloc(json->list_data.children, sizeof(json_t *) * (json->list_data.len + 1));
     json->list_data.children[(int) json->list_data.len++] = child;
 }
 
+json_t *json_list_value_at(json_t *json, uint32 index) {
+    json_assert_type(json, JSON_TYPE_LIST);
+
+    return json->list_data.children[index];
+}
+
 json_t *json_list_pop_at(json_t *json, uint32 index) {
     json_t *child = json->obj_data.children[index];
 
-    int i;
-    for (i = index; i < json->list_data.len - 1; i++) {
+    for (int i = index; i < json->list_data.len - 1; i++) {
         json->list_data.children[i] = json->list_data.children[i + 1];
     }
 
@@ -665,8 +706,14 @@ json_t *json_list_pop_at(json_t *json, uint32 index) {
     return child;
 }
 
+uint32 json_list_get_len(json_t *json) {
+    json_assert_type(json, JSON_TYPE_LIST);
+
+    return json->list_data.len;
+}
+
 json_t *json_obj_lookup_key(json_t *json, char *key) {
-    JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ);
+    json_assert_type(json, JSON_TYPE_OBJ);
 
     int i;
     for (i = 0; i < json->obj_data.len; i++) {
@@ -679,7 +726,7 @@ json_t *json_obj_lookup_key(json_t *json, char *key) {
 }
 
 json_t *json_obj_pop_key(json_t *json, char *key) {
-    JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ);
+    json_assert_type(json, JSON_TYPE_OBJ);
 
     int i, p = -1;
     for (i = 0; i < json->obj_data.len; i++) {
@@ -720,12 +767,30 @@ json_t *json_obj_new() {
 }
 
 void json_obj_append(json_t *json, char *key, json_t *child) {
-    JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ);
+    json_assert_type(json, JSON_TYPE_OBJ);
 
     json->obj_data.children = realloc(json->obj_data.children, sizeof(json_t *) * (json->obj_data.len + 1));
     json->obj_data.keys = realloc(json->obj_data.keys, sizeof(char *) * (json->obj_data.len + 1));
     json->obj_data.keys[(int) json->obj_data.len] = strdup(key);
     json->obj_data.children[(int) json->obj_data.len++] = child;
+}
+
+char *json_obj_key_at(json_t *json, uint32 index) {
+    json_assert_type(json, JSON_TYPE_OBJ);
+
+    return json->obj_data.keys[index];
+}
+
+json_t *json_obj_value_at(json_t *json, uint32 index) {
+    json_assert_type(json, JSON_TYPE_OBJ);
+
+    return json->obj_data.children[index];
+}
+
+uint32 json_obj_get_len(json_t *json) {
+    json_assert_type(json, JSON_TYPE_OBJ);
+
+    return json->obj_data.len;
 }
 
 
@@ -848,8 +913,13 @@ void json_dump_rec(json_t *json, char **output, int *len, int *size, uint8 free_
             *size = realloc_chunks(output, *size, *len + 1);
             (*output)[(*len)++] = '[';
             for (i = 0; i < json->list_data.len; i++) {
-                json_dump_rec(json->list_data.children[i], output, len, size,
-                              free_mode >= JSON_FREE_MEMBERS ? JSON_FREE_EVERYTHING : JSON_FREE_NOTHING);
+                json_dump_rec(
+                    json->list_data.children[i],
+                    output,
+                    len,
+                    size,
+                    free_mode >= JSON_FREE_MEMBERS ? JSON_FREE_EVERYTHING : JSON_FREE_NOTHING
+                );
                 if (i < json->list_data.len - 1) {
                     *size = realloc_chunks(output, *size, *len + 1);
                     (*output)[(*len)++] = ',';
@@ -876,8 +946,13 @@ void json_dump_rec(json_t *json, char **output, int *len, int *size, uint8 free_
                 (*output)[*len - 2] = '"';
                 (*output)[*len - 1] = ':';
 
-                json_dump_rec(json->obj_data.children[i], output, len, size,
-                              free_mode >= JSON_FREE_MEMBERS ? JSON_FREE_EVERYTHING : JSON_FREE_NOTHING);
+                json_dump_rec(
+                    json->obj_data.children[i],
+                    output,
+                    len,
+                    size,
+                    free_mode >= JSON_FREE_MEMBERS ? JSON_FREE_EVERYTHING : JSON_FREE_NOTHING
+                );
                 if (i < json->obj_data.len - 1) {
                     *size = realloc_chunks(output, *size, *len + 1);
                     (*output)[(*len)++] = ',';
@@ -915,7 +990,7 @@ void json_dump_rec(json_t *json, char **output, int *len, int *size, uint8 free_
             break;
 
         case JSON_TYPE_MEMBERS_FREED:
-            DEBUG("cannot dump JSON with freed members");
+            DEBUG_JSON("cannot dump JSON with freed members");
             break;
     }
 

@@ -19,17 +19,11 @@
 #include <user_interface.h>
 
 #include "espgoodies/common.h"
-#include "espgoodies/wifi.h"
+#include "espgoodies/ota.h"
+#include "espgoodies/sleep.h"
 #include "espgoodies/system.h"
 #include "espgoodies/utils.h"
-
-#ifdef _SLEEP
-#include "espgoodies/sleep.h"
-#endif
-
-#ifdef _OTA
-#include "espgoodies/ota.h"
-#endif
+#include "espgoodies/wifi.h"
 
 #include "common.h"
 #include "config.h"
@@ -37,36 +31,36 @@
 #include "core.h"
 
 
-#define TASK_QUEUE_SIZE             8
+#define TASK_QUEUE_SIZE      8
 
-#define TASK_POLL                   0x02
-#define TASK_LISTEN_RESPOND         0x03
-#define TASK_UPDATE_SYSTEM          0x04
+#define TASK_POLL            0x02
+#define TASK_LISTEN_RESPOND  0x03
+#define TASK_UPDATE_SYSTEM   0x04
 
-#define CONFIG_SAVE_INTERVAL        5  /* Seconds */
+#define CONFIG_SAVE_INTERVAL 5    /* Seconds */
 
 
-static uint32                       last_expr_time = 0;
-static uint32                       last_config_save_time = 0;
-static uint32                       now;
-static uint64                       now_ms;
-static uint64                       now_us;
+static uint32     last_expr_time = 0;
+static uint32     last_config_save_time = 0;
+static uint32     now;
+static uint64     now_ms;
+static uint64     now_us;
 
-static uint32                       force_eval_expressions_mask = 0;
-static bool                         config_needs_saving = FALSE;
-static uint32                       poll_started_time_ms = 0;
-static bool                         polling_enabled = FALSE;
+static uint32     force_eval_expressions_mask = 0;
+static bool       config_needs_saving = FALSE;
+static uint32     poll_started_time_ms = 0;
+static bool       polling_enabled = FALSE;
 
 #ifdef _SLEEP
 /* Used to prevent more than one value-change per port when using sleep mode with short wakes */
-static uint32                       value_change_trigger_mask = 0;
+static uint32     value_change_trigger_mask = 0;
 #endif
 
-static os_event_t                   task_queue[TASK_QUEUE_SIZE];
+static os_event_t task_queue[TASK_QUEUE_SIZE];
 
 
-ICACHE_FLASH_ATTR static void       core_task(os_event_t *e);
-ICACHE_FLASH_ATTR static void       handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_mask);
+static void ICACHE_FLASH_ATTR core_task(os_event_t *e);
+static void ICACHE_FLASH_ATTR handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_mask);
 
 
 void core_init(void) {
@@ -132,14 +126,11 @@ void core_poll(void) {
     }
 
     /* Determine changed ports */
-    port_t **port = all_ports, *p;
-    while ((p = *port++)) {
-        if (!IS_ENABLED(p)) {
-            continue;
-        }
-
-        /* Don't mess with the led while in setup mode */
-        if ((system_setup_mode_led_gpio_no == p->slot) && system_setup_mode_active()) {
+    port_t *p;
+    int i;
+    for (i = 0; i < all_ports_count; i++) {
+        p = all_ports[i];
+        if (!IS_PORT_ENABLED(p)) {
             continue;
         }
 
@@ -174,12 +165,21 @@ void core_poll(void) {
 
         if (p->value != value) {
             if (IS_UNDEFINED(p->value)) {
-                DEBUG_PORT(p, "detected value change: (undefined) -> %s, reason = %c",
-                           dtostr(value, -1), p->change_reason);
+                DEBUG_PORT(
+                    p,
+                    "detected value change: (undefined) -> %s, reason = %c",
+                    dtostr(value, -1),
+                    p->change_reason
+                );
             }
             else {
-                DEBUG_PORT(p, "detected value change: %s -> %s, reason = %c",
-                           dtostr(p->value, -1), dtostr(value, -1), p->change_reason);
+                DEBUG_PORT(
+                    p,
+                    "detected value change: %s -> %s, reason = %c",
+                    dtostr(p->value, -1),
+                    dtostr(value, -1),
+                    p->change_reason
+                );
             }
 
             p->value = value;
@@ -237,8 +237,7 @@ void core_task(os_event_t *e) {
         case TASK_UPDATE_SYSTEM: {
             /* Schedule next system update */
             system_os_post(USER_TASK_PRIO_0, TASK_UPDATE_SYSTEM, (os_param_t) NULL);
-            system_setup_mode_update();
-            system_connected_led_update();
+            system_update();
 
             break;
         }
@@ -263,14 +262,17 @@ void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_m
     force_eval_expressions_mask = 0;
 
     /* Trigger value-change events; save persisted ports */
-    port_t **port = all_ports, *p;
-    while ((p = *port++)) {
+    port_t *p;
+    int i;
+    for (i = 0; i < all_ports_count; i++) {
+        p = all_ports[i];
+
         if (!((1ULL << p->slot) & change_mask)) {
             continue;
         }
 
         /* Add a value-change event, but only for non-internal ports */
-        if (!IS_INTERNAL(p)) {
+        if (!IS_PORT_INTERNAL(p)) {
 #ifdef _SLEEP
             if (sleep_is_short_wake()) {
                 if (!(value_change_trigger_mask & (1UL << p->slot))) {
@@ -281,12 +283,15 @@ void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_m
                     DEBUG_PORT(p, "skipping value-change event due to short wake");
                 }
             }
+            else {
+                event_push_value_change(p);
+            }
 #else
             event_push_value_change(p);
 #endif
         }
 
-        if (IS_PERSISTED(p) && (now_ms - poll_started_time_ms > 2000)) {
+        if (IS_PORT_PERSISTED(p) && (now_ms - poll_started_time_ms > 2000)) {
             /* Don't save config during the first few seconds since polling starts; this avoids saving at each boot due
              * to port values transitioning from undefined to their initial value */
             config_mark_for_saving();
@@ -294,14 +299,15 @@ void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_m
     }
 
     /* Reevaluate the expressions depending on changed ports */
-    port = all_ports;
-    while ((p = *port++)) {
-        if (!IS_ENABLED(p)) {
+    for (i = 0; i < all_ports_count; i++) {
+        p = all_ports[i];
+
+        if (!IS_PORT_ENABLED(p)) {
             continue;
         }
 
-        /* Only output (writable) ports have value expressions */
-        if (!IS_OUTPUT(p)) {
+        /* Only writable ports have value expressions */
+        if (!IS_PORT_WRITABLE(p)) {
             continue;
         }
 

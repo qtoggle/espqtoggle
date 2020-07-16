@@ -7,15 +7,15 @@
                 "method": "PATCH",
                 "path": "/device",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "body": {
-                    "sleep_mode": "invalid"
+                    "sleep_wake_interval": "invalid"
                 },
                 "expected_status": 400,
                 "expected_body": {
                     "error": "invalid-field",
-                    "field": "sleep_mode"
+                    "field": "sleep_wake_interval"
                 }
             }
         },
@@ -25,15 +25,15 @@
                 "method": "PATCH",
                 "path": "/device",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "body": {
-                    "sleep_mode": "10"
+                    "sleep_wake_interval": -1
                 },
                 "expected_status": 400,
                 "expected_body": {
                     "error": "invalid-field",
-                    "field": "sleep_mode"
+                    "field": "sleep_wake_interval"
                 }
             }
         },
@@ -43,15 +43,15 @@
                 "method": "PATCH",
                 "path": "/device",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "body": {
-                    "sleep_mode": "10081:10"
+                    "sleep_wake_interval": 10081
                 },
                 "expected_status": 400,
                 "expected_body": {
                     "error": "invalid-field",
-                    "field": "sleep_mode"
+                    "field": "sleep_wake_interval"
                 }
             }
         },
@@ -61,15 +61,51 @@
                 "method": "PATCH",
                 "path": "/device",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "body": {
-                    "sleep_mode": "1:3601"
+                    "sleep_wake_duration": "invalid"
                 },
                 "expected_status": 400,
                 "expected_body": {
                     "error": "invalid-field",
-                    "field": "sleep_mode"
+                    "field": "sleep_wake_duration"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "sleep_wake_duration": -1
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid-field",
+                    "field": "sleep_wake_duration"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "sleep_wake_duration": 3601
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid-field",
+                    "field": "sleep_wake_duration"
                 }
             }
         }

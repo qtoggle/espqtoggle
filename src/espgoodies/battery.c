@@ -23,93 +23,126 @@
 #include <mem.h>
 #include <user_interface.h>
 
-#include "common.h"
-#include "utils.h"
-#include "battery.h"
+#include "espgoodies/common.h"
+#include "espgoodies/system.h"
+#include "espgoodies/utils.h"
+#include "espgoodies/battery.h"
 
 
-#ifndef BATTERY_DIV_FACTOR
-#define BATTERY_DIV_FACTOR      1
-#endif
+static struct { /* Voltage vs. battery SoC lookup table */
 
-#ifndef BATTERY_VOLT_100
-#define BATTERY_VOLT_100        1000
-#endif
+    uint16 voltage;
+    uint16 level;
 
-#ifndef BATTERY_VOLT_80
-#define BATTERY_VOLT_80         800
-#endif
+} lut[BATTERY_LUT_LEN] = {
 
-#ifndef BATTERY_VOLT_60
-#define BATTERY_VOLT_60         600
-#endif
-
-#ifndef BATTERY_VOLT_40
-#define BATTERY_VOLT_40         400
-#endif
-
-#ifndef BATTERY_VOLT_20
-#define BATTERY_VOLT_20         200
-#endif
-
-#ifndef BATTERY_VOLT_0
-#define BATTERY_VOLT_0          0
-#endif
-
-#define ADC_LUT_LEN             6
-
-static struct {  /* Voltage vs. battery charge level lookup table */
-
-    short voltage;
-    short level;
-
-} adc_lut[] = {
-
-    {BATTERY_VOLT_100, 100},
-    {BATTERY_VOLT_80,  80},
-    {BATTERY_VOLT_60,  60},
-    {BATTERY_VOLT_40,  40},
-    {BATTERY_VOLT_20,  20},
-    {BATTERY_VOLT_0,   0}
+    {0, 100},
+    {0,  80},
+    {0,  60},
+    {0,  40},
+    {0,  20},
+    {0,   0}
 
 };
 
-static double adc_factor = 1 / BATTERY_DIV_FACTOR / 1.024;
+static uint16 battery_div_factor = 0;
 
 
-int battery_get_voltage(void) {
+void battery_config_load(uint8 *config_data) {
+    memcpy(&battery_div_factor, config_data + SYSTEM_CONFIG_OFFS_BATTERY_DIV_FACTOR, 2);
+    for (int i = 0; i < BATTERY_LUT_LEN; i++) {
+        memcpy(&lut[i].voltage, config_data + SYSTEM_CONFIG_OFFS_BATTERY_VOLTAGES + 2 * i, 2);
+    }
+
+    DEBUG_BATTERY(
+        "loaded battery: div_factor = %d/1000, v0 = %d, v20 = %d, v40 = %d, v60 = %d, v80 = %d, v100 = %d",
+        battery_div_factor,
+        lut[0].voltage,
+        lut[1].voltage,
+        lut[2].voltage,
+        lut[3].voltage,
+        lut[4].voltage,
+        lut[5].voltage
+    );
+}
+
+void battery_config_save(uint8 *config_data) {
+    memcpy(config_data + SYSTEM_CONFIG_OFFS_BATTERY_DIV_FACTOR, &battery_div_factor, 2);
+    for (int i = 0; i < BATTERY_LUT_LEN; i++) {
+        memcpy(config_data + SYSTEM_CONFIG_OFFS_BATTERY_VOLTAGES + 2 * i, &lut[i].voltage, 2);
+    }
+}
+
+void battery_configure(uint16 div_factor, uint16 voltages[]) {
+    battery_div_factor = div_factor;
+    for (int i = 0; i < BATTERY_LUT_LEN; i++) {
+        lut[i].voltage = voltages[i];
+    }
+
+    DEBUG_BATTERY(
+        "configuring battery: div_factor = %d/1000, v0 = %d, v20 = %d, v40 = %d, v60 = %d, v80 = %d, v100 = %d",
+        div_factor,
+        voltages[0],
+        voltages[1],
+        voltages[2],
+        voltages[3],
+        voltages[4],
+        voltages[5]
+    );
+}
+
+void battery_get_config(uint16 *div_factor, uint16 *voltages) {
+    *div_factor = battery_div_factor;
+    for (int i = 0; i < BATTERY_LUT_LEN; i++) {
+        memcpy(voltages + i, &lut[i].voltage, 2);
+    }
+}
+
+bool battery_enabled(void) {
+    return battery_div_factor > 0;
+}
+
+
+uint16 battery_get_voltage(void) {
     int v = system_adc_read();
 
     DEBUG_BATTERY("raw ADC value: %d", v);
 
-    v = v * adc_factor;  /* In millivolts */
+    if (battery_div_factor) {
+        v = v * 1024.0 / battery_div_factor;
+    }
+    else  {
+        v = 0;
+    }
+
+    /* v is now in millivolts */
 
     DEBUG_BATTERY("voltage: %d mV", v);
 
     return v;
 }
 
-int battery_get_level(void) {
+uint8 battery_get_level(void) {
     int i = 0;
     int v1, v2, v = battery_get_voltage();
     int l1, l2;
 
-    while (i < ADC_LUT_LEN && v < adc_lut[i].voltage) {
+    while (i < BATTERY_LUT_LEN && v < lut[i].voltage) {
         i++;
     }
 
     if (i == 0) {
-        v = adc_lut[0].level;
+        v = lut[0].level;
     }
-    else if (i >= ADC_LUT_LEN) {
-        v = adc_lut[ADC_LUT_LEN - 1].level;
+    else if (i >= BATTERY_LUT_LEN) {
+        v = lut[BATTERY_LUT_LEN - 1].level;
     }
     else {
-        v1 = adc_lut[i].voltage;
-        v2 = adc_lut[i - 1].voltage;
+        v1 = lut[i].voltage;
+        v2 = lut[i - 1].voltage;
 
-        l1 = adc_lut[i].level;
-        l2 = adc_lut[i - 1].level;
+        l1 = lut[i].level;
+        l2 = lut[i - 1].level;
 
         v = l1 + (v - v1) * (l2 - l1) / (v2 - v1);
     }

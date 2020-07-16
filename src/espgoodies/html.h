@@ -23,14 +23,14 @@
 
 
 #ifdef _DEBUG_HTML
-#define DEBUG_HTML(fmt, ...)        DEBUG("[html          ] " fmt, ##__VA_ARGS__)
+#define DEBUG_HTML(fmt, ...) DEBUG("[html          ] " fmt, ##__VA_ARGS__)
 #else
-#define DEBUG_HTML(...)             {}
+#define DEBUG_HTML(...)      {}
 #endif
 
 
 /* Result must be freed */
-ICACHE_FLASH_ATTR uint8           * html_load(uint32 *len);
+uint8 ICACHE_FLASH_ATTR *html_load(uint32 *len);
 
 
 #endif /* _ESPGOODIES_HTML_H */

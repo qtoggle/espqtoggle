@@ -23,17 +23,11 @@
 #include <user_interface.h>
 #include <mem.h>
 
-#include "common.h"
-#include "system.h"
-#include "wifi.h"
-
-#ifdef _SLEEP
-#include "sleep.h"
-#endif
-
-#ifdef _OTA
-#include "ota.h"
-#endif
+#include "espgoodies/common.h"
+#include "espgoodies/ota.h"
+#include "espgoodies/sleep.h"
+#include "espgoodies/system.h"
+#include "espgoodies/wifi.h"
 
 
 #define CONNECTED_WATCHDOG_INTERVAL 10      /* Seconds */
@@ -41,39 +35,38 @@
 #define TEMPORARY_CONNECT_INTERVAL  10000   /* How often to attempt to connect, in temporary station mode */
 
 
-static bool                         station_connected = FALSE;
-static bool                         scanning = FALSE;
-static wifi_scan_callback_t         scan_callback = NULL;
-static wifi_connect_callback_t      station_connect_callback = NULL;
-static wifi_ap_client_callback_t    ap_client_callback = NULL;
-static os_timer_t                   connected_watchdog_timer;
-static os_timer_t                   temporary_connect_timer;
-static int                          connected_watchdog_counter = 0;
+static bool                      station_connected = FALSE;
+static bool                      scanning = FALSE;
+static wifi_scan_callback_t      scan_callback = NULL;
+static wifi_connect_callback_t   station_connect_callback = NULL;
+static wifi_ap_client_callback_t ap_client_callback = NULL;
+static os_timer_t                connected_watchdog_timer;
+static os_timer_t                temporary_connect_timer;
+static int                       connected_watchdog_counter = 0;
 
-static ip_addr_t                    manual_ip_address = {0};
-static uint8                        manual_netmask = 0;
-static ip_addr_t                    manual_gateway = {0};
-static ip_addr_t                    manual_dns = {0};
+static ip_addr_t                 manual_ip_address = {0};
+static uint8                     manual_netmask = 0;
+static ip_addr_t                 manual_gateway = {0};
+static ip_addr_t                 manual_dns = {0};
 
-static uint8                        current_bssid[WIFI_BSSID_LEN];
-static struct station_config        cached_station_config;
-static bool                         cached_station_config_changed = FALSE;
-static bool                         cached_station_config_read = FALSE;
-static struct ip_info               cached_ip_info;
+static uint8                     current_bssid[WIFI_BSSID_LEN];
+static struct station_config     cached_station_config;
+static bool                      cached_station_config_changed = FALSE;
+static bool                      cached_station_config_read = FALSE;
+static struct ip_info            cached_ip_info;
 
-static bool                         ap_enabled = FALSE;
-static bool                         station_enabled = FALSE;
-static bool                         temporary_station_enabled = FALSE;
-static bool                         temporary_connect_timer_armed = FALSE;
+static bool                      ap_enabled = FALSE;
+static bool                      station_enabled = FALSE;
+static bool                      temporary_station_enabled = FALSE;
+static bool                      temporary_connect_timer_armed = FALSE;
 
 
-ICACHE_FLASH_ATTR static void       ensure_station_config_read(void);
-
-ICACHE_FLASH_ATTR static void       on_wifi_event(System_Event_t *evt);
-ICACHE_FLASH_ATTR static void       on_wifi_scan_done(void *arg, STATUS status);
-ICACHE_FLASH_ATTR static void       on_connected_watchdog(void *arg);
-ICACHE_FLASH_ATTR static void       on_temporary_connect(void *arg);
-ICACHE_FLASH_ATTR static int        compare_wifi_rssi(const void *a, const void *b);
+static void ICACHE_FLASH_ATTR ensure_station_config_read(void);
+static void ICACHE_FLASH_ATTR on_wifi_event(System_Event_t *evt);
+static void ICACHE_FLASH_ATTR on_wifi_scan_done(void *arg, STATUS status);
+static void ICACHE_FLASH_ATTR on_connected_watchdog(void *arg);
+static void ICACHE_FLASH_ATTR on_temporary_connect(void *arg);
+static int  ICACHE_FLASH_ATTR compare_wifi_rssi(const void *a, const void *b);
 
 
 char *wifi_get_ssid(void) {
@@ -313,8 +306,11 @@ void wifi_station_enable(char *hostname, wifi_connect_callback_t callback) {
     ensure_station_config_read();
     if (cached_station_config.ssid[0]) {
         if (cached_station_config.bssid_set) {
-            DEBUG_WIFI("connecting to SSID=\"%s\", BSSID=" BSSID_FMT,
-                       (char *) cached_station_config.ssid, BSSID2STR(cached_station_config.bssid));
+            DEBUG_WIFI(
+                "connecting to SSID=\"%s\", BSSID=" BSSID_FMT,
+                (char *) cached_station_config.ssid,
+                BSSID2STR(cached_station_config.bssid)
+            );
         }
         else {
             DEBUG_WIFI("connecting to SSID=\"%s\", no particular BSSID", (char *) cached_station_config.ssid);
@@ -384,9 +380,13 @@ void wifi_station_disable(void) {
     }
 }
 
-void wifi_station_temporary_enable(char *ssid, char *psk, uint8 *bssid,
-                                   char *hostname, wifi_connect_callback_t callback) {
-
+void wifi_station_temporary_enable(
+    char *ssid,
+    char *psk,
+    uint8 *bssid,
+    char *hostname,
+    wifi_connect_callback_t callback
+) {
     if (station_enabled) {
         DEBUG_WIFI("station already enabled");
         return;
@@ -703,10 +703,12 @@ void on_wifi_event(System_Event_t *evt) {
          case EVENT_STAMODE_DISCONNECTED:
              station_connected = FALSE;
 
-             DEBUG_WIFI("disconnected from SSID \"%s\", BSSID " BSSID_FMT ", reason %d",
-                        evt->event_info.disconnected.ssid,
-                        BSSID2STR(evt->event_info.disconnected.bssid),
-                        evt->event_info.disconnected.reason);
+             DEBUG_WIFI(
+                 "disconnected from SSID \"%s\", BSSID " BSSID_FMT ", reason %d",
+                 evt->event_info.disconnected.ssid,
+                 BSSID2STR(evt->event_info.disconnected.bssid),
+                 evt->event_info.disconnected.reason
+             );
 
              if (station_connect_callback) {
                  station_connect_callback(FALSE);
@@ -756,9 +758,11 @@ void on_wifi_event(System_Event_t *evt) {
              break;
 
          case EVENT_SOFTAPMODE_DISTRIBUTE_STA_IP:
-             DEBUG_WIFI("AP client with MAC " MAC_FMT " was given IP " IP_FMT,
-                        MAC2STR(evt->event_info.distribute_sta_ip.mac),
-                        IP2STR(&evt->event_info.distribute_sta_ip.ip.addr));
+             DEBUG_WIFI(
+                 "AP client with MAC " MAC_FMT " was given IP " IP_FMT,
+                 MAC2STR(evt->event_info.distribute_sta_ip.mac),
+                 IP2STR(&evt->event_info.distribute_sta_ip.ip.addr)
+             );
 
              if (ap_client_callback) {
                  ap_client_callback(TRUE, evt->event_info.distribute_sta_ip.ip, evt->event_info.distribute_sta_ip.mac);
@@ -801,8 +805,13 @@ void on_wifi_scan_done(void *arg, STATUS status) {
 
     while (result) {
         result->ssid[result->ssid_len] = 0;
-        DEBUG_WIFI("found SSID=\"%s\", channel=%d, RSSI=%d, BSSID=" BSSID_FMT,
-                   result->ssid, result->channel, result->rssi, BSSID2STR(result->bssid));
+        DEBUG_WIFI(
+            "found SSID=\"%s\", channel=%d, RSSI=%d, BSSID=" BSSID_FMT,
+            result->ssid,
+            result->channel,
+            result->rssi,
+            BSSID2STR(result->bssid)
+        );
 
         results = realloc(results, sizeof(wifi_scan_result_t) * (len + 1));
 
@@ -846,8 +855,11 @@ void on_connected_watchdog(void *arg) {
             DEBUG_WIFI("connected watchdog: counter = %d/%d", connected_watchdog_counter, CONNECTED_WATCHDOG_COUNT);
         }
         else {
-            DEBUG_WIFI("connected watchdog: counter = %d/%d, resetting system",
-                       connected_watchdog_counter, CONNECTED_WATCHDOG_COUNT);
+            DEBUG_WIFI(
+                "connected watchdog: counter = %d/%d, resetting system",
+                connected_watchdog_counter,
+                CONNECTED_WATCHDOG_COUNT
+            );
             system_reset(/* delayed = */ FALSE);
         }
     }

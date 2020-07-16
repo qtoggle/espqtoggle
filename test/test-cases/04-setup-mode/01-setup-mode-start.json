@@ -2,6 +2,13 @@
     "name": "setup-mode-start",
     "instructions": [
         {
+            "name": "device-write-gpio",
+            "params": {
+                "gpio": 12,
+                "value": 1
+            }
+        },
+        {
             "name": "wifi-ap-stop"
         },
         {

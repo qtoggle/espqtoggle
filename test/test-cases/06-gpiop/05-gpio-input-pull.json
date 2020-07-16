@@ -1,0 +1,47 @@
+{
+    "name": "gpio-input-pull",
+    "instructions": [
+        {
+            "name": "device-float-gpio",
+            "params": {
+                "gpio": 15
+            }
+        },
+        {
+            "name": "device-float-gpio",
+            "params": {
+                "gpio": 16
+            }
+        },
+        {
+            "name": "sleep",
+            "params": {
+                "duration": 500
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/gpio15/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": true,
+                "expected_status": 200
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/gpio16/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": false,
+                "expected_status": 200
+            }
+        }
+    ]
+}

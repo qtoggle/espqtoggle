@@ -1,0 +1,111 @@
+{
+    "name": "listen-port-update",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "fire_and_forget": true,
+            "fire_delay": 1000,
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "display_name": "test display name {{TEST_CASE_NAME}}"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/listen?session_id=test-{{TEST_CASE_NAME}}&timeout=3",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "array",
+                    "items": [
+                        {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["type", "params"],
+                            "properties": {
+                                "type": {
+                                    "enum": ["port-update"]
+                                },
+                                "params":  {
+                                    "type": "object",
+                                    "required": [
+                                        "id",
+                                        "display_name",
+                                        "writable",
+                                        "enabled",
+                                        "persisted",
+                                        "internal",
+                                        "transform_read",
+                                        "transform_write",
+                                        "type",
+                                        "value",
+                                        "definitions"
+                                    ],
+                                    "properties": {
+                                        "id": {
+                                            "enum": ["gpio0"]
+                                        },
+                                        "display_name": {
+                                            "enum": ["test display name {{TEST_CASE_NAME}}"]
+                                        },
+                                        "writable": {
+                                            "type": "boolean"
+                                        },
+                                        "enabled": {
+                                            "type": "boolean"
+                                        },
+                                        "persisted": {
+                                            "type": "boolean"
+                                        },
+                                        "internal": {
+                                            "type": "boolean"
+                                        },
+                                        "transform_read": {
+                                            "type": "string"
+                                        },
+                                        "transform_write": {
+                                            "type": "string"
+                                        },
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "expression": {
+                                            "type": "string"
+                                        },
+                                        "value": {
+                                            "oneOf": [
+                                                {
+                                                    "type": "boolean"
+                                                },
+                                                {
+                                                    "type": "number"
+                                                },
+                                                {
+                                                    "type": "null"
+                                                }
+                                            ]
+                                        },
+                                        "definitions": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

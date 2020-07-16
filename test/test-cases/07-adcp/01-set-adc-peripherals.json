@@ -1,0 +1,23 @@
+{
+    "name": "set-adc-peripherals",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PUT",
+                "path": "/peripherals",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN_EMPTY}"
+                },
+                "body": [
+                    {
+                        "type": 2,
+                        "port_ids": ["adc0"]
+                    }
+                ],
+                "expected_status": 204,
+                "expected_body": null
+            }
+        }
+    ]
+}

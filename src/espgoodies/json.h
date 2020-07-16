@@ -23,57 +23,59 @@
 #include <os_type.h>
 
 
-#define JSON_TYPE_NULL                  'n'
-#define JSON_TYPE_BOOL                  'b'
-#define JSON_TYPE_INT                   'i'
-#define JSON_TYPE_DOUBLE                'd'
-#define JSON_TYPE_STR                   's'
-#define JSON_TYPE_LIST                  'l'
-#define JSON_TYPE_OBJ                   'o'
-#define JSON_TYPE_STRINGIFIED           't'
-#define JSON_TYPE_MEMBERS_FREED         'f'
+#define JSON_TYPE_NULL          'n'
+#define JSON_TYPE_BOOL          'b'
+#define JSON_TYPE_INT           'i'
+#define JSON_TYPE_DOUBLE        'd'
+#define JSON_TYPE_STR           's'
+#define JSON_TYPE_LIST          'l'
+#define JSON_TYPE_OBJ           'o'
+#define JSON_TYPE_STRINGIFIED   't'
+#define JSON_TYPE_MEMBERS_FREED 'f'
 
-#define JSON_MAX_NAME_LEN               64
-#define JSON_MAX_VALUE_LEN              1024
-#define JSON_MAX_VALUE_LIST_LEN         4096
+#define JSON_MAX_NAME_LEN       64
+#define JSON_MAX_VALUE_LEN      1024
+#define JSON_MAX_VALUE_LIST_LEN 4096
 
-#define JSON_FREE_NOTHING               0
-#define JSON_FREE_MEMBERS               1
-#define JSON_FREE_EVERYTHING            2
+#define JSON_FREE_NOTHING       0
+#define JSON_FREE_MEMBERS       1
+#define JSON_FREE_EVERYTHING    2
 
-#define JSON_ASSERT_TYPE(json, t)       {\
-    if ((json)->type != t) DEBUG("unexpected JSON type at %s:%d: wanted %c, got %c",\
-                                 __FILE__, __LINE__, t, (json)->type);\
-}
+#if defined(_DEBUG) && defined(_DEBUG_JSON)
+#define DEBUG_JSON(fmt, ...) DEBUG("[json          ] " fmt, ##__VA_ARGS__)
+#else
+#define DEBUG_JSON(...)      {}
+#endif
+
 
 #pragma pack(push, 1)
 
 typedef struct json {
 
-    char                    type;
+    char                  type;
 
     union {
 
         struct {
-            uint16          len;
-            struct json  ** children;
+            uint16        len;
+            struct json **children;
         } list_data;
 
         struct {
-            uint8           len;
-            char         ** keys;
-            struct json  ** children;
+            uint8         len;
+            char        **keys;
+            struct json **children;
         } obj_data;
 
         struct {
-            uint16          len;
-            char         ** chunks;
+            uint16        len;
+            char        **chunks;
         } stringified_data;
 
-        bool                bool_value;
-        int                 int_value;
-        double              double_value;
-        char              * str_value;
+        bool              bool_value;
+        int32             int_value;
+        double            double_value;
+        char             *str_value;
 
     };
 
@@ -82,74 +84,43 @@ typedef struct json {
 #pragma pack(pop)
 
 
-#define                         json_get_type(json) ((json)->type)
+json_t ICACHE_FLASH_ATTR *json_parse(char *input);
+char   ICACHE_FLASH_ATTR *json_dump(json_t *json, uint8 free_mode);
+char   ICACHE_FLASH_ATTR *json_dump_r(json_t *json, uint8 free_mode);
+void   ICACHE_FLASH_ATTR  json_stringify(json_t *json);
+void   ICACHE_FLASH_ATTR  json_free(json_t *json);
+json_t ICACHE_FLASH_ATTR *json_dup(json_t *json);
 
-ICACHE_FLASH_ATTR json_t      * json_parse(char *input);
-ICACHE_FLASH_ATTR char        * json_dump(json_t *json, uint8 free_mode);
-ICACHE_FLASH_ATTR char        * json_dump_r(json_t *json, uint8 free_mode);
-ICACHE_FLASH_ATTR void          json_stringify(json_t *json);
-ICACHE_FLASH_ATTR void          json_free(json_t *json);
-ICACHE_FLASH_ATTR json_t      * json_dup(json_t *json);
+char   ICACHE_FLASH_ATTR  json_get_type(json_t *json);
+void   ICACHE_FLASH_ATTR  json_assert_type(json_t *json, char type);
 
-ICACHE_FLASH_ATTR json_t      * json_null_new(void);
-ICACHE_FLASH_ATTR json_t      * json_bool_new(bool value);
-ICACHE_FLASH_ATTR json_t      * json_int_new(int value);
-ICACHE_FLASH_ATTR json_t      * json_double_new(double value);
-ICACHE_FLASH_ATTR json_t      * json_str_new(char *value);
-#define                         json_bool_get(json) ({ \
-                                    JSON_ASSERT_TYPE(json, JSON_TYPE_BOOL); \
-                                    ((json)->bool_value); \
-                                })
+json_t ICACHE_FLASH_ATTR *json_null_new(void);
 
-#define                         json_int_get(json) ({ \
-                                    JSON_ASSERT_TYPE(json, JSON_TYPE_INT); \
-                                    ((json)->int_value); \
-                                })
-#define                         json_double_get(json) ({ \
-                                    JSON_ASSERT_TYPE(json, JSON_TYPE_DOUBLE); \
-                                    ((json)->double_value); \
-                                })
-#define                         json_str_get(json) ({ \
-                                    JSON_ASSERT_TYPE(json, JSON_TYPE_STR); \
-                                    ((json)->str_value); \
-                                })
-#define                         json_list_value_at(json, index) ({ \
-                                    JSON_ASSERT_TYPE(json, JSON_TYPE_LIST); \
-                                    (json->list_data.children[(index)]); \
-                                })
-#define                         json_list_get_len(json) ({ \
-                                    JSON_ASSERT_TYPE(json, JSON_TYPE_LIST); \
-                                    (json->list_data.len); \
-                                })
+json_t ICACHE_FLASH_ATTR *json_bool_new(bool value);
+bool   ICACHE_FLASH_ATTR  json_bool_get(json_t *json);
 
-ICACHE_FLASH_ATTR json_t      * json_list_new(void);
-ICACHE_FLASH_ATTR void          json_list_append(json_t *json, json_t *child);
-ICACHE_FLASH_ATTR json_t      * json_list_pop_at(json_t *json, uint32 index);
-#define                         json_list_value_at(json, index) ({ \
-                                    JSON_ASSERT_TYPE(json, JSON_TYPE_LIST); \
-                                    (json->list_data.children[(index)]); \
-                                })
-#define                         json_list_get_len(json) ({ \
-                                    JSON_ASSERT_TYPE(json, JSON_TYPE_LIST); \
-                                    (json->list_data.len); \
-                                })
+json_t ICACHE_FLASH_ATTR *json_int_new(int value);
+int32  ICACHE_FLASH_ATTR  json_int_get(json_t *json);
 
-ICACHE_FLASH_ATTR json_t      * json_obj_lookup_key(json_t *json, char *key);
-ICACHE_FLASH_ATTR json_t      * json_obj_pop_key(json_t *json, char *key);
-ICACHE_FLASH_ATTR json_t      * json_obj_new(void);
-ICACHE_FLASH_ATTR void          json_obj_append(json_t *json, char *key, json_t *child);
-#define                         json_obj_key_at(json, index) ({ \
-                                    JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ); \
-                                    (json->obj_data.keys[(index)]); \
-                                })
-#define                         json_obj_value_at(json, index) ({ \
-                                    JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ); \
-                                    (json->obj_data.children[(index)]); \
-                                })
-#define                         json_obj_get_len(json) ({ \
-                                    JSON_ASSERT_TYPE(json, JSON_TYPE_OBJ); \
-                                    (json->obj_data.len); \
-                                })
+json_t ICACHE_FLASH_ATTR *json_double_new(double value);
+double ICACHE_FLASH_ATTR  json_double_get(json_t *json);
+
+json_t ICACHE_FLASH_ATTR *json_str_new(char *value);
+char   ICACHE_FLASH_ATTR *json_str_get(json_t *json);
+
+json_t ICACHE_FLASH_ATTR *json_list_new(void);
+void   ICACHE_FLASH_ATTR  json_list_append(json_t *json, json_t *child);
+json_t ICACHE_FLASH_ATTR *json_list_value_at(json_t *json, uint32 index);
+json_t ICACHE_FLASH_ATTR *json_list_pop_at(json_t *json, uint32 index);
+uint32 ICACHE_FLASH_ATTR  json_list_get_len(json_t *json);
+
+json_t ICACHE_FLASH_ATTR *json_obj_lookup_key(json_t *json, char *key);
+json_t ICACHE_FLASH_ATTR *json_obj_pop_key(json_t *json, char *key);
+json_t ICACHE_FLASH_ATTR *json_obj_new(void);
+void   ICACHE_FLASH_ATTR  json_obj_append(json_t *json, char *key, json_t *child);
+char   ICACHE_FLASH_ATTR *json_obj_key_at(json_t *json, uint32 index);
+json_t ICACHE_FLASH_ATTR *json_obj_value_at(json_t *json, uint32 index);
+uint32 ICACHE_FLASH_ATTR  json_obj_get_len(json_t *json);
 
 
 #endif /* _ESPGOODIES_JSON_H */

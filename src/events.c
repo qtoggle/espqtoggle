@@ -20,10 +20,7 @@
 #include <mem.h>
 
 #include "espgoodies/common.h"
-
-#ifdef _OTA
 #include "espgoodies/ota.h"
-#endif
 
 #include "api.h"
 #include "common.h"
@@ -46,16 +43,16 @@ char *EVENT_TYPES_STR[] = {
 
 int EVENT_ACCESS_LEVELS[] = {
     0, /* offset */
-    API_ACCESS_LEVEL_VIEWONLY,    /* value-change */
-    API_ACCESS_LEVEL_VIEWONLY,    /* port-update */
-    API_ACCESS_LEVEL_VIEWONLY,    /* port-add */
-    API_ACCESS_LEVEL_VIEWONLY,    /* port-remove */
-    API_ACCESS_LEVEL_ADMIN,       /* device-update */
-    API_ACCESS_LEVEL_VIEWONLY     /* full-update */
+    API_ACCESS_LEVEL_VIEWONLY, /* value-change */
+    API_ACCESS_LEVEL_VIEWONLY, /* port-update */
+    API_ACCESS_LEVEL_VIEWONLY, /* port-add */
+    API_ACCESS_LEVEL_VIEWONLY, /* port-remove */
+    API_ACCESS_LEVEL_ADMIN,    /* device-update */
+    API_ACCESS_LEVEL_VIEWONLY  /* full-update */
 };
 
 
-ICACHE_FLASH_ATTR static void   event_push(int type, char *port_id);
+static void ICACHE_FLASH_ATTR event_push(int type, char *port_id);
 
 
 void event_push_value_change(port_t *port) {
@@ -157,7 +154,7 @@ void event_push(int type, char *port_id) {
 
     sessions_push_event(type, port_id);
 
-    if ((device_flags & DEVICE_FLAG_WEBHOOKS_ENABLED) && ((1U << type) & webhooks_events_mask)) {
+    if ((device_flags & DEVICE_FLAG_WEBHOOKS_ENABLED) && (BIT(type) & webhooks_events_mask)) {
         webhooks_push_event(type, port_id);
     }
 }

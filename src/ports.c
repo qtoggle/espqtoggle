@@ -20,8 +20,8 @@
 #include <string.h>
 #include <limits.h>
 #include <c_types.h>
+#include <user_interface.h>
 #include <mem.h>
-#include <pwm.h>
 
 #include "espgoodies/common.h"
 #include "espgoodies/flashcfg.h"
@@ -32,191 +32,215 @@
 #include "config.h"
 #include "core.h"
 #include "events.h"
-#include "ports.h"
+#include "peripherals.h"
 #include "stringpool.h"
+#include "virtual.h"
+#include "ports.h"
 
 
-port_t                           ** all_ports = NULL;
-char                              * all_gpio_choices[] = {"0:GPIO0", "1:GPIO1", "2:GPIO2", "3:GPIO3", "4:GPIO4",
-                                                          "5:GPIO5", "6:GPIO6", "7:GPIO7", "8:GPIO8", "9:GPIO9",
-                                                          "10:GPIO10", "11:GPIO11", "12:GPIO12", "13:GPIO13",
-                                                          "14:GPIO14", "15:GPIO15", "16:GPIO16", NULL};
+port_t        **all_ports = NULL;
+int             all_ports_count = 0;
 
-char                              * all_gpio_none_choices[] = {"0:GPIO0", "1:GPIO1", "2:GPIO2", "3:GPIO3", "4:GPIO4",
-                                                               "5:GPIO5", "6:GPIO6", "7:GPIO7", "8:GPIO8", "9:GPIO9",
-                                                               "10:GPIO10", "11:GPIO11", "12:GPIO12", "13:GPIO13",
-                                                               "14:GPIO14", "15:GPIO15", "16:GPIO16", "-1:none", NULL};
-
-char                              * esp8266_gpio_choices[] = {"0:GPIO0", "1:GPIO1", "2:GPIO2", "3:GPIO3", "4:GPIO4",
-                                                              "5:GPIO5", "12:GPIO12", "13:GPIO13", "14:GPIO14",
-                                                              "15:GPIO15", "16:GPIO16", NULL};
-
-char                              * esp8266_gpio_none_choices[] = {"0:GPIO0", "1:GPIO1", "2:GPIO2", "3:GPIO3",
-                                                                   "4:GPIO4", "5:GPIO5", "12:GPIO12", "13:GPIO13",
-                                                                   "14:GPIO14", "15:GPIO15", "16:GPIO16", "-1:none",
-                                                                   NULL};
-
-static int                          all_ports_count = 0;
-static uint8                        next_extra_slot = PORT_SLOT_EXTRA0;
+static uint32   used_slots = 0;
 
 
-ICACHE_FLASH_ATTR static int        attr_get_extra_data_1bu(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_extra_data_1bu(port_t *port, attrdef_t *attrdef, int value);
+static int64  ICACHE_FLASH_ATTR attr_get_param_uint8(port_t *port, attrdef_t *attrdef);
+static void   ICACHE_FLASH_ATTR attr_set_param_uint8(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static int        attr_get_extra_data_1bs(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_extra_data_1bs(port_t *port, attrdef_t *attrdef, int value);
+static int64  ICACHE_FLASH_ATTR attr_get_param_sint8(port_t *port, attrdef_t *attrdef);
+static void   ICACHE_FLASH_ATTR attr_set_param_sint8(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static int        attr_get_extra_data_2bu(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_extra_data_2bu(port_t *port, attrdef_t *attrdef, int value);
+static int64  ICACHE_FLASH_ATTR attr_get_param_uint16(port_t *port, attrdef_t *attrdef);
+static void   ICACHE_FLASH_ATTR attr_set_param_uint16(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static int        attr_get_extra_data_2bs(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_extra_data_2bs(port_t *port, attrdef_t *attrdef, int value);
+static int64  ICACHE_FLASH_ATTR attr_get_param_sint16(port_t *port, attrdef_t *attrdef);
+static void   ICACHE_FLASH_ATTR attr_set_param_sint16(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static int        attr_get_extra_data_4bs(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_extra_data_4bs(port_t *port, attrdef_t *attrdef, int value);
+static int64  ICACHE_FLASH_ATTR attr_get_param_uint32(port_t *port, attrdef_t *attrdef);
+static void   ICACHE_FLASH_ATTR attr_set_param_uint32(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static double     attr_get_extra_data_double(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_extra_data_double(port_t *port, attrdef_t *attrdef, double value);
+static int64  ICACHE_FLASH_ATTR attr_get_param_sint32(port_t *port, attrdef_t *attrdef);
+static void   ICACHE_FLASH_ATTR attr_set_param_sint32(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static int        attr_get_flag(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_flag(port_t *port, attrdef_t *attrdef, int value);
+static int64  ICACHE_FLASH_ATTR attr_get_param_sint64(port_t *port, attrdef_t *attrdef);
+static void   ICACHE_FLASH_ATTR attr_set_param_sint64(port_t *port, attrdef_t *attrdef, int64 value);
 
-ICACHE_FLASH_ATTR static int        attr_get_extra_data_num_choices(port_t *port, attrdef_t *attrdef);
-ICACHE_FLASH_ATTR static void       attr_set_extra_data_num_choices(port_t *port, attrdef_t *attrdef, int index);
+static double ICACHE_FLASH_ATTR attr_get_param_double(port_t *port, attrdef_t *attrdef);
+static void   ICACHE_FLASH_ATTR attr_set_param_double(port_t *port, attrdef_t *attrdef, double value);
 
-ICACHE_FLASH_ATTR static void       attr_set_extra_info_cache(port_t *port, attrdef_t *attrdef, void *value);
+static int    ICACHE_FLASH_ATTR attr_get_flag(port_t *port, attrdef_t *attrdef);
+static void   ICACHE_FLASH_ATTR attr_set_flag(port_t *port, attrdef_t *attrdef, int value);
 
-ICACHE_FLASH_ATTR static void       port_load(port_t *port, uint8 *data);
-ICACHE_FLASH_ATTR static void       port_save(port_t *port, uint8 *data, uint32 *strings_offs);
+static int    ICACHE_FLASH_ATTR attr_get_param_num_choices(port_t *port, attrdef_t *attrdef);
+static void   ICACHE_FLASH_ATTR attr_set_param_num_choices(port_t *port, attrdef_t *attrdef, int index);
+
+static void   ICACHE_FLASH_ATTR attr_set_user_data_cache(port_t *port, attrdef_t *attrdef, double value);
+
+static void   ICACHE_FLASH_ATTR port_load(port_t *port, uint8 *config_data);
+static void   ICACHE_FLASH_ATTR port_save(port_t *port, uint8 *config_data, uint32 *strings_offs);
 
 
-int attr_get_extra_data_1bu(port_t *port, attrdef_t *attrdef) {
-    uint8 v = port->extra_data[attrdef->gs_extra_data_offs];
+int64 attr_get_param_uint8(port_t *port, attrdef_t *attrdef) {
+    uint8 v = PERIPHERAL_PARAM_UINT8(port->peripheral, attrdef->storage_param_no);
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &v);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
     return v;
 }
 
-void attr_set_extra_data_1bu(port_t *port, attrdef_t *attrdef, int value) {
+void attr_set_param_uint8(port_t *port, attrdef_t *attrdef, int64 value) {
     uint8 v = value;
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &v);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    port->extra_data[attrdef->gs_extra_data_offs] = v;
+    PERIPHERAL_PARAM_UINT8(port->peripheral, attrdef->storage_param_no) = v;
 }
 
-int attr_get_extra_data_1bs(port_t *port, attrdef_t *attrdef) {
-    int8 v = port->extra_data[attrdef->gs_extra_data_offs];
+int64 attr_get_param_sint8(port_t *port, attrdef_t *attrdef) {
+    int8 v = PERIPHERAL_PARAM_SINT8(port->peripheral, attrdef->storage_param_no);
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &v);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
     return v;
 }
 
-void attr_set_extra_data_1bs(port_t *port, attrdef_t *attrdef, int value) {
+void attr_set_param_sint8(port_t *port, attrdef_t *attrdef, int64 value) {
     int8 v = value;
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &v);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    port->extra_data[attrdef->gs_extra_data_offs] = v;
+    PERIPHERAL_PARAM_SINT8(port->peripheral, attrdef->storage_param_no) = v;
 }
 
-int attr_get_extra_data_2bu(port_t *port, attrdef_t *attrdef) {
-    uint16 *pv = ((uint16 *) (port->extra_data + attrdef->gs_extra_data_offs));
+int64 attr_get_param_uint16(port_t *port, attrdef_t *attrdef) {
+    uint16 v = PERIPHERAL_PARAM_UINT16(port->peripheral, attrdef->storage_param_no);
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, pv);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    return *pv;
+    return v;
 }
 
-void attr_set_extra_data_2bu(port_t *port, attrdef_t *attrdef, int value) {
+void attr_set_param_uint16(port_t *port, attrdef_t *attrdef, int64 value) {
     uint16 v = value;
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &v);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    uint16 *pv = ((uint16 *) (port->extra_data + attrdef->gs_extra_data_offs));
-    *pv = v;
+    PERIPHERAL_PARAM_UINT16(port->peripheral, attrdef->storage_param_no) = v;
 }
 
-int attr_get_extra_data_2bs(port_t *port, attrdef_t *attrdef) {
-    int16 *pv = ((int16 *) (port->extra_data + attrdef->gs_extra_data_offs));
+int64 attr_get_param_sint16(port_t *port, attrdef_t *attrdef) {
+    int16 v = PERIPHERAL_PARAM_SINT16(port->peripheral, attrdef->storage_param_no);
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, pv);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    return *pv;
+    return v;
 }
 
-void attr_set_extra_data_2bs(port_t *port, attrdef_t *attrdef, int value) {
+void attr_set_param_sint16(port_t *port, attrdef_t *attrdef, int64 value) {
     int16 v = value;
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &v);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    int16 *pv = ((int16 *) (port->extra_data + attrdef->gs_extra_data_offs));
-    *pv = v;
+    PERIPHERAL_PARAM_SINT16(port->peripheral, attrdef->storage_param_no) = v;
 }
 
-int attr_get_extra_data_4bs(port_t *port, attrdef_t *attrdef) {
-    int32 *pv = ((int32 *) (port->extra_data + attrdef->gs_extra_data_offs));
+int64 attr_get_param_uint32(port_t *port, attrdef_t *attrdef) {
+    uint32 v = PERIPHERAL_PARAM_UINT32(port->peripheral, attrdef->storage_param_no);
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, pv);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    return *pv;
+    return v;
 }
 
-void attr_set_extra_data_4bs(port_t *port, attrdef_t *attrdef, int value) {
+void attr_set_param_uint32(port_t *port, attrdef_t *attrdef, int64 value) {
+    uint32 v = value;
+
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
+    }
+
+    PERIPHERAL_PARAM_SINT32(port->peripheral, attrdef->storage_param_no) = v;
+}
+
+int64 attr_get_param_sint32(port_t *port, attrdef_t *attrdef) {
+    int32 v = PERIPHERAL_PARAM_SINT32(port->peripheral, attrdef->storage_param_no);
+
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
+    }
+
+    return v;
+}
+
+void attr_set_param_sint32(port_t *port, attrdef_t *attrdef, int64 value) {
     int32 v = value;
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &v);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    int32 *pv = ((int32 *) (port->extra_data + attrdef->gs_extra_data_offs));
-    *pv = v;
+    PERIPHERAL_PARAM_UINT16(port->peripheral, attrdef->storage_param_no) = v;
 }
 
-double attr_get_extra_data_double(port_t *port, attrdef_t *attrdef) {
-    double *pv = ((double *) (port->extra_data + attrdef->gs_extra_data_offs));
+int64 attr_get_param_sint64(port_t *port, attrdef_t *attrdef) {
+    int64 v = PERIPHERAL_PARAM_SINT64(port->peripheral, attrdef->storage_param_no);
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, pv);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    return *pv;
+    return v;
 }
 
-void attr_set_extra_data_double(port_t *port, attrdef_t *attrdef, double value) {
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &value);
+void attr_set_param_sint64(port_t *port, attrdef_t *attrdef, int64 value) {
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, value);
     }
 
-    double *pv = ((double *) (port->extra_data + attrdef->gs_extra_data_offs));
-    *pv = value;
+    PERIPHERAL_PARAM_SINT64(port->peripheral, attrdef->storage_param_no) = value;
+}
+
+double attr_get_param_double(port_t *port, attrdef_t *attrdef) {
+    double v = PERIPHERAL_PARAM_DOUBLE(port->peripheral, attrdef->storage_param_no);
+
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
+    }
+
+    return v;
+}
+
+void attr_set_param_double(port_t *port, attrdef_t *attrdef, double value) {
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, value);
+    }
+
+    PERIPHERAL_PARAM_UINT16(port->peripheral, attrdef->storage_param_no) = value;
 }
 
 int attr_get_flag(port_t *port, attrdef_t *attrdef) {
-    bool v = !!(port->flags & (1 << attrdef->gs_flag_bit));
+    bool v = PERIPHERAL_GET_FLAG(port->peripheral, attrdef->storage_flag_bit_no);
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &v);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
     return v;
@@ -225,199 +249,150 @@ int attr_get_flag(port_t *port, attrdef_t *attrdef) {
 void attr_set_flag(port_t *port, attrdef_t *attrdef, int value) {
     bool v = value;
 
-    if (attrdef->extra_info_cache_offs) {
-        attr_set_extra_info_cache(port, attrdef, &v);
+    if (attrdef->cache_user_data_field_offs) {
+        attr_set_user_data_cache(port, attrdef, v);
     }
 
-    if (v) {
-        port->flags |= 1 << attrdef->gs_flag_bit;
-    }
-    else {
-        port->flags &= ~(1 << attrdef->gs_flag_bit);
-    }
+    PERIPHERAL_SET_FLAG(port->peripheral, attrdef->storage_flag_bit_no, v);
 }
 
-int attr_get_extra_data_num_choices(port_t *port, attrdef_t *attrdef) {
-    uint8 index = port->extra_data[attrdef->gs_extra_data_offs];
+int attr_get_param_num_choices(port_t *port, attrdef_t *attrdef) {
+    uint8 index = PERIPHERAL_PARAM_UINT8(port->peripheral, attrdef->storage_param_no);
 
-    if (attrdef->extra_info_cache_offs) {
-        double dv = get_choice_value_num(attrdef->choices[index]);
-
-        switch (attrdef->gs_type) {
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_1BU: {
-                uint8 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
-                break;
-            }
-
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_1BS: {
-                int8 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
-                break;
-            }
-
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_2BU: {
-                uint16 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
-                break;
-            }
-
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_2BS: {
-                int16 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
-                break;
-            }
-
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_4BS: {
-                int32 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
-                break;
-            }
-
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_DOUBLE:
-                attr_set_extra_info_cache(port, attrdef, &dv);
-                break;
-        }
+    if (attrdef->cache_user_data_field_offs) {
+        double value = get_choice_value_num(attrdef->choices[index]);
+        attr_set_user_data_cache(port, attrdef, value);
     }
 
     return index;
 }
 
-void attr_set_extra_data_num_choices(port_t *port, attrdef_t *attrdef, int index) {
-    port->extra_data[attrdef->gs_extra_data_offs] = index;
+void attr_set_param_num_choices(port_t *port, attrdef_t *attrdef, int index) {
+    PERIPHERAL_PARAM_UINT8(port->peripheral, attrdef->storage_param_no) = index;
 
-    if (attrdef->extra_info_cache_offs) {
-        double dv = get_choice_value_num(attrdef->choices[index]);
+    if (attrdef->cache_user_data_field_offs) {
+        double value = get_choice_value_num(attrdef->choices[index]);
+        attr_set_user_data_cache(port, attrdef, value);
+    }
+}
 
-        switch (attrdef->gs_type) {
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_1BU: {
-                uint8 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
-                break;
-            }
+void attr_set_user_data_cache(port_t *port, attrdef_t *attrdef, double value) {
+    void *dest_addr = ((uint8 *) port->peripheral->user_data) + attrdef->cache_user_data_field_offs - 1;
+    switch (attrdef->storage) {
+        case ATTRDEF_STORAGE_PARAM_UINT8: {
+            uint8 v = value;
+            memcpy(dest_addr, &v, 1);
+            break;
+        }
 
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_1BS: {
-                int8 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
-                break;
-            }
+        case ATTRDEF_STORAGE_PARAM_SINT8: {
+            int8 v = value;
+            memcpy(dest_addr, &v, 1);
+            break;
+        }
 
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_2BU: {
-                uint16 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
-                break;
-            }
+        case ATTRDEF_STORAGE_PARAM_UINT16: {
+            uint16 v = value;
+            memcpy(dest_addr, &v, 2);
+            break;
+        }
 
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_2BS: {
-                int16 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
-                break;
-            }
+        case ATTRDEF_STORAGE_PARAM_SINT16: {
+            sint16 v = value;
+            memcpy(dest_addr, &v, 2);
+            break;
+        }
 
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_4BS: {
-                int32 v = dv;
-                attr_set_extra_info_cache(port, attrdef, &v);
-                break;
-            }
+        case ATTRDEF_STORAGE_PARAM_UINT32: {
+            uint32 v = value;
+            memcpy(dest_addr, &v, 4);
+            break;
+        }
 
-            case ATTRDEF_GS_TYPE_EXTRA_DATA_DOUBLE:
-                attr_set_extra_info_cache(port, attrdef, &dv);
-                break;
+        case ATTRDEF_STORAGE_PARAM_SINT32: {
+            int32 v = value;
+            memcpy(dest_addr, &v, 4);
+            break;
+        }
+
+        case ATTRDEF_STORAGE_PARAM_SINT64: {
+            int64 v = value;
+            memcpy(dest_addr, &v, 8);
+            break;
+        }
+
+        case ATTRDEF_STORAGE_PARAM_DOUBLE: {
+            memcpy(dest_addr, &value, 8);
+            break;
         }
     }
 }
 
-void attr_set_extra_info_cache(port_t *port, attrdef_t *attrdef, void *value) {
-    uint8 size = 1;
-    switch (attrdef->gs_type) {
-        case ATTRDEF_GS_TYPE_EXTRA_DATA_1BU:
-        case ATTRDEF_GS_TYPE_EXTRA_DATA_1BS:
-        case ATTRDEF_GS_TYPE_EXTRA_DATA_BOOL:
-            size = 1;
-            break;
+void port_load(port_t *port, uint8 *config_data) {
+    uint8 *base_ptr = config_data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * port->slot;
+    char *strings_ptr = (char *) config_data + CONFIG_OFFS_STR_BASE;
 
-        case ATTRDEF_GS_TYPE_EXTRA_DATA_2BU:
-        case ATTRDEF_GS_TYPE_EXTRA_DATA_2BS:
-            size = 2;
-            break;
-
-        case ATTRDEF_GS_TYPE_EXTRA_DATA_4BS:
-            size = 4;
-            break;
-
-        case ATTRDEF_GS_TYPE_EXTRA_DATA_DOUBLE:
-            size = sizeof(double);
-            break;
+    /* id */
+    if (port->id) {
+        free(port->id);
     }
-
-    memcpy(((uint8 *) port->extra_info) + attrdef->extra_info_cache_offs - 1 /* common offset */, value, size);
-}
-
-
-void port_load(port_t *port, uint8 *data) {
-    uint8 *base_ptr = data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * port->slot;
-    char *strings_ptr = (char *) data + CONFIG_OFFS_STR_BASE;
+    port->id = string_pool_read_dup(strings_ptr, base_ptr + PORT_CONFIG_OFFS_ID);
+    if (!port->id) {
+        char dummy_id[7];
+        snprintf(dummy_id, sizeof(dummy_id), "port%02d", port->slot);
+        port->id = strdup(dummy_id);
+    }
+    DEBUG_PORT(port, "id = \"%s\"", port->id);
 
     DEBUG_PORT(port, "slot = %d", port->slot);
 
     /* display_name */
-    port->display_name = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_DISP_NAME);
+    port->display_name = string_pool_read_dup(strings_ptr, base_ptr + PORT_CONFIG_OFFS_DISP_NAME);
     DEBUG_PORT(port, "display_name = \"%s\"", port->display_name ? port->display_name : "");
 
     /* unit */
     if (port->type == PORT_TYPE_NUMBER) {
-        if (string_pool_read(strings_ptr, base_ptr + CONFIG_OFFS_PORT_UNIT)) {
+        if (string_pool_read(strings_ptr, base_ptr + PORT_CONFIG_OFFS_UNIT)) {
             if (port->unit) {
                 free(port->unit);
             }
-            port->unit = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_UNIT);
+            port->unit = string_pool_read_dup(strings_ptr, base_ptr + PORT_CONFIG_OFFS_UNIT);
         }
         DEBUG_PORT(port, "unit = \"%s\"", port->unit ? port->unit : "");
     }
 
     /* flags */
     uint32 flags = 0;
-    memcpy(&flags, base_ptr + CONFIG_OFFS_PORT_FLAGS, 4);
+    memcpy(&flags, base_ptr + PORT_CONFIG_OFFS_FLAGS, 4);
     port->flags |= flags; /* Flags that are set by initialization remain set */
 
     /* All enabled ports are automatically considered as set */
-    if (IS_ENABLED(port)) {
+    if (IS_PORT_ENABLED(port)) {
         port->flags |= PORT_FLAG_SET;
     }
 
-    DEBUG_PORT(port, "enabled = %s", IS_ENABLED(port) ? "true" : "false");
-    DEBUG_PORT(port, "output = %s", IS_OUTPUT(port) ? "true" : "false");
-    DEBUG_PORT(port, "pull_up = %s", IS_PULL_UP(port) ? "true" : "false");
-    DEBUG_PORT(port, "persisted = %s", IS_PERSISTED(port) ? "true" : "false");
-    DEBUG_PORT(port, "internal = %s", IS_INTERNAL(port) ? "true" : "false");
-    DEBUG_PORT(port, "set = %s", IS_SET(port) ? "true" : "false");
-    DEBUG_PORT(port, "virtual = %s", IS_VIRTUAL(port) ? "true" : "false");
+    DEBUG_PORT(port, "enabled = %s", IS_PORT_ENABLED(port) ? "true" : "false");
+    DEBUG_PORT(port, "writable = %s", IS_PORT_WRITABLE(port) ? "true" : "false");
+    DEBUG_PORT(port, "set = %s", IS_PORT_SET(port) ? "true" : "false");
+    DEBUG_PORT(port, "persisted = %s", IS_PORT_PERSISTED(port) ? "true" : "false");
+    DEBUG_PORT(port, "internal = %s", IS_PORT_INTERNAL(port) ? "true" : "false");
+    DEBUG_PORT(port, "virtual = %s", IS_PORT_VIRTUAL(port) ? "true" : "false");
 
     /* value */
-    double value = UNDEFINED;
-    if (IS_PERSISTED(port)) {
-        memcpy(&value, base_ptr + CONFIG_OFFS_PORT_VALUE, sizeof(double));
+    if (IS_PORT_PERSISTED(port)) {
+        memcpy(&port->value, base_ptr + PORT_CONFIG_OFFS_VALUE, sizeof(double));
 
-        if (IS_UNDEFINED(value)) {
-            DEBUG_PORT(port, "value = (undefined)");
+        if (IS_UNDEFINED(port->value)) {
+            DEBUG_PORT(port, "persisted value = (undefined)");
         }
         else {
-            DEBUG_PORT(port, "value = %s", dtostr(value, -1));
+            DEBUG_PORT(port, "persisted value = %s", dtostr(port->value, -1));
         }
     }
 
     /* sampling_interval */
-    memcpy(&port->sampling_interval, base_ptr + CONFIG_OFFS_PORT_SAMP_INT, 4);
-    if (!port->def_sampling_interval) {
-        port->def_sampling_interval = PORT_DEF_SAMP_INT;
-    }
-    if (!port->sampling_interval) {
-        port->sampling_interval = port->def_sampling_interval;
-    }
-    if (!port->max_sampling_interval) {
-        port->max_sampling_interval = PORT_MAX_SAMP_INT;
-    }
-    port->last_sample_time = -LONG_LONG_MAX;
+    memcpy(&port->sampling_interval, base_ptr + PORT_CONFIG_OFFS_SAMP_INT, 4);
+    port->last_sample_time = -LLONG_MAX;
 
     DEBUG_PORT(port, "sampling_interval = %d ms", port->sampling_interval);
 
@@ -425,12 +400,9 @@ void port_load(port_t *port, uint8 *data) {
     if (!port->heart_beat_interval) {
         port->heart_beat_interval = PORT_DEF_HEART_BEAT_INT;
     }
-    port->last_heart_beat_time = -LONG_LONG_MAX;
+    port->last_heart_beat_time = -LLONG_MAX;
 
     DEBUG_PORT(port, "heart_beat_interval = %d ms", port->heart_beat_interval);
-
-    /* Extra data */
-    memcpy(port->extra_data, base_ptr + CONFIG_OFFS_PORT_DATA, PORT_PERSISTED_EXTRA_DATA_LEN);
 
     /* Expressions */
     port->sexpr = NULL;
@@ -440,14 +412,14 @@ void port_load(port_t *port, uint8 *data) {
     port->stransform_read = NULL;
     port->transform_read = NULL;
 
-    if (IS_OUTPUT(port)) {
+    if (IS_PORT_WRITABLE(port)) {
         /* Value expression */
-        port->sexpr = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_EXPR);
+        port->sexpr = string_pool_read_dup(strings_ptr, base_ptr + PORT_CONFIG_OFFS_EXPR);
         DEBUG_PORT(port, "expression = \"%s\"", port->sexpr ? port->sexpr : "");
         /* The expression will be parsed later, in config_init() */
 
         /* transform_write */
-        port->stransform_write = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_TRANS_W);
+        port->stransform_write = string_pool_read_dup(strings_ptr, base_ptr + PORT_CONFIG_OFFS_TRANS_W);
         DEBUG_PORT(port, "transform_write = \"%s\"", port->stransform_write ? port->stransform_write : "");
 
         if (port->stransform_write) {
@@ -464,7 +436,7 @@ void port_load(port_t *port, uint8 *data) {
     }
 
     /* transform_read */
-    port->stransform_read = string_pool_read_dup(strings_ptr, base_ptr + CONFIG_OFFS_PORT_TRANS_R);
+    port->stransform_read = string_pool_read_dup(strings_ptr, base_ptr + PORT_CONFIG_OFFS_TRANS_R);
     DEBUG_PORT(port, "transform_read = \"%s\"", port->stransform_read ? port->stransform_read : "");
 
     if (port->stransform_read) {
@@ -486,15 +458,15 @@ void port_load(port_t *port, uint8 *data) {
     if (port->attrdefs) {
         attrdef_t *a, **attrdefs = port->attrdefs;
         while ((a = *attrdefs++)) {
-            if (!IS_SET(port)) {
+            if (!IS_PORT_SET(port)) {
                 DEBUG_PORT(port, "setting default value for attribute %s", a->name);
 
                 switch (a->type) {
                     case ATTR_TYPE_BOOLEAN: {
-                        bool value = a->def_bool;
-                        ((int_setter_t) a->set)(port, a, value);
+                        bool v = a->def_bool;
+                        ((int_setter_t) a->set)(port, a, v);
 
-                        DEBUG_PORT(port, "%s set to %d", a->name, value);
+                        DEBUG_PORT(port, "%s set to %d", a->name, v);
 
                         break;
                     }
@@ -505,7 +477,7 @@ void port_load(port_t *port, uint8 *data) {
                             DEBUG_PORT(port, "%s set to choice %d", a->name, (int) a->def);
                         }
                         else {
-                            if (a->integer) {
+                            if (IS_ATTRDEF_INTEGER(a)) {
                                 ((int_setter_t) a->set)(port, a, (int) a->def);
                                 DEBUG_PORT(port, "%s set to %d", a->name, (int) a->def);
                             }
@@ -534,106 +506,70 @@ void port_load(port_t *port, uint8 *data) {
             }
 
             /* Calling getter will load value into cache */
-            if (a->extra_info_cache_offs) {
+            if (a->cache_user_data_field_offs) {
                 ((int_getter_t) a->get)(port, a);
             }
         }
     }
 
-    /* Port can now be configured */
-    if (IS_ENABLED(port)) {
-        port_configure(port);
-    }
-
-    /* Initial port value */
-    port->value = UNDEFINED;
-    if (IS_OUTPUT(port) && IS_ENABLED(port)) {
-        if (IS_PERSISTED(port)) {
-            /* Initial value is given by the persisted value */
-            port->value = value;
-            DEBUG_PORT(port, "setting persisted value %s", dtostr(port->value, -1));
-        }
-        else {
-            /* Initial value is given by the read value */
-            port->value = port->read_value(port);
-            if (!IS_UNDEFINED(port->value)) {
-                if (port->transform_read) {
-                    port->value = expr_eval(port->transform_read);
-                }
-
-                DEBUG_PORT(port, "setting read value %s", dtostr(port->value, -1));
-            }
-        }
-
-        if (!IS_UNDEFINED(port->value)) {
-            port_set_value(port, port->value, CHANGE_REASON_NATIVE);
-        }
-    }
-
     port->change_reason = CHANGE_REASON_NATIVE;
 
-    /* From now on, consider port configured */
+    /* Port is now set and ready to be used */
     port->flags |= PORT_FLAG_SET;
 }
 
-void port_save(port_t *port, uint8 *data, uint32 *strings_offs) {
-    uint8 *base_ptr = data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * port->slot;
-    char *strings_ptr = (char *) data + CONFIG_OFFS_STR_BASE;
+void port_save(port_t *port, uint8 *config_data, uint32 *strings_offs) {
+    uint8 *base_ptr = config_data + CONFIG_OFFS_PORT_BASE + CONFIG_PORT_SIZE * port->slot;
+    char *strings_ptr = (char *) config_data + CONFIG_OFFS_STR_BASE;
 
     /* id */
-    if (IS_VIRTUAL(port)) {
-        /* Only virtual ports have custom ids */
-        if (!string_pool_write(strings_ptr, strings_offs, port->id, base_ptr + CONFIG_OFFS_PORT_ID)) {
-            DEBUG_PORT(port, "no more string space to save id");
-        }
+    if (!string_pool_write(strings_ptr, strings_offs, port->id, base_ptr + PORT_CONFIG_OFFS_ID)) {
+        DEBUG_PORT(port, "no more strings pool space");
     }
 
     /* display name */
-    if (!string_pool_write(strings_ptr, strings_offs, port->display_name, base_ptr + CONFIG_OFFS_PORT_DISP_NAME)) {
-        DEBUG_PORT(port, "no more string space to save display name");
+    if (!string_pool_write(strings_ptr, strings_offs, port->display_name, base_ptr + PORT_CONFIG_OFFS_DISP_NAME)) {
+        DEBUG_PORT(port, "no more strings pool space");
     }
 
     /* unit */
     if (port->type == PORT_TYPE_NUMBER) {
-        if (!string_pool_write(strings_ptr, strings_offs, port->unit, base_ptr + CONFIG_OFFS_PORT_UNIT)) {
-            DEBUG_PORT(port, "no more string space to save unit");
+        if (!string_pool_write(strings_ptr, strings_offs, port->unit, base_ptr + PORT_CONFIG_OFFS_UNIT)) {
+            DEBUG_PORT(port, "no more strings pool space");
         }
     }
 
     /* Flags */
-    memcpy(base_ptr + CONFIG_OFFS_PORT_FLAGS, &port->flags, 4);
+    memcpy(base_ptr + PORT_CONFIG_OFFS_FLAGS, &port->flags, 4);
 
     /* value */
-    memcpy(base_ptr + CONFIG_OFFS_PORT_VALUE, &port->value, sizeof(double));
+    memcpy(base_ptr + PORT_CONFIG_OFFS_VALUE, &port->value, sizeof(double));
 
     /* min */
-    memcpy(base_ptr + CONFIG_OFFS_PORT_MIN, &port->min, sizeof(double));
+    memcpy(base_ptr + PORT_CONFIG_OFFS_MIN, &port->min, sizeof(double));
 
     /* max */
-    memcpy(base_ptr + CONFIG_OFFS_PORT_MAX, &port->max, sizeof(double));
+    memcpy(base_ptr + PORT_CONFIG_OFFS_MAX, &port->max, sizeof(double));
 
     /* step */
-    memcpy(base_ptr + CONFIG_OFFS_PORT_STEP, &port->step, sizeof(double));
+    memcpy(base_ptr + PORT_CONFIG_OFFS_STEP, &port->step, sizeof(double));
 
     /* sampling_interval */
-    memcpy(base_ptr + CONFIG_OFFS_PORT_SAMP_INT, &port->sampling_interval, 4);
-
-    /* Custom data */
-    memcpy(base_ptr + CONFIG_OFFS_PORT_DATA, port->extra_data, PORT_PERSISTED_EXTRA_DATA_LEN);
+    memcpy(base_ptr + PORT_CONFIG_OFFS_SAMP_INT, &port->sampling_interval, 4);
 
     /* value expression */
-    if (!string_pool_write(strings_ptr, strings_offs, port->sexpr, base_ptr + CONFIG_OFFS_PORT_EXPR)) {
-        DEBUG_PORT(port, "no more string space to save expression");
+    if (!string_pool_write(strings_ptr, strings_offs, port->sexpr, base_ptr + PORT_CONFIG_OFFS_EXPR)) {
+        DEBUG_PORT(port, "no more strings pool space");
     }
 
     /* transform_write */
-    if (!string_pool_write(strings_ptr, strings_offs, port->stransform_write, base_ptr + CONFIG_OFFS_PORT_TRANS_W)) {
-        DEBUG_PORT(port, "no more string space to save write transform");
+    if (!string_pool_write(strings_ptr, strings_offs, port->stransform_write, base_ptr + PORT_CONFIG_OFFS_TRANS_W)) {
+        DEBUG_PORT(port, "no more strings pool space");
     }
 
     /* transform_read */
-    if (!string_pool_write(strings_ptr, strings_offs, port->stransform_read, base_ptr + CONFIG_OFFS_PORT_TRANS_R)) {
-        DEBUG_PORT(port, "no more string space to save read transform");
+    if (!string_pool_write(strings_ptr, strings_offs, port->stransform_read, base_ptr + PORT_CONFIG_OFFS_TRANS_R)) {
+        DEBUG_PORT(port, "no more strings pool space");
     }
 
     /* choices */
@@ -652,85 +588,146 @@ void port_save(port_t *port, uint8 *data, uint32 *strings_offs) {
 
         choices_str[len - 1] = 0;
 
-        if (!string_pool_write(strings_ptr, strings_offs, choices_str, base_ptr + CONFIG_OFFS_PORT_CHOICES)) {
-            DEBUG_PORT(port, "no more string space to save port choices");
+        if (!string_pool_write(strings_ptr, strings_offs, choices_str, base_ptr + PORT_CONFIG_OFFS_CHOICES)) {
+            DEBUG_PORT(port, "no more strings pool space");
         }
 
         free(choices_str);
     }
     else {
-        string_pool_write(strings_ptr, strings_offs, NULL, base_ptr + CONFIG_OFFS_PORT_CHOICES);
+        string_pool_write(strings_ptr, strings_offs, NULL, base_ptr + PORT_CONFIG_OFFS_CHOICES);
     }
 }
 
-void ports_init(uint8 *data) {
-    /* Add the ports list null terminator */
-    all_ports = malloc(sizeof(port_t *));
-    all_ports[0] = NULL;
-
-#ifdef HAS_GPIO
-    gpio_init_ports();
-#endif
-
-#ifdef HAS_PWM
-    pwm_init_ports();
-#endif
-
-#ifdef HAS_ADC
-    adc_init_ports();
-#endif
-
-#ifdef HAS_VIRTUAL
-    virtual_ports_init(data);
-#endif
-
-#ifdef _INIT_EXTRA_PORT_DRIVERS
-    _INIT_EXTRA_PORT_DRIVERS
-#endif
-
-#ifdef _INIT_EXTERNAL_PORT_DRIVERS
-    _INIT_EXTERNAL_PORT_DRIVERS
+void ports_init(uint8 *config_data) {
+#ifdef _VIRTUAL
+    virtual_ports_init(config_data);
 #endif
 
     /* Load port data */
-    port_t **p = all_ports;
-    while (*p) {
-        DEBUG_PORT(*p, "loading data");
-        port_load(*p, data);
-        p++;
+    port_t *port;
+    int i;
+    for (i = 0; i < all_ports_count; i++) {
+        port = all_ports[i];
+        DEBUG_PORT(port, "loading data");
+        port_load(port, config_data);
+    }
+
+    /* Do a second round to configure all ports and set their initial values */
+    for (i = 0; i < all_ports_count; i++) {
+        port = all_ports[i];
+        port_configure(port);
+
+        /* Initial port value */
+        if (IS_PORT_WRITABLE(port)) {
+            if (IS_PORT_PERSISTED(port)) {
+                DEBUG_PORT(port, "using persisted value %s", dtostr(port->value, -1));
+            }
+            else if (IS_UNDEFINED(port->value)) {
+                if (IS_PORT_ENABLED(port)) {
+                    /* Initial value is given by the read value */
+                    port->value = port->read_value(port);
+                    if (!IS_UNDEFINED(port->value)) {
+                        if (port->transform_read) {
+                            port->value = expr_eval(port->transform_read);
+                        }
+
+                        DEBUG_PORT(port, "using read value %s", dtostr(port->value, -1));
+                    }
+                }
+                else {
+                    DEBUG_PORT(port, "using undefined value");
+                }
+            }
+            else { /* Not persisted but initially defined (normally by peripheral */
+                DEBUG_PORT(port, "using initial value %s", dtostr(port->value, -1));
+            }
+
+            if (!IS_UNDEFINED(port->value) && IS_PORT_ENABLED(port)) {
+                port_set_value(port, port->value, CHANGE_REASON_NATIVE);
+            }
+        }
+        else { /* Read-only ports start as undefined */
+            port->value = UNDEFINED;
+        }
     }
 }
 
-void ports_save(uint8 *data, uint32 *strings_offs) {
-    port_t **p = all_ports;
-    while (*p) {
-        DEBUG_PORT(*p, "saving data");
-        port_save(*p, data, strings_offs);
-        p++;
+void ports_save(uint8 *config_data, uint32 *strings_offs) {
+    port_t *p;
+    int i;
+    for (i = 0; i < all_ports_count; i++) {
+        p = all_ports[i];
+        DEBUG_PORT(p, "saving");
+        port_save(p, config_data, strings_offs);
     }
 
-    virtual_ports_save(data, strings_offs);
+    virtual_ports_save(config_data, strings_offs);
+}
+
+bool ports_slot_busy(uint8 slot) {
+    return !!(used_slots & BIT(slot));
+}
+
+int8 ports_next_slot() {
+    uint8 slot;
+
+    /* Virtual port slots come in last and are not available for peripherals. Always look for free ports starting with
+     * extra slots. If no extra slot is available, look through standard slots as well. */
+
+    for (slot = PORT_SLOT_EXTRA0; slot < PORT_SLOT_VIRTUAL0; slot++) {
+        if (!(used_slots & BIT(slot))) {
+            return slot;
+        }
+    }
+
+    /* If no extra slot is free, try the regular slots */
+    for (slot = 0; slot < PORT_SLOT_EXTRA0; slot++) {
+        if (!(used_slots & BIT(slot))) {
+            return slot;
+        }
+    }
+
+    return -1;
+}
+
+void ports_rebuild_change_dep_mask(void) {
+    /* Rebuild deps mask for remaining (virtual) ports */
+    for (int i = 0; i < all_ports_count; i++) {
+        port_rebuild_change_dep_mask(all_ports[i]);
+    }
+}
+
+port_t *port_create(void) {
+    port_t *port = zalloc(sizeof(port_t));
+    port->value = UNDEFINED;
+
+    return port;
 }
 
 void port_register(port_t *port) {
-    if (port->slot == PORT_SLOT_AUTO) {
-        if (next_extra_slot > PORT_SLOT_EXTRA_MAX) {
-            DEBUG("reached max extra port slots, continuing from 0");
-            next_extra_slot = 0;
-        }
-
-        port->slot = next_extra_slot++;
-        DEBUG_PORT(port, "automatically allocated extra slot %d", port->slot);
-    }
-
     /* If a unit is present, it's normally a literal string. Make sure it's a free()-able string. */
     if (port->unit) {
         port->unit = strdup(port->unit);
     }
 
-    all_ports = realloc(all_ports, (all_ports_count + 2) * sizeof(port_t *));
+    /* Set min/max to UNDEFINED, by default */
+    if (port->min == 0 && port->max == 0) {
+        port->min = port->max = UNDEFINED;
+    }
+
+    /* step has no sense without min */
+    if (IS_UNDEFINED(port->min) || port->step == 0) {
+        port->step = UNDEFINED;
+    }
+
+    /* Set default sampling interval */
+    if (!port->sampling_interval) {
+        port->sampling_interval = port->def_sampling_interval;
+    }
+
+    all_ports = realloc(all_ports, (all_ports_count + 1) * sizeof(port_t *));
     all_ports[all_ports_count++] = port;
-    all_ports[all_ports_count] = NULL;
 
     /* Prepare custom port attrdefs */
     if (port->attrdefs) {
@@ -741,49 +738,63 @@ void port_register(port_t *port) {
                 a->min = a->max = UNDEFINED;
             }
 
+            /* step has no sense without min */
+            if (IS_UNDEFINED(a->min) || a->step == 0) {
+                a->step = UNDEFINED;
+            }
+
             /* Set default getter/setter */
             /* TODO: add support for default setters/getters for string attributes */
-            if ((!a->get || !a->set) && (a->gs_type != ATTRDEF_GS_TYPE_CUSTOM)) {
+            if ((!a->get || !a->set) && (a->storage != ATTRDEF_STORAGE_CUSTOM)) {
                 if (a->choices) {
                     if (a->type == ATTR_TYPE_NUMBER) {
-                        a->get = attr_get_extra_data_num_choices;
-                        a->set = attr_set_extra_data_num_choices;
+                        a->get = attr_get_param_num_choices;
+                        a->set = attr_set_param_num_choices;
                     }
                 }
                 else {
-                    switch (a->gs_type) {
-                        case ATTRDEF_GS_TYPE_EXTRA_DATA_1BS:
-                        case ATTRDEF_GS_TYPE_EXTRA_DATA_BOOL:
-                            a->get = attr_get_extra_data_1bs;
-                            a->set = attr_set_extra_data_1bs;
+                    switch (a->storage) {
+                        case ATTRDEF_STORAGE_PARAM_UINT8:
+                            a->get = attr_get_param_uint8;
+                            a->set = attr_set_param_uint8;
                             break;
 
-                        case ATTRDEF_GS_TYPE_EXTRA_DATA_1BU:
-                            a->get = attr_get_extra_data_1bu;
-                            a->set = attr_set_extra_data_1bu;
+                        case ATTRDEF_STORAGE_PARAM_SINT8:
+                            a->get = attr_get_param_sint8;
+                            a->set = attr_set_param_sint8;
                             break;
 
-                        case ATTRDEF_GS_TYPE_EXTRA_DATA_2BS:
-                            a->get = attr_get_extra_data_2bs;
-                            a->set = attr_set_extra_data_2bs;
+                        case ATTRDEF_STORAGE_PARAM_UINT16:
+                            a->get = attr_get_param_uint16;
+                            a->set = attr_set_param_uint16;
                             break;
 
-                        case ATTRDEF_GS_TYPE_EXTRA_DATA_2BU:
-                            a->get = attr_get_extra_data_2bu;
-                            a->set = attr_set_extra_data_2bu;
+                        case ATTRDEF_STORAGE_PARAM_SINT16:
+                            a->get = attr_get_param_sint16;
+                            a->set = attr_set_param_sint16;
                             break;
 
-                        case ATTRDEF_GS_TYPE_EXTRA_DATA_4BS:
-                            a->get = attr_get_extra_data_4bs;
-                            a->set = attr_set_extra_data_4bs;
+                        case ATTRDEF_STORAGE_PARAM_UINT32:
+                            a->get = attr_get_param_uint32;
+                            a->set = attr_set_param_uint32;
                             break;
 
-                        case ATTRDEF_GS_TYPE_EXTRA_DATA_DOUBLE:
-                            a->get = attr_get_extra_data_double;
-                            a->set = attr_set_extra_data_double;
+                        case ATTRDEF_STORAGE_PARAM_SINT32:
+                            a->get = attr_get_param_sint32;
+                            a->set = attr_set_param_sint32;
                             break;
 
-                        case ATTRDEF_GS_TYPE_FLAG:
+                        case ATTRDEF_STORAGE_PARAM_SINT64:
+                            a->get = attr_get_param_sint64;
+                            a->set = attr_set_param_sint64;
+                            break;
+
+                        case ATTRDEF_STORAGE_PARAM_DOUBLE:
+                            a->get = attr_get_param_double;
+                            a->set = attr_set_param_double;
+                            break;
+
+                        case ATTRDEF_STORAGE_FLAG:
                             a->get = attr_get_flag;
                             a->set = attr_set_flag;
                             break;
@@ -791,6 +802,14 @@ void port_register(port_t *port) {
                 }
             }
         }
+    }
+
+    used_slots |= BIT(port->slot);
+
+    if (!port->id) { /* Port may not have an ID when registered */
+        char dummy_id[7];
+        snprintf(dummy_id, sizeof(dummy_id), "port%02d", port->slot);
+        port->id = strdup(dummy_id);
     }
 
     DEBUG_PORT(port, "registered");
@@ -810,29 +829,108 @@ bool port_unregister(port_t *port) {
         return FALSE;  /* Port not found */
     }
 
-    /* Shift following ports back with 1 position */
+    /* Shift following ports back by 1 position */
     for (i = p; i < all_ports_count - 1; i++) {
         all_ports[i] = all_ports[i + 1];
     }
 
-    all_ports_count--;
-    all_ports = realloc(all_ports, (all_ports_count + 1) * sizeof(port_t *));
-    all_ports[all_ports_count] = NULL;
+    if (all_ports_count > 1) {
+        all_ports = realloc(all_ports, --all_ports_count * sizeof(port_t *));
+    }
+    else {
+        free(all_ports);
+        all_ports = NULL;
+        all_ports_count = 0;
+    }
+
+    used_slots &= ~BIT(port->slot);
 
     DEBUG_PORT(port, "unregistered");
+
+    /* Free ID */
+    if (port->id) {
+        free(port->id);
+        port->id= NULL;
+    }
 
     return TRUE;
 }
 
+void port_cleanup(port_t *port) {
+    DEBUG_PORT(port, "cleaning up");
+
+    /* Free choices */
+    if (port->choices) {
+        free_choices(port->choices);
+        port->choices = NULL;
+    }
+
+    /* Don't free ID as it's needed by port_unregister() */
+
+    /* Free display name */
+    if (port->display_name) {
+        free(port->display_name);
+        port->display_name = NULL;
+    }
+    /* Free unit */
+    if (port->unit) {
+        free(port->unit);
+        port->unit = NULL;
+    }
+
+    /* Destroy value expression */
+    if (port->expr) {
+        port_expr_remove(port);
+    }
+
+    /* Destroy transform expressions */
+    if (port->transform_read) {
+        expr_free(port->transform_read);
+        port->transform_read = NULL;
+    }
+    if (port->stransform_read) {
+        free(port->stransform_read);
+        port->stransform_read = NULL;
+    }
+    if (port->transform_write) {
+        expr_free(port->transform_write);
+        port->transform_write = NULL;
+    }
+    if (port->stransform_write) {
+        free(port->stransform_write);
+        port->stransform_write = NULL;
+    }
+
+    /* Cancel sequence */
+    if (port->sequence_pos >= 0) {
+        port_sequence_cancel(port);
+    }
+}
+
 port_t *port_find_by_id(char *id) {
-    port_t **port = all_ports, *p;
-    while ((p = *port++)) {
+    port_t *p;
+    int i;
+    for (i = 0; i < all_ports_count; i++) {
+        p = all_ports[i];
         if (!strcmp(p->id, id)) {
             return p;
         }
     }
 
     return NULL;    
+}
+
+port_t *port_find_by_slot(uint8 slot) {
+    port_t *p;
+    int i;
+    for (i = 0; i < all_ports_count; i++) {
+        p = all_ports[i];
+        if (p->slot == slot) {
+            return p;
+        }
+    }
+
+    return NULL;
 }
 
 void port_rebuild_change_dep_mask(port_t *the_port) {
@@ -842,14 +940,7 @@ void port_rebuild_change_dep_mask(port_t *the_port) {
         return;
     }
 
-    port_t **ports, **port, *p;
-    port = ports = expr_port_deps(the_port->expr);
-    if (ports) {
-        while ((p = *port++)) {
-            the_port->change_dep_mask |= (1ULL << p->slot);
-        }
-        free(ports);
-    }
+    the_port->change_dep_mask = expr_get_port_deps(the_port->expr);
 
     if (expr_is_time_dep(the_port->expr)) {
         the_port->change_dep_mask |= (1ULL << TIME_EXPR_DEP_BIT);
@@ -912,7 +1003,7 @@ bool port_set_value(port_t *port, double value, char reason) {
 }
 
 json_t *port_get_json_value(port_t *port) {
-    if (IS_UNDEFINED(port->value) || !IS_ENABLED(port)) {
+    if (IS_UNDEFINED(port->value) || !IS_PORT_ENABLED(port)) {
         return json_null_new();
     }
 
@@ -930,21 +1021,6 @@ json_t *port_get_json_value(port_t *port) {
 void port_enable(port_t *port) {
     DEBUG_PORT(port, "enabling");
     port->flags |= PORT_FLAG_ENABLED;
-
-    port_t *p, **pp = all_ports;
-    while ((p = *pp++)) {
-        if (!IS_ENABLED(p)) {
-            continue;
-        }
-
-        if ((p->mutual_excl_mask & (1UL << port->slot)) || (port->mutual_excl_mask & (1UL << p->slot))) {
-            if (IS_ENABLED(p)) {
-                DEBUG_PORT(port, "mutually exclusive with %s", p->id);
-                port_disable(p);
-                event_push_port_update(p);
-            }
-        }
-    }
 
     /* Rebuild expression */
     if (port->expr) {
@@ -987,7 +1063,7 @@ void port_disable(port_t *port) {
 void port_configure(port_t *port) {
     DEBUG_PORT(port, "configuring");
 
-    /* Attribute getters may cache values inside port->extra_info; calling all attribute getters here ensures that this
+    /* Attribute getters may cache values inside port->user_data; calling all attribute getters here ensures that this
      * cached data is up-do-date with latest attribute values */
     if (port->attrdefs) {
         attrdef_t *a, **attrdefs = port->attrdefs;
@@ -999,6 +1075,6 @@ void port_configure(port_t *port) {
     }
 
     if (port->configure) {
-        port->configure(port);
+        port->configure(port, IS_PORT_ENABLED(port));
     }
 }

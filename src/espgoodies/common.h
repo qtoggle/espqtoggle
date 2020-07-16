@@ -25,55 +25,55 @@
 #include <os_type.h>
 #include <c_types.h>
 
-#include "system.h"
+#include "espgoodies/system.h"
 
 
 /* We need to alter the ICACHE_RODATA_ATTR definition to add 4-byte alignment specifier */
 #ifdef ICACHE_RODATA_ATTR
 #undef ICACHE_RODATA_ATTR
 #endif
-#define ICACHE_RODATA_ATTR      __attribute__((aligned(4))) __attribute__((section(".irom.text")))
+#define ICACHE_RODATA_ATTR __attribute__((aligned(4))) __attribute__((section(".irom.text")))
 
 /* We need to redefine these string functions here because the built-in ones fail at linkage */
-#define strtok                  my_strtok
-#define strdup                  my_strdup
-#define strndup                 my_strndup
+#define strtok  my_strtok
+#define strdup  my_strdup
+#define strndup my_strndup
 
-#define malloc                  my_malloc
-#define realloc                 my_realloc
-#define free                    my_free
-#define zalloc                  my_zalloc
+#define malloc  my_malloc
+#define realloc my_realloc
+#define free    my_free
+#define zalloc  my_zalloc
 
-#define printf                  os_printf
+#define printf os_printf
 
 #ifdef _DEBUG_IP
 #undef os_printf
-#define os_printf               udp_printf
+#define os_printf       udp_printf
 #endif
 
 #ifdef _DEBUG
-#define DEBUG(fmt, ...)         os_printf("%8d: " fmt "\n", (uint32) system_uptime_ms(), ##__VA_ARGS__)
+#define DEBUG(fmt, ...) os_printf("%8d: " fmt "\n", (uint32) system_uptime_ms(), ##__VA_ARGS__)
 #else
-#define DEBUG(...)              {}
+#define DEBUG(...)      {}
 #endif
 
-#define printf                  os_printf
-#define sprintf                 os_sprintf
-#define snprintf                os_snprintf
-#define vsnprintf               os_vsnprintf
+#define printf    os_printf
+#define sprintf   os_sprintf
+#define snprintf  os_snprintf
+#define vsnprintf os_vsnprintf
 
 
-ICACHE_FLASH_ATTR char        * my_strtok(char *s, char *d);
-ICACHE_FLASH_ATTR char        * my_strdup(const char *s);
-ICACHE_FLASH_ATTR char        * my_strndup(const char *s, int n);
+char ICACHE_FLASH_ATTR *my_strtok(char *s, char *d);
+char ICACHE_FLASH_ATTR *my_strdup(const char *s);
+char ICACHE_FLASH_ATTR *my_strndup(const char *s, int n);
 
-ICACHE_FLASH_ATTR void        * my_malloc(size_t size);
-ICACHE_FLASH_ATTR void        * my_realloc(void *ptr, size_t size);
-ICACHE_FLASH_ATTR void          my_free(void *ptr);
-ICACHE_FLASH_ATTR void        * my_zalloc(size_t size);
+void ICACHE_FLASH_ATTR *my_malloc(size_t size);
+void ICACHE_FLASH_ATTR *my_realloc(void *ptr, size_t size);
+void ICACHE_FLASH_ATTR  my_free(void *ptr);
+void ICACHE_FLASH_ATTR *my_zalloc(size_t size);
 
 #ifdef _DEBUG_IP
-ICACHE_FLASH_ATTR int           udp_printf(const char *format, ...);
+int  ICACHE_FLASH_ATTR  udp_printf(const char *format, ...);
 #endif
 
 

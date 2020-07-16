@@ -1,0 +1,21 @@
+{
+    "name": "set-port-value-port-disabled",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/pwm4/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": true,
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "port-disabled"
+                }
+            }
+        }
+    ]
+}
+

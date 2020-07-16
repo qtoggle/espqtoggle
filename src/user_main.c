@@ -24,71 +24,154 @@
 #include <version.h>
 
 #include "espgoodies/common.h"
-#include "espgoodies/wifi.h"
 #include "espgoodies/crypto.h"
+#include "espgoodies/debug.h"
+#include "espgoodies/drivers/uart.h"
+#include "espgoodies/flashcfg.h"
 #include "espgoodies/initdata.h"
+#include "espgoodies/ota.h"
 #include "espgoodies/rtc.h"
+#include "espgoodies/sleep.h"
 #include "espgoodies/system.h"
 #include "espgoodies/tcpserver.h"
 #include "espgoodies/utils.h"
-
-#ifdef _SLEEP
-#include "espgoodies/sleep.h"
-#endif
-
-#ifdef _OTA
-#include "espgoodies/ota.h"
-#endif
+#include "espgoodies/wifi.h"
 
 #include "client.h"
 #include "common.h"
 #include "config.h"
 #include "core.h"
 #include "device.h"
-#include "drivers/uart.h"
 #include "ver.h"
 
 
-#define CONNECT_TIMEOUT             20000   /* Milliseconds */
-#define DEBUG_BAUD                  115200
+#define CONNECT_TIMEOUT             20000             /* Milliseconds */
 
+#define RTC_UNEXP_RESET_COUNT_ADDR  RTC_USER_ADDR + 0 /* 130 * 4 bytes = 520 */
+#define MAX_UNEXP_RESET_COUNT       16
+
+#ifndef FW_BASE_URL
+#define FW_BASE_URL                 ""
+#define FW_BASE_OTA_PATH            ""
+#endif
 #define FW_LATEST_FILE              "/latest"
 #define FW_LATEST_STABLE_FILE       "/latest_stable"
 #define FW_LATEST_BETA_FILE         "/latest_beta"
-#define FW_AUTO_MIN_INTERVAL        24  /* Hours */
+#define FW_AUTO_MIN_INTERVAL        24                /* Hours */
 
 
-static bool                         wifi_first_time_connected = FALSE;
-static os_timer_t                   connect_timeout_timer;
+static bool       wifi_first_time_connected = FALSE;
+static os_timer_t connect_timeout_timer;
 #ifdef _OTA
-static os_timer_t                   ota_auto_timer;
-static uint32                       ota_auto_counter = 1;
+static os_timer_t ota_auto_timer;
+static uint32     ota_auto_counter = 1;
 #endif
 
 
-ICACHE_FLASH_ATTR static void       main_init(void);
-#ifdef _DEBUG
-ICACHE_FLASH_ATTR static void       debug_putc_func(char c);
-#endif
-ICACHE_FLASH_ATTR void              user_init(void);
-ICACHE_FLASH_ATTR void              user_rf_pre_init(void);
-ICACHE_FLASH_ATTR int               user_rf_cal_sector_set(void);
+static void ICACHE_FLASH_ATTR check_update_fw_config(void);
+static void ICACHE_FLASH_ATTR check_reboot_loop(void);
+static void ICACHE_FLASH_ATTR main_init(void);
 
-ICACHE_FLASH_ATTR static void       on_system_ready(void);
-ICACHE_FLASH_ATTR static void       on_system_reset(void);
+void        ICACHE_FLASH_ATTR user_init(void);
+void        ICACHE_FLASH_ATTR user_rf_pre_init(void);
+int         ICACHE_FLASH_ATTR user_rf_cal_sector_set(void);
 
-ICACHE_FLASH_ATTR static void       on_setup_mode(bool active);
+static void ICACHE_FLASH_ATTR on_system_ready(void);
+static void ICACHE_FLASH_ATTR on_system_reset(void);
+
+static void ICACHE_FLASH_ATTR on_setup_mode(bool active);
 
 #ifdef _OTA
-ICACHE_FLASH_ATTR static void       on_ota_auto_timer(void *arg);
-ICACHE_FLASH_ATTR static void       on_ota_auto_perform(int code);
+static void ICACHE_FLASH_ATTR on_ota_auto_timer(void *arg);
+static void ICACHE_FLASH_ATTR on_ota_auto_perform(int code);
 #endif
 
-ICACHE_FLASH_ATTR static void       on_wifi_connect(bool connected);
-ICACHE_FLASH_ATTR static void       on_wifi_connect_timeout(void *arg);
+static void ICACHE_FLASH_ATTR on_wifi_connect(bool connected);
+static void ICACHE_FLASH_ATTR on_wifi_connect_timeout(void *arg);
 
 
-/* Main/system */
+void check_update_fw_config(void) {
+    version_t fw_version;
+    system_get_fw_version(&fw_version);
+    if ((fw_version.major > FW_VERSION_MAJOR) ||
+        (fw_version.major == 0 &&
+         fw_version.minor == 0 &&
+         fw_version.patch == 0 &&
+         fw_version.label == 0 &&
+         fw_version.type == 0)) {
+
+        DEBUG_CONFIG("invalid firmware version detected, resetting configuration");
+        flashcfg_reset(FLASH_CONFIG_SLOT_DEFAULT);
+    }
+
+    if (fw_version.major != FW_VERSION_MAJOR ||
+        fw_version.minor != FW_VERSION_MINOR ||
+        fw_version.patch != FW_VERSION_PATCH ||
+        fw_version.label != FW_VERSION_LABEL ||
+        fw_version.type != FW_VERSION_TYPE) {
+
+        DEBUG_CONFIG("firmware update detected");
+        fw_version.major = FW_VERSION_MAJOR;
+        fw_version.minor = FW_VERSION_MINOR;
+        fw_version.patch = FW_VERSION_PATCH;
+        fw_version.label = FW_VERSION_LABEL;
+        fw_version.type = FW_VERSION_TYPE;
+
+        system_set_fw_version(&fw_version);
+        system_config_save();
+    }
+}
+
+void check_reboot_loop(void) {
+    struct rst_info *reset_info = system_get_rst_info();
+    uint32 unexp_reset_count;
+
+    switch (reset_info->reason) {
+        case REASON_DEFAULT_RST:
+            DEBUG_SYSTEM("reset reason: %s", "power reboot");
+            break;
+
+        case REASON_WDT_RST:
+            DEBUG_SYSTEM("reset reason: %s", "hardware watchdog");
+            break;
+
+        case REASON_EXCEPTION_RST:
+            DEBUG_SYSTEM("reset reason: %s", "fatal exception");
+            break;
+
+        case REASON_SOFT_WDT_RST:
+            DEBUG_SYSTEM("reset reason: %s", "software watchdog");
+            break;
+
+        case REASON_SOFT_RESTART:
+            DEBUG_SYSTEM("reset reason: %s", "software reset");
+            break;
+
+        case REASON_DEEP_SLEEP_AWAKE:
+            DEBUG_SYSTEM("reset reason: %s", "deep-sleep wake");
+            break;
+
+        case REASON_EXT_SYS_RST:
+            DEBUG_SYSTEM("reset reason: %s", "hardware reset");
+            break;
+    }
+
+    if (reset_info->reason == REASON_WDT_RST || reset_info->reason == REASON_EXCEPTION_RST) {
+        DEBUG_SYSTEM("unexpected reset detected");
+        unexp_reset_count = rtc_get_value(RTC_UNEXP_RESET_COUNT_ADDR) + 1;
+
+        if (unexp_reset_count == MAX_UNEXP_RESET_COUNT) {
+            DEBUG_SYSTEM("too many unexpected resets, resetting configuration");
+            flashcfg_reset(FLASH_CONFIG_SLOT_DEFAULT);
+        }
+    }
+
+    else {
+        unexp_reset_count = 0;
+    }
+
+    rtc_set_value(RTC_UNEXP_RESET_COUNT_ADDR, unexp_reset_count);
+}
 
 void main_init(void) {
     system_init_done_cb(on_system_ready);
@@ -120,6 +203,7 @@ void on_system_ready(void) {
 void on_system_reset(void) {
     DEBUG_SYSTEM("cleaning up before reset");
 
+    core_disable_polling();
     config_ensure_saved();
     sessions_respond_all();
     tcp_server_stop();
@@ -129,8 +213,13 @@ void on_setup_mode(bool active) {
     if (active && strlen(DEFAULT_SSID)) {
         DEBUG_SYSTEM("enabling connection to default SSID");
         wifi_station_disable();
-        wifi_station_temporary_enable(DEFAULT_SSID, /* psk = */ NULL, /* bssid = */ NULL,
-                                      /* hostname = */ device_name, /* callback = */ NULL);
+        wifi_station_temporary_enable(
+            DEFAULT_SSID,
+            /* psk = */ NULL,
+            /* bssid = */ NULL,
+            /* hostname = */ device_name,
+            /* callback = */ NULL
+        );
     }
 }
 
@@ -169,12 +258,9 @@ void on_wifi_connect(bool connected) {
     os_timer_disarm(&connect_timeout_timer);
     core_enable_polling();
 
-    if (!(device_flags & DEVICE_FLAG_CONFIGURED)) {
-        DEBUG_SYSTEM("system not configured, starting provisioning");
+    /* Attempt to fetch the latest provisioning configuration at each boot, right after Wi-Fi connection */
+    if (device_provisioning_version > 0) {
         config_start_provisioning();
-    }
-    else {
-        DEBUG_SYSTEM("system configured");
     }
 
 #ifdef _SLEEP
@@ -196,8 +282,11 @@ void on_wifi_connect(bool connected) {
                 count_modulo = 1;
             }
 
-            DEBUG_SYSTEM("sleep boot count: %d %% %d = %d", sleep_boot_count, count_modulo,
-                         sleep_boot_count % count_modulo);
+            DEBUG_SYSTEM(
+                "sleep boot count: %d %% %d = %d",
+                sleep_boot_count, count_modulo,
+                sleep_boot_count % count_modulo
+            );
 
             if (sleep_boot_count % count_modulo == 0) {
                 ota_auto_update_check(/* beta = */ device_flags & DEVICE_FLAG_OTA_BETA_ENABLED, on_ota_auto_perform);
@@ -239,51 +328,47 @@ int user_rf_cal_sector_set(void) {
     return 256 - 5;
 }
 
-#ifdef _DEBUG
-void debug_putc_func(char c) {
-    uart_write_char(_DEBUG_UART_NO, c);
-}
-#endif
-
 void user_init(void) {
 #ifdef _DEBUG
-    uart_setup(_DEBUG_UART_NO, DEBUG_BAUD, UART_PARITY_NONE, UART_STOP_BITS_1);
-    os_install_putc1(debug_putc_func);
+    debug_uart_setup(_DEBUG_UART_NO);
     os_delay_us(10000);
 
-printf("\n\n");
-DEBUG("espQToggle  " FW_VERSION);
-DEBUG("Config      " FW_CONFIG_NAME);
-DEBUG("API Version " API_VERSION);
-DEBUG("SDK Version " ESP_SDK_VERSION_STRING);
+    printf("\n\n");
+    DEBUG_SYSTEM("espQToggle  " FW_VERSION);
+    DEBUG_SYSTEM("API Version " API_VERSION);
+    DEBUG_SYSTEM("SDK Version " ESP_SDK_VERSION_STRING);
 
 #else /* !_DEBUG */
-    system_set_os_print(0);
+    debug_uart_setup(DEBUG_UART_DISABLE);
 #endif /* _DEBUG */
 
     system_reset_set_callback(on_system_reset);
     system_setup_mode_set_callback(on_setup_mode);
 
     rtc_init();
+    check_reboot_loop();
 #ifdef _SLEEP
     sleep_init();
 #endif
+    system_config_load();
+    check_update_fw_config();
     config_init();
+    system_config_init();
 #ifdef _OTA
-    ota_init(/* current_version = */   FW_VERSION,
-             /* latest_url = */        FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME FW_LATEST_FILE,
-             /* latest_stable_url = */ FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME FW_LATEST_STABLE_FILE,
-             /* latest_beta_url = */   FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME FW_LATEST_BETA_FILE,
-             /* url_template = */      FW_BASE_URL FW_BASE_OTA_PATH "/" FW_CONFIG_NAME "/%s");
+    ota_init(
+        /* current_version = */   FW_VERSION,
+        /* latest_url = */        FW_BASE_URL FW_BASE_OTA_PATH "/" FW_LATEST_FILE,
+        /* latest_stable_url = */ FW_BASE_URL FW_BASE_OTA_PATH "/" FW_LATEST_STABLE_FILE,
+        /* latest_beta_url = */   FW_BASE_URL FW_BASE_OTA_PATH "/" FW_LATEST_BETA_FILE,
+        /* url_template = */      FW_BASE_URL FW_BASE_OTA_PATH "/%s"
+    );
 
     os_timer_disarm(&ota_auto_timer);
     os_timer_setfn(&ota_auto_timer, on_ota_auto_timer, NULL);
     os_timer_arm(&ota_auto_timer, 60 * 1000, /* repeat = */ TRUE);
 #endif
-
     wifi_init();
     client_init();
     core_init();
-    system_init();
     main_init();
 }

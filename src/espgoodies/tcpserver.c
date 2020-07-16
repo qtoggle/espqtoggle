@@ -22,33 +22,33 @@
 #include <string.h>
 #include <mem.h>
 
-#include "common.h"
-#include "tcpserver.h"
+#include "espgoodies/common.h"
+#include "espgoodies/tcpserver.h"
 
 
-#define SEND_PACKET_SIZE        1024
+#define SEND_PACKET_SIZE 1024
 
 typedef struct {
 
-    void *                      app_info;
-    uint8 *                     send_buffer;
-    int                         send_len;
-    int                         send_offs;
-    bool                        free_on_sent;
+    void  *app_info;
+    uint8 *send_buffer;
+    int    send_len;
+    int    send_offs;
+    bool   free_on_sent;
 
 } conn_info_t;
 
-static struct espconn *         tcp_server_conn = NULL;
-static tcp_conn_cb_t            tcp_conn_cb = NULL;
-static tcp_recv_cb_t            tcp_recv_cb = NULL;
-static tcp_sent_cb_t            tcp_sent_cb = NULL;
-static tcp_disc_cb_t            tcp_disc_cb = NULL;
+static struct espconn *tcp_server_conn = NULL;
+static tcp_conn_cb_t   tcp_conn_cb = NULL;
+static tcp_recv_cb_t   tcp_recv_cb = NULL;
+static tcp_sent_cb_t   tcp_sent_cb = NULL;
+static tcp_disc_cb_t   tcp_disc_cb = NULL;
 
-ICACHE_FLASH_ATTR static void   on_client_connection(void *arg);
-ICACHE_FLASH_ATTR static void   on_client_recv(void *arg, char *data, uint16 len);
-ICACHE_FLASH_ATTR static void   on_client_sent(void *arg);
-ICACHE_FLASH_ATTR static void   on_client_disconnect(void *arg);
-ICACHE_FLASH_ATTR static void   on_client_error(void *arg, int8 err);
+static void ICACHE_FLASH_ATTR on_client_connection(void *arg);
+static void ICACHE_FLASH_ATTR on_client_recv(void *arg, char *data, uint16 len);
+static void ICACHE_FLASH_ATTR on_client_sent(void *arg);
+static void ICACHE_FLASH_ATTR on_client_disconnect(void *arg);
+static void ICACHE_FLASH_ATTR on_client_error(void *arg, int8 err);
 
 
 #if defined(_DEBUG) && defined(_DEBUG_TCPSERVER)
@@ -61,13 +61,18 @@ void DEBUG_CONN(char *module, struct espconn *conn, char *fmt, ...) {
     va_start(args, fmt);
     
     if (conn && conn->proto.tcp) {
-        snprintf(new_fmt, sizeof(new_fmt), "[%-14s] [%d.%d.%d.%d:%d] %s",
-                 module,
-                 conn->proto.tcp->remote_ip[0],
-                 conn->proto.tcp->remote_ip[1],
-                 conn->proto.tcp->remote_ip[2],
-                 conn->proto.tcp->remote_ip[3],
-                 conn->proto.tcp->remote_port, fmt);
+        snprintf(
+            new_fmt,
+            sizeof(new_fmt),
+            "[%-14s] [%d.%d.%d.%d:%d] %s",
+            module,
+            conn->proto.tcp->remote_ip[0],
+            conn->proto.tcp->remote_ip[1],
+            conn->proto.tcp->remote_ip[2],
+            conn->proto.tcp->remote_ip[3],
+            conn->proto.tcp->remote_port,
+            fmt
+        );
     }
     else {
         snprintf(new_fmt, sizeof(new_fmt), "[%-14s] [no connection] %s", module, fmt);
@@ -80,12 +85,13 @@ void DEBUG_CONN(char *module, struct espconn *conn, char *fmt, ...) {
 
 #endif
 
-void tcp_server_init(int tcp_port,
-                     tcp_conn_cb_t conn_cb,
-                     tcp_recv_cb_t recv_cb,
-                     tcp_sent_cb_t sent_cb,
-                     tcp_disc_cb_t disc_cb) {
-
+void tcp_server_init(
+    int tcp_port,
+    tcp_conn_cb_t conn_cb,
+    tcp_recv_cb_t recv_cb,
+    tcp_sent_cb_t sent_cb,
+    tcp_disc_cb_t disc_cb
+) {
     tcp_server_conn = (struct espconn *) zalloc(sizeof(struct espconn));
 
     espconn_create(tcp_server_conn);
@@ -222,8 +228,14 @@ void on_client_sent(void *arg) {
 
     int rem = info->send_len - info->send_offs;
     if (rem <= SEND_PACKET_SIZE) {
-        DEBUG_TCPSERVER_CONN(conn, "sending packet %d/%d (%d/%d bytes)",
-                             packet_no, packet_count, info->send_len, info->send_len);
+        DEBUG_TCPSERVER_CONN(
+            conn,
+            "sending packet %d/%d (%d/%d bytes)",
+            packet_no,
+            packet_count,
+            info->send_len,
+            info->send_len
+        );
 
         if (espconn_send(conn, info->send_buffer + info->send_offs, rem)) {
             DEBUG_TCPSERVER_CONN(conn, "send failed");
@@ -233,8 +245,14 @@ void on_client_sent(void *arg) {
         info->send_buffer = NULL;
     }
     else {
-        DEBUG_TCPSERVER_CONN(conn, "sending packet %d/%d (%d/%d bytes)",
-                             packet_no, packet_count, SEND_PACKET_SIZE * packet_no, info->send_len);
+        DEBUG_TCPSERVER_CONN(
+            conn,
+            "sending packet %d/%d (%d/%d bytes)",
+            packet_no,
+            packet_count,
+            SEND_PACKET_SIZE * packet_no,
+            info->send_len
+        );
 
         if (espconn_send(conn, info->send_buffer + info->send_offs, SEND_PACKET_SIZE)) {
             DEBUG_TCPSERVER_CONN(conn, "send failed");

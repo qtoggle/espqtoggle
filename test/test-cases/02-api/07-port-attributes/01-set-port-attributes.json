@@ -1,0 +1,97 @@
+{
+    "name": "set-port-attributes",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "display_name": "test display name",
+                    "enabled": true,
+                    "persisted": true,
+                    "internal": true,
+                    "transform_read": "NOT(${DOLLAR}gpio0)"
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "array",
+                    "additionalItems": true,
+                    "items": [
+                        {
+                            "type": "object",
+                            "required": [
+                                "id",
+                                "display_name",
+                                "writable",
+                                "enabled",
+                                "persisted",
+                                "internal",
+                                "transform_read",
+                                "transform_write"
+                            ],
+                            "properties": {
+                                "id": {
+                                    "enum": ["gpio0"]
+                                },
+                                "display_name": {
+                                    "enum": ["test display name"]
+                                },
+                                "writable": {
+                                    "enum": [true]
+                                },
+                                "enabled": {
+                                    "enum": [true]
+                                },
+                                "persisted": {
+                                    "enum": [true]
+                                },
+                                "internal": {
+                                    "enum": [true]
+                                },
+                                "transform_read": {
+                                    "enum": ["NOT(${DOLLAR}gpio0)"]
+                                },
+                                "transform_write": {
+                                    "enum": [""]
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/ports/gpio0",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "transform_read": "",
+                    "persisted": false,
+                    "internal": false
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        }
+    ]
+}

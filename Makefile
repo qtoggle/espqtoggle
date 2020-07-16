@@ -1,52 +1,26 @@
 
 DEBUG ?= true
-DEBUG_FLAGS ?= battery dnsserver flashcfg gpio html httpclient \
-               httpserver ota rtc sleep system tcpserver wifi \
-               api core device espqtclient expr ports events sessions virtual webhooks \
-               adc gpiop pwm uart hspi dallastemp dht v9821 bl0940 hlw8012 sht kr102
+DEBUG_FLAGS ?= battery dnsserver flashcfg html httpclient httpserver json ota rtc sleep system tcpserver wifi 	\
+               gpio hspi onewire pwm uart 																		\
+               api config core device espqtclient events expr peripherals ports sessions virtual webhooks 		\
+               api core device espqtclient expr ports events sessions virtual webhooks							\
+               adcp bl0937 bl0940 dhtxx ds18x20 gpiop kr102 pwmp shelly_ht v9821
 DEBUG_IP ?= # 192.168.0.1
 DEBUG_PORT ?= 48879
 DEBUG_UART_NO ?= 0
 
 OTA     ?= true
 SSL     ?= false
-SLEEP   ?= false
+SLEEP   ?= true
 VIRTUAL ?= true
-
-PORTS ?= # gpio0 gpio2 gpio4 gpio5 gpio12 gpio13 gpio14 gpio15 adc0 pwm0
-EXTRA_PORT_DRIVERS ?=
-EXTERNAL_PORT_DRIVERS ?=
-EXTERNAL_PORT_DRIVERS_DIR ?=
-EXTERNAL_DRIVERS_DIR ?=
-PORT_ID_MAPPINGS ?= # gpio0:mygpio adc0:myadc
-
-BATTERY ?= false
-BATTERY_DIV_FACTOR ?= 0.166 # 200k / (1000k + 200k)
-BATTERY_VOLT_0   ?= 3000
-BATTERY_VOLT_20  ?= 3650
-BATTERY_VOLT_40  ?= 3710
-BATTERY_VOLT_60  ?= 3760
-BATTERY_VOLT_80  ?= 3880
-BATTERY_VOLT_100 ?= 4250
-
-SETUP_MODE_PORT ?= null
-SETUP_MODE_LEVEL ?= 0
-SETUP_MODE_INT ?= 5
-SETUP_MODE_RESET_INT ?= 20
-SETUP_MODE_LED_PORT ?= null
-
-CONNECTED_LED_PORT ?= null
-CONNECTED_LED_LEVEL ?= 1
+BATTERY ?= true
 
 FLASH_MODE ?= qio
 FLASH_FREQ ?= 40
 
-FW_CONFIG_NAME ?= # configuration-name
-FW_CONFIG_MODELS ?= # model1|model2|model3
-
-FW_BASE_URL  ?= http://provisioning.qtoggle.io
+FW_BASE_URL      ?= http://provisioning.qtoggle.io
 FW_BASE_OTA_PATH ?= /firmware/espqtoggle
-FW_BASE_CFG_PATH ?= /config
+FW_BASE_CFG_PATH ?= /config/espqtoggle
 
 # SSID to connect to when unconfigured
 DEFAULT_SSID ?= qToggleSetup
@@ -54,7 +28,30 @@ DEFAULT_SSID ?= qToggleSetup
 # ---- configurable stuff ends here ---- #
 
 SHELL = /bin/bash  # other shells will probably fail
+
+rwildcard = $(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
+
+# parse version 
 VERSION = $(shell cat src/ver.h | grep FW_VERSION | head -n 1 | tr -s ' ' | cut -d ' ' -f 3 | tr -d '"')
+_VERSION_PARTS = $(subst -, ,$(subst ., ,$(VERSION)))
+VERSION_MAJOR = $(word 1,$(_VERSION_PARTS))
+VERSION_MINOR = $(word 2,$(_VERSION_PARTS))
+VERSION_PATCH = $(word 3,$(_VERSION_PARTS))
+VERSION_TYPE = $(word 4,$(_VERSION_PARTS))
+VERSION_LABEL = $(word 5,$(_VERSION_PARTS))
+ifeq ($(VERSION_TYPE),)
+	VERSION_TYPE = plain
+endif
+ifeq ($(VERSION_LABEL),)
+	VERSION_LABEL = 0
+endif
+
+CFLAGS += -DFW_VERSION_MAJOR=$(VERSION_MAJOR)
+CFLAGS += -DFW_VERSION_MINOR=$(VERSION_MINOR)
+CFLAGS += -DFW_VERSION_PATCH=$(VERSION_PATCH)
+CFLAGS += -DFW_VERSION_LABEL=$(VERSION_LABEL)
+CFLAGS += -DFW_VERSION_TYPE=VERSION_TYPE_$(shell echo $(VERSION_TYPE) | tr a-z A-Z)
+
 
 ifeq ($(FLASH_MODE),qio)
 	FLASH_MODE_INT = 0
@@ -120,11 +117,6 @@ endif
 APP = espqtoggle
 SRC_MAIN_DIR = src
 SRC_ESPGOODIES_DIR = src/espgoodies
-SRC_PORTS_DIR = src/ports
-SRC_DRIVERS_DIR = src/drivers
-SRC_EXTRA_PORT_DRIVERS_DIR = src/extra
-SRC_EXTERNAL_PORT_DRIVERS_DIR = $(EXTERNAL_PORT_DRIVERS_DIR)
-SRC_EXTERNAL_DRIVERS_DIR = $(EXTERNAL_DRIVERS_DIR)
 BUILD_DIR = build
 INIT_DATA_FILES = esp_init_data_default.bin
 
@@ -134,7 +126,7 @@ CFLAGS += -Wpointer-arith -Wall -Wl,-EL -fno-inline-functions -nostdlib -mlongca
           -ffunction-sections -fdata-sections -mforce-l32 -Wmissing-prototypes -fno-builtin-printf \
           -fno-guess-branch-probability -freorder-blocks-and-partition -fno-cse-follow-jumps \
           -D__ets__ -DICACHE_FLASH -DUSE_OPTIMIZE_PRINTF -DFLASH_CONFIG_ADDR=$(FLASH_CONFIG_ADDR) \
-          -Os -O2
+          -Os -O2 -std=c99
 LDFLAGS	= -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static -L$(SDK_BASE)/lib -Wl,--gc-sections -Os -O2
 
 ifneq ($(DEBUG),true)
@@ -155,82 +147,25 @@ ifeq ($(SLEEP), true)
 endif
 
 ifeq ($(VIRTUAL), true)
-    CFLAGS += -DHAS_VIRTUAL
+    CFLAGS += -D_VIRTUAL
 endif
 
 ifeq ($(BATTERY), true)
     CFLAGS += -D_BATTERY
 endif
 
-ifneq ($(BATTERY_DIV_FACTOR),)
-    CFLAGS += -DBATTERY_DIV_FACTOR=$(BATTERY_DIV_FACTOR)
-endif
-
-ifneq ($(BATTERY_VOLT_0)),)
-    CFLAGS += -DBATTERY_VOLT_0=$(BATTERY_VOLT_0)
-    CFLAGS += -DBATTERY_VOLT_20=$(BATTERY_VOLT_20)
-    CFLAGS += -DBATTERY_VOLT_40=$(BATTERY_VOLT_40)
-    CFLAGS += -DBATTERY_VOLT_60=$(BATTERY_VOLT_60)
-    CFLAGS += -DBATTERY_VOLT_80=$(BATTERY_VOLT_80)
-    CFLAGS += -DBATTERY_VOLT_100=$(BATTERY_VOLT_100)
-endif
-
-ifneq ($(SETUP_MODE_PORT), null)
-    CFLAGS += -DSETUP_MODE_PORT=$(SETUP_MODE_PORT)
-    CFLAGS += -DSETUP_MODE_LEVEL=$(SETUP_MODE_LEVEL)
-    CFLAGS += -DSETUP_MODE_INT=$(SETUP_MODE_INT)
-    CFLAGS += -DSETUP_MODE_RESET_INT=$(SETUP_MODE_RESET_INT)
-endif
-
-ifneq ($(SETUP_MODE_LED_PORT), null)
-    CFLAGS += -DSETUP_MODE_LED_PORT=$(SETUP_MODE_LED_PORT)
-endif
-
-ifneq ($(CONNECTED_LED_PORT), null)
-    CFLAGS += -DCONNECTED_LED_PORT=$(CONNECTED_LED_PORT)
-endif
-
-ifneq ($(CONNECTED_LED_LEVEL), null)
-    CFLAGS += -DCONNECTED_LED_LEVEL=$(CONNECTED_LED_LEVEL)
-endif
-
 INC := $(addprefix -I,$(INC))
 LIB := $(addprefix -l,$(LIB))
 
-SRC_MAIN_FILES =                  $(wildcard $(SRC_MAIN_DIR)/*.c)
-SRC_ESPGOODIES_FILES =            $(wildcard $(SRC_ESPGOODIES_DIR)/*.c)
-SRC_PORT_FILES =                  $(wildcard $(SRC_PORTS_DIR)/*.c)
-SRC_DRIVERS_FILES =               $(wildcard $(SRC_DRIVERS_DIR)/*.c)
-SRC_EXTERNAL_DRIVERS_FILES =      $(wildcard $(SRC_EXTERNAL_DRIVERS_DIR)/*.c)
-SRC_EXTRA_PORT_DRIVERS_FILES =    $(foreach p,$(EXTRA_PORT_DRIVERS),$(SRC_EXTRA_PORT_DRIVERS_DIR)/$(p).c)
-SRC_EXTERNAL_PORT_DRIVERS_FILES = $(foreach p,$(EXTERNAL_PORT_DRIVERS),$(SRC_EXTERNAL_PORT_DRIVERS_DIR)/$(p).c)
+SRC_MAIN_FILES =        $(call rwildcard,$(SRC_MAIN_DIR),*.c)
+SRC_ESPGOODIES_FILES =  $(call rwildcard,$(SRC_ESPGOODIES_DIR),*.c)
 
 OBJ_FILES = $(SRC_MAIN_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
-            $(SRC_ESPGOODIES_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
-            $(SRC_PORT_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
-            $(SRC_DRIVERS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
-            $(SRC_EXTERNAL_DRIVERS_FILES:$(SRC_EXTERNAL_DRIVERS_DIR)/%.c=$(BUILD_DIR)/external/drivers/%.o) \
-            $(SRC_EXTRA_PORT_DRIVERS_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o) \
-            $(SRC_EXTERNAL_PORT_DRIVERS_FILES:$(SRC_EXTERNAL_PORT_DRIVERS_DIR)/%.c=$(BUILD_DIR)/external/ports/%.o)
-            
+            $(SRC_ESPGOODIES_FILES:$(SRC_MAIN_DIR)/%.c=$(BUILD_DIR)/%.o)
+
 INIT_DATA_FILES := $(foreach f,$(INIT_DATA_FILES),$(SDK_BASE)/bin/$(f))
 
 VPATH = $(SRC_MAIN_DIR)
-
-ifneq ($(EXTRA_PORT_DRIVERS),)
-    INCLUDE_EXTRA_PORT_DRIVERS = $(foreach p,$(EXTRA_PORT_DRIVERS),-include $(SRC_EXTRA_PORT_DRIVERS_DIR)/$(p).h)
-    INIT_EXTRA_PORT_DRIVERS = $(foreach p,$(EXTRA_PORT_DRIVERS),$(p)_init_ports();)
-    CFLAGS += -D_INIT_EXTRA_PORT_DRIVERS="$(INIT_EXTRA_PORT_DRIVERS)"
-    CFLAGS += $(addprefix -DHAS_,$(shell echo $(EXTRA_PORT_DRIVERS) | tr a-z A-Z))
-endif
-
-ifneq ($(EXTERNAL_PORT_DRIVERS),)
-    INCLUDE_EXTERNAL_PORT_DRIVERS = $(foreach p,$(EXTERNAL_PORT_DRIVERS),\
-    								  -include $(SRC_EXTERNAL_PORT_DRIVERS_DIR)/$(p).h)
-    INIT_EXTERNAL_PORT_DRIVERS = $(foreach p,$(EXTERNAL_PORT_DRIVERS),$(p)_init_ports();)
-    CFLAGS += -D_INIT_EXTERNAL_PORT_DRIVERS="$(INIT_EXTERNAL_PORT_DRIVERS)"
-    CFLAGS += $(addprefix -DHAS_,$(shell echo $(EXTERNAL_PORT_DRIVERS) | tr a-z A-Z))
-endif
 
 ifeq ($(DEBUG), true)
     CFLAGS += -D_DEBUG
@@ -241,25 +176,8 @@ ifneq ($(DEBUG_IP),)
 endif
 endif
 
-# define HAS_<PORT>
-CFLAGS += $(addprefix -DHAS_,$(shell echo $(PORTS) | tr a-z A-Z))
-
 # define _DEBUG_<FLAG>
 CFLAGS += $(addprefix -D_DEBUG_,$(shell echo $(DEBUG_FLAGS) | tr a-z A-Z))
-
-# define <PORT>_ID="<id>" from mappings
-CFLAGS += $(foreach m,$(PORT_ID_MAPPINGS),-D$(shell \
-    m=$$(echo $(m) | tr ':' ' '); parts=($${m}); \
-    name=$$(echo $${parts[0]} | tr a-z A-Z); id=$${parts[1]}; \
-    echo $${name}_ID=\\\"$${id}\\\"; \
-))
-
-# define <PORT>_ID="<id>" defaults
-CFLAGS += $(foreach p,$(PORTS),$(shell \
-    if ! [[ "$(PORT_ID_MAPPINGS)" =~ $(p): ]]; then \
-        echo -D$$(echo $(p) | tr a-z A-Z)_ID=\\\"$(p)\\\"; \
-    fi \
-))
 
 # define init data hex content
 INIT_DATA_HEX_DEF = $(foreach f,$(INIT_DATA_FILES),$(shell \
@@ -267,22 +185,12 @@ INIT_DATA_HEX_DEF = $(foreach f,$(INIT_DATA_FILES),$(shell \
     echo -D$${def_name}="\{$$(hexdump -ve '"0x%08X,"' $(f))\}"; \
 ))
 
-_COMMA := ,
-ifneq ($(FW_CONFIG_MODELS),)
-	FW_CONFIG_MODELS_PREPARED := $(subst |,\"$(_COMMA)\",$(FW_CONFIG_MODELS))
-	FW_CONFIG_MODELS_PREPARED := \"$(FW_CONFIG_MODELS_PREPARED)\"
-else
-	FW_CONFIG_MODELS_PREPARED := \"default\"
-endif
-
-CFLAGS += -DFW_CONFIG_NAME=\"$(FW_CONFIG_NAME)\"
-CFLAGS += -DFW_CONFIG_MODELS=$(FW_CONFIG_MODELS_PREPARED)
 CFLAGS += -DFW_BASE_URL=\"$(FW_BASE_URL)\"
 CFLAGS += -DFW_BASE_OTA_PATH=\"$(FW_BASE_OTA_PATH)\"
 CFLAGS += -DFW_BASE_CFG_PATH=\"$(FW_BASE_CFG_PATH)\"
 CFLAGS += -DDEFAULT_SSID=\"$(DEFAULT_SSID)\"
 
-LDSCRIPT = $(SDK_BASE)/ld/eagle.app.v6.new.$(FLASH_SIZE).app$(1).ld
+ldscript = $(SDK_BASE)/ld/eagle.app.v6.new.$(FLASH_SIZE).app$(1).ld
 
 V ?= $(VERBOSE)
 ifeq ("$(V)","1")
@@ -315,24 +223,8 @@ buildinfo:
 	$(vecho) " *" SLEEP = $(SLEEP)
 	$(vecho) " *" VIRTUAL = $(VIRTUAL)
 	$(vecho) " *" BATTERY = $(BATTERY)
-	$(vecho) " *" BATTERY_DIV_FACTOR = $(BATTERY_DIV_FACTOR)
-	$(vecho) " *" BATTERY_VOLT = $(BATTERY_VOLT_0) $(BATTERY_VOLT_20) $(BATTERY_VOLT_40) \
-								 $(BATTERY_VOLT_60) $(BATTERY_VOLT_80) $(BATTERY_VOLT_100)
-	$(vecho) " *" PORTS = $(PORTS)
-	$(vecho) " *" EXTRA_PORT_DRIVERS = $(EXTRA_PORT_DRIVERS)
-	$(vecho) " *" EXTERNAL_PORT_DRIVERS = $(EXTERNAL_PORT_DRIVERS)
-	$(vecho) " *" EXTERNAL_PORT_DRIVERS_DIR = $(EXTERNAL_PORT_DRIVERS_DIR)
-	$(vecho) " *" EXTERNAL_DRIVERS_DIR = $(EXTERNAL_DRIVERS_DIR)
-	$(vecho) " *" PORT_ID_MAPPINGS = $(PORT_ID_MAPPINGS)
-	$(vecho) " *" SETUP_MODE_PORT = $(SETUP_MODE_PORT)
-	$(vecho) " *" SETUP_MODE_LEVEL = $(SETUP_MODE_LEVEL)
-	$(vecho) " *" SETUP_MODE_LED_PORT = $(SETUP_MODE_LED_PORT)
-	$(vecho) " *" CONNECTED_LED_PORT = $(CONNECTED_LED_PORT)
-	$(vecho) " *" CONNECTED_LED_LEVEL = $(CONNECTED_LED_LEVEL)
 	$(vecho) " *" FLASH_MODE = $(FLASH_MODE)
 	$(vecho) " *" FLASH_FREQ = $(FLASH_FREQ)
-	$(vecho) " *" CONFIG_NAME = $(FW_CONFIG_NAME)
-	$(vecho) " *" CONFIG_MODELS = "$(FW_CONFIG_MODELS)"
 	$(vecho) " *" FW_BASE_URL = "$(FW_BASE_URL)"
 	$(vecho) " *" FW_BASE_OTA_PATH = "$(FW_BASE_OTA_PATH)"
 	$(vecho) " *" FW_BASE_CFG_PATH = "$(FW_BASE_CFG_PATH)"
@@ -345,21 +237,6 @@ $(BUILD_DIR)/%.o: %.c
 	@$(MD) -p $(@D)
 	$(Q) $(CC) $(INC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/ports.o: ports.c
-	$(vecho) "CC $<"
-	@$(MD) -p $(@D)
-	$(Q) $(CC) $(INC) $(CFLAGS) $(INCLUDE_EXTRA_PORT_DRIVERS) $(INCLUDE_EXTERNAL_PORT_DRIVERS) -c $< -o $@
-
-$(BUILD_DIR)/external/ports/%.o: $(SRC_EXTERNAL_PORT_DRIVERS_DIR)/%.c
-	$(vecho) "CC $<"
-	@$(MD) -p $(@D)
-	$(Q) $(CC) $(INC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/external/drivers/%.o: $(SRC_EXTERNAL_DRIVERS_DIR)/%.c
-	$(vecho) "CC $<"
-	@$(MD) -p $(@D)
-	$(Q) $(CC) $(INC) $(CFLAGS) $(INCLUDE_EXTRA_PORT_DRIVERS) $(INCLUDE_EXTERNAL_PORT_DRIVERS) -c $< -o $@
-
 $(BUILD_DIR)/espgoodies/initdata.o: espgoodies/initdata.c
 	$(vecho) "CC $<"
 	$(Q) $(CC) $(INC) $(CFLAGS) $(INIT_DATA_HEX_DEF) -c $< -o $@
@@ -370,7 +247,7 @@ $(BUILD_DIR)/$(APP).a: $(OBJ_FILES)
 
 $(BUILD_DIR)/$(APP)%.out:$(BUILD_DIR)/$(APP).a
 	$(vecho) "LD $@"
-	$(Q) $(LD) $(LDFLAGS) -T$(call LDSCRIPT,$*) -Wl,--start-group $(LIB) $^ -Wl,--end-group -o $@
+	$(Q) $(LD) $(LDFLAGS) -T$(call ldscript,$*) -Wl,--start-group $(LIB) $^ -Wl,--end-group -o $@
 
 $(BUILD_DIR)/%.html.gz: html/%.html
 	$(vecho) "GZ $@"
@@ -378,7 +255,6 @@ $(BUILD_DIR)/%.html.gz: html/%.html
 	$(Q) $(GZ) $(BUILD_DIR)/$$(basename $^) > $@
 
 $(BUILD_DIR)/user%.bin: $(BUILD_DIR)/$(APP)%.out $(BUILD_DIR)/index.html.gz
-	@echo $(FW_CONFIG_NAME) > $(BUILD_DIR)/.config_name
 	$(vecho) "FW $@"
 	$(Q) $(OC) --only-section .text -O binary $< $(BUILD_DIR)/eagle.app.v6.text.bin
 	$(Q) $(OC) --only-section .data -O binary $< $(BUILD_DIR)/eagle.app.v6.data.bin
