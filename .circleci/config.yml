@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  run-automated-tests:
+  run-automated-t   ests:
     docker:
       - image: qtoggle/espqtoggle-builder
     working_directory: /opt/espqtoggle

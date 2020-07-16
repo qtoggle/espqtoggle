@@ -30,16 +30,16 @@ fi
 sed -ri "s/0.0.0-unknown.0/${VERSION}/" ${SRC_DIR}/src/ver.h
 
 make clean
-
-for flash_mode in ${FLASH_MODES}; do
-    for flash_freq in ${FLASH_FREQS}; do
-        make FLASH_MODE=${flash_mode} FLASH_FREQ=${flash_freq}
-        mv build/firmware.bin build/firmware-${flash_mode}-${flash_freq}.bin
-    done
-done
 make -j4
 
 if [[ -n "${AWS_BUCKET}" && -n "${AWS_FOLDER}" && "${AWS_RELEASE}" == "true" ]]; then
+    for flash_mode in ${FLASH_MODES}; do
+        for flash_freq in ${FLASH_FREQS}; do
+            make FLASH_MODE=${flash_mode} FLASH_FREQ=${flash_freq}
+            mv build/firmware.bin build/firmware-${flash_mode}-${flash_freq}.bin
+        done
+    done
+
     echo "Uploading release to AWS"
 
     mkdir -p ${RELEASE_DIR}
