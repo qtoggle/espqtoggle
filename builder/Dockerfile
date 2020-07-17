@@ -7,6 +7,7 @@ MAINTAINER Calin Crisan ccrisan@gmail.com
 
 ENV PATH="/opt/xtensa-lx106-elf/bin:${PATH}"
 ENV SDK_BASE="/opt/esp-nonos-sdk"
+ENV SRC_DIR="${SRC_DIR:-/src}"
 
 # apt stuff
 RUN DEBIAN_FRONTEND=noninteractive apt-get update -qq
@@ -41,4 +42,4 @@ RUN git clone https://github.com/espressif/ESP8266_NONOS_SDK.git /opt/esp-nonos-
 ADD ./builder.sh /opt
 ADD ./makever.sh /opt
 
-CMD /opt/builder.sh
+CMD cd ${SRC_DIR} && make clean && make -j4 all
