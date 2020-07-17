@@ -1,0 +1,49 @@
+{
+    "name": "expressions-cleanup",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "DELETE",
+                "path": "/ports/bool_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "DELETE",
+                "path": "/ports/num_port",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "DELETE",
+                "path": "/ports/num_port2",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "DELETE",
+                "path": "/ports/num_port3",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 204
+            }
+        }
+    ]
+}

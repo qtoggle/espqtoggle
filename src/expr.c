@@ -36,6 +36,9 @@
 #define MAX_ARGS     16
 #define MAX_HIST_LEN 32
 
+#define LUT_INTERPOLATION_CLOSEST 0
+#define LUT_INTERPOLATION_LINEAR  1
+
 
 typedef struct {
 
@@ -106,6 +109,10 @@ static double    ICACHE_FLASH_ATTR  _acc_callback(expr_t *expr, int argc, double
 static double    ICACHE_FLASH_ATTR  _accinc_callback(expr_t *expr, int argc, double *args);
 static double    ICACHE_FLASH_ATTR  _hyst_callback(expr_t *expr, int argc, double *args);
 static double    ICACHE_FLASH_ATTR  _sequence_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _lut_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _lutli_callback(expr_t *expr, int argc, double *args);
+
+static double    ICACHE_FLASH_ATTR  _lut_common_callback(expr_t *expr, int argc, double *args, uint8 interpolation);
 
 expr_t           ICACHE_FLASH_ATTR *parse_rec(char *port_id, char *input, int len, int abs_pos);
 static expr_t    ICACHE_FLASH_ATTR *parse_port_id_expr(char *port_id, char *input, int abs_pos);
@@ -702,6 +709,59 @@ double _sequence_callback(expr_t *expr, int argc, double *args) {
     return result;
 }
 
+double _lut_callback(expr_t *expr, int argc, double *args) {
+    return _lut_common_callback(expr, argc, args, LUT_INTERPOLATION_CLOSEST);
+}
+
+double _lutli_callback(expr_t *expr, int argc, double *args) {
+    return _lut_common_callback(expr, argc, args, LUT_INTERPOLATION_LINEAR);
+}
+
+double _lut_common_callback(expr_t *expr, int argc, double *args, uint8 interpolation) {
+    uint32 length = (argc - 1) / 2;
+    double x = args[0];
+
+    /* Create points list as successive pairs of (x, y) */
+    double *points = malloc(sizeof(double) * 2 * length);
+    memcpy(points, args + 1, sizeof(double) * 2 * length);
+
+    /* Sort pairs of doubles based only on the first double (x) */
+    qsort(points, length, sizeof(double) * 2, compare_double);
+
+    if (x < points[0]) {
+        return points[1];
+    }
+
+    for (uint32 i = 0; i < length - 1; i++) {
+        double x1 = points[2 * i];
+        double y1 = points[2 * i + 1];
+        double x2 = points[2 * i + 2];
+        double y2 = points[2 * i + 3];
+
+        if (x > x2) {
+            continue;
+        }
+
+        if (interpolation == LUT_INTERPOLATION_CLOSEST) {
+            if (x - x1 < x2 - x) {
+                return y1;
+            }
+            else {
+                return y2;
+            }
+        }
+        else { /* Assuming LUT_INTERPOLATION_LINEAR */
+            if (x1 == x2) {
+                return y1;
+            }
+
+            return y1 + (y2 - y1) * (x - x1) / (x2 - x1);
+        }
+    }
+
+    return points[2 * length - 1];
+}
+
 
 func_t _add =      {.name = "ADD",      .argc = -2, .callback = _add_callback};
 func_t _sub =      {.name = "SUB",      .argc = 2,  .callback = _sub_callback};
@@ -756,6 +816,8 @@ func_t _acc =      {.name = "ACC",      .argc = 2,  .callback = _acc_callback};
 func_t _accinc =   {.name = "ACCINC",   .argc = 2,  .callback = _accinc_callback};
 func_t _hyst =     {.name = "HYST",     .argc = 3,  .callback = _hyst_callback};
 func_t _sequence = {.name = "SEQUENCE", .argc = -2, .callback = _sequence_callback};
+func_t _lut =      {.name = "LUT",      .argc = -5, .callback = _lut_callback};
+func_t _lutli =    {.name = "LUTLI",    .argc = -5, .callback = _lutli_callback};
 
 func_t *funcs[] = {
     &_add,
@@ -811,6 +873,8 @@ func_t *funcs[] = {
     &_accinc,
     &_hyst,
     &_sequence,
+    &_lut,
+    &_lutli,
 
     NULL
 };
