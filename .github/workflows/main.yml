@@ -1,8 +1,8 @@
 name: Main
 
 on:
-  push
-  workflow_dispatch
+  - push
+  - workflow_dispatch
 
 jobs:
 
@@ -36,12 +36,14 @@ jobs:
           fetch-depth: 0
       - name: Build
         run: |
-          cd ${GITHUB_WORKSPACE}
           export VERSION="$(/opt/makever.sh)"
+          sed -ri "s/0.0.0-unknown.0/${VERSION}/" src/ver.h
           make clean
           make -j4
       - name: TestMyESP helper
         run: |
+          export VERSION="$(/opt/makever.sh)"
+          sed -ri "s/0.0.0-unknown.0/${GIT_TAG_NAME}/" src/ver.h
           ./test/testmyesp-helper.sh \
             --server-url ${TESTMYESP_SERVER} \
             --credentials ${{ secrets.TESTMYESP_USERNAME }}:${{ secrets.TESTMYESP_PASSWORD }} \
@@ -51,25 +53,29 @@ jobs:
             --flash-image-url esp_init_data_default.bin 0xFC000 https://github.com/espressif/ESP8266_NONOS_SDK/raw/v2.2.1/bin/esp_init_data_default_v08.bin \
             --flash-image-url sysparam.bin 0xFE000 https://github.com/espressif/ESP8266_NONOS_SDK/raw/v2.2.1/bin/blank.bin \
             --flash-image-url boot.bin 0x00000 https://github.com/espressif/ESP8266_NONOS_SDK/raw/v2.2.1/bin/boot_v1.7.bin \
-            --flash-image-file user1.bin 0x01000 ${SRC_DIR}/build/user1.bin \
-            --flash-image-file user2.bin 0x81000 ${SRC_DIR}/build/user2.bin \
+            --flash-image-file user1.bin 0x01000 build/user1.bin \
+            --flash-image-file user2.bin 0x81000 build/user2.bin \
             --flash-image-fill config.bin 0x7C000 0 16384 \
-            --test-cases ${SRC_DIR}/test/test-cases/01-wifi/*.json \
-            --test-cases ${SRC_DIR}/test/test-cases/02-api/*/*.json \
-            --test-cases ${SRC_DIR}/test/test-cases/03-sleep-mode/*.json \
-            --test-cases ${SRC_DIR}/test/test-cases/04-setup-mode/*.json \
-            --test-cases ${SRC_DIR}/test/test-cases/05-provisioning/*.json \
-            --test-cases ${SRC_DIR}/test/test-cases/06-gpiop/*.json \
-            --test-cases ${SRC_DIR}/test/test-cases/07-adcp/*.json
+            --test-cases test/test-cases/01-wifi/*.json \
+            --test-cases test/test-cases/02-api/*/*.json \
+            --test-cases test/test-cases/03-sleep-mode/*.json \
+            --test-cases test/test-cases/04-setup-mode/*.json \
+            --test-cases test/test-cases/05-provisioning/*.json \
+            --test-cases test/test-cases/06-gpiop/*.json \
+            --test-cases test/test-cases/07-adcp/*.json
 
   release-s3:
     name: Release To S3
     if: startsWith(github.ref, 'refs/tags/version-')
-    needs:
-      - blackbox-tests
     runs-on: ubuntu-latest
     container:
       image: qtoggle/espqtoggle-builder
+    defaults:
+      run:
+        shell: bash
+    env:
+      S3_BUCKET: qtoggle
+      S3_FOLDER: firmware/espqtoggle
     steps:
       - name: Source code checkout
         uses: actions/checkout@master
@@ -79,39 +85,65 @@ jobs:
         with:
           tagRegex: "version-(.*)"
       - name: Build
-      - run: |
-          cd ${GITHUB_WORKSPACE}
-          export VERSION="$(/opt/makever.sh)"
-          sed -ri "s/0.0.0-unknown.0/${VERSION}/" src/ver.h
+        run: |
+          sed -ri "s/0.0.0-unknown.0/${GIT_TAG_NAME}/" src/ver.h
           make clean
           make -j4
-          for flash_mode in qio qout dio dout; do
-              for flash_freq in 20 26 40 80; do
+          for flash_freq in 20 26 40 80; do
+              for flash_mode in qio qout dio dout; do
                   rm -f build/firmware.bin
                   make FLASH_MODE=${flash_mode} FLASH_FREQ=${flash_freq}
                   mv build/firmware.bin build/firmware-${flash_mode}-${flash_freq}.bin
               done
           done
       - name: Setup s3cmd
-      - run: |
+        run: |
           echo "[default]" > ~/.s3cfg
-          echo "access_key = ${AWS_ACCESS_KEY}" > ~/.s3cfg
-          echo "secret_key = ${AWS_SECRET_KEY}" > ~/.s3cfg
-      - name: Prepare version file
-      - run: |
-          if [[ "${VERSION}" =~ beta.[0-9]+$ ]]; then  # beta version
+          echo "access_key = ${{ secrets.AWS_ACCESS_KEY }}" >> ~/.s3cfg
+          echo "secret_key = ${{ secrets.AWS_SECRET_KEY }}" >> ~/.s3cfg
+      - name: Upload to S3
+        run: |
+          if [[ "${GIT_TAG_NAME}" =~ beta.[0-9]+$ ]]; then  # beta version
               latest_file="latest_beta"
-          elif [[ "${VERSION}" =~ alpha.[0-9]+$ ]]; then  # alpha version
+          elif [[ "${GIT_TAG_NAME}" =~ alpha.[0-9]+$ ]]; then  # alpha version
               latest_file="latest_alpha"
           else  # stable version
               latest_file="latest_stable"
           fi
-          echo "Version: ${VERSION}" > build/${latest_file}
+          echo "Version: ${GIT_TAG_NAME}" > build/${latest_file}
           echo -n "Date: " >> build/${latest_file}
           date "+%Y-%m-%d" >> build/${latest_file}
-      - name: Upload to S3
-      - run: |
-          s3cmd put -P --guess-mime-type build/user{1,2}.bin  s3://${S3_BUCKET}/${S3_FOLDER}/${VERSION}/
-          s3cmd put -P --guess-mime-type build/firmware-*.bin s3://${S3_BUCKET}/${S3_FOLDER}/${VERSION}/
+
+          s3cmd put -P --guess-mime-type build/user*.bin  s3://${S3_BUCKET}/${S3_FOLDER}/${GIT_TAG_NAME}/
+          s3cmd put -P --guess-mime-type build/firmware-*.bin s3://${S3_BUCKET}/${S3_FOLDER}/${GIT_TAG_NAME}/
           s3cmd put -P --guess-mime-type build/${latest_file} s3://${S3_BUCKET}/${S3_FOLDER}/${latest_file}
           s3cmd put -P --guess-mime-type build/${latest_file} s3://${S3_BUCKET}/${S3_FOLDER}/latest
+
+  release-gh:
+    name: Release To Github
+    if: startsWith(github.ref, 'refs/tags/version-')
+    needs:
+      - release-s3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract version from tag
+        id: tagName
+        uses: olegtarasov/get-tag@v2
+        with:
+          tagRegex: "version-(.*)"
+      - name: Create Github release
+        run: |
+          url="https://api.github.com/repos/qtoggle/espqtoggle/releases?access_token=${{ secrets.GITHUB_TOKEN }}"
+          prerelease=$(if echo "${GIT_TAG_NAME}" | grep -E "alpha|beta" &>/dev/null; then echo true; else echo false; fi)
+          markdown="|  | QIO | QOUT | DIO | DOUT |\n"
+          markdown+="|:-:|:-:|:-:|:-:|:-:|\n"
+          for flash_freq in 20 26 40 80; do
+              markdown+="| ${flash_freq}MHz | "
+              for flash_mode in qio qout dio dout; do
+                  firmware_url="https://provisioning.qtoggle.io/firmware/espqtoggle/${GIT_TAG_NAME}/firmware-${flash_mode}-${flash_freq}.bin"
+                  markdown+=" [firmware.bin](${firmware_url}) |"
+              done
+              markdown+="\n"
+          done
+          body="{\"tag_name\": \"version-${GIT_TAG_NAME}\", \"name\": \"${GIT_TAG_NAME}\", \"body\": \"${markdown}\", \"prerelease\": ${prerelease}, \"draft\": true}"
+          curl -Ss "${url}" -X POST -d "${body}" > /dev/null
