@@ -89,6 +89,7 @@ jobs:
       - name: Build
         run: |
           sed -ri "s/0.0.0-unknown.0/${GIT_TAG_NAME}/" src/ver.h
+          export DEBUG=false
           make clean
           make -j4
           for flash_freq in 20 26 40 80; do
