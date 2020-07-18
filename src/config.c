@@ -136,14 +136,14 @@ void config_start_auto_provisioning(void) {
         return;
     }
 
-    if (!device_config_name[0] || !strncmp(device_config_name, "custom/", 7)) {
+    /* No automatic configuration if:
+     *  * no config_name specified
+     *  * config_name starts with "custom/"
+     *  * provisioning_config version is 0
+     */
+
+    if (!device_config_name[0] || !strncmp(device_config_name, "custom/", 7) || device_provisioning_version == 0) {
         DEBUG_CONFIG("provisioning: no configuration");
-
-        /* Clear the provisioning file version as well, for consistency */
-        device_provisioning_version = 0;
-
-        config_mark_for_saving();
-
         return;
     }
 

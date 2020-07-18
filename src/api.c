@@ -3269,6 +3269,11 @@ json_t *api_put_provisioning(json_t *query_json, json_t *request_json, int *code
         return API_ERROR(response_json, 400, "invalid-request");
     }
 
+    /* Clear existing configuration name & version */
+    DEBUG_DEVICE("clearing config name");
+    device_config_name[0] = '\0';
+    device_provisioning_version = 0;
+
     *code = 204;
 
     return response_json;
