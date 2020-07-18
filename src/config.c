@@ -43,7 +43,7 @@
 static bool provisioning = FALSE;
 
 
-void ICACHE_FLASH_ATTR on_config_provisioning_response(
+void ICACHE_FLASH_ATTR on_provisioning_config_response(
                            char *body,
                            int body_len,
                            int status,
@@ -130,7 +130,7 @@ void config_save(void) {
     DEBUG_CONFIG("total strings size is %d", strings_offs - 1);
 }
 
-void config_start_provisioning(void) {
+void config_start_auto_provisioning(void) {
     if (provisioning) {
         DEBUG_CONFIG("provisioning: busy");
         return;
@@ -162,9 +162,88 @@ void config_start_provisioning(void) {
         /* header_names = */ NULL,
         /* header_values = */ NULL,
         /* header_count = */ 0,
-        on_config_provisioning_response,
+        on_provisioning_config_response,
         HTTP_DEF_TIMEOUT
     );
+}
+
+bool config_apply_json_provisioning(json_t *config, bool force) {
+    if (provisioning) {
+        DEBUG_CONFIG("provisioning: busy");
+        return FALSE;
+    }
+
+    if (json_get_type(config) != JSON_TYPE_OBJ) {
+        DEBUG_CONFIG("provisioning: invalid config");
+        return FALSE;
+    }
+
+    /* Verify minimum FW version requirement */
+    json_t *min_fw_version_json = json_obj_lookup_key(config, "min_fw_version");
+    if (min_fw_version_json) {
+        version_t min_fw_version;
+        version_t sys_fw_version;
+        char *min_fw_version_str = json_str_get(min_fw_version_json);
+        version_parse(min_fw_version_str, &min_fw_version);
+        system_get_fw_version(&sys_fw_version);
+
+        if (!force && version_cmp(&min_fw_version, &sys_fw_version) > 0) {
+            DEBUG_CONFIG("provisioning: ignoring config due to min FW version %s", min_fw_version_str);
+            return FALSE;
+        }
+    }
+
+    json_t *provisioning_version_json = json_obj_lookup_key(config, "version");
+    uint16 provisioning_version = 0;
+    if (provisioning_version_json) {
+        provisioning_version = json_int_get(provisioning_version_json);
+    }
+
+    if (!force && device_provisioning_version == provisioning_version) {
+        DEBUG_CONFIG("provisioning: ignoring config due to same provisioning version %d", provisioning_version);
+        return FALSE;
+    }
+
+    /* Setting this to TRUE here will prevent triggering of events during following API calls */
+    provisioning = TRUE;
+
+    /* Update provisioning version right away (thus marking device as provisioned) before actual provisioning to
+     * prevent endless reboot loops in case of device crash during provisioning */
+
+    DEBUG_CONFIG("provisioning: updating version to %d", provisioning_version);
+    device_provisioning_version = provisioning_version;
+    config_save();
+
+    /* Temporarily set API access level to admin */
+    api_conn_save();
+    api_conn_set((void *) 1, API_ACCESS_LEVEL_ADMIN);
+
+    json_t *device_config = json_obj_lookup_key(config, "device");
+    if (device_config) {
+        apply_device_provisioning_config(device_config);
+    }
+
+    json_t *peripherals_config = json_obj_lookup_key(config, "peripherals");
+    if (peripherals_config) {
+        apply_peripherals_provisioning_config(peripherals_config);
+    }
+
+    json_t *system_config = json_obj_lookup_key(config, "system");
+    if (system_config) {
+        apply_system_provisioning_config(system_config);
+    }
+
+    json_t *ports_config = json_obj_lookup_key(config, "ports");
+    if (ports_config) {
+        apply_ports_provisioning_config(ports_config);
+    }
+
+    api_conn_restore();
+
+    provisioning = FALSE;
+    event_push_full_update();
+
+    return TRUE;
 }
 
 bool config_is_provisioning(void) {
@@ -172,7 +251,7 @@ bool config_is_provisioning(void) {
 }
 
 
-void on_config_provisioning_response(
+void on_provisioning_config_response(
     char *body,
     int body_len,
     int status,
@@ -181,92 +260,21 @@ void on_config_provisioning_response(
     int header_count,
     uint8 addr[]
 ) {
+    provisioning = FALSE;
+
     if (status == 200) {
         json_t *config = json_parse(body);
         if (!config) {
-            DEBUG_CONFIG("provisioning: invalid json");
-            provisioning = FALSE;
+            DEBUG_CONFIG("provisioning: invalid JSON");
             return;
         }
 
-        if (json_get_type(config) == JSON_TYPE_OBJ) {
-            DEBUG_CONFIG("provisioning: got config");
-
-            /* Verify minimum FW version requirement */
-            json_t *min_fw_version_json = json_obj_lookup_key(config, "min_fw_version");
-            if (min_fw_version_json) {
-                version_t min_fw_version;
-                version_t sys_fw_version;
-                char *min_fw_version_str = json_str_get(min_fw_version_json);
-                version_parse(min_fw_version_str, &min_fw_version);
-                system_get_fw_version(&sys_fw_version);
-
-                if (version_cmp(&min_fw_version, &sys_fw_version) > 0) {
-                    DEBUG_CONFIG("provisioning: ignoring config due to min FW version %s", min_fw_version_str);
-                    provisioning = FALSE;
-                    json_free(config);
-                    return;
-                }
-            }
-
-            json_t *provisioning_version_json = json_obj_lookup_key(config, "version");
-            uint16 provisioning_version = 0;
-            if (provisioning_version_json) {
-                provisioning_version = json_int_get(provisioning_version_json);
-            }
-
-            if (device_provisioning_version == provisioning_version) {
-                DEBUG_CONFIG("provisioning: ignoring config due to same provisioning version %d", provisioning_version);
-                provisioning = FALSE;
-                json_free(config);
-                return;
-            }
-
-            /* Update provisioning version right away (thus marking device as provisioned) before actual provisioning to
-             * prevent endless reboot loops in case of device crash during provisioning */
-
-            DEBUG_CONFIG("provisioning: updating version to %d", provisioning_version);
-            device_provisioning_version = provisioning_version;
-            config_save();
-
-            /* Temporarily set API access level to admin */
-            api_conn_save();
-            api_conn_set((void *) 1, API_ACCESS_LEVEL_ADMIN);
-
-            json_t *device_config = json_obj_lookup_key(config, "device");
-            if (device_config) {
-                apply_device_provisioning_config(device_config);
-            }
-
-            json_t *peripherals_config = json_obj_lookup_key(config, "peripherals");
-            if (peripherals_config) {
-                apply_peripherals_provisioning_config(peripherals_config);
-            }
-
-            json_t *system_config = json_obj_lookup_key(config, "system");
-            if (system_config) {
-                apply_system_provisioning_config(system_config);
-            }
-
-            json_t *ports_config = json_obj_lookup_key(config, "ports");
-            if (ports_config) {
-                apply_ports_provisioning_config(ports_config);
-            }
-
-            api_conn_restore();
-            json_free(config);
-
-        }
-        else {
-            DEBUG_CONFIG("provisioning: invalid config");
-        }
+        config_apply_json_provisioning(config, /* force = */ FALSE);
+        json_free(config);
     }
     else {
         DEBUG_CONFIG("provisioning: got status %d", status);
     }
-
-    provisioning = FALSE;
-    event_push_full_update();
 }
 
 void apply_device_provisioning_config(json_t *device_config) {

@@ -110,6 +110,8 @@ json_t ICACHE_FLASH_ATTR *api_get_peripherals(json_t *query_json, int *code);
 json_t ICACHE_FLASH_ATTR *api_put_peripherals(json_t *query_json, json_t *request_json, int *code);
 json_t ICACHE_FLASH_ATTR *api_get_system(json_t *query_json, int *code);
 json_t ICACHE_FLASH_ATTR *api_put_system(json_t *query_json, json_t *request_json, int *code);
+json_t ICACHE_FLASH_ATTR *api_get_provisioning(json_t *query_json, int *code);
+json_t ICACHE_FLASH_ATTR *api_put_provisioning(json_t *query_json, json_t *request_json, int *code);
 
 json_t ICACHE_FLASH_ATTR *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx);
 json_t ICACHE_FLASH_ATTR *device_to_json(void);
