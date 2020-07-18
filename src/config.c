@@ -136,7 +136,7 @@ void config_start_provisioning(void) {
         return;
     }
 
-    if (!device_config_name[0]) {
+    if (!device_config_name[0] || !strncmp(device_config_name, "custom/", 7)) {
         DEBUG_CONFIG("provisioning: no configuration");
 
         /* Clear the provisioning file version as well, for consistency */
