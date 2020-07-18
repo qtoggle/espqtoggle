@@ -260,7 +260,7 @@ void on_wifi_connect(bool connected) {
 
     /* Attempt to fetch the latest provisioning configuration at each boot, right after Wi-Fi connection */
     if (device_provisioning_version > 0) {
-        config_start_provisioning();
+        config_start_auto_provisioning();
     }
 
 #ifdef _SLEEP

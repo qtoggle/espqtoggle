@@ -215,7 +215,7 @@ void on_http_request(
             request_json = json_parse(body);
             if (!request_json) {
                 /* Invalid JSON */
-                DEBUG_ESPQTCLIENT_CONN(conn, "invalid json");
+                DEBUG_ESPQTCLIENT_CONN(conn, "invalid JSON");
                 respond_error(conn, 400, "malformed-body");
                 goto done;
             }

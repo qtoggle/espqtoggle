@@ -377,6 +377,21 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
             RESPOND_NO_SUCH_FUNCTION(response_json);
         }
     }
+    else if (!strcmp(part1, "provisioning")) {
+        if (part2) {
+            RESPOND_NO_SUCH_FUNCTION(response_json);
+        }
+
+        if (method == HTTP_METHOD_GET) {
+            response_json = api_get_provisioning(query_json, code);
+        }
+        else if (method == HTTP_METHOD_PUT) {
+            response_json = api_put_provisioning(query_json, request_json, code);
+        }
+        else {
+            RESPOND_NO_SUCH_FUNCTION(response_json);
+        }
+    }
     else {
         RESPOND_NO_SUCH_FUNCTION(response_json);
     }
@@ -1201,7 +1216,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
 
     if (config_name_changed) {
         /* If a new configuration name as been set, start the provisioning process */
-        config_start_provisioning();
+        config_start_auto_provisioning();
     }
 
     config_mark_for_saving();
@@ -3026,13 +3041,15 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
         port_ids = NULL;
     }
 
-    DEBUG_DEVICE("clearing config name");
-    device_config_name[0] = '\0';
-    device_provisioning_version = 0;
+    /* Clear existing configuration name & version, but only when called directly, i.e. not during provisioning */
+    if (!config_is_provisioning()) {
+        DEBUG_DEVICE("clearing config name");
+        device_config_name[0] = '\0';
+        device_provisioning_version = 0;
+        event_push_full_update();
+    }
 
     config_mark_for_saving();
-
-    event_push_full_update();
 
     *code = 204;
 
@@ -3204,11 +3221,53 @@ json_t *api_put_system(json_t *query_json, json_t *request_json, int *code) {
     battery_configure(div_factor, voltages);
 #endif
 
-    DEBUG_DEVICE("clearing config name");
-    device_config_name[0] = '\0';
-    device_provisioning_version = 0;
+    /* Clear existing configuration name & version, but only when called directly, i.e. not during provisioning */
+    if (!config_is_provisioning()) {
+        DEBUG_DEVICE("clearing config name");
+        device_config_name[0] = '\0';
+        device_provisioning_version = 0;
+    }
 
     system_config_save();
+
+    *code = 204;
+
+    return response_json;
+}
+
+json_t *api_get_provisioning(json_t *query_json, int *code) {
+    json_t *response_json = json_obj_new();
+
+    if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
+    }
+
+    int dummy_code;
+
+    json_obj_append(response_json, "peripherals", api_get_peripherals(NULL, &dummy_code));
+    json_obj_append(response_json, "system", api_get_system(NULL, &dummy_code));
+    json_obj_append(response_json, "device", api_get_device(NULL, &dummy_code));
+    json_obj_append(response_json, "ports", api_get_ports(NULL, &dummy_code));
+
+    *code = 200;
+
+    return response_json;
+}
+
+json_t *api_put_provisioning(json_t *query_json, json_t *request_json, int *code) {
+    json_t *response_json = json_obj_new();
+
+    if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
+    }
+
+    if (json_get_type(request_json) != JSON_TYPE_OBJ) {
+        return API_ERROR(response_json, 400, "invalid-request");
+    }
+
+    if (!config_apply_json_provisioning(request_json, /* force = */ TRUE)) {
+        return API_ERROR(response_json, 400, "invalid-request");
+    }
 
     *code = 204;
 
