@@ -94,6 +94,7 @@ bool write_value_duty(port_t *port, double value) {
 
     DEBUG_PWMP_PORT(port, "setting duty to %d%%", (int) value);
     pwm_set_duty(user_data->pin, value);
+    user_data->duty = value;
 
     return TRUE;
 }
