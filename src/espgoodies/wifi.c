@@ -684,8 +684,6 @@ void on_wifi_event(System_Event_t *evt) {
 
      switch (evt->event) {
          case EVENT_STAMODE_DISCONNECTED:
-             station_connected = FALSE;
-
              DEBUG_WIFI(
                  "disconnected from SSID \"%s\", BSSID " BSSID_FMT ", reason %d",
                  evt->event_info.disconnected.ssid,
@@ -693,9 +691,11 @@ void on_wifi_event(System_Event_t *evt) {
                  evt->event_info.disconnected.reason
              );
 
-             if (station_connect_callback) {
+             if (station_connect_callback && station_connected) {
                  station_connect_callback(FALSE);
              }
+
+             station_connected = FALSE;
 
              /* Reconnect to temporary station */
              if (temporary_station_enabled) {
@@ -717,11 +717,11 @@ void on_wifi_event(System_Event_t *evt) {
          case EVENT_STAMODE_GOT_IP:
              DEBUG_WIFI("connected and ready at " IP_FMT, IP2STR(&evt->event_info.got_ip.ip));
 
-             station_connected = TRUE;
-
-             if (station_connect_callback) {
+             if (station_connect_callback && !station_connected) {
                  station_connect_callback(TRUE);
              }
+
+             station_connected = TRUE;
 
              /* In case temporary connection is enabled, stop attempting to connect as soon as connected */
              os_timer_disarm(&temporary_connect_timer);
