@@ -87,6 +87,7 @@ void   ICACHE_FLASH_ATTR system_status_led_get_config(int8 *pin, bool *level);
 void   ICACHE_FLASH_ATTR system_setup_mode_set_callback(system_setup_mode_callback_t callback);
 bool   ICACHE_FLASH_ATTR system_setup_mode_active(void);
 void   ICACHE_FLASH_ATTR system_setup_mode_toggle(void);
+bool   ICACHE_FLASH_ATTR system_setup_mode_has_ap_clients(void);
 
 void   ICACHE_FLASH_ATTR system_update(void);
 
