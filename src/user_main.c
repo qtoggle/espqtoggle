@@ -298,7 +298,7 @@ void on_wifi_connect(bool connected) {
         core_enable_polling();
 
         /* Attempt to fetch the latest provisioning configuration at each boot, right after Wi-Fi connection */
-        config_start_auto_provisioning();
+        config_start_auto_provisioning(/* ignore_version = */ FALSE);
 
 #ifdef _SLEEP
         /* Start sleep timer now that we're connected */

@@ -130,7 +130,7 @@ void config_save(void) {
     DEBUG_CONFIG("total strings size is %d", strings_offs - 1);
 }
 
-void config_start_auto_provisioning(void) {
+void config_start_auto_provisioning(bool ignore_version) {
     if (provisioning) {
         DEBUG_CONFIG("provisioning: busy");
         return;
@@ -142,8 +142,12 @@ void config_start_auto_provisioning(void) {
      *  * provisioning_config version is 0
      */
 
-    if (!device_config_name[0] || !strncmp(device_config_name, "custom/", 7) || device_provisioning_version == 0) {
+    if (!device_config_name[0] || !strncmp(device_config_name, "custom/", 7)) {
         DEBUG_CONFIG("provisioning: no configuration");
+        return;
+    }
+    if (device_provisioning_version == 0 && !ignore_version) {
+        DEBUG_CONFIG("provisioning: skipping due to null version");
         return;
     }
 
