@@ -30,9 +30,7 @@
 #include "espgoodies/wifi.h"
 
 
-#define CONNECTED_WATCHDOG_INTERVAL 10      /* Seconds */
-#define CONNECTED_WATCHDOG_COUNT    3       /* Disconnected times, in a row, that trigger a reset */
-#define TEMPORARY_CONNECT_INTERVAL  10000   /* How often to attempt to connect, in temporary station mode */
+#define TEMPORARY_CONNECT_INTERVAL 10000 /* How often to attempt to connect, in temporary station mode */
 
 
 static bool                      station_connected = FALSE;
@@ -40,9 +38,7 @@ static bool                      scanning = FALSE;
 static wifi_scan_callback_t      scan_callback = NULL;
 static wifi_connect_callback_t   station_connect_callback = NULL;
 static wifi_ap_client_callback_t ap_client_callback = NULL;
-static os_timer_t                connected_watchdog_timer;
 static os_timer_t                temporary_connect_timer;
-static int                       connected_watchdog_counter = 0;
 
 static ip_addr_t                 manual_ip_address = {0};
 static uint8                     manual_netmask = 0;
@@ -64,7 +60,6 @@ static bool                      temporary_connect_timer_armed = FALSE;
 static void ICACHE_FLASH_ATTR ensure_station_config_read(void);
 static void ICACHE_FLASH_ATTR on_wifi_event(System_Event_t *evt);
 static void ICACHE_FLASH_ATTR on_wifi_scan_done(void *arg, STATUS status);
-static void ICACHE_FLASH_ATTR on_connected_watchdog(void *arg);
 static void ICACHE_FLASH_ATTR on_temporary_connect(void *arg);
 static int  ICACHE_FLASH_ATTR compare_wifi_rssi(const void *a, const void *b);
 
@@ -614,18 +609,6 @@ void wifi_init(void) {
     }
 
     wifi_set_event_handler_cb(on_wifi_event);
-
-    /* Initialize connected watchdog timer */
-#ifdef _SLEEP
-    if (!sleep_is_short_wake()) {
-#endif
-        DEBUG_WIFI("initializing connected watchdog");
-        os_timer_disarm(&connected_watchdog_timer);
-        os_timer_setfn(&connected_watchdog_timer, on_connected_watchdog, NULL);
-        os_timer_arm(&connected_watchdog_timer, CONNECTED_WATCHDOG_INTERVAL * 1000, /* repeat = */ TRUE);
-#ifdef _SLEEP
-    }
-#endif
 }
 
 void wifi_reset(void) {
@@ -774,7 +757,7 @@ void on_wifi_event(System_Event_t *evt) {
              DEBUG_WIFI("AP client with MAC "MAC_FMT " disconnected", MAC2STR(evt->event_info.distribute_sta_ip.mac));
 
              if (ap_client_callback) {
-                 ap_client_callback(TRUE, (ip_addr_t){0}, evt->event_info.distribute_sta_ip.mac);
+                 ap_client_callback(FALSE, (ip_addr_t){0}, evt->event_info.distribute_sta_ip.mac);
              }
 
              break;
@@ -829,40 +812,6 @@ void on_wifi_scan_done(void *arg, STATUS status) {
     qsort(results, len, sizeof(wifi_scan_result_t), compare_wifi_rssi);
 
     callback(results, len);
-}
-
-void on_connected_watchdog(void *arg) {
-    bool connected = station_connected && (wifi_station_get_connect_status() == STATION_GOT_IP);
-    bool override = FALSE;
-
-#ifdef _OTA
-    if (ota_busy()) {
-        override = TRUE;
-    }
-#endif
-
-    if (system_setup_mode_active()) {
-        override = TRUE;
-    }
-
-    DEBUG_WIFI("connected watchdog: connected = %d, override = %d", connected, override);
-    if (connected || override) {
-        connected_watchdog_counter = 0;
-    }
-    else {
-        if (connected_watchdog_counter < CONNECTED_WATCHDOG_COUNT) {
-            connected_watchdog_counter++;
-            DEBUG_WIFI("connected watchdog: counter = %d/%d", connected_watchdog_counter, CONNECTED_WATCHDOG_COUNT);
-        }
-        else {
-            DEBUG_WIFI(
-                "connected watchdog: counter = %d/%d, resetting system",
-                connected_watchdog_counter,
-                CONNECTED_WATCHDOG_COUNT
-            );
-            system_reset(/* delayed = */ FALSE);
-        }
-    }
 }
 
 void on_temporary_connect(void *arg) {
