@@ -45,27 +45,31 @@
 #include "ver.h"
 
 
-#define CONNECT_TIMEOUT             20000             /* Milliseconds */
+#define CONNECT_TIMEOUT_CORE_POLLING 10  /* Seconds */
+#define CONNECT_TIMEOUT_SETUP_MODE   300 /* Seconds */
+#define SETUP_MODE_IDLE_TIMEOUT      300 /* Seconds */
 
-#define RTC_UNEXP_RESET_COUNT_ADDR  RTC_USER_ADDR + 0 /* 130 * 4 bytes = 520 */
-#define MAX_UNEXP_RESET_COUNT       16
+#define RTC_UNEXP_RESET_COUNT_ADDR RTC_USER_ADDR + 0 /* 130 * 4 bytes = 520 */
+#define MAX_UNEXP_RESET_COUNT      16
 
 #ifndef FW_BASE_URL
-#define FW_BASE_URL                 ""
-#define FW_BASE_OTA_PATH            ""
+#define FW_BASE_URL           ""
+#define FW_BASE_OTA_PATH      ""
 #endif
-#define FW_LATEST_FILE              "/latest"
-#define FW_LATEST_STABLE_FILE       "/latest_stable"
-#define FW_LATEST_BETA_FILE         "/latest_beta"
-#define FW_AUTO_MIN_INTERVAL        24                /* Hours */
+#define FW_LATEST_FILE        "/latest"
+#define FW_LATEST_STABLE_FILE "/latest_stable"
+#define FW_LATEST_BETA_FILE   "/latest_beta"
+#define FW_AUTO_MIN_INTERVAL  24 /* Hours */
 
 
 static bool       wifi_first_time_connected = FALSE;
-static os_timer_t connect_timeout_timer;
+static os_timer_t wifi_connect_timeout_core_polling_timer;
+static os_timer_t wifi_connect_timeout_setup_mode_timer;
 #ifdef _OTA
 static os_timer_t ota_auto_timer;
 static uint32     ota_auto_counter = 1;
 #endif
+static os_timer_t setup_mode_idle_timer;
 
 
 static void ICACHE_FLASH_ATTR check_update_fw_config(void);
@@ -80,6 +84,7 @@ static void ICACHE_FLASH_ATTR on_system_ready(void);
 static void ICACHE_FLASH_ATTR on_system_reset(void);
 
 static void ICACHE_FLASH_ATTR on_setup_mode(bool active);
+static void ICACHE_FLASH_ATTR on_setup_mode_idle_timeout(void *);
 
 #ifdef _OTA
 static void ICACHE_FLASH_ATTR on_ota_auto_timer(void *arg);
@@ -87,7 +92,8 @@ static void ICACHE_FLASH_ATTR on_ota_auto_perform(int code);
 #endif
 
 static void ICACHE_FLASH_ATTR on_wifi_connect(bool connected);
-static void ICACHE_FLASH_ATTR on_wifi_connect_timeout(void *arg);
+static void ICACHE_FLASH_ATTR on_wifi_connect_timeout_core_polling(void *arg);
+static void ICACHE_FLASH_ATTR on_wifi_connect_timeout_setup_mode(void *arg);
 
 
 void check_update_fw_config(void) {
@@ -176,9 +182,15 @@ void check_reboot_loop(void) {
 void main_init(void) {
     system_init_done_cb(on_system_ready);
 
-    os_timer_disarm(&connect_timeout_timer);
-    os_timer_setfn(&connect_timeout_timer, on_wifi_connect_timeout, NULL);
-    os_timer_arm(&connect_timeout_timer, CONNECT_TIMEOUT, /* repeat = */ FALSE);
+    /* Core polling Wi-Fi timeout */
+    os_timer_disarm(&wifi_connect_timeout_core_polling_timer);
+    os_timer_setfn(&wifi_connect_timeout_core_polling_timer, on_wifi_connect_timeout_core_polling, NULL);
+    os_timer_arm(&wifi_connect_timeout_core_polling_timer, CONNECT_TIMEOUT_CORE_POLLING * 1000, /* repeat = */ FALSE);
+
+    /* Setup mode Wi-Fi timeout */
+    os_timer_disarm(&wifi_connect_timeout_setup_mode_timer);
+    os_timer_setfn(&wifi_connect_timeout_setup_mode_timer, on_wifi_connect_timeout_setup_mode, NULL);
+    os_timer_arm(&wifi_connect_timeout_setup_mode_timer, CONNECT_TIMEOUT_SETUP_MODE * 1000, /* repeat = */ FALSE);
 
     if (wifi_get_ssid()) {
         wifi_station_enable(device_name, on_wifi_connect);
@@ -210,17 +222,41 @@ void on_system_reset(void) {
 }
 
 void on_setup_mode(bool active) {
-    if (active && strlen(DEFAULT_SSID)) {
-        DEBUG_SYSTEM("enabling connection to default SSID");
-        wifi_station_disable();
-        wifi_station_temporary_enable(
-            DEFAULT_SSID,
-            /* psk = */ NULL,
-            /* bssid = */ NULL,
-            /* hostname = */ device_name,
-            /* callback = */ NULL
-        );
+    os_timer_disarm(&setup_mode_idle_timer);
+
+    if (active) {
+        os_timer_setfn(&setup_mode_idle_timer, on_setup_mode_idle_timeout, NULL);
+        os_timer_arm(&setup_mode_idle_timer, SETUP_MODE_IDLE_TIMEOUT * 1000, /* repeat = */ TRUE);
+
+        if (strlen(DEFAULT_SSID)) {
+            DEBUG_SYSTEM("enabling connection to default SSID");
+            wifi_station_disable();
+            wifi_station_temporary_enable(
+                DEFAULT_SSID,
+                /* psk = */ NULL,
+                /* bssid = */ NULL,
+                /* hostname = */ device_name,
+                /* callback = */ NULL
+            );
+        }
     }
+}
+
+void on_setup_mode_idle_timeout(void *arg) {
+    if (!system_setup_mode_active()) {
+        return;
+    }
+
+    if (wifi_station_is_connected()) {
+        return; /* Don't reset if connected to AP */
+    }
+
+    if (system_setup_mode_has_ap_clients()) {
+        return; /* Don't reset if AP has clients */
+    }
+
+    DEBUG_SYSTEM("setup mode idle timeout");
+    system_setup_mode_toggle();
 }
 
 #ifdef _OTA
@@ -244,81 +280,90 @@ void on_ota_auto_perform(int code) {
 #endif /* _OTA */
 
 void on_wifi_connect(bool connected) {
-    if (wifi_first_time_connected) {
-        return;  /* We're only interested in first time connection */
-    }
-
     if (!connected) {
-        return;  /* We don't care about disconnections */
+        /* Re-arm the setup mode Wi-Fi timer upon disconnection */
+        os_timer_disarm(&wifi_connect_timeout_setup_mode_timer);
+        os_timer_setfn(&wifi_connect_timeout_setup_mode_timer, on_wifi_connect_timeout_setup_mode, NULL);
+        os_timer_arm(&wifi_connect_timeout_setup_mode_timer, CONNECT_TIMEOUT_SETUP_MODE * 1000, /* repeat = */ FALSE);
+        return;
     }
 
     DEBUG_SYSTEM("we're connected!");
 
-    wifi_first_time_connected = TRUE;
-    os_timer_disarm(&connect_timeout_timer);
-    core_enable_polling();
+    os_timer_disarm(&wifi_connect_timeout_setup_mode_timer);
 
-    /* Attempt to fetch the latest provisioning configuration at each boot, right after Wi-Fi connection */
-    config_start_auto_provisioning();
+    if (!wifi_first_time_connected) {
+        wifi_first_time_connected = TRUE;
+        os_timer_disarm(&wifi_connect_timeout_core_polling_timer);
+        core_enable_polling();
+
+        /* Attempt to fetch the latest provisioning configuration at each boot, right after Wi-Fi connection */
+        config_start_auto_provisioning();
 
 #ifdef _SLEEP
-    /* Start sleep timer now that we're connected */
-    sleep_reset();
+        /* Start sleep timer now that we're connected */
+        sleep_reset();
 #endif
 
 #ifdef _OTA
-    /* Start firmware auto update mechanism */
+        /* Start firmware auto update mechanism */
 
-    if (device_flags & DEVICE_FLAG_OTA_AUTO_UPDATE) {
+        if (device_flags & DEVICE_FLAG_OTA_AUTO_UPDATE) {
 #ifdef _SLEEP
-        int wake_interval = sleep_get_wake_interval();
-        if (wake_interval) {
-            /* Do not check for an update more often than each OTA_AUTO_MIN_INTERVAL hours */
-            int sleep_boot_count = rtc_get_boot_count();
-            int count_modulo = FW_AUTO_MIN_INTERVAL * 60 / wake_interval;
-            if (count_modulo < 1) {  /* For sleep intervals longer than 24h */
-                count_modulo = 1;
+            int wake_interval = sleep_get_wake_interval();
+            if (wake_interval) {
+                /* Do not check for an update more often than each OTA_AUTO_MIN_INTERVAL hours */
+                int sleep_boot_count = rtc_get_boot_count();
+                int count_modulo = FW_AUTO_MIN_INTERVAL * 60 / wake_interval;
+                if (count_modulo < 1) {  /* For sleep intervals longer than 24h */
+                    count_modulo = 1;
+                }
+
+                DEBUG_SYSTEM(
+                    "sleep boot count: %d %% %d = %d",
+                    sleep_boot_count, count_modulo,
+                    sleep_boot_count % count_modulo
+                );
+
+                if (sleep_boot_count % count_modulo == 0) {
+                    ota_auto_update_check(/* beta = */ device_flags & DEVICE_FLAG_OTA_BETA_ENABLED, on_ota_auto_perform);
+                }
             }
-
-            DEBUG_SYSTEM(
-                "sleep boot count: %d %% %d = %d",
-                sleep_boot_count, count_modulo,
-                sleep_boot_count % count_modulo
-            );
-
-            if (sleep_boot_count % count_modulo == 0) {
+            else {  /* Sleep disabled, check for update at each boot */
                 ota_auto_update_check(/* beta = */ device_flags & DEVICE_FLAG_OTA_BETA_ENABLED, on_ota_auto_perform);
             }
-        }
-        else {  /* Sleep disabled, check for update at each boot */
-            ota_auto_update_check(/* beta = */ device_flags & DEVICE_FLAG_OTA_BETA_ENABLED, on_ota_auto_perform);
-        }
-
 #else  /* !_SLEEP */
-        ota_auto_update_check(/* beta = */ device_flags & DEVICE_FLAG_OTA_BETA_ENABLED, on_ota_auto_perform);
+            ota_auto_update_check(/* beta = */ device_flags & DEVICE_FLAG_OTA_BETA_ENABLED, on_ota_auto_perform);
 #endif
-    }
-
+        }
 #endif  /* _OTA */
+    }
 }
 
-void on_wifi_connect_timeout(void *arg) {
-    DEBUG_SYSTEM("timeout waiting for initial Wi-Fi connection");
+void on_wifi_connect_timeout_core_polling(void *arg) {
+    DEBUG_SYSTEM("initial Wi-Fi connection timeout, starting core polling");
     core_enable_polling();
 #ifdef _SLEEP
     sleep_reset();
 #endif
 }
 
+void on_wifi_connect_timeout_setup_mode(void *arg) {
+    if (!system_setup_mode_active()) {
+        DEBUG_SYSTEM("Wi-Fi connection timeout, switching to setup mode");
+        system_setup_mode_toggle();
+    }
+}
 
-    /* Main functions */
+
+/* Main functions */
 
 void user_rf_pre_init(void) {
     init_data_ensure();
 
-    system_deep_sleep_set_option(2);    /* No RF calibration after waking from deep sleep */
-    system_phy_set_rfoption(2);         /* No RF calibration after waking from deep sleep */
-    system_phy_set_powerup_option(2);   /* Calibration only for VDD33 and Tx power */
+    system_deep_sleep_set_option(2);  /* No RF calibration after waking from deep sleep */
+    system_phy_set_rfoption(2);       /* No RF calibration after waking from deep sleep */
+    system_phy_set_powerup_option(2); /* Calibration only for VDD33 and Tx power */
 }
 
 int user_rf_cal_sector_set(void) {

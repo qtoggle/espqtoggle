@@ -33,7 +33,7 @@
 #include "espgoodies/system.h"
 
 
-#define RESET_DELAY          3000    /* Milliseconds */
+#define RESET_DELAY          3000 /* Milliseconds */
 
 #define SETUP_MODE_IDLE      0
 #define SETUP_MODE_PRESSED   1
@@ -54,14 +54,16 @@ static os_timer_t                   reset_timer;
 static system_reset_callback_t      reset_callback = NULL;
 static system_setup_mode_callback_t setup_mode_callback;
 
-static uint64                       setup_mode_time = 0;
+static uint64                       setup_mode_button_time_ms = 0;
 static uint8                        setup_mode_state = SETUP_MODE_IDLE;
 static bool                         setup_mode = FALSE;
+static int8                         setup_mode_ap_client_count = 0;
 
 static uint32                       fw_version_int = 0;
 
 
 static void ICACHE_FLASH_ATTR on_system_reset(void *arg);
+static void ICACHE_FLASH_ATTR on_setup_mode_ap_client(bool connected, ip_addr_t ip_address, uint8 *mac);
 
 
 void system_config_load(void) {
@@ -308,13 +310,17 @@ void system_setup_mode_toggle(void) {
 
         char ssid[WIFI_SSID_MAX_LEN + 1];
         snprintf(ssid, sizeof(ssid), DEFAULT_HOSTNAME, system_get_chip_id());
-        wifi_ap_enable(ssid, /* psk = */ NULL, NULL);
+        wifi_ap_enable(ssid, /* psk = */ NULL, on_setup_mode_ap_client);
         dnsserver_start_captive();
 
         if (setup_mode_callback) {
             setup_mode_callback(TRUE);
         }
     }
+}
+
+bool system_setup_mode_has_ap_clients(void) {
+    return setup_mode_ap_client_count > 0;
 }
 
 void system_update(void) {
@@ -327,7 +333,7 @@ void system_update(void) {
     }
 
     /* Do a factory reset if setup button was held pressed enough */
-    if (setup_mode_time > 0 && now_ms - setup_mode_time > setup_button_reset_hold * 1000) {
+    if (setup_mode_button_time_ms > 0 && now_ms - setup_mode_button_time_ms > setup_button_reset_hold * 1000) {
         DEBUG_SYSTEM("resetting to factory defaults");
         setup_mode_state = SETUP_MODE_RESET;
 
@@ -339,7 +345,7 @@ void system_update(void) {
     }
 
     /* Enter setup mode if setup button was held pressed enough */
-    if (setup_mode_state == SETUP_MODE_PRESSED && now_ms - setup_mode_time > setup_button_hold * 1000) {
+    if (setup_mode_state == SETUP_MODE_PRESSED && now_ms - setup_mode_button_time_ms > setup_button_hold * 1000) {
         setup_mode_state = SETUP_MODE_TRIGGERED;
         system_setup_mode_toggle();
     }
@@ -349,12 +355,12 @@ void system_update(void) {
         bool value = gpio_read_value(setup_button_pin);
         if (value == setup_button_level && setup_mode_state == SETUP_MODE_IDLE) {
             DEBUG_SYSTEM("setup mode timer started");
-            setup_mode_time = now_ms;
+            setup_mode_button_time_ms = now_ms;
             setup_mode_state = SETUP_MODE_PRESSED;
         }
         else if (value != setup_button_level && setup_mode_state != SETUP_MODE_IDLE) {
             DEBUG_SYSTEM("setup mode timer reset");
-            setup_mode_time = 0;
+            setup_mode_button_time_ms = 0;
             setup_mode_state = SETUP_MODE_IDLE;
         }
     }
@@ -392,4 +398,15 @@ void on_system_reset(void *arg) {
     wifi_save_config();
     rtc_reset();
     system_restart();
+}
+
+void on_setup_mode_ap_client(bool connected, ip_addr_t ip_address, uint8 *mac) {
+    if (connected) {
+        setup_mode_ap_client_count++;
+    }
+    else {
+        setup_mode_ap_client_count--;
+    }
+
+    DEBUG_SYSTEM("setup mode AP clients: %d", setup_mode_ap_client_count);
 }
