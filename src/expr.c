@@ -1034,7 +1034,7 @@ expr_t *parse_port_id_expr(char *port_id, char *input, int abs_pos) {
     }
 
     while ((c = *s)) {
-        if (!isalnum((int) c) && c != '_' && c != '-') {
+        if (!isalnum((int) c) && c != '_' && c != '-' && c != '.') {
             DEBUG_EXPR("invalid port identifier \"%s\"", input);
             set_parse_error("unexpected-character", s, abs_pos + s - input);
             return NULL;
