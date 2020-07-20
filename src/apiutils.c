@@ -183,7 +183,7 @@ bool validate_id(char *id) {
 
     int c;
     while ((c = *id++)) {
-        if (!isalnum(c) && c != '_' && c != '-') {
+        if (!isalnum(c) && c != '_' && c != '-' && c != '.') {
             return FALSE;
         }
     }
