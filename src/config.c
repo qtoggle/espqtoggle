@@ -439,27 +439,32 @@ void apply_port_provisioning_config(json_t *port_config) {
                 port = port_find_by_id(port_id);
             }
 
-            value_json = json_obj_pop_key(port_config, "value");
+            if (port) {
+                value_json = json_obj_pop_key(port_config, "value");
 
-            DEBUG_CONFIG("provisioning: setting port %s attributes", port_id);
-
-            code = 200;
-            response_json = api_patch_port(port, /* query_json = */ NULL, port_config, &code);
-            json_free(response_json);
-            if (code / 100 != 2) {
-                DEBUG_CONFIG("provisioning: api_patch_port() failed with status code %d", code);
-            }
-
-            if (value_json) { /* If value was also supplied with provisioning */
-                DEBUG_CONFIG("provisioning: setting port %s value", port_id);
+                DEBUG_CONFIG("provisioning: setting port %s attributes", port_id);
 
                 code = 200;
-                response_json = api_patch_port_value(port, /* query_json = */ NULL, value_json, &code);
+                response_json = api_patch_port(port, /* query_json = */ NULL, port_config, &code);
                 json_free(response_json);
                 if (code / 100 != 2) {
-                    DEBUG_CONFIG("provisioning: api_patch_port_value() failed with status code %d", code);
+                    DEBUG_CONFIG("provisioning: api_patch_port() failed with status code %d", code);
                 }
-                json_free(value_json);
+
+                if (value_json) { /* If value was also supplied with provisioning */
+                    DEBUG_CONFIG("provisioning: setting port %s value", port_id);
+
+                    code = 200;
+                    response_json = api_patch_port_value(port, /* query_json = */ NULL, value_json, &code);
+                    json_free(response_json);
+                    if (code / 100 != 2) {
+                        DEBUG_CONFIG("provisioning: api_patch_port_value() failed with status code %d", code);
+                    }
+                    json_free(value_json);
+                }
+            }
+            else { /* Got the id of an inexistent, non-virtual, port */
+                DEBUG_CONFIG("provisioning: skipping inexistent port with id %s", port_id);
             }
         }
         else {

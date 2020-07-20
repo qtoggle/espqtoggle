@@ -701,6 +701,7 @@ void ports_rebuild_change_dep_mask(void) {
 port_t *port_create(void) {
     port_t *port = zalloc(sizeof(port_t));
     port->value = UNDEFINED;
+    port->change_reason = CHANGE_REASON_NATIVE;
 
     return port;
 }
