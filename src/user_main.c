@@ -400,9 +400,9 @@ void user_init(void) {
 #ifdef _OTA
     ota_init(
         /* current_version = */   FW_VERSION,
-        /* latest_url = */        FW_BASE_URL FW_BASE_OTA_PATH "/" FW_LATEST_FILE,
-        /* latest_stable_url = */ FW_BASE_URL FW_BASE_OTA_PATH "/" FW_LATEST_STABLE_FILE,
-        /* latest_beta_url = */   FW_BASE_URL FW_BASE_OTA_PATH "/" FW_LATEST_BETA_FILE,
+        /* latest_url = */        FW_BASE_URL FW_BASE_OTA_PATH FW_LATEST_FILE,
+        /* latest_stable_url = */ FW_BASE_URL FW_BASE_OTA_PATH FW_LATEST_STABLE_FILE,
+        /* latest_beta_url = */   FW_BASE_URL FW_BASE_OTA_PATH FW_LATEST_BETA_FILE,
         /* url_template = */      FW_BASE_URL FW_BASE_OTA_PATH "/%s"
     );
 
