@@ -3274,6 +3274,8 @@ json_t *api_put_provisioning(json_t *query_json, json_t *request_json, int *code
     device_config_name[0] = '\0';
     device_provisioning_version = 0;
 
+    event_push_full_update();
+
     *code = 204;
 
     return response_json;

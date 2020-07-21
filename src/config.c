@@ -208,7 +208,7 @@ bool config_apply_json_provisioning(json_t *config, bool force) {
         return FALSE;
     }
 
-    /* Setting this to TRUE here will prevent triggering of events during following API calls */
+    /* Setting this to TRUE here will simply prevent triggering of events during following API calls */
     provisioning = TRUE;
 
     /* Update provisioning version right away (thus marking device as provisioned) before actual provisioning to
@@ -245,7 +245,6 @@ bool config_apply_json_provisioning(json_t *config, bool force) {
     api_conn_restore();
 
     provisioning = FALSE;
-    event_push_full_update();
 
     return TRUE;
 }
@@ -279,6 +278,9 @@ void on_provisioning_config_response(
     else {
         DEBUG_CONFIG("provisioning: got status %d", status);
     }
+
+    /* Regardless of the outcome of the provisioning operation, a full-update event needs to be triggered */
+    event_push_full_update();
 }
 
 void apply_device_provisioning_config(json_t *device_config) {
