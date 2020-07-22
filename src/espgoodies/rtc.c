@@ -32,14 +32,10 @@ static uint32 boot_count = 0;
 
 
 void rtc_init(void) {
-    struct rst_info *reset_info = system_get_rst_info();
-
     uint32 test_value;
     system_rtc_mem_read(FULL_BOOT_TEST_ADDR, &test_value, 4);
 
-    if (test_value != FULL_BOOT_MAGIC ||
-        (reset_info->reason != REASON_DEEP_SLEEP_AWAKE && reset_info->reason != REASON_EXT_SYS_RST)) {
-
+    if (test_value != FULL_BOOT_MAGIC) {
         DEBUG_RTC("full boot");
         test_value = FULL_BOOT_MAGIC;
         system_rtc_mem_write(FULL_BOOT_TEST_ADDR, &test_value, 4);
