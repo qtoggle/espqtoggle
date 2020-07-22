@@ -26,7 +26,7 @@
 #define VERSION_TYPE_ALPHA   1
 #define VERSION_TYPE_BETA    2
 #define VERSION_TYPE_RC      3
-#define VERSION_TYPE_FINAL   6
+#define VERSION_TYPE_STABLE  6
 #define VERSION_TYPE_UNKNOWN 7
 
 

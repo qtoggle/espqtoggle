@@ -40,7 +40,7 @@ VERSION_PATCH = $(word 3,$(_VERSION_PARTS))
 VERSION_TYPE = $(word 4,$(_VERSION_PARTS))
 VERSION_LABEL = $(word 5,$(_VERSION_PARTS))
 ifeq ($(VERSION_TYPE),)
-	VERSION_TYPE = plain
+	VERSION_TYPE = stable
 endif
 ifeq ($(VERSION_LABEL),)
 	VERSION_LABEL = 0

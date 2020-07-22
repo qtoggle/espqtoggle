@@ -25,7 +25,7 @@
 
 
 static char *types_str[] = {
-    "", /* plain */
+    "", /* stable */
     "alpha",
     "beta",
     "rc",
