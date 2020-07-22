@@ -1833,7 +1833,7 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
 
                 expr_t *expr = expr_parse(port->id, sexpr, strlen(sexpr));
                 if (!expr) {
-                    return INVALID_EXPRESSION_FROM_ERROR(request_json, "expression");
+                    return INVALID_EXPRESSION_FROM_ERROR(response_json, "expression");
                 }
 
                 if (expr_check_loops(expr, port) > 1) {
