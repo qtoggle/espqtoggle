@@ -162,14 +162,19 @@ void check_reboot_loop(void) {
             break;
     }
 
-    if (reset_info->reason == REASON_WDT_RST || reset_info->reason == REASON_EXCEPTION_RST) {
-        DEBUG_SYSTEM("unexpected reset detected");
-        unexp_reset_count = rtc_get_value(RTC_UNEXP_RESET_COUNT_ADDR) + 1;
+    if (reset_info->reason == REASON_WDT_RST ||
+        reset_info->reason == REASON_SOFT_WDT_RST ||
+        reset_info->reason == REASON_EXCEPTION_RST) {
 
-        if (unexp_reset_count == MAX_UNEXP_RESET_COUNT) {
+        unexp_reset_count = rtc_get_value(RTC_UNEXP_RESET_COUNT_ADDR);
+        DEBUG_SYSTEM("unexpected reset detected (count = %d)", unexp_reset_count);
+
+        if (unexp_reset_count >= MAX_UNEXP_RESET_COUNT) {
             DEBUG_SYSTEM("too many unexpected resets, resetting configuration");
             flashcfg_reset(FLASH_CONFIG_SLOT_DEFAULT);
         }
+
+        unexp_reset_count++;
     }
 
     else {
