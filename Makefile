@@ -1,4 +1,6 @@
 
+VERSION ?= 0.0.0-unknown.0
+
 DEBUG ?= true
 DEBUG_FLAGS ?= battery dnsserver flashcfg html httpclient httpserver json ota rtc sleep system tcpserver wifi 	\
                gpio hspi onewire pwm uart 																		\
@@ -32,20 +34,30 @@ SHELL = /bin/bash  # other shells will probably fail
 rwildcard = $(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
 
 # parse version 
-VERSION = $(shell cat src/ver.h | grep FW_VERSION | head -n 1 | tr -s ' ' | cut -d ' ' -f 3 | tr -d '"')
-_VERSION_PARTS = $(subst -, ,$(subst ., ,$(VERSION)))
-VERSION_MAJOR = $(word 1,$(_VERSION_PARTS))
-VERSION_MINOR = $(word 2,$(_VERSION_PARTS))
-VERSION_PATCH = $(word 3,$(_VERSION_PARTS))
-VERSION_TYPE = $(word 4,$(_VERSION_PARTS))
-VERSION_LABEL = $(word 5,$(_VERSION_PARTS))
+VERSION_PARTS := $(subst -, ,$(subst ., ,$(VERSION)))
+VERSION_MAJOR := $(word 1,$(VERSION_PARTS))
+VERSION_MINOR := $(word 2,$(VERSION_PARTS))
+VERSION_PATCH := $(word 3,$(VERSION_PARTS))
+VERSION_TYPE  := $(word 4,$(VERSION_PARTS))
+VERSION_LABEL := $(word 5,$(VERSION_PARTS))
 ifeq ($(VERSION_TYPE),)
 	VERSION_TYPE = stable
+endif
+ifneq ($(shell echo $(VERSION_LABEL) | grep -E "^g[a-f0-9]+$$"),)
+	VERSION_LABEL := $(VERSION_TYPE)
+	VERSION_TYPE = git
 endif
 ifeq ($(VERSION_LABEL),)
 	VERSION_LABEL = 0
 endif
 
+# put back together version
+VERSION := $(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_PATCH)
+ifneq ($(VERSION_TYPE),stable)
+VERSION := $(VERSION)-$(VERSION_TYPE).$(VERSION_LABEL)
+endif
+
+CFLAGS += -DFW_VERSION=\"$(VERSION)\"
 CFLAGS += -DFW_VERSION_MAJOR=$(VERSION_MAJOR)
 CFLAGS += -DFW_VERSION_MINOR=$(VERSION_MINOR)
 CFLAGS += -DFW_VERSION_PATCH=$(VERSION_PATCH)

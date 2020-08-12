@@ -20,17 +20,21 @@
 #define _VERSION_H
 
 
-#define API_VERSION "1.0"
-#define VENDOR      "qtoggle/espqtoggle"
-#define FW_VERSION  "0.0.0-unknown.0"
+#include "espgoodies/version.h"
 
-/* Following will be automatically supplied via Makefile by splitting FW_VERSION above:
- *  * FW_VERSION_MAJOR
- *  * FW_VERSION_MINOR
- *  * FW_VERSION_PATCH
- *  * FW_VERSION_LABEL
- *  * FW_VERSION_TYPE
- */
+
+#define API_VERSION      "1.0"
+#define VENDOR           "qtoggle/espqtoggle"
+
+/* Following will be automatically supplied via Makefile */
+#ifndef FW_VERSION
+#define FW_VERSION       "0.0.0-unknown.0"
+#define FW_VERSION_MAJOR 0
+#define FW_VERSION_MINOR 0
+#define FW_VERSION_PATCH 0
+#define FW_VERSION_LABEL 0
+#define FW_VERSION_TYPE  VERSION_TYPE_UNKNOWN
+#endif
 
 
 #endif /* _VERSION_H */
