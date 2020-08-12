@@ -1380,7 +1380,7 @@ json_t *api_get_access(json_t *query_json, int *code) {
 }
 
 json_t *api_get_backup(json_t *query_json, int *code) {
-    json_t *response_json = json_list_new();
+    json_t *response_json = json_obj_new();
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
         return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
