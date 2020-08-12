@@ -11,7 +11,7 @@
         {
             "name": "json-http-client",
             "params": {
-                "method": "PUT",
+                "method": "PATCH",
                 "path": "/system",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"

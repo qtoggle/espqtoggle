@@ -37,7 +37,7 @@
         {
             "name": "json-http-client",
             "params": {
-                "method": "PUT",
+                "method": "PATCH",
                 "path": "/system",
                 "headers": {
                     "Authorization": "Bearer inexistent"
@@ -49,7 +49,7 @@
         {
             "name": "json-http-client",
             "params": {
-                "method": "PUT",
+                "method": "PATCH",
                 "path": "/system",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_VIEWONLY}"
@@ -61,7 +61,7 @@
         {
             "name": "json-http-client",
             "params": {
-                "method": "PUT",
+                "method": "PATCH",
                 "path": "/system",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_NORMAL}"

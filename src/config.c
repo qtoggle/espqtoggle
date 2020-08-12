@@ -353,7 +353,7 @@ void apply_system_provisioning_config(json_t *system_config) {
 
     if (json_get_type(system_config) == JSON_TYPE_OBJ) {
         code = 200;
-        response_json = api_put_system(/* query_json = */ NULL, system_config, &code);
+        response_json = api_patch_system(/* query_json = */ NULL, system_config, &code);
         json_free(response_json);
         if (code / 100 != 2) {
             DEBUG_CONFIG("provisioning: api_patch_system() failed with status code %d", code);

@@ -44,7 +44,7 @@
 #define MAX_SAMP_INT   3600000 /* Milliseconds */
 
 #define MIN_TEMP       -55     /* Degrees C */
-#define MAX_TEMP       125    /* Degrees C */
+#define MAX_TEMP       125     /* Degrees C */
 
 
 typedef struct {
