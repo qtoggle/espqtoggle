@@ -240,6 +240,14 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
             RESPOND_NO_SUCH_FUNCTION(response_json);
         }
     }
+    else if (!strcmp(part1, "backup")) {
+        if (!part2) {
+            response_json = api_get_backup(query_json, code);
+        }
+        else {
+            RESPOND_NO_SUCH_FUNCTION(response_json);
+        }
+    }
     else if (!strcmp(part1, "ports")) {
         if (part2) {
             port = port_find_by_id(part2);
@@ -1367,6 +1375,34 @@ json_t *api_get_access(json_t *query_json, int *code) {
     }
 
     *code = 200;
+
+    return response_json;
+}
+
+json_t *api_get_backup(json_t *query_json, int *code) {
+    json_t *response_json = json_list_new();
+
+    if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
+    }
+
+    json_t *endpoints_json = json_list_new();
+
+    json_t *peripherals_json = json_obj_new();
+    json_obj_append(peripherals_json, "path", json_str_new("/peripherals"));
+    json_obj_append(peripherals_json, "display_name", json_str_new("Peripherals"));
+    json_obj_append(peripherals_json, "restore_method", json_str_new("PUT"));
+    json_obj_append(peripherals_json, "reconnect", json_bool_new(FALSE));
+
+    json_t *system_json = json_obj_new();
+    json_obj_append(system_json, "path", json_str_new("/system"));
+    json_obj_append(system_json, "display_name", json_str_new("System Configuration"));
+    json_obj_append(system_json, "restore_method", json_str_new("PATCH"));
+    json_obj_append(system_json, "reconnect", json_bool_new(FALSE));
+
+    json_list_append(endpoints_json, peripherals_json);
+    json_list_append(endpoints_json, system_json);
+    json_obj_append(response_json, "endpoints", endpoints_json);
 
     return response_json;
 }
