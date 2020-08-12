@@ -4,7 +4,7 @@
         {
             "name": "json-http-client",
             "params": {
-                "method": "PUT",
+                "method": "PATCH",
                 "path": "/system",
                 "body": {
                     "setup_button": {
