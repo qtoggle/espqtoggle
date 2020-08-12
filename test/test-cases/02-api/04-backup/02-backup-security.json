@@ -1,5 +1,5 @@
 {
-    "name": "system-security",
+    "name": "backup-security",
     "instructions": [
         {
             "name": "json-http-client",
