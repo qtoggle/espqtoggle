@@ -109,7 +109,7 @@ json_t ICACHE_FLASH_ATTR *api_patch_raw_io(char *io, json_t *query_json, json_t 
 json_t ICACHE_FLASH_ATTR *api_get_peripherals(json_t *query_json, int *code);
 json_t ICACHE_FLASH_ATTR *api_put_peripherals(json_t *query_json, json_t *request_json, int *code);
 json_t ICACHE_FLASH_ATTR *api_get_system(json_t *query_json, int *code);
-json_t ICACHE_FLASH_ATTR *api_put_system(json_t *query_json, json_t *request_json, int *code);
+json_t ICACHE_FLASH_ATTR *api_patch_system(json_t *query_json, json_t *request_json, int *code);
 json_t ICACHE_FLASH_ATTR *api_get_provisioning(json_t *query_json, int *code);
 json_t ICACHE_FLASH_ATTR *api_put_provisioning(json_t *query_json, json_t *request_json, int *code);
 
