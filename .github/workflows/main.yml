@@ -37,13 +37,11 @@ jobs:
       - name: Build
         run: |
           export VERSION="$(/opt/makever.sh)"
-          sed -ri "s/0.0.0-unknown.0/${VERSION}/" src/ver.h
           make clean
           make -j4
       - name: TestMyESP helper
         run: |
           export VERSION="$(/opt/makever.sh)"
-          sed -ri "s/0.0.0-unknown.0/${GIT_TAG_NAME}/" src/ver.h
           ./test/testmyesp-helper.sh \
             --server-url ${TESTMYESP_SERVER} \
             --credentials ${{ secrets.TESTMYESP_USERNAME }}:${{ secrets.TESTMYESP_PASSWORD }} \
@@ -88,7 +86,6 @@ jobs:
           tagRegex: "version-(.*)"
       - name: Build
         run: |
-          sed -ri "s/0.0.0-unknown.0/${GIT_TAG_NAME}/" src/ver.h
           export DEBUG=false
           make clean
           make -j4

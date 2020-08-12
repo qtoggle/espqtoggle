@@ -32,14 +32,11 @@ ADD https://qtoggle.s3.amazonaws.com/various/xtensa-lx106-elf.tar.xz /opt
 RUN cd /opt && tar xvf xtensa-lx106-elf.tar.xz && rm xtensa-lx106-elf.tar.xz
 
 # esp8266 sdk
-ADD fix-sdk.sh /opt
+ADD fix-sdk.sh makever.sh /opt/
 RUN git clone https://github.com/espressif/ESP8266_NONOS_SDK.git /opt/esp-nonos-sdk && \
     cd /opt/esp-nonos-sdk && \
     git checkout a0b1311 && \
     /opt/fix-sdk.sh . && \
     rm -rf .git
-
-ADD ./builder.sh /opt
-ADD ./makever.sh /opt
 
 CMD cd ${SRC_DIR} && make clean && make -j4 all
