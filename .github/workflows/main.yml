@@ -48,7 +48,7 @@ jobs:
           export VERSION="$(/opt/makever.sh)"
           extra_opts=""
           if [ "${{ github.event.inputs.verbose }}" == "yes" ]; then
-              extra_opts+="--verbose "
+              extra_opts+="--verbose"
           fi
           ./test/testmyesp-helper.sh \
             --server-url ${TESTMYESP_SERVER} \
