@@ -97,7 +97,6 @@
                 "expected_content_regex": ".*checking for a new version.*"
             }
         },
-
         {
             "name": "json-http-client",
             "params": {
@@ -107,7 +106,26 @@
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "body": {
-                    "firmware_auto_update": false,
+                    "firmware_auto_update": false
+                },
+                "expected_status": 204
+            }
+        },
+        {
+            "name": "sleep",
+            "params": {
+                "duration": 5000
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PATCH",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
                     "sleep_wake_interval": 0,
                     "sleep_wake_duration": 1
                 },
@@ -116,4 +134,3 @@
         }
     ]
 }
-
