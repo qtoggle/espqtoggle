@@ -9,6 +9,10 @@ jobs:
   blackbox-tests:
     name: Blackbox Tests
     if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/version-')
+    inputs:
+      verbose:
+        description: 'Verbose'
+        default: 'no'
     runs-on: ubuntu-latest
     container:
       image: qtoggle/espqtoggle-builder
@@ -42,6 +46,10 @@ jobs:
       - name: TestMyESP helper
         run: |
           export VERSION="$(/opt/makever.sh)"
+          extra_opts=""
+          if [ "${{ github.event.inputs.verbose }}" == "yes" ]; then
+              extra_opts+="--verbose "
+          fi
           ./test/testmyesp-helper.sh \
             --server-url ${TESTMYESP_SERVER} \
             --credentials ${{ secrets.TESTMYESP_USERNAME }}:${{ secrets.TESTMYESP_PASSWORD }} \
@@ -60,7 +68,7 @@ jobs:
             --test-cases test/test-cases/04-setup-mode/*.json \
             --test-cases test/test-cases/05-provisioning/*.json \
             --test-cases test/test-cases/06-gpiop/*.json \
-            --test-cases test/test-cases/07-adcp/*.json
+            --test-cases test/test-cases/07-adcp/*.json ${extra_opts}
 
   release-s3:
     name: Release To S3
