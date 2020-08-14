@@ -1,5 +1,9 @@
 #!/bin/bash
 
+for arg in $@; do
+    echo ">>> Called with [$arg]"
+done
+
 set -e
 
 server_url=""
@@ -311,6 +315,7 @@ function parse_options() {
                 ;;
 
             --verbose)
+                echo ">>> VERBOSE SET"
                 verbose="true"
                 shift 1
                 ;;
