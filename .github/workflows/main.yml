@@ -16,6 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: qtoggle/espqtoggle-builder
+    defaults:
+      run:
+        shell: bash
     timeout-minutes: 1800
     env:
       TESTMYESP_SERVER: https://testmyesp.qtoggle.io
@@ -47,7 +50,7 @@ jobs:
         run: |
           export VERSION="$(/opt/makever.sh)"
           extra_opts=""
-          if [ "${{ github.event.inputs.verbose }}" == "yes" ]; then
+          if [[ "${{ github.event.inputs.verbose }}" == "yes" ]]; then
               extra_opts+="--verbose"
           fi
           ./test/testmyesp-helper.sh \
