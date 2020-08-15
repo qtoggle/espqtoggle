@@ -1237,6 +1237,9 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
 #ifdef _SLEEP
     else if (needs_sleep_reset) {
         sleep_reset();
+
+        /* Save configuration right away to prevent any losses due to sleep */
+        config_ensure_saved();
     }
 #endif
     
