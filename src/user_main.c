@@ -326,7 +326,7 @@ void on_wifi_connect(bool connected) {
         if (device_flags & DEVICE_FLAG_OTA_AUTO_UPDATE) {
 #ifdef _SLEEP
             int wake_interval = sleep_get_wake_interval();
-            if (wake_interval) {
+            if (wake_interval && sleep_get_wake_duration()) {
                 /* Do not check for an update more often than each OTA_AUTO_MIN_INTERVAL hours */
                 int sleep_boot_count = rtc_get_boot_count();
                 int count_modulo = FW_AUTO_MIN_INTERVAL * 60 / wake_interval;

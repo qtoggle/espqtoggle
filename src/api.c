@@ -3545,7 +3545,7 @@ json_t *device_attrdefs_to_json(void) {
 
     attrdef_json = attrdef_to_json(
         "Sleep Wake Duration",
-        "Controls for how long the device stays awake.",
+        "Controls for how long the device stays awake (0 disables sleep mode).",
         /* unit = */ "s",
         ATTR_TYPE_NUMBER,
         /* modifiable = */ TRUE,

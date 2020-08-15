@@ -78,7 +78,7 @@ void sleep_init(sleep_callback_t callback) {
 void sleep_reset(void) {
     os_timer_disarm(&sleep_timer);
 
-    if (!wake_interval) {
+    if (!wake_interval || !wake_duration) {
         DEBUG_SLEEP("sleep mode disabled");
         return;
     }
@@ -97,20 +97,20 @@ bool sleep_is_short_wake(void) {
     return (wake_interval > 0) && (wake_duration <= WAKE_SHORT_DURATION);
 }
 
-int sleep_get_wake_interval(void) {
+uint16 sleep_get_wake_interval(void) {
     return wake_interval;
 }
 
-void sleep_set_wake_interval(int interval) {
+void sleep_set_wake_interval(uint16 interval) {
     wake_interval = interval;
     DEBUG_SLEEP("wake interval set to %d minutes", interval);
 }
 
-int sleep_get_wake_duration(void) {
+uint16 sleep_get_wake_duration(void) {
     return wake_duration;
 }
 
-void sleep_set_wake_duration(int duration) {
+void sleep_set_wake_duration(uint16 duration) {
     wake_duration = duration;
     DEBUG_SLEEP("wake duration set to %d seconds", duration);
 }

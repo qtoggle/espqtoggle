@@ -108,7 +108,7 @@
                 "body": {
                     "firmware_auto_update": false,
                     "sleep_wake_interval": 0,
-                    "sleep_wake_duration": 1
+                    "sleep_wake_duration": 0
                 },
                 "expected_status": 204
             }
