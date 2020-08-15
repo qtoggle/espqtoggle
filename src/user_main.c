@@ -82,6 +82,7 @@ int         ICACHE_FLASH_ATTR user_rf_cal_sector_set(void);
 
 static void ICACHE_FLASH_ATTR on_system_ready(void);
 static void ICACHE_FLASH_ATTR on_system_reset(void);
+static void ICACHE_FLASH_ATTR on_system_sleep(uint32 interval);
 
 static void ICACHE_FLASH_ATTR on_setup_mode(bool active);
 static void ICACHE_FLASH_ATTR on_setup_mode_idle_timeout(void *);
@@ -219,6 +220,15 @@ void on_system_ready(void) {
 
 void on_system_reset(void) {
     DEBUG_SYSTEM("cleaning up before reset");
+
+    core_disable_polling();
+    config_ensure_saved();
+    sessions_respond_all();
+    tcp_server_stop();
+}
+
+void on_system_sleep(uint32 interval) {
+    DEBUG_SYSTEM("cleaning up before sleep");
 
     core_disable_polling();
     config_ensure_saved();
@@ -399,7 +409,7 @@ void user_init(void) {
     rtc_init();
     check_reboot_loop();
 #ifdef _SLEEP
-    sleep_init();
+    sleep_init(on_system_sleep);
 #endif
     system_config_load();
     check_update_fw_config();

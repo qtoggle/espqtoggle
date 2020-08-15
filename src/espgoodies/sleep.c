@@ -30,18 +30,20 @@
 #define RTC_SLEEP_REM_ADDR   RTC_USER_ADDR + 2 /* 132 * 4 bytes = 528 */
 
 
-static uint16     wake_interval = 0;      /* Minutes, 0 - sleep disabled */
-static uint16     wake_duration = 0;      /* Seconds */
-static os_timer_t sleep_timer;
-static bool       about_to_sleep = FALSE;
+static uint16           wake_interval = 0;      /* Minutes, 0 - sleep disabled */
+static uint16           wake_duration = 0;      /* Seconds */
+static os_timer_t       sleep_timer;
+static bool             about_to_sleep = FALSE;
+static sleep_callback_t sleep_callback;
 
 
 static void ICACHE_FLASH_ATTR on_sleep(void *arg);
 
 
-void sleep_init(void) {
-    /* We might still have a few rounds to sleep, as part of the long sleep mechanism */
+void sleep_init(sleep_callback_t callback) {
+    sleep_callback = callback;
 
+    /* We might still have a few rounds to sleep, as part of the long sleep mechanism */
     uint32 sleep_count = rtc_get_value(RTC_SLEEP_COUNT_ADDR);
     uint32 sleep_rem = rtc_get_value(RTC_SLEEP_REM_ADDR);
 
@@ -55,6 +57,9 @@ void sleep_init(void) {
     if (sleep_count > 0) {
         DEBUG_SLEEP("sleeping for another %d seconds", MAX_SLEEP_DURATION);
         rtc_set_value(RTC_SLEEP_COUNT_ADDR, sleep_count - 1);
+        if (sleep_callback) {
+            sleep_callback(MAX_SLEEP_DURATION);
+        }
         system_deep_sleep_instant(MAX_SLEEP_DURATION * 1000 * 1000);
         return;
     }
@@ -62,6 +67,9 @@ void sleep_init(void) {
     if (sleep_rem > 0) {
         DEBUG_SLEEP("sleeping for another %d seconds", sleep_rem);
         rtc_set_value(RTC_SLEEP_REM_ADDR, 0);
+        if (sleep_callback) {
+            sleep_callback(sleep_rem);
+        }
         system_deep_sleep_instant(sleep_rem * 1000 * 1000);
         return;
     }
@@ -129,12 +137,18 @@ void on_sleep(void *arg) {
     about_to_sleep = TRUE;
 
     if (sleep_count > 0) {
+        if (sleep_callback) {
+            sleep_callback(MAX_SLEEP_DURATION);
+        }
         rtc_set_value(RTC_SLEEP_COUNT_ADDR, sleep_count - 1);
         rtc_set_value(RTC_SLEEP_REM_ADDR, sleep_rem);
         DEBUG_SLEEP("sleeping for %d seconds", MAX_SLEEP_DURATION);
         system_deep_sleep(MAX_SLEEP_DURATION * 1000 * 1000);
     }
     else {
+        if (sleep_callback) {
+            sleep_callback(sleep_rem);
+        }
         rtc_set_value(RTC_SLEEP_COUNT_ADDR, 0);
         rtc_set_value(RTC_SLEEP_REM_ADDR, 0);
         DEBUG_SLEEP("sleeping for %d seconds", sleep_rem);

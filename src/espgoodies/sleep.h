@@ -35,8 +35,10 @@
 #define SLEEP_WAKE_DURATION_MAX    3600        /* Seconds */
 #define SLEEP_WAKE_CONNECT_TIMEOUT 20          /* Seconds */
 
+typedef void (*sleep_callback_t)(uint32 interval);
 
-void ICACHE_FLASH_ATTR sleep_init(void);
+
+void ICACHE_FLASH_ATTR sleep_init(sleep_callback_t callback);
 void ICACHE_FLASH_ATTR sleep_reset(void);
 bool ICACHE_FLASH_ATTR sleep_pending(void);
 bool ICACHE_FLASH_ATTR sleep_is_short_wake(void);
