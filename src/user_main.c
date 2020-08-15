@@ -331,7 +331,10 @@ void on_wifi_connect(bool connected) {
                 );
 
                 if (sleep_boot_count % count_modulo == 0) {
-                    ota_auto_update_check(/* beta = */ device_flags & DEVICE_FLAG_OTA_BETA_ENABLED, on_ota_auto_perform);
+                    ota_auto_update_check(
+                        /* beta = */ device_flags & DEVICE_FLAG_OTA_BETA_ENABLED,
+                        on_ota_auto_perform
+                    );
                 }
             }
             else {  /* Sleep disabled, check for update at each boot */

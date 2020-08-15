@@ -106,31 +106,28 @@
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "body": {
-                    "firmware_auto_update": false
-                },
-                "expected_status": 204
-            }
-        },
-        {
-            "name": "sleep",
-            "params": {
-                "duration": 5000
-            }
-        },
-        {
-            "name": "json-http-client",
-            "params": {
-                "method": "PATCH",
-                "path": "/device",
-                "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
-                },
-                "body": {
+                    "firmware_auto_update": false,
                     "sleep_wake_interval": 0,
                     "sleep_wake_duration": 1
                 },
                 "expected_status": 204
             }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "ip_address": "${TEST_NETWORK_DEVICE_IP}",
+                "method": "POST",
+                "path": "/reset",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "wifi-ap-wait-device-disconnect"
         }
     ]
 }
