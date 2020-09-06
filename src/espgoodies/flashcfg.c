@@ -39,9 +39,7 @@ bool flashcfg_load(uint8 slot, uint8 *data) {
             break;
     }
 
-    ETS_INTR_LOCK();
     SpiFlashOpResult result = spi_flash_read(FLASH_CONFIG_ADDR + offs, (uint32 *) data, size);
-    ETS_INTR_UNLOCK();
     if (result != SPI_FLASH_RESULT_OK) {
         DEBUG_FLASHCFG("failed to read %d bytes from flash config at 0x%05X", size, FLASH_CONFIG_ADDR + offs);
         return FALSE;
@@ -72,9 +70,7 @@ bool flashcfg_save(uint8 slot, uint8 *data) {
     SpiFlashOpResult result;
     for (i = 0; i < size / SPI_FLASH_SEC_SIZE; i++) {
         sector = (FLASH_CONFIG_ADDR + offs + SPI_FLASH_SEC_SIZE * i) / SPI_FLASH_SEC_SIZE;
-        ETS_INTR_LOCK();
         result = spi_flash_erase_sector(sector);
-        ETS_INTR_UNLOCK();
         if (result != SPI_FLASH_RESULT_OK) {
             DEBUG_FLASHCFG(
                 "failed to erase flash sector at 0x%05X",
@@ -90,9 +86,7 @@ bool flashcfg_save(uint8 slot, uint8 *data) {
         }
     }
 
-    ETS_INTR_LOCK();
     result = spi_flash_write(FLASH_CONFIG_ADDR + offs, (uint32 *) data, size);
-    ETS_INTR_UNLOCK();
     if (result != SPI_FLASH_RESULT_OK) {
         DEBUG_FLASHCFG("failed to write %d bytes of flash config at 0x%05X", size, FLASH_CONFIG_ADDR + offs);
         return FALSE;
