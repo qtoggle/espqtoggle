@@ -40,7 +40,8 @@
             }
         },
         {
-            "name": "wifi-ap-wait-device-disconnect"
+            "name": "wifi-ap-wait-device-disconnect",
+            "timeout": 120
         },
         {
             "name": "wifi-ap-wait-device-connect"
