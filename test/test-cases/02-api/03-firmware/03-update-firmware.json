@@ -42,7 +42,7 @@
         {
             "name": "wifi-ap-wait-device-disconnect",
             "params": {
-                "timeout": 120
+                "timeout": 60
             }
         },
         {
