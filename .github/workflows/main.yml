@@ -98,6 +98,7 @@ jobs:
       - name: Build
         run: |
           export DEBUG=false
+          export VERSION="$(/opt/makever.sh)"
           make clean
           make -j4
           for flash_freq in 20 26 40 80; do
