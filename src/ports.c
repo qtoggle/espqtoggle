@@ -371,6 +371,7 @@ void port_load(port_t *port, uint8 *config_data) {
         port->flags |= PORT_FLAG_SET;
     }
 
+    DEBUG_PORT(port, "type = %c", port->type);
     DEBUG_PORT(port, "enabled = %s", IS_PORT_ENABLED(port) ? "true" : "false");
     DEBUG_PORT(port, "writable = %s", IS_PORT_WRITABLE(port) ? "true" : "false");
     DEBUG_PORT(port, "set = %s", IS_PORT_SET(port) ? "true" : "false");

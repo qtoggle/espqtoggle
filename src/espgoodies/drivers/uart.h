@@ -46,5 +46,11 @@ uint16 ICACHE_FLASH_ATTR uart_read(uint8 uart_no, uint8 *buff, uint16 max_len, u
 uint16 ICACHE_FLASH_ATTR uart_write(uint8 uart_no, uint8 *buff, uint16 len, uint32 timeout_us);
 void   ICACHE_FLASH_ATTR uart_write_char(uint8 uart_no, char c);
 
+void   ICACHE_FLASH_ATTR uart_buff_setup(uint8 uart_no, uint16 size);
+uint16 ICACHE_FLASH_ATTR uart_buff_peek(uint8 uart_no, uint8 *data, uint16 max_len);
+uint16 ICACHE_FLASH_ATTR uart_buff_avail(uint8 uart_no);
+uint16 ICACHE_FLASH_ATTR uart_buff_read(uint8 uart_no, uint8 *data, uint16 max_len);
+void   ICACHE_FLASH_ATTR uart_buff_cleanup(uint8 uart_no);
+
 
 #endif /* _ESPGOODIES_UART_H */
