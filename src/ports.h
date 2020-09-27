@@ -169,6 +169,7 @@ typedef struct port {
     uint64             change_dep_mask;       /* Port change dependency mask */
 
     int                aux;                   /* Member used internally for dependency loops & more */
+    void              *user_data;             /* Generic pointer to user data */
 
     /* Sampling */
     uint32             sampling_interval;

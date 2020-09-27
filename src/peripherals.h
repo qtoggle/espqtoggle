@@ -54,7 +54,7 @@
 #define PERIPHERAL_MAX_DOUBLE_PARAMS 3
 #define PERIPHERAL_MAX_NUM           16 /* Max number of registered peripherals */
 #define PERIPHERAL_MAX_PORTS         16 /* Max number of ports/peripheral */
-#define PERIPHERAL_MAX_TYPE_ID       9  /* Needs to be increased when adding a new peripheral type */
+#define PERIPHERAL_MAX_TYPE_ID       10 /* Needs to be increased when adding a new peripheral type */
 
 #define PERIPHERAL_GET_FLAG(p, no)     (!!((p)->flags & BIT(no)))
 #define PERIPHERAL_SET_FLAG(p, no, v)  {if (v) (p)->flags |= BIT(no); else (p)->flags &= ~BIT(no);}

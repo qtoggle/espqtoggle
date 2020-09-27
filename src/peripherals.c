@@ -34,6 +34,7 @@
 #include "peripherals/bl0940.h"
 #include "peripherals/shellyht.h"
 #include "peripherals/v9821.h"
+#include "peripherals/tuyamcu.h"
 
 
 static peripheral_type_t *all_peripheral_types[] = {
@@ -47,6 +48,7 @@ static peripheral_type_t *all_peripheral_types[] = {
     &peripheral_type_bl0940,    /* Type 7 */
     &peripheral_type_shelly_ht, /* Type 8 */
     &peripheral_type_v9821,     /* Type 9 */
+    &peripheral_type_tuya_mcu,  /* Type 10 */
 
 };
 
