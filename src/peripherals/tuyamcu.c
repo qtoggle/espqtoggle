@@ -115,10 +115,11 @@
 #define DP_TYPE_ENUM    0x04
 #define DP_TYPE_FAULT   0x05
 
-#define PARAM_DP_FLAG_TYPE_MASK   0x0F
-#define PARAM_DP_FLAG_WRITABLE    4
+#define PARAM_DP_FLAG_TYPE_MASK 0x0F
+#define PARAM_DP_FLAG_WRITABLE  4
 
-#define PARAM_NO_POLLING_INTERVAL 0
+#define FLAG_NO_FORCE_COORDINATED_SETUP 0
+#define PARAM_NO_POLLING_INTERVAL       0
 
 
 typedef struct {
@@ -706,6 +707,11 @@ void init_mcu(peripheral_t *peripheral) {
     }
     else {
         DEBUG_TUYA_MCU(peripheral, "timeout waiting for setup type");
+    }
+
+    if (PERIPHERAL_GET_FLAG(peripheral, FLAG_NO_FORCE_COORDINATED_SETUP)) {
+        DEBUG_TUYA_MCU(peripheral, "force coordinated setup");
+        user_data->flags &= ~BIT(FLAG_SELF_SETUP);
     }
 
     /* Send initial net status, unless self-setup */
