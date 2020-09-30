@@ -221,7 +221,7 @@ static double ICACHE_FLASH_ATTR read_value(port_t *port);
 static bool   ICACHE_FLASH_ATTR write_value(port_t *port, double value);
 static void   ICACHE_FLASH_ATTR configure(port_t *port, bool enabled);
 
-static bool   ICACHE_FLASH_ATTR init_mcu(peripheral_t *peripheral);
+static void   ICACHE_FLASH_ATTR init_mcu(peripheral_t *peripheral);
 static void   ICACHE_FLASH_ATTR update(peripheral_t *peripheral);
 
 static void   ICACHE_FLASH_ATTR process_next_frame(peripheral_t *peripheral);
@@ -334,7 +334,9 @@ uint8 *make_dp_frame_number(peripheral_t *peripheral, uint8 dp_id, uint32 value,
 
     uint16 data_len_n = htons(data_len);
     memcpy(frame + 2, &data_len_n, 2);
-    frame[4] = value;
+
+    uint32 value_n = htonl(value);
+    memcpy(frame + 4, &value_n, 4);
 
     return frame;
 }
@@ -609,13 +611,11 @@ void configure(port_t *port, bool enabled) {
         user_data->flags |= BIT(FLAG_CONFIGURED);
 
         DEBUG_TUYA_MCU(peripheral, "initializing MCU");
-        if (!init_mcu(peripheral)) {
-            DEBUG_TUYA_MCU(peripheral, "MCU initialization failed");
-        }
+        init_mcu(peripheral);
     }
 }
 
-bool init_mcu(peripheral_t *peripheral) {
+void init_mcu(peripheral_t *peripheral) {
     user_data_t *user_data = peripheral->user_data;
 
     uint16 frame_len, data_len, size;
@@ -627,12 +627,12 @@ bool init_mcu(peripheral_t *peripheral) {
     send_empty_cmd(peripheral, CMD_HEARTBEAT);
     user_data->last_heartbeat_time_ms = system_uptime_ms();
 
-    if (!wait_uart_cmd(peripheral, CMD_HEARTBEAT, NULL, NULL, SYNC_TIMEOUT)) {
-        DEBUG_TUYA_MCU(peripheral, "timeout waiting for initial heartbeat");
-        return FALSE;
+    if (wait_uart_cmd(peripheral, CMD_HEARTBEAT, NULL, NULL, SYNC_TIMEOUT)) {
+        DEBUG_TUYA_MCU(peripheral, "got initial heartbeat");
     }
-
-    DEBUG_TUYA_MCU(peripheral, "got initial heartbeat");
+    else {
+        DEBUG_TUYA_MCU(peripheral, "timeout waiting for initial heartbeat");
+    }
 
     /* Query product info */
     DEBUG_TUYA_MCU(peripheral, "querying product info");
@@ -641,48 +641,47 @@ bool init_mcu(peripheral_t *peripheral) {
     free(frame);
     if (size != frame_len) {
         DEBUG_TUYA_MCU(peripheral, "failed to write frame");
-        return FALSE;
     }
 
-    if (!wait_uart_cmd(peripheral, CMD_PROD_INFO, &data, &data_len, SYNC_TIMEOUT)) {
-        DEBUG_TUYA_MCU(peripheral, "timeout waiting for product info");
-        return FALSE;
-    }
-
-    DEBUG_TUYA_MCU(peripheral, "got product info");
-    char *json_data = strndup((char *) data, data_len);
-    json_t *json = json_parse(json_data);
-    free(data);
-    if (json) {
-        if (json_get_type(json) == JSON_TYPE_OBJ) {
-            json_t *ir_json = json_obj_lookup_key(json, "ir"); /* e.g. "5.12": output - GPIO5, input - GPIO12 */
-            if (ir_json && json_get_type(ir_json) == JSON_TYPE_STR) {
-                char *ir = json_str_get(ir_json);
-                char *out_str = ir;
-                char *in_str = ir;
-                while (*in_str++) {
-                    if (*in_str == '.') {
-                        *in_str = '\0';
-                        break;
+    if (wait_uart_cmd(peripheral, CMD_PROD_INFO, &data, &data_len, SYNC_TIMEOUT)) {
+        DEBUG_TUYA_MCU(peripheral, "got product info");
+        char *json_data = strndup((char *) data, data_len);
+        json_t *json = json_parse(json_data);
+        free(data);
+        if (json) {
+            if (json_get_type(json) == JSON_TYPE_OBJ) {
+                json_t *ir_json = json_obj_lookup_key(json, "ir"); /* e.g. "5.12": output - GPIO5, input - GPIO12 */
+                if (ir_json && json_get_type(ir_json) == JSON_TYPE_STR) {
+                    char *ir = json_str_get(ir_json);
+                    char *out_str = ir;
+                    char *in_str = ir;
+                    while (*in_str++) {
+                        if (*in_str == '.') {
+                            *in_str = '\0';
+                            break;
+                        }
                     }
+
+                    user_data->ir_out_pin = strtol(out_str, NULL, 10);
+                    user_data->ir_in_pin = strtol(in_str, NULL, 10);
+                    user_data->flags |= BIT(FLAG_IR);
+
+                    DEBUG_TUYA_MCU(peripheral, "IR pins: in = %d, out = %d", user_data->ir_in_pin, user_data->ir_out_pin);
                 }
 
-                user_data->ir_out_pin = strtol(out_str, NULL, 10);
-                user_data->ir_in_pin = strtol(in_str, NULL, 10);
-                user_data->flags |= BIT(FLAG_IR);
-
-                DEBUG_TUYA_MCU(peripheral, "IR pins: in = %d, out = %d", user_data->ir_in_pin, user_data->ir_out_pin);
+                json_t *low_json = json_obj_lookup_key(json, "low"); /* 0/1 */
+                if (low_json && json_get_type(low_json) == JSON_TYPE_INT && json_int_get(low_json) == 1) {
+                    user_data->flags |= BIT(FLAG_LOW_POWER);
+                }
             }
-
-            json_t *low_json = json_obj_lookup_key(json, "low"); /* 0/1 */
-            if (low_json && json_get_type(low_json) == JSON_TYPE_INT && json_int_get(low_json) == 1) {
-                user_data->flags |= BIT(FLAG_LOW_POWER);
-            }
+            json_free(json);
         }
-        json_free(json);
+        else {
+            DEBUG_TUYA_MCU(peripheral, "failed o parse product info");
+        }
     }
     else {
-        DEBUG_TUYA_MCU(peripheral, "failed o parse product info");
+        DEBUG_TUYA_MCU(peripheral, "timeout waiting for product info");
     }
 
     /* Query setup type */
@@ -692,23 +691,22 @@ bool init_mcu(peripheral_t *peripheral) {
     free(frame);
     if (size != frame_len) {
         DEBUG_TUYA_MCU(peripheral, "failed to write frame");
-        return FALSE;
     }
 
-    if (!wait_uart_cmd(peripheral, CMD_SETUP_TYPE, &data, &data_len, SYNC_TIMEOUT)) {
-        DEBUG_TUYA_MCU(peripheral, "timeout waiting for setup type");
-        return FALSE;
-    }
+    if (wait_uart_cmd(peripheral, CMD_SETUP_TYPE, &data, &data_len, SYNC_TIMEOUT)) {
+        if (data_len >= 2) {
+            user_data->flags |= BIT(FLAG_SELF_SETUP);
 
-    if (data_len >= 2) {
-        user_data->flags |= BIT(FLAG_SELF_SETUP);
-
-        DEBUG_TUYA_MCU(peripheral, "self setup type: status = %d, reset = %d", data[0], data[1]);
+            DEBUG_TUYA_MCU(peripheral, "self setup type: status = %d, reset = %d", data[0], data[1]);
+        }
+        else {
+            DEBUG_TUYA_MCU(peripheral, "coordinated setup type");
+        }
+        free(data);
     }
     else {
-        DEBUG_TUYA_MCU(peripheral, "coordinated setup type");
+        DEBUG_TUYA_MCU(peripheral, "timeout waiting for setup type");
     }
-    free(data);
 
     /* Send initial net status, unless self-setup */
     if (!(user_data->flags & BIT(FLAG_SELF_SETUP))) {
@@ -722,8 +720,6 @@ bool init_mcu(peripheral_t *peripheral) {
     user_data->last_polling_time_ms = system_uptime_ms();
 
     /* Parsing of DPs will be done during one of the following update() calls */
-
-    return TRUE;
 }
 
 void process_next_frame(peripheral_t *peripheral) {
@@ -1060,8 +1056,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
      * List of details ends at first DP_ID set to 0.
      *
      * Flags:
-     *  * Bit 0: port type (0 - boolean, 1 - number)
-     *  * Bit 1: enum
+     *  * Bit 0 + 1: port type
      *  * Bit 2: reserved
      *  * Bit 3: reserved
      *  * Bit 4: writable
