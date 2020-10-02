@@ -635,6 +635,8 @@ void init_mcu(peripheral_t *peripheral) {
         DEBUG_TUYA_MCU(peripheral, "timeout waiting for initial heartbeat");
     }
 
+    os_delay_us(200000);
+
     /* Query product info */
     DEBUG_TUYA_MCU(peripheral, "querying product info");
     frame = make_frame_empty(peripheral, CMD_PROD_INFO, &frame_len);
@@ -685,6 +687,8 @@ void init_mcu(peripheral_t *peripheral) {
         DEBUG_TUYA_MCU(peripheral, "timeout waiting for product info");
     }
 
+    os_delay_us(200000);
+
     /* Query setup type */
     DEBUG_TUYA_MCU(peripheral, "querying setup type");
     frame = make_frame_empty(peripheral, CMD_SETUP_TYPE, &frame_len);
@@ -716,9 +720,12 @@ void init_mcu(peripheral_t *peripheral) {
 
     /* Send initial net status, unless self-setup */
     if (!(user_data->flags & BIT(FLAG_SELF_SETUP))) {
+        os_delay_us(200000);
         DEBUG_TUYA_MCU(peripheral, "sending initial net status");
         send_net_status_cmd(peripheral, CMD_NET_STATUS_REPORT);
     }
+
+    os_delay_us(200000);
 
     /* Query initial DP values */
     DEBUG_TUYA_MCU(peripheral, "querying initial DP values");
