@@ -66,8 +66,8 @@
                 "expected_status": 200,
                 "expected_body_schema": {
                     "type": "integer",
-                    "minimum": 400,
-                    "maximum": 600
+                    "minimum": 300,
+                    "maximum": 700
                 }
             }
         },
