@@ -46,7 +46,7 @@
 
 #define READ_TIMEOUT       50000 /* Microseconds */
 #define WRITE_TIMEOUT      50000 /* Microseconds */
-#define SYNC_TIMEOUT       1000   /* Milliseconds */
+#define SYNC_TIMEOUT       1000  /* Milliseconds */
 #define HEARTBEAT_INTERVAL 15000 /* Milliseconds */
 
 #define FRAME_HEADER0 0x55
@@ -115,8 +115,9 @@
 #define DP_TYPE_ENUM    0x04
 #define DP_TYPE_FAULT   0x05
 
-#define PARAM_DP_FLAG_TYPE_MASK 0x0F
-#define PARAM_DP_FLAG_WRITABLE  4
+#define PARAM_DP_FLAG_TYPE_MASK    0x0F
+#define PARAM_DP_FLAG_WRITABLE     4
+#define PARAM_DP_FLAG_ENUM_AS_BOOL 8
 
 #define FLAG_NO_FORCE_COORDINATED_SETUP 0
 #define PARAM_NO_POLLING_INTERVAL       0
@@ -128,6 +129,8 @@ typedef struct {
     uint16 flags;
     uint8  dp_id;
     bool   valid;
+    uint8  false_value;
+    uint8  true_value;
 
 } dp_details_t;
 
@@ -558,6 +561,11 @@ double read_value(port_t *port) {
         return UNDEFINED;
     }
 
+    /* If port was mapped from enum to boolean, use indicated false/true values */
+    if (dp_details->flags & PARAM_DP_FLAG_ENUM_AS_BOOL) {
+        return dp_details->value == dp_details->true_value;
+    }
+
     return dp_details->value;
 }
 
@@ -575,6 +583,10 @@ bool write_value(port_t *port, double value) {
         data = make_dp_frame_number(peripheral, dp_details->dp_id, (uint32) value, &data_len);
     }
     else if (type == DP_TYPE_ENUM) {
+        /* If port was mapped from enum to boolean, use indicated false/true values */
+        if (dp_details->flags & PARAM_DP_FLAG_ENUM_AS_BOOL) {
+            value = value ? dp_details->true_value : dp_details->false_value;
+        }
         data = make_dp_frame_enum(peripheral, dp_details->dp_id, (uint8) value, &data_len);
     }
     else {
@@ -1062,17 +1074,20 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
      *
      * Following 48 bytes are organized as a list of DP details; for each DP, a port will be allocated, according to
      * given details. Details are structured as follows:
-     *  * Byte  0:     DP_ID
-     *  * Byte  1:     Reserved
-     *  * Bytes 2-3:   16-bit flags (see below)
+     *  * Byte  0:   DP_ID
+     *  * Byte  1:   reserved
+     *  * Bytes 2-3: 16-bit flags (see below)
+     *  * ...:       depending on flags
      *
      * List of details ends at first DP_ID set to 0.
      *
      * Flags:
-     *  * Bit 0 + 1: port type
-     *  * Bit 2: reserved
-     *  * Bit 3: reserved
-     *  * Bit 4: writable
+     *  * Bit 0-3: port type
+     *  * Bit 4:   writable
+     *  * Bit 5:   reserved
+     *  * Bit 6:   reserved
+     *  * Bit 7:   reserved
+     *  * Bit 8:   treat enum as bool (2 extra bytes indicate false and true values)
      */
 
     uint8 *p = peripheral->params + 8;
@@ -1118,6 +1133,13 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
         /* writable */
         if (dp_details->flags & BIT(PARAM_DP_FLAG_WRITABLE)) {
             port->flags |= PORT_FLAG_WRITABLE;
+        }
+
+        /* enum as bool */
+        if (dp_details->flags & BIT(PARAM_DP_FLAG_ENUM_AS_BOOL)) {
+            port->type = PORT_TYPE_BOOLEAN;
+            dp_details->false_value = *p++;
+            dp_details->true_value = *p++;
         }
 
         port->slot = -1;
