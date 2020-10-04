@@ -69,7 +69,11 @@ uint64                   system_uptime_us(void);
 int    ICACHE_FLASH_ATTR system_get_flash_size(void);
 
 void   ICACHE_FLASH_ATTR system_reset(bool delayed);
-void   ICACHE_FLASH_ATTR system_reset_set_callback(system_reset_callback_t callback);
+void   ICACHE_FLASH_ATTR system_reset_set_callbacks(
+                             system_reset_callback_t callback,
+                             system_reset_callback_t factory_callback
+                         );
+void   ICACHE_FLASH_ATTR system_check_reboot_loop(void);
 
 void   ICACHE_FLASH_ATTR system_get_fw_version(version_t *version);
 void   ICACHE_FLASH_ATTR system_set_fw_version(version_t *version);

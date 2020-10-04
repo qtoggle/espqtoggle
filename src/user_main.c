@@ -49,9 +49,6 @@
 #define CONNECT_TIMEOUT_SETUP_MODE   300 /* Seconds */
 #define SETUP_MODE_IDLE_TIMEOUT      300 /* Seconds */
 
-#define RTC_UNEXP_RESET_COUNT_ADDR RTC_USER_ADDR + 0 /* 130 * 4 bytes = 520 */
-#define MAX_UNEXP_RESET_COUNT      16
-
 #ifndef FW_BASE_URL
 #define FW_BASE_URL           ""
 #define FW_BASE_OTA_PATH      ""
@@ -73,7 +70,6 @@ static os_timer_t setup_mode_idle_timer;
 
 
 static void ICACHE_FLASH_ATTR check_update_fw_config(void);
-static void ICACHE_FLASH_ATTR check_reboot_loop(void);
 static void ICACHE_FLASH_ATTR main_init(void);
 
 void        ICACHE_FLASH_ATTR user_init(void);
@@ -127,62 +123,6 @@ void check_update_fw_config(void) {
         system_set_fw_version(&fw_version);
         system_config_save();
     }
-}
-
-void check_reboot_loop(void) {
-    struct rst_info *reset_info = system_get_rst_info();
-    uint32 unexp_reset_count;
-
-    switch (reset_info->reason) {
-        case REASON_DEFAULT_RST:
-            DEBUG_SYSTEM("reset reason: %s", "power reboot");
-            break;
-
-        case REASON_WDT_RST:
-            DEBUG_SYSTEM("reset reason: %s", "hardware watchdog");
-            break;
-
-        case REASON_EXCEPTION_RST:
-            DEBUG_SYSTEM("reset reason: %s", "fatal exception");
-            break;
-
-        case REASON_SOFT_WDT_RST:
-            DEBUG_SYSTEM("reset reason: %s", "software watchdog");
-            break;
-
-        case REASON_SOFT_RESTART:
-            DEBUG_SYSTEM("reset reason: %s", "software reset");
-            break;
-
-        case REASON_DEEP_SLEEP_AWAKE:
-            DEBUG_SYSTEM("reset reason: %s", "deep-sleep wake");
-            break;
-
-        case REASON_EXT_SYS_RST:
-            DEBUG_SYSTEM("reset reason: %s", "hardware reset");
-            break;
-    }
-
-    if (reset_info->reason == REASON_WDT_RST ||
-        reset_info->reason == REASON_SOFT_WDT_RST ||
-        reset_info->reason == REASON_EXCEPTION_RST) {
-
-        unexp_reset_count = rtc_get_value(RTC_UNEXP_RESET_COUNT_ADDR);
-        DEBUG_SYSTEM("unexpected reset detected (count = %d)", unexp_reset_count);
-
-        if (unexp_reset_count >= MAX_UNEXP_RESET_COUNT) {
-            DEBUG_SYSTEM("too many unexpected resets, resetting configuration");
-            flashcfg_reset(FLASH_CONFIG_SLOT_DEFAULT);
-        }
-
-        unexp_reset_count++;
-    }
-
-    else {
-        unexp_reset_count = 0;
-    }
-
-    rtc_set_value(RTC_UNEXP_RESET_COUNT_ADDR, unexp_reset_count);
 }
 
 void main_init(void) {
@@ -403,11 +343,11 @@ void user_init(void) {
     debug_uart_setup(DEBUG_UART_DISABLE);
 #endif /* _DEBUG */
 
-    system_reset_set_callback(on_system_reset);
+    system_reset_set_callbacks(on_system_reset, config_factory_reset);
     system_setup_mode_set_callback(on_setup_mode);
 
     rtc_init();
-    check_reboot_loop();
+    system_check_reboot_loop();
 #ifdef _SLEEP
     sleep_init(on_system_sleep);
 #endif

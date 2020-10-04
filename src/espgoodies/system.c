@@ -33,12 +33,16 @@
 #include "espgoodies/system.h"
 
 
-#define RESET_DELAY          3000 /* Milliseconds */
+#define RESET_DELAY                3000 /* Milliseconds */
 
-#define SETUP_MODE_IDLE      0
-#define SETUP_MODE_PRESSED   1
-#define SETUP_MODE_TRIGGERED 2
-#define SETUP_MODE_RESET     3
+#define SETUP_MODE_IDLE            0
+#define SETUP_MODE_PRESSED         1
+#define SETUP_MODE_TRIGGERED       2
+#define SETUP_MODE_RESET           3
+
+#define RTC_UNEXP_RESET_COUNT_ADDR RTC_USER_ADDR + 0 /* 130 * 4 bytes = 520 */
+#define MAX_UNEXP_RESET_COUNT      16
+
 
 static int8                         setup_button_pin = -1;
 static bool                         setup_button_level = FALSE;
@@ -52,6 +56,7 @@ static uint32                       last_time_us = 0;
 static uint64                       uptime_us = 0;
 static os_timer_t                   reset_timer;
 static system_reset_callback_t      reset_callback = NULL;
+static system_reset_callback_t      reset_factory_callback = NULL;
 static system_setup_mode_callback_t setup_mode_callback;
 
 static uint64                       setup_mode_button_time_ms = 0;
@@ -224,8 +229,65 @@ void system_reset(bool delayed) {
     }
 }
 
-void system_reset_set_callback(system_reset_callback_t callback) {
+void system_reset_set_callbacks(system_reset_callback_t callback, system_reset_callback_t factory_callback) {
     reset_callback = callback;
+    reset_factory_callback = factory_callback;
+}
+
+void system_check_reboot_loop(void) {
+    struct rst_info *reset_info = system_get_rst_info();
+    uint32 unexp_reset_count;
+
+    switch (reset_info->reason) {
+        case REASON_DEFAULT_RST:
+            DEBUG_SYSTEM("reset reason: %s", "power reboot");
+            break;
+
+        case REASON_WDT_RST:
+            DEBUG_SYSTEM("reset reason: %s", "hardware watchdog");
+            break;
+
+        case REASON_EXCEPTION_RST:
+            DEBUG_SYSTEM("reset reason: %s", "fatal exception");
+            break;
+
+        case REASON_SOFT_WDT_RST:
+            DEBUG_SYSTEM("reset reason: %s", "software watchdog");
+            break;
+
+        case REASON_SOFT_RESTART:
+            DEBUG_SYSTEM("reset reason: %s", "software reset");
+            break;
+
+        case REASON_DEEP_SLEEP_AWAKE:
+            DEBUG_SYSTEM("reset reason: %s", "deep-sleep wake");
+            break;
+
+        case REASON_EXT_SYS_RST:
+            DEBUG_SYSTEM("reset reason: %s", "hardware reset");
+            break;
+    }
+
+    if (reset_info->reason == REASON_WDT_RST ||
+        reset_info->reason == REASON_SOFT_WDT_RST ||
+        reset_info->reason == REASON_EXCEPTION_RST) {
+
+        unexp_reset_count = rtc_get_value(RTC_UNEXP_RESET_COUNT_ADDR);
+        DEBUG_SYSTEM("unexpected reset detected (count = %d)", unexp_reset_count);
+
+        if (unexp_reset_count >= MAX_UNEXP_RESET_COUNT) {
+            DEBUG_SYSTEM("too many unexpected resets, resetting configuration");
+            flashcfg_reset(FLASH_CONFIG_SLOT_DEFAULT);
+        }
+
+        unexp_reset_count++;
+    }
+
+    else {
+        unexp_reset_count = 0;
+    }
+
+    rtc_set_value(RTC_UNEXP_RESET_COUNT_ADDR, unexp_reset_count);
 }
 
 void system_get_fw_version(version_t *version) {
@@ -337,7 +399,12 @@ void system_update(void) {
         DEBUG_SYSTEM("resetting to factory defaults");
         setup_mode_state = SETUP_MODE_RESET;
 
-        flashcfg_reset(FLASH_CONFIG_SLOT_DEFAULT);
+        if (reset_factory_callback) {
+            reset_factory_callback();
+        }
+        else {
+            flashcfg_reset(FLASH_CONFIG_SLOT_DEFAULT);
+        }
         wifi_reset();
 
         system_reset(/* delayed = */ TRUE);
