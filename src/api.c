@@ -1272,8 +1272,7 @@ json_t *api_post_reset(json_t *query_json, json_t *request_json, int *code) {
     }
 
     if (factory) {
-        DEBUG_SYSTEM("resetting to factory defaults");
-        flashcfg_reset(FLASH_CONFIG_SLOT_DEFAULT);
+        config_factory_reset();
         wifi_reset();
     }
 

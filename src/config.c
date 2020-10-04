@@ -130,6 +130,18 @@ void config_save(void) {
     DEBUG_CONFIG("total strings size is %d", strings_offs - 1);
 }
 
+void config_factory_reset(void) {
+    uint8 *config_data = zalloc(FLASH_CONFIG_SIZE_DEFAULT);
+    uint32 strings_offs = 1; /* Address 0 in strings pool represents an unset string, so it's left out */
+    char *strings_ptr = (char *) config_data + CONFIG_OFFS_STR_BASE;
+
+    /* Preserve configuration name */
+    string_pool_write(strings_ptr, &strings_offs, device_config_name, config_data + CONFIG_OFFS_CONFIG_NAME);
+
+    flashcfg_save(FLASH_CONFIG_SLOT_DEFAULT, config_data);
+    free(config_data);
+}
+
 void config_start_auto_provisioning(bool ignore_version) {
     if (provisioning) {
         DEBUG_CONFIG("provisioning: busy");
