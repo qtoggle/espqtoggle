@@ -5,7 +5,6 @@ DEBUG ?= true
 DEBUG_FLAGS ?= battery dnsserver flashcfg html httpclient httpserver json ota rtc sleep system tcpserver wifi 	\
                gpio hspi onewire pwm uart 																		\
                api config core device espqtclient events expr peripherals ports sessions virtual webhooks 		\
-               api core device espqtclient expr ports events sessions virtual webhooks							\
                adcp bl0937 bl0940 dhtxx ds18x20 gpiop pwmp shelly_ht tuya_mcu v9821
 DEBUG_IP ?= # 192.168.0.1
 DEBUG_PORT ?= 48879
@@ -14,7 +13,6 @@ DEBUG_UART_NO ?= 0
 OTA     ?= true
 SSL     ?= false
 SLEEP   ?= true
-VIRTUAL ?= true
 BATTERY ?= true
 
 FLASH_MODE ?= qio
@@ -152,10 +150,6 @@ ifeq ($(SLEEP), true)
     CFLAGS += -D_SLEEP
 endif
 
-ifeq ($(VIRTUAL), true)
-    CFLAGS += -D_VIRTUAL
-endif
-
 ifeq ($(BATTERY), true)
     CFLAGS += -D_BATTERY
 endif
@@ -227,7 +221,6 @@ buildinfo:
 	$(vecho) " *" OTA = $(OTA)
 	$(vecho) " *" SSL = $(SSL)
 	$(vecho) " *" SLEEP = $(SLEEP)
-	$(vecho) " *" VIRTUAL = $(VIRTUAL)
 	$(vecho) " *" BATTERY = $(BATTERY)
 	$(vecho) " *" FLASH_MODE = $(FLASH_MODE)
 	$(vecho) " *" FLASH_FREQ = $(FLASH_FREQ)

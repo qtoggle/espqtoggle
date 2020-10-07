@@ -32,9 +32,6 @@
 #include "virtual.h"
 
 
-#ifdef _VIRTUAL
-
-
 #define SAMP_INT                    10  /* Milliseconds */
 
 #define CONFIG_CUSTOM_DATA_OFFS_MIN 0x00 /* 4 bytes */
@@ -193,6 +190,3 @@ bool virtual_port_unregister(port_t *port) {
 
     return TRUE;
 }
-
-
-#endif  /* _VIRTUAL */

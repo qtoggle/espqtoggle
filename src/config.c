@@ -52,11 +52,6 @@ void ICACHE_FLASH_ATTR on_provisioning_config_response(
                            int header_count,
                            uint8 addr[]
                        );
-void ICACHE_FLASH_ATTR apply_device_provisioning_config(json_t *device_config);
-void ICACHE_FLASH_ATTR apply_peripherals_provisioning_config(json_t *peripherals_config);
-void ICACHE_FLASH_ATTR apply_system_provisioning_config(json_t *system_config);
-void ICACHE_FLASH_ATTR apply_ports_provisioning_config(json_t *ports_config);
-void ICACHE_FLASH_ATTR apply_port_provisioning_config(json_t *port_config);
 
 
 void config_init(void) {
@@ -183,6 +178,11 @@ void config_start_auto_provisioning(bool ignore_version) {
     );
 }
 
+bool config_is_provisioning(void) {
+    return provisioning;
+}
+
+
 bool config_apply_json_provisioning(json_t *config, bool force) {
     if (provisioning) {
         DEBUG_CONFIG("provisioning: busy");
@@ -232,78 +232,67 @@ bool config_apply_json_provisioning(json_t *config, bool force) {
     api_conn_save();
     api_conn_set((void *) 1, API_ACCESS_LEVEL_ADMIN);
 
+    bool result = TRUE;
+
     json_t *device_config = json_obj_pop_key(config, "device");
     if (device_config) {
-        apply_device_provisioning_config(device_config);
+        result = config_apply_device_provisioning(device_config);
         json_free(device_config);
+
+        if (!result) {
+            goto done;
+        }
     }
 
     system_soft_wdt_feed();
 
     json_t *peripherals_config = json_obj_pop_key(config, "peripherals");
     if (peripherals_config) {
-        apply_peripherals_provisioning_config(peripherals_config);
+        result = config_apply_peripherals_provisioning(peripherals_config);
         json_free(peripherals_config);
+
+        if (!result) {
+            goto done;
+        }
     }
 
     system_soft_wdt_feed();
 
     json_t *system_config = json_obj_pop_key(config, "system");
     if (system_config) {
-        apply_system_provisioning_config(system_config);
+        result = config_apply_system_provisioning(system_config);
         json_free(system_config);
+
+        if (!result) {
+            goto done;
+        }
     }
 
     system_soft_wdt_feed();
 
     json_t *ports_config = json_obj_pop_key(config, "ports");
     if (ports_config) {
-        apply_ports_provisioning_config(ports_config);
+        result = config_apply_ports_provisioning(
+            ports_config,
+            /* error_response_json = */ NULL,
+            /* error_port_id = */ NULL
+        );
         json_free(ports_config);
+
+        if (!result) {
+            goto done;
+        }
     }
+
+done:
 
     api_conn_restore();
-
     provisioning = FALSE;
 
-    return TRUE;
+    return result;
 }
 
-bool config_is_provisioning(void) {
-    return provisioning;
-}
-
-
-void on_provisioning_config_response(
-    char *body,
-    int body_len,
-    int status,
-    char *header_names[],
-    char *header_values[],
-    int header_count,
-    uint8 addr[]
-) {
-    provisioning = FALSE;
-
-    if (status == 200) {
-        json_t *config = json_parse(body);
-        if (!config) {
-            DEBUG_CONFIG("provisioning: invalid JSON");
-            return;
-        }
-
-        config_apply_json_provisioning(config, /* force = */ FALSE);
-        json_free(config);
-    }
-    else {
-        DEBUG_CONFIG("provisioning: got status %d", status);
-    }
-
-    /* Regardless of the outcome of the provisioning operation, a full-update event needs to be triggered */
-    event_push_full_update();
-}
-
-void apply_device_provisioning_config(json_t *device_config) {
+bool config_apply_device_provisioning(json_t *device_config) {
     json_t *response_json;
     json_t *attr_json;
     int code;
@@ -331,14 +320,18 @@ void apply_device_provisioning_config(json_t *device_config) {
         json_free(response_json);
         if (code / 100 != 2) {
             DEBUG_CONFIG("provisioning: api_patch_device() failed with status code %d", code);
+            return FALSE;
         }
     }
     else {
         DEBUG_CONFIG("provisioning: invalid device config");
+        return FALSE;
     }
+
+    return TRUE;
 }
 
-void apply_peripherals_provisioning_config(json_t *peripherals_config) {
+bool config_apply_peripherals_provisioning(json_t *peripherals_config) {
     json_t *response_json;
     int code;
 
@@ -350,14 +343,18 @@ void apply_peripherals_provisioning_config(json_t *peripherals_config) {
         json_free(response_json);
         if (code / 100 != 2) {
             DEBUG_CONFIG("provisioning: api_patch_peripherals() failed with status code %d", code);
+            return FALSE;
         }
     }
     else {
         DEBUG_CONFIG("provisioning: invalid peripherals config");
+        return FALSE;
     }
+
+    return TRUE;
 }
 
-void apply_system_provisioning_config(json_t *system_config) {
+bool config_apply_system_provisioning(json_t *system_config) {
     json_t *response_json;
     int code;
 
@@ -369,65 +366,102 @@ void apply_system_provisioning_config(json_t *system_config) {
         json_free(response_json);
         if (code / 100 != 2) {
             DEBUG_CONFIG("provisioning: api_patch_system() failed with status code %d", code);
+            return FALSE;
         }
     }
     else {
         DEBUG_CONFIG("provisioning: invalid system config");
+        return FALSE;
     }
+
+    return TRUE;
 }
 
-void apply_ports_provisioning_config(json_t *ports_config) {
+bool config_apply_ports_provisioning(json_t *ports_config, json_t **error_response_json, char **error_port_id) {
     json_t *port_config;
     int i;
+    char *port_id;
 
     DEBUG_CONFIG("provisioning: applying ports config");
 
     if (json_get_type(ports_config) == JSON_TYPE_LIST) {
         for (i = 0; i < json_list_get_len(ports_config); i++) {
             port_config = json_list_value_at(ports_config, i);
-            apply_port_provisioning_config(port_config);
+
+            if (!config_apply_port_provisioning(port_config, &port_id, error_response_json)) {
+                if (error_port_id) {
+                    *error_port_id = port_id;
+                }
+                else {
+                    free(port_id);
+                }
+                return FALSE;
+            }
+
+            free(port_id);
 
             system_soft_wdt_feed();
         }
     }
     else {
         DEBUG_CONFIG("provisioning: invalid ports config");
+        return FALSE;
     }
+
+    return TRUE;
 }
 
-void apply_port_provisioning_config(json_t *port_config) {
+bool config_apply_port_provisioning(json_t *port_config, char **port_id, json_t **error_response_json) {
     json_t *response_json;
-    json_t *port_id_json;
+    json_t *id_json;
     json_t *virtual_json;
     json_t *request_json;
     json_t *attr_json;
     json_t *value_json;
     port_t *port;
     int code;
+    bool result = TRUE;
+
+    if (port_id) {
+        *port_id = NULL;
+    }
+    if (error_response_json) {
+        *error_response_json = NULL;
+    }
 
     if (json_get_type(port_config) == JSON_TYPE_OBJ) {
-        port_id_json = json_obj_pop_key(port_config, "id");
+        id_json = json_obj_pop_key(port_config, "id");
         virtual_json = json_obj_pop_key(port_config, "virtual");
-        if (port_id_json && json_get_type(port_id_json) == JSON_TYPE_STR) {
-            char *port_id = json_str_get(port_id_json);
-            DEBUG_CONFIG("provisioning: applying port %s config", port_id);
-            port = port_find_by_id(port_id);
+        if (id_json && json_get_type(id_json) == JSON_TYPE_STR) {
+            char *id = json_str_get(id_json);
+            if (port_id) {
+                *port_id = strdup(id);
+            }
+
+            DEBUG_CONFIG("provisioning: applying port %s config", id);
+            port = port_find_by_id(id);
 
             /* Virtual ports have to be added first */
             if (virtual_json && json_get_type(virtual_json) == JSON_TYPE_BOOL && json_bool_get(virtual_json)) {
                 if (port) {
-                    DEBUG_CONFIG("provisioning: virtual port %s exists, removing it first", port_id);
+                    DEBUG_CONFIG("provisioning: virtual port %s exists, removing it first", id);
                     code = 200;
                     response_json = api_delete_port(port, /* query_json = */ NULL, &code);
-                    json_free(response_json);
                     if (code / 100 != 2) {
                         DEBUG_CONFIG("provisioning: api_delete_port() failed with status code %d", code);
+                        result = FALSE;
+                    }
+                    if (!result && error_response_json) {
+                        *error_response_json = response_json;
+                    }
+                    else {
+                        json_free(response_json);
                     }
                 }
 
-                DEBUG_CONFIG("provisioning: adding virtual port %s", port_id);
+                DEBUG_CONFIG("provisioning: adding virtual port %s", id);
                 request_json = json_obj_new();
-                json_obj_append(request_json, "id", json_str_new(port_id));
+                json_obj_append(request_json, "id", json_str_new(id));
 
                 /* Pass non-modifiable virtual port attributes from port_config to request_json */
                 attr_json = json_obj_pop_key(port_config, "type");
@@ -457,50 +491,83 @@ void apply_port_provisioning_config(json_t *port_config) {
 
                 code = 200;
                 response_json = api_post_ports(/* query_json = */ NULL, request_json, &code);
-                json_free(response_json);
                 if (code / 100 != 2) {
                     DEBUG_CONFIG("provisioning: api_post_ports() failed with status code %d", code);
+                    result = FALSE;
                 }
+                if (!result && error_response_json) {
+                    *error_response_json = response_json;
+                }
+                else {
+                    json_free(response_json);
+                }
+
                 json_free(request_json);
 
                 /* Lookup port reference after adding it */
-                port = port_find_by_id(port_id);
+                port = port_find_by_id(id);
             }
 
             if (port) {
                 value_json = json_obj_pop_key(port_config, "value");
 
-                DEBUG_CONFIG("provisioning: setting port %s attributes", port_id);
+                DEBUG_CONFIG("provisioning: setting port %s attributes", id);
 
                 code = 200;
-                response_json = api_patch_port(port, /* query_json = */ NULL, port_config, &code);
-                json_free(response_json);
+                response_json = api_patch_port(
+                    port,
+                    /* query_json = */ NULL,
+                    port_config, &code,
+                    /* provisioning = */ TRUE
+                );
                 if (code / 100 != 2) {
                     DEBUG_CONFIG("provisioning: api_patch_port() failed with status code %d", code);
+                    result = FALSE;
+                }
+                if (!result && error_response_json) {
+                    *error_response_json = response_json;
+                }
+                else {
+                    json_free(response_json);
                 }
 
-                if (value_json) { /* If value was also supplied with provisioning */
-                    DEBUG_CONFIG("provisioning: setting port %s value", port_id);
+                if (value_json) {
+                    /* Value was also supplied with provisioning */
 
-                    code = 200;
-                    response_json = api_patch_port_value(port, /* query_json = */ NULL, value_json, &code);
-                    json_free(response_json);
-                    if (code / 100 != 2) {
-                        DEBUG_CONFIG("provisioning: api_patch_port_value() failed with status code %d", code);
+                    if (json_get_type(value_json) != JSON_TYPE_NULL &&
+                        IS_PORT_ENABLED(port) &&
+                        IS_PORT_WRITABLE(port)
+                    ) {
+                        DEBUG_CONFIG("provisioning: setting port %s value", id);
+
+                        code = 200;
+                        response_json = api_patch_port_value(port, /* query_json = */ NULL, value_json, &code);
+                        if (code / 100 != 2) {
+                            DEBUG_CONFIG("provisioning: api_patch_port_value() failed with status code %d", code);
+                            result = FALSE;
+                        }
+                        if (!result && error_response_json) {
+                            *error_response_json = response_json;
+                        }
+                        else {
+                            json_free(response_json);
+                        }
                     }
+
                     json_free(value_json);
                 }
             }
-            else { /* Got the id of an inexistent, non-virtual, port */
-                DEBUG_CONFIG("provisioning: skipping inexistent port with id %s", port_id);
+            else { /* Got the id of an inexistent, non-virtual port */
+                DEBUG_CONFIG("provisioning: skipping inexistent port with id %s", id);
             }
         }
         else {
+            /* Missing id - not an error */
             DEBUG_CONFIG("provisioning: invalid or missing port id");
         }
 
-        if (port_id_json) {
-            json_free(port_id_json);
+        if (id_json) {
+            json_free(id_json);
         }
         if (virtual_json) {
             json_free(virtual_json);
@@ -508,5 +575,37 @@ void apply_port_provisioning_config(json_t *port_config) {
     }
     else {
         DEBUG_CONFIG("provisioning: invalid port config");
+        result = FALSE;
     }
+
+    return result;
+}
+
+void on_provisioning_config_response(
+    char *body,
+    int body_len,
+    int status,
+    char *header_names[],
+    char *header_values[],
+    int header_count,
+    uint8 addr[]
+) {
+    provisioning = FALSE;
+
+    if (status == 200) {
+        json_t *config = json_parse(body);
+        if (!config) {
+            DEBUG_CONFIG("provisioning: invalid JSON");
+            return;
+        }
+
+        config_apply_json_provisioning(config, /* force = */ FALSE);
+        json_free(config);
+    }
+    else {
+        DEBUG_CONFIG("provisioning: got status %d", status);
+    }
+
+    /* Regardless of the outcome of the provisioning operation, a full-update event needs to be triggered */
+    event_push_full_update();
 }

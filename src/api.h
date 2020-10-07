@@ -89,11 +89,19 @@ json_t ICACHE_FLASH_ATTR *api_get_firmware(json_t *query_json, int *code);
 json_t ICACHE_FLASH_ATTR *api_patch_firmware(json_t *query_json, json_t *request_json, int *code);
 #endif
 json_t ICACHE_FLASH_ATTR *api_get_access(json_t *query_json, int *code);
-json_t ICACHE_FLASH_ATTR *api_get_backup(json_t *query_json, int *code);
+json_t ICACHE_FLASH_ATTR *api_get_backup_endpoints(json_t *query_json, int *code);
 
 json_t ICACHE_FLASH_ATTR *api_get_ports(json_t *query_json, int *code);
 json_t ICACHE_FLASH_ATTR *api_post_ports(json_t *query_json, json_t *request_json, int *code);
-json_t ICACHE_FLASH_ATTR *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, int *code);
+json_t ICACHE_FLASH_ATTR *api_put_ports(json_t *query_json, json_t *request_json, int *code);
+
+json_t ICACHE_FLASH_ATTR *api_patch_port(
+                              port_t *port,
+                              json_t *query_json,
+                              json_t *request_json,
+                              int *code,
+                              bool provisioning
+                          );
 json_t ICACHE_FLASH_ATTR *api_delete_port(port_t *port, json_t *query_json, int *code);
 
 json_t ICACHE_FLASH_ATTR *api_get_port_value(port_t *port, json_t *query_json, int *code);
