@@ -144,7 +144,7 @@ void init(peripheral_t *peripheral) {
 
 void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
     user_data_t *user_data = peripheral->user_data;
-    port_t *port = port_create();
+    port_t *port = port_new();
 
     port->slot = user_data->pin; /* Try to use slot corresponding to GPIO pin */
     port->type = PORT_TYPE_BOOLEAN;

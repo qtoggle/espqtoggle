@@ -500,15 +500,10 @@ void on_http_request(
     done:
 
     free(jwt_str);
-
-    if (jwt) {
-        jwt_free(jwt);
-    }
+    jwt_free(jwt);
 
     json_free(query_json);
-    if (request_json) {
-        json_free(request_json);
-    }
+    json_free(request_json);
 }
 
 void respond_error_field(struct espconn *conn, int status, char *error, char *field) {

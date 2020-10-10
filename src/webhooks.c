@@ -77,9 +77,7 @@ static void ICACHE_FLASH_ATTR on_webhook_response(
 
 
 void webhooks_push_event(int type, char *port_id) {
-    event_t *event = malloc(sizeof(event_t));
-    event->type = type;
-    event->port_id = port_id ? strdup(port_id) : NULL;
+    event_t *event = event_new(type, port_id);
 
     webhooks_queue_node_t *n, *pn;
 

@@ -693,7 +693,7 @@ void ports_rebuild_change_dep_mask(void) {
     }
 }
 
-port_t *port_create(void) {
+port_t *port_new(void) {
     port_t *port = zalloc(sizeof(port_t));
 
     port->value = UNDEFINED;
@@ -998,7 +998,7 @@ bool port_set_value(port_t *port, double value, char reason) {
     return result;
 }
 
-json_t *port_get_json_value(port_t *port) {
+json_t *port_make_json_value(port_t *port) {
     if (IS_UNDEFINED(port->value) || !IS_PORT_ENABLED(port)) {
         return json_null_new();
     }

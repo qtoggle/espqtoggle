@@ -57,7 +57,7 @@ bool write_value(port_t *port, double value) {
 }
 
 void init_virtual_port(uint8 *base_ptr, char *strings_ptr, uint32 flags, uint8 index) {
-    port_t *port = port_create();
+    port_t *port = port_new();
 
     port->slot = index + PORT_SLOT_VIRTUAL0;
 

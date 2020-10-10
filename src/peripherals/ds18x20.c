@@ -225,7 +225,7 @@ void cleanup(peripheral_t *peripheral) {
 }
 
 void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
-    port_t *port = port_create();
+    port_t *port = port_new();
 
     port->slot = -1;
     port->type = PORT_TYPE_NUMBER;

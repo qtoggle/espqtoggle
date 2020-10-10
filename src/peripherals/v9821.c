@@ -337,7 +337,7 @@ void init(peripheral_t *peripheral) {
 void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
     user_data_t *user_data = peripheral->user_data;
 
-    port_t *active_power_port = port_create();
+    port_t *active_power_port = port_new();
     active_power_port->slot = -1;
     active_power_port->type = PORT_TYPE_NUMBER;
     active_power_port->unit = "W";
@@ -350,7 +350,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
 
     user_data->active_power_port = active_power_port;
 
-    port_t *reactive_power_port = port_create();
+    port_t *reactive_power_port = port_new();
     reactive_power_port->slot = -1;
     reactive_power_port->type = PORT_TYPE_NUMBER;
     reactive_power_port->unit = "VA";
@@ -358,7 +358,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
     reactive_power_port->configure = configure;
     ports[(*ports_len)++] = reactive_power_port;
 
-    port_t *apparent_power_port = port_create();
+    port_t *apparent_power_port = port_new();
     apparent_power_port->slot = -1;
     apparent_power_port->type = PORT_TYPE_NUMBER;
     apparent_power_port->unit = "VAR";
@@ -366,7 +366,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
     apparent_power_port->configure = configure;
     ports[(*ports_len)++] = apparent_power_port;
 
-    port_t *power_factor_port = port_create();
+    port_t *power_factor_port = port_new();
     power_factor_port->slot = -1;
     power_factor_port->type = PORT_TYPE_NUMBER;
     power_factor_port->unit = "%";
@@ -374,7 +374,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
     power_factor_port->configure = configure;
     ports[(*ports_len)++] = power_factor_port;
 
-    port_t *energy_port = port_create();
+    port_t *energy_port = port_new();
     energy_port->slot = -1;
     energy_port->type = PORT_TYPE_NUMBER;
     energy_port->unit = "kWh";
@@ -382,7 +382,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
     energy_port->configure = configure;
     ports[(*ports_len)++] = energy_port;
 
-    port_t *current_port = port_create();
+    port_t *current_port = port_new();
     current_port->slot = -1;
     current_port->type = PORT_TYPE_NUMBER;
     current_port->unit = "A";
@@ -390,7 +390,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
     current_port->configure = configure;
     ports[(*ports_len)++] = current_port;
 
-    port_t *voltage_port = port_create();
+    port_t *voltage_port = port_new();
     voltage_port->slot = -1;
     voltage_port->type = PORT_TYPE_NUMBER;
     voltage_port->unit = "V";
@@ -398,7 +398,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
     voltage_port->configure = configure;
     ports[(*ports_len)++] = voltage_port;
 
-    port_t *frequency_port = port_create();
+    port_t *frequency_port = port_new();
     frequency_port->slot = -1;
     frequency_port->type = PORT_TYPE_NUMBER;
     frequency_port->unit = "Hz";

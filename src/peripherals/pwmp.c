@@ -153,7 +153,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
         freq_port_created = TRUE;
         user_data->owns_freq_port = TRUE;
 
-        port_t *freq_port = port_create();
+        port_t *freq_port = port_new();
 
         freq_port->slot = -1;
         freq_port->type = PORT_TYPE_NUMBER;
@@ -170,7 +170,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
         ports[(*ports_len)++] = freq_port;
     }
 
-    port_t *port = port_create();
+    port_t *port = port_new();
 
     port->slot = user_data->pin; /* Try to use slot corresponding to GPIO pin */
     port->type = PORT_TYPE_NUMBER;

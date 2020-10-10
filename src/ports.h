@@ -247,7 +247,7 @@ bool   ICACHE_FLASH_ATTR  ports_slot_busy(uint8 slot);
 int8   ICACHE_FLASH_ATTR  ports_next_slot(void);
 void   ICACHE_FLASH_ATTR  ports_rebuild_change_dep_mask(void);
 
-port_t ICACHE_FLASH_ATTR *port_create(void);
+port_t ICACHE_FLASH_ATTR *port_new(void);
 void   ICACHE_FLASH_ATTR  port_cleanup(port_t *port, bool free_id);
 void   ICACHE_FLASH_ATTR  port_register(port_t *port);
 bool   ICACHE_FLASH_ATTR  port_unregister(port_t *port);
@@ -257,7 +257,7 @@ void   ICACHE_FLASH_ATTR  port_rebuild_change_dep_mask(port_t *port);
 void   ICACHE_FLASH_ATTR  port_sequence_cancel(port_t *port);
 void   ICACHE_FLASH_ATTR  port_expr_remove(port_t *port);
 bool   ICACHE_FLASH_ATTR  port_set_value(port_t *port, double value, char reason);
-json_t ICACHE_FLASH_ATTR *port_get_json_value(port_t *port);
+json_t ICACHE_FLASH_ATTR *port_make_json_value(port_t *port);
 void   ICACHE_FLASH_ATTR  port_enable(port_t *port);
 void   ICACHE_FLASH_ATTR  port_disable(port_t *port);
 void   ICACHE_FLASH_ATTR  port_configure(port_t *port);

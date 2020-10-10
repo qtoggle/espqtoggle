@@ -45,8 +45,9 @@
 
 typedef struct {
 
-    int8  type;
-    char *port_id;
+    int8    type;
+    char   *port_id;
+    json_t *json_value;
 
 } event_t;
 
@@ -55,14 +56,16 @@ extern char *EVENT_TYPES_STR[];
 extern int   EVENT_ACCESS_LEVELS[];
 
 
-void   ICACHE_FLASH_ATTR  event_push_value_change(port_t *port);
-void   ICACHE_FLASH_ATTR  event_push_port_update(port_t *port);
-void   ICACHE_FLASH_ATTR  event_push_port_add(port_t *port);
-void   ICACHE_FLASH_ATTR  event_push_port_remove(port_t *port);
-void   ICACHE_FLASH_ATTR  event_push_device_update(void);
-void   ICACHE_FLASH_ATTR  event_push_full_update(void);
-json_t ICACHE_FLASH_ATTR *event_to_json(event_t *event, json_refs_ctx_t *json_refs_ctx);
-void   ICACHE_FLASH_ATTR  event_free(event_t *event);
+event_t ICACHE_FLASH_ATTR *event_new(uint8 type, char *port_id);
+void    ICACHE_FLASH_ATTR  event_free(event_t *event);
+
+void    ICACHE_FLASH_ATTR  event_push_value_change(port_t *port);
+void    ICACHE_FLASH_ATTR  event_push_port_update(port_t *port);
+void    ICACHE_FLASH_ATTR  event_push_port_add(port_t *port);
+void    ICACHE_FLASH_ATTR  event_push_port_remove(port_t *port);
+void    ICACHE_FLASH_ATTR  event_push_device_update(void);
+void    ICACHE_FLASH_ATTR  event_push_full_update(void);
+json_t  ICACHE_FLASH_ATTR *event_to_json(event_t *event, json_refs_ctx_t *json_refs_ctx);
 
 
 #endif /* _EVENTS_H */
