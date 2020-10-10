@@ -246,9 +246,9 @@ int8   ICACHE_FLASH_ATTR  ports_next_slot(void);
 void   ICACHE_FLASH_ATTR  ports_rebuild_change_dep_mask(void);
 
 port_t ICACHE_FLASH_ATTR *port_create(void);
+void   ICACHE_FLASH_ATTR  port_cleanup(port_t *port);
 void   ICACHE_FLASH_ATTR  port_register(port_t *port);
 bool   ICACHE_FLASH_ATTR  port_unregister(port_t *port);
-void   ICACHE_FLASH_ATTR  port_cleanup(port_t *port);
 port_t ICACHE_FLASH_ATTR *port_find_by_id(char *id);
 port_t ICACHE_FLASH_ATTR *port_find_by_slot(uint8 slot);
 void   ICACHE_FLASH_ATTR  port_rebuild_change_dep_mask(port_t *port);

@@ -241,8 +241,13 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
         }
     }
     else if (!strcmp(part1, "backup")) {
-        if (!part2) {
-            response_json = api_get_backup(query_json, code);
+        if (part2) {
+            if (!strcmp(part2, "endpoints")) {
+                response_json = api_get_backup_endpoints(query_json, code);
+            }
+            else {
+                RESPOND_NO_SUCH_FUNCTION(response_json);
+            }
         }
         else {
             RESPOND_NO_SUCH_FUNCTION(response_json);
@@ -282,13 +287,11 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
             }
             else { /* /ports/{id} */
                 if (method == HTTP_METHOD_PATCH) {
-                    response_json = api_patch_port(port, query_json, request_json, code);
+                    response_json = api_patch_port(port, query_json, request_json, code, /* provisioning = */ FALSE);
                 }
-#ifdef _VIRTUAL
                 else if (method == HTTP_METHOD_DELETE) {
                     response_json = api_delete_port(port, query_json, code);
                 }
-#endif
                 else {
                     RESPOND_NO_SUCH_FUNCTION(response_json);
                 }
@@ -298,11 +301,12 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
             if (method == HTTP_METHOD_GET) {
                 response_json = api_get_ports(query_json, code);
             }
-#ifdef _VIRTUAL
             else if (method == HTTP_METHOD_POST) {
-                response_json = api_post_ports( query_json, request_json, code);
+                response_json = api_post_ports(query_json, request_json, code);
             }
-#endif
+            else if (method == HTTP_METHOD_PUT) {
+                response_json = api_put_ports(query_json, request_json, code);
+            }
             else {
                 RESPOND_NO_SUCH_FUNCTION(response_json);
             }
@@ -665,6 +669,7 @@ json_t *device_to_json(void) {
 #ifdef _OTA
     json_list_append(flags_json, json_str_new("firmware"));
 #endif
+    json_list_append(flags_json, json_str_new("backup"));
     json_list_append(flags_json, json_str_new("listen"));
     json_list_append(flags_json, json_str_new("sequences"));
 #ifdef _SSL
@@ -677,9 +682,7 @@ json_t *device_to_json(void) {
     /* Various optional attributes */
     json_obj_append(json, "uptime", json_int_new(system_uptime()));
 
-#ifdef _VIRTUAL
     json_obj_append(json, "virtual_ports", json_int_new(VIRTUAL_MAX_PORTS));
-#endif
 
     /* IP configuration */
     ip_addr_t ip = wifi_get_ip_address();
@@ -1381,14 +1384,12 @@ json_t *api_get_access(json_t *query_json, int *code) {
     return response_json;
 }
 
-json_t *api_get_backup(json_t *query_json, int *code) {
-    json_t *response_json = json_obj_new();
+json_t *api_get_backup_endpoints(json_t *query_json, int *code) {
+    json_t *response_json = json_list_new();
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
         return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
-
-    json_t *endpoints_json = json_list_new();
 
     json_t *peripherals_json = json_obj_new();
     json_obj_append(peripherals_json, "path", json_str_new("/peripherals"));
@@ -1402,9 +1403,8 @@ json_t *api_get_backup(json_t *query_json, int *code) {
     json_obj_append(system_json, "restore_method", json_str_new("PATCH"));
     json_obj_append(system_json, "reconnect", json_bool_new(FALSE));
 
-    json_list_append(endpoints_json, peripherals_json);
-    json_list_append(endpoints_json, system_json);
-    json_obj_append(response_json, "endpoints", endpoints_json);
+    json_list_append(response_json, peripherals_json);
+    json_list_append(response_json, system_json);
 
     return response_json;
 }
@@ -1674,17 +1674,109 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
     json_refs_ctx_t json_refs_ctx;
     json_refs_ctx_init(&json_refs_ctx, JSON_REFS_TYPE_PORT);
 
+    json_free(response_json);
+
     return port_to_json(new_port, &json_refs_ctx);
 }
 
-json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, int *code) {
-    DEBUG_API("updating attributes of port %s", port->id);
-    
+json_t *api_put_ports(json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = json_obj_new();
 
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
         return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
+
+    DEBUG_API("restoring ports");
+
+    /* Remember port IDs associated to each peripheral; we need them later for recreation */
+    uint8 i, j;
+    char **port_ids_by_peripheral_index[PERIPHERAL_MAX_NUM];
+    uint8 port_ids_len_by_peripheral_index[PERIPHERAL_MAX_NUM];
+    for (i = 0; i < PERIPHERAL_MAX_NUM; i++) {
+        port_ids_by_peripheral_index[i] = NULL;
+        port_ids_len_by_peripheral_index[i] = 0;
+    }
+
+    /* Remove all ports */
+    port_t *port;
+    while (all_ports_count > 0) {
+        port = all_ports[0];
+        DEBUG_API("removing port %s", port->id);
+
+        if (port->peripheral) { /* Virtual ports don't have a peripheral */
+            uint8 peripheral_index = port->peripheral->index;
+            uint8 port_ids_len = ++(port_ids_len_by_peripheral_index[peripheral_index]);
+            char **port_ids = port_ids_by_peripheral_index[peripheral_index] = realloc(
+                port_ids_by_peripheral_index[peripheral_index],
+                sizeof(char *) * port_ids_len
+            );
+
+            port_ids[port_ids_len - 1] = strdup(port->id);
+        }
+
+        port_cleanup(port);
+        if (IS_PORT_VIRTUAL(port)) {
+            virtual_port_unregister(port);
+        }
+
+        port_unregister(port);
+        free(port);
+    }
+
+    /* Recreate peripheral ports */
+    peripheral_t *peripheral;
+    for (i = 0; i < all_peripherals_count; i++) {
+        peripheral = all_peripherals[i];
+        peripheral_cleanup(peripheral);
+        peripheral_init(peripheral);
+        peripheral_make_ports(peripheral, port_ids_by_peripheral_index[i], port_ids_len_by_peripheral_index[i]);
+    }
+
+    /* Free remembered port IDs */
+    for (i = 0; i < PERIPHERAL_MAX_NUM; i++) {
+        uint8 port_ids_len = port_ids_len_by_peripheral_index[i];
+        for (j = 0; j < port_ids_len; j++) {
+            free(port_ids_by_peripheral_index[i][j]);
+        }
+
+        free(port_ids_by_peripheral_index[i]);
+    }
+
+    /* Actually apply supplied ports configuration */
+    json_t *error_response_json = NULL;
+    char *error_port_id;
+    if (config_apply_ports_provisioning(request_json, &error_response_json, &error_port_id)) {
+        *code = 204;
+    }
+    else {
+        DEBUG_API("provisioning ports failed");
+        json_free(response_json);
+        response_json = error_response_json;
+        if (error_port_id) {
+            json_obj_append(response_json, "id", json_str_new(error_port_id));
+            free(error_port_id);
+        }
+        *code = 400;
+    }
+
+    /* Save, but only if everything went well */
+    if (*code == 204) {
+        config_mark_for_saving();
+    }
+
+    event_push_full_update();
+
+    return response_json;
+}
+
+json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, int *code, bool provisioning) {
+    json_t *response_json = json_obj_new();
+
+    if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
+    }
+
+    DEBUG_API("updating attributes of port %s", port->id);
 
     if (json_get_type(request_json) != JSON_TYPE_OBJ) {
         return API_ERROR(response_json, 400, "invalid-request");
@@ -1722,7 +1814,12 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
             if (child) {
                 if (!IS_ATTRDEF_MODIFIABLE(a)) {
                     json_free(child);
-                    return ATTR_NOT_MODIFIABLE(response_json, key);
+                    if (provisioning) {
+                        continue;
+                    }
+                    else {
+                        return ATTR_NOT_MODIFIABLE(response_json, key);
+                    }
                 }
 
                 switch (a->type) {
@@ -2047,10 +2144,14 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                  !strcmp(key, "step") ||
                  !strcmp(key, "choices")) {
 
-            return ATTR_NOT_MODIFIABLE(response_json, key);
+            if (!provisioning) {
+                return ATTR_NOT_MODIFIABLE(response_json, key);
+            }
         }
         else {
-            return NO_SUCH_ATTR(response_json, key);
+            if (!provisioning) {
+                return NO_SUCH_ATTR(response_json, key);
+            }
         }
     }
     
@@ -2858,7 +2959,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
         peripheral = all_peripherals[0];
         peripheral_unregister(peripheral);
         peripheral_cleanup(peripheral);
-        free(peripheral);
+        peripheral_free(peripheral);
     }
 
     DEBUG_PERIPHERALS("creating newly supplied peripherals");
@@ -3073,7 +3174,8 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
             memcpy(peripheral->params + PERIPHERAL_CONFIG_OFFS_DOUBLE_PARAMS, double_params, double_param_count * 4);
         }
 
-        peripheral_init(peripheral, port_ids, port_ids_len);
+        peripheral_init(peripheral);
+        peripheral_make_ports(peripheral, port_ids, port_ids_len);
 
         free(port_ids);
         port_ids = NULL;

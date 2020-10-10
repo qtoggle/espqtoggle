@@ -70,8 +70,22 @@ void ICACHE_FLASH_ATTR config_init(void);
 void ICACHE_FLASH_ATTR config_save(void);
 void ICACHE_FLASH_ATTR config_factory_reset(void);
 void ICACHE_FLASH_ATTR config_start_auto_provisioning(bool ignore_version);
-bool ICACHE_FLASH_ATTR config_apply_json_provisioning(json_t *config, bool force);
 bool ICACHE_FLASH_ATTR config_is_provisioning(void);
+
+bool ICACHE_FLASH_ATTR config_apply_json_provisioning(json_t *config, bool force);
+bool ICACHE_FLASH_ATTR config_apply_device_provisioning(json_t *device_config);
+bool ICACHE_FLASH_ATTR config_apply_peripherals_provisioning(json_t *peripherals_config);
+bool ICACHE_FLASH_ATTR config_apply_system_provisioning(json_t *system_config);
+bool ICACHE_FLASH_ATTR config_apply_ports_provisioning(
+                           json_t *ports_config,
+                           json_t **error_response_json,
+                           char **error_port_id
+                       );
+bool ICACHE_FLASH_ATTR config_apply_port_provisioning(
+                           json_t *port_config,
+                           char **port_id,
+                           json_t **error_response_json
+                       );
 
 
 #endif /* _CONFIG_H */

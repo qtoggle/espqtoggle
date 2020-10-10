@@ -701,7 +701,13 @@ json_t *json_list_pop_at(json_t *json, uint32 index) {
     }
 
     json->list_data.len--;
-    json->list_data.children = realloc(json->list_data.children, sizeof(json_t *) * json->list_data.len);
+    if (json->list_data.len > 0) {
+        json->list_data.children = realloc(json->list_data.children, sizeof(json_t *) * json->list_data.len);
+    }
+    else {
+        free(json->list_data.children);
+        json->list_data.children = NULL;
+    }
 
     return child;
 }
@@ -749,8 +755,17 @@ json_t *json_obj_pop_key(json_t *json, char *key) {
     }
 
     json->obj_data.len--;
-    json->obj_data.children = realloc(json->obj_data.children, sizeof(json_t *) * json->obj_data.len);
-    json->obj_data.keys = realloc(json->obj_data.keys, sizeof(char *) * json->obj_data.len);
+    if (json->obj_data.len > 0) {
+        json->obj_data.children = realloc(json->obj_data.children, sizeof(json_t *) * json->obj_data.len);
+        json->obj_data.keys = realloc(json->obj_data.keys, sizeof(char *) * json->obj_data.len);
+    }
+    else {
+        free(json->obj_data.children);
+        free(json->obj_data.keys);
+
+        json->obj_data.children = NULL;
+        json->obj_data.keys = NULL;
+    }
 
     return child;
 }

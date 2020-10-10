@@ -96,8 +96,10 @@ extern uint8          all_peripherals_count;
 void ICACHE_FLASH_ATTR peripherals_init(uint8 *config_data);
 void ICACHE_FLASH_ATTR peripherals_save(uint8 *config_data, uint32 *strings_offs);
 
-void ICACHE_FLASH_ATTR peripheral_init(peripheral_t *peripheral, char *port_ids[], uint8 port_ids_len);
+void ICACHE_FLASH_ATTR peripheral_init(peripheral_t *peripheral);
 void ICACHE_FLASH_ATTR peripheral_cleanup(peripheral_t *peripheral);
+void ICACHE_FLASH_ATTR peripheral_free(peripheral_t *peripheral);
+void ICACHE_FLASH_ATTR peripheral_make_ports(peripheral_t *peripheral, char *port_ids[], uint8 port_ids_len);
 void ICACHE_FLASH_ATTR peripheral_register(peripheral_t *peripheral);
 void ICACHE_FLASH_ATTR peripheral_unregister(peripheral_t *peripheral);
 

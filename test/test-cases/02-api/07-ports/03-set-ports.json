@@ -1,0 +1,192 @@
+{
+    "name": "set-ports",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PUT",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": [
+                    {
+                        "id": "gpio0",
+                        "display_name": "GPIO 0",
+                        "enabled": true,
+                        "writable": false,
+                        "persisted": true,
+                        "internal": true,
+                        "transform_read": "1",
+                        "transform_write": "1",
+                        "expression": "1",
+                        "type": "number",
+                        "value": null,
+                        "definitions": {}
+                    },
+                    {
+                        "id": "vport1",
+                        "virtual": true,
+                        "display_name": "Virtual Port",
+                        "type": "number",
+                        "unit": "unit1",
+                        "min": 0,
+                        "max": 100,
+                        "step": 2,
+                        "integer": true,
+                        "value": 14
+                    }
+                ],
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": [
+                    {
+                        "id": "gpio0",
+                        "display_name": "GPIO 0",
+                        "writable": true,
+                        "enabled": true,
+                        "persisted": true,
+                        "internal": true,
+                        "transform_read": "1",
+                        "transform_write": "1",
+                        "expression": "1",
+                        "type": "boolean",
+                        "value": true,
+                        "definitions": {}
+                    },
+                    {
+                        "id": "gpio2",
+                        "display_name": "",
+                        "writable": false,
+                        "enabled": false,
+                        "persisted": false,
+                        "internal": false,
+                        "transform_read": "",
+                        "type": "boolean",
+                        "value": null,
+                        "definitions": {}
+                    },
+                    {
+                        "id": "adc0",
+                        "display_name": "",
+                        "writable": false,
+                        "enabled": false,
+                        "persisted": false,
+                        "internal": false,
+                        "sampling_interval": 1000,
+                        "transform_read": "",
+                        "type": "number",
+                        "min": 0,
+                        "max": 1000,
+                        "integer": true,
+                        "unit": "mV",
+                        "value": null,
+                        "definitions": {
+                            "sampling_interval": {
+                                "display_name": "Sampling Interval",
+                                "description": "Indicates how often the port value will be read.",
+                                "unit": "ms",
+                                "modifiable": true,
+                                "type": "number",
+                                "min": 0,
+                                "max": 60000,
+                                "integer": true
+                            }
+                        }
+                    },
+                    {
+                        "id": "pwm_freq",
+                        "display_name": "",
+                        "writable": true,
+                        "enabled": false,
+                        "persisted": false,
+                        "internal": false,
+                        "transform_read": "",
+                        "transform_write": "",
+                        "expression": "",
+                        "type": "number",
+                        "unit": "Hz",
+                        "min": 1,
+                        "max": 50000,
+                        "integer": true,
+                        "value": null,
+                        "definitions": {}
+                    },
+                    {
+                        "id": "pwm4",
+                        "display_name": "",
+                        "writable": true,
+                        "enabled": false,
+                        "persisted": false,
+                        "internal": false,
+                        "transform_read": "",
+                        "transform_write": "",
+                        "expression": "",
+                        "type": "number",
+                        "unit": "%",
+                        "min": 0,
+                        "max": 100,
+                        "integer": true,
+                        "value": null,
+                        "definitions": {}
+                    },
+                    {
+                        "id": "vport1",
+                        "display_name": "Virtual Port",
+                        "unit": "unit1",
+                        "writable": true,
+                        "enabled": true,
+                        "persisted": false,
+                        "internal": false,
+                        "virtual": true,
+                        "transform_read": "",
+                        "transform_write": "",
+                        "expression": "",
+                        "type": "number",
+                        "min": 0,
+                        "max": 100,
+                        "value": 14,
+                        "integer": true,
+                        "step": 2,
+                        "definitions": {}
+                    }
+                ]
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PUT",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": [
+                    {
+                        "id": "gpio0",
+                        "display_name": "",
+                        "enabled": false,
+                        "persisted": false,
+                        "internal": false,
+                        "transform_read": "",
+                        "transform_write": "",
+                        "expression": ""
+                    }
+                ],
+                "expected_status": 204,
+                "expected_body": null
+            }
+        }
+    ]
+}

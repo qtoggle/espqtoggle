@@ -601,9 +601,7 @@ void port_save(port_t *port, uint8 *config_data, uint32 *strings_offs) {
 }
 
 void ports_init(uint8 *config_data) {
-#ifdef _VIRTUAL
     virtual_ports_init(config_data);
-#endif
 
     /* Load port data */
     port_t *port;
@@ -705,6 +703,57 @@ port_t *port_create(void) {
     port->change_reason = CHANGE_REASON_NATIVE;
 
     return port;
+}
+
+void port_cleanup(port_t *port) {
+    DEBUG_PORT(port, "cleaning up");
+
+    /* Free choices */
+    if (port->choices) {
+        free_choices(port->choices);
+        port->choices = NULL;
+    }
+
+    /* Don't free ID as it's needed by port_unregister() */
+
+    /* Free display name */
+    if (port->display_name) {
+        free(port->display_name);
+        port->display_name = NULL;
+    }
+    /* Free unit */
+    if (port->unit) {
+        free(port->unit);
+        port->unit = NULL;
+    }
+
+    /* Destroy value expression */
+    if (port->expr) {
+        port_expr_remove(port);
+    }
+
+    /* Destroy transform expressions */
+    if (port->transform_read) {
+        expr_free(port->transform_read);
+        port->transform_read = NULL;
+    }
+    if (port->stransform_read) {
+        free(port->stransform_read);
+        port->stransform_read = NULL;
+    }
+    if (port->transform_write) {
+        expr_free(port->transform_write);
+        port->transform_write = NULL;
+    }
+    if (port->stransform_write) {
+        free(port->stransform_write);
+        port->stransform_write = NULL;
+    }
+
+    /* Cancel sequence */
+    if (port->sequence_pos >= 0) {
+        port_sequence_cancel(port);
+    }
 }
 
 void port_register(port_t *port) {
@@ -856,57 +905,6 @@ bool port_unregister(port_t *port) {
     }
 
     return TRUE;
-}
-
-void port_cleanup(port_t *port) {
-    DEBUG_PORT(port, "cleaning up");
-
-    /* Free choices */
-    if (port->choices) {
-        free_choices(port->choices);
-        port->choices = NULL;
-    }
-
-    /* Don't free ID as it's needed by port_unregister() */
-
-    /* Free display name */
-    if (port->display_name) {
-        free(port->display_name);
-        port->display_name = NULL;
-    }
-    /* Free unit */
-    if (port->unit) {
-        free(port->unit);
-        port->unit = NULL;
-    }
-
-    /* Destroy value expression */
-    if (port->expr) {
-        port_expr_remove(port);
-    }
-
-    /* Destroy transform expressions */
-    if (port->transform_read) {
-        expr_free(port->transform_read);
-        port->transform_read = NULL;
-    }
-    if (port->stransform_read) {
-        free(port->stransform_read);
-        port->stransform_read = NULL;
-    }
-    if (port->transform_write) {
-        expr_free(port->transform_write);
-        port->transform_write = NULL;
-    }
-    if (port->stransform_write) {
-        free(port->stransform_write);
-        port->stransform_write = NULL;
-    }
-
-    /* Cancel sequence */
-    if (port->sequence_pos >= 0) {
-        port_sequence_cancel(port);
-    }
 }
 
 port_t *port_find_by_id(char *id) {

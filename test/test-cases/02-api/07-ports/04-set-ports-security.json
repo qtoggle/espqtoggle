@@ -1,0 +1,41 @@
+{
+    "name": "set-ports-security",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PUT",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer inexistent"
+                },
+                "body": [],
+                "expected_status": 401
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PUT",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_VIEWONLY}"
+                },
+                "body": [],
+                "expected_status": 403
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PUT",
+                "path": "/ports",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_NORMAL}"
+                },
+                "body": [],
+                "expected_status": 403
+            }
+        }
+    ]
+}
