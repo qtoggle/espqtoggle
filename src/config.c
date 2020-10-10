@@ -599,13 +599,13 @@ void on_provisioning_config_response(
             return;
         }
 
-        config_apply_json_provisioning(config, /* force = */ FALSE);
+        if (config_apply_json_provisioning(config, /* force = */ FALSE)) {
+            event_push_full_update();
+        }
+
         json_free(config);
     }
     else {
         DEBUG_CONFIG("provisioning: got status %d", status);
     }
-
-    /* Regardless of the outcome of the provisioning operation, a full-update event needs to be triggered */
-    event_push_full_update();
 }
