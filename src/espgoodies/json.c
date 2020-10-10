@@ -802,6 +802,10 @@ json_t *json_obj_value_at(json_t *json, uint32 index) {
     return json->children[index];
 }
 
+json_t *json_obj_pop_at(json_t *json, uint32 index) {
+    return json_obj_pop_key(json, json->keys[index]);
+}
+
 uint32 json_obj_get_len(json_t *json) {
     json_assert_type(json, JSON_TYPE_OBJ);
 

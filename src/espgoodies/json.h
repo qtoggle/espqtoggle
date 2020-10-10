@@ -107,6 +107,7 @@ json_t ICACHE_FLASH_ATTR *json_obj_new(void);
 void   ICACHE_FLASH_ATTR  json_obj_append(json_t *json, char *key, json_t *child);
 char   ICACHE_FLASH_ATTR *json_obj_key_at(json_t *json, uint32 index);
 json_t ICACHE_FLASH_ATTR *json_obj_value_at(json_t *json, uint32 index);
+json_t ICACHE_FLASH_ATTR *json_obj_pop_at(json_t *json, uint32 index);
 uint32 ICACHE_FLASH_ATTR  json_obj_get_len(json_t *json);
 
 

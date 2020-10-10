@@ -313,6 +313,16 @@ bool config_apply_device_provisioning(json_t *device_config) {
         }
     }
 
+    /* Never update network attributes */
+    for (int i = 0; i < json_obj_get_len(device_config); i++) {
+        char *key = json_obj_key_at(device_config, i);
+        if (!strncmp(key, "wifi_", 5) || !strncmp(key, "ip_", 3)) {
+            DEBUG_CONFIG("ignoring device attribute %s", key);
+            json_free(json_obj_pop_at(device_config, i));
+            i--;
+        }
+    }
+
     if (json_get_type(device_config) == JSON_TYPE_OBJ) {
         DEBUG_CONFIG("provisioning: setting device attributes");
         code = 200;
