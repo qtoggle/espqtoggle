@@ -301,16 +301,11 @@ bool config_apply_device_provisioning(json_t *device_config) {
 
     /* Never update device name */
     attr_json = json_obj_pop_key(device_config, "name");
-    if (attr_json) {
-        json_free(attr_json);
-    }
+    json_free(attr_json);
 
     /* Don't overwrite display name */
     if (device_display_name[0]) {
-        attr_json = json_obj_pop_key(device_config, "display_name");
-        if (attr_json) {
-            json_free(attr_json);
-        }
+        json_free(json_obj_pop_key(device_config, "display_name"));
     }
 
     /* Never update network attributes */
@@ -576,12 +571,8 @@ bool config_apply_port_provisioning(json_t *port_config, char **port_id, json_t 
             DEBUG_CONFIG("provisioning: invalid or missing port id");
         }
 
-        if (id_json) {
-            json_free(id_json);
-        }
-        if (virtual_json) {
-            json_free(virtual_json);
-        }
+        json_free(id_json);
+        json_free(virtual_json);
     }
     else {
         DEBUG_CONFIG("provisioning: invalid port config");

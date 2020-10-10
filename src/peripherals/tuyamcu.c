@@ -1101,7 +1101,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
         dp_count++;
         dp_max_id = MAX(dp_max_id, dp_id);
 
-        port_t *port = port_create();
+        port_t *port = port_new();
         user_data->dp_details = realloc(user_data->dp_details, sizeof(dp_details_t) * dp_count);
         dp_details_t *dp_details = &user_data->dp_details[dp_count - 1];
 

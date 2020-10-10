@@ -497,7 +497,7 @@ void init(peripheral_t *peripheral) {
 }
 
 void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
-    port_t *temperature_port = port_create();
+    port_t *temperature_port = port_new();
     temperature_port->slot = -1;
     temperature_port->type = PORT_TYPE_NUMBER;
     temperature_port->min = MIN_TEMP;
@@ -510,7 +510,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
     temperature_port->configure = configure;
     ports[(*ports_len)++] = temperature_port;
 
-    port_t *humidity_port = port_create();
+    port_t *humidity_port = port_new();
     humidity_port->slot = -1;
     humidity_port->type = PORT_TYPE_NUMBER;
     humidity_port->min = 0;

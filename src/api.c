@@ -612,7 +612,7 @@ json_t *port_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
     }
 
     /* Port value */
-    json_obj_append(json, "value", port_get_json_value(port));
+    json_obj_append(json, "value", port_make_json_value(port));
 
     /* Attribute definitions */
     json_obj_append(json, "definitions", port_attrdefs_to_json(port, json_refs_ctx));
@@ -1444,7 +1444,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
 
     int i;
     json_t *child, *c, *c2;
-    port_t *new_port = port_create();
+    port_t *new_port = port_new();
     char *choice;
 
     /* Will automatically allocate slot */
@@ -2223,7 +2223,7 @@ json_t *api_get_port_value(port_t *port, json_t *query_json, int *code) {
     /* Poll ports before retrieving current port value, ensuring value is as up-to-date as possible */
     core_poll();
 
-    response_json = port_get_json_value(port);
+    response_json = port_make_json_value(port);
 
     *code = 200;
 
@@ -3423,9 +3423,7 @@ json_t *api_put_provisioning(json_t *query_json, json_t *request_json, int *code
 }
 
 json_t *_api_error(json_t *response_json, char *error, char *field_name, char *field_value) {
-    if (response_json) {
-        json_free(response_json);
-    }
+    json_free(response_json);
     response_json = json_obj_new();
     json_obj_append(response_json, "error", json_str_new(error));
     if (field_name) {
@@ -3459,9 +3457,7 @@ json_t *_forbidden_error(json_t *response_json, uint8 level) {
 }
 
 json_t *_invalid_expression_error(json_t *response_json, char *field, char *reason, char *token, int32 pos) {
-    if (response_json) {
-        json_free(response_json);
-    }
+    json_free(response_json);
     response_json = json_obj_new();
     json_obj_append(response_json, "error", json_str_new("invalid-field"));
     json_obj_append(response_json, "field", json_str_new(field));

@@ -36,6 +36,10 @@ jwt_t *jwt_new(uint8 alg, json_t *claims) {
 }
 
 void jwt_free(jwt_t *jwt) {
+    if (!jwt) {
+        return;
+    }
+
     json_free(jwt->claims);
     free(jwt);
 }

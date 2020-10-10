@@ -55,6 +55,31 @@ int EVENT_ACCESS_LEVELS[] = {
 static void ICACHE_FLASH_ATTR event_push(int type, char *port_id);
 
 
+event_t *event_new(uint8 type, char *port_id) {
+    event_t *event = zalloc(sizeof(event_t));
+    event->type = type;
+
+    if (port_id) {
+        event->port_id = strdup(port_id);
+
+        /* value-change events must be accompanied by instantaneous value */
+        if (type == EVENT_TYPE_VALUE_CHANGE) {
+            port_t *port = port_find_by_id(port_id);
+            if (port) {
+                event->json_value = port_make_json_value(port);
+            }
+        }
+    }
+
+    return event;
+}
+
+void event_free(event_t *event) {
+    json_free(event->json_value);
+    free(event->port_id);
+    free(event);
+}
+
 void event_push_value_change(port_t *port) {
     event_push(EVENT_TYPE_VALUE_CHANGE, port->id);
 }
@@ -85,15 +110,9 @@ json_t *event_to_json(event_t *event, json_refs_ctx_t *json_refs_ctx) {
 
     switch (event->type) {
         case EVENT_TYPE_VALUE_CHANGE:
-            port = port_find_by_id(event->port_id);
-            if (!port) {
-                DEBUG_EVENTS("dropping %s event for inexistent port %s", EVENT_TYPES_STR[event->type], event->port_id);
-                return NULL;
-            }
-
             params = json_obj_new();
             json_obj_append(params, "id", json_str_new(event->port_id));
-            json_obj_append(params, "value", port_get_json_value(port));
+            json_obj_append(params, "value", json_dup(event->json_value));
             break;
 
         case EVENT_TYPE_PORT_UPDATE:
@@ -125,11 +144,6 @@ json_t *event_to_json(event_t *event, json_refs_ctx_t *json_refs_ctx) {
     }
 
     return json;
-}
-
-void event_free(event_t *event) {
-    free(event->port_id);
-    free(event);
 }
 
 void event_push(int type, char *port_id) {

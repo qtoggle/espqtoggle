@@ -277,7 +277,7 @@ void cleanup(peripheral_t *peripheral) {
 void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
     user_data_t *user_data = peripheral->user_data;
 
-    port_t *active_power_port = port_create();
+    port_t *active_power_port = port_new();
     active_power_port->slot = -1;
     active_power_port->type = PORT_TYPE_NUMBER;
     active_power_port->min_sampling_interval = MIN_SAMP_INT;
@@ -287,7 +287,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
     active_power_port->configure = configure;
     ports[(*ports_len)++] = active_power_port;
 
-    port_t *energy_port = port_create();
+    port_t *energy_port = port_new();
     energy_port->slot = -1;
     energy_port->type = PORT_TYPE_NUMBER;
     energy_port->min_sampling_interval = MIN_SAMP_INT;
@@ -298,7 +298,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
     ports[(*ports_len)++] = energy_port;
 
     if (user_data->cf1_pin_no >= 0) {
-        port_t *current_port = port_create();
+        port_t *current_port = port_new();
         current_port->slot = -1;
         current_port->type = PORT_TYPE_NUMBER;
         current_port->min_sampling_interval = MIN_SAMP_INT;
@@ -308,7 +308,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
         current_port->configure = configure;
         ports[(*ports_len)++] = current_port;
 
-        port_t *voltage_port = port_create();
+        port_t *voltage_port = port_new();
         voltage_port->slot = -1;
         voltage_port->type = PORT_TYPE_NUMBER;
         voltage_port->min_sampling_interval = MIN_SAMP_INT;

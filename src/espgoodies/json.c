@@ -474,6 +474,10 @@ void json_stringify(json_t *json) {
 }
 
 void json_free(json_t *json) {
+    if (!json) {
+        return;
+    }
+
     int i, n, r;
 
     switch (json->type) {

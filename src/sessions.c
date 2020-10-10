@@ -36,7 +36,7 @@ session_t sessions[SESSION_COUNT];
 
 
 static void    ICACHE_FLASH_ATTR   session_push(session_t *session, int type, char *port_id);
-static void    ICACHE_FLASH_ATTR   session_free(session_t *session);
+static void    ICACHE_FLASH_ATTR   session_dispose(session_t *session);
 static event_t ICACHE_FLASH_ATTR **pop_all_events(session_t *session);
 static void    ICACHE_FLASH_ATTR   on_session_timeout(void *arg);
 
@@ -80,7 +80,7 @@ session_t *session_create(char *id, struct espconn *conn, int timeout, int acces
     if  (free_slot == -1) {
         DEBUG_SESSIONS("all available listen sessions are in use, freeing up first slot");
         session_respond(sessions + 0);
-        session_free(sessions + 0);
+        session_dispose(sessions + 0);
         free_slot = 0;
     }
 
@@ -185,10 +185,8 @@ void sessions_respond_all(void) {
 }
 
 void session_push(session_t *session, int type, char *port_id) {
-    event_t *event = malloc(sizeof(event_t));
-    event->type = type;
-    event->port_id = port_id ? strdup(port_id) : NULL;
-    
+    event_t *event = event_new(type, port_id);
+
     session_queue_node_t *n, *pn;
 
     /* Deduplicate change & update events */
@@ -221,6 +219,7 @@ void session_push(session_t *session, int type, char *port_id) {
         }
     }
 
+    /* Make room for new event, if needed */
     while (session->queue_len >= SESSION_MAX_QUEUE_LEN) {
         DEBUG_SESSION(session->id, "dropping oldest event");
     
@@ -254,7 +253,7 @@ void session_push(session_t *session, int type, char *port_id) {
     );
 }
 
-void session_free(session_t *session) {
+void session_dispose(session_t *session) {
     DEBUG_SESSION(session->id, "freeing");
 
     session->id[0] = 0;
@@ -308,6 +307,6 @@ void on_session_timeout(void *arg) {
     }
     else {
         DEBUG_SESSION(session->id, "expired");
-        session_free(session);
+        session_dispose(session);
     }
 }
