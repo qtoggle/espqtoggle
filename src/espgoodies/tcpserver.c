@@ -32,8 +32,8 @@ typedef struct {
 
     void  *app_info;
     uint8 *send_buffer;
-    int    send_len;
-    int    send_offs;
+    int32  send_len;
+    int32  send_offs;
     bool   free_on_sent;
 
 } conn_info_t;
@@ -273,9 +273,7 @@ void on_client_disconnect(void *arg) {
     if (conn->reverse) {
         conn_info_t *info = conn->reverse;
         tcp_disc_cb(conn, info->app_info);
-        if (info->send_buffer) {
-            free(info->send_buffer);
-        }
+        free(info->send_buffer);
         free(info);
     }
     conn->reverse = NULL;

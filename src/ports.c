@@ -333,9 +333,7 @@ void port_load(port_t *port, uint8 *config_data) {
     char *strings_ptr = (char *) config_data + CONFIG_OFFS_STR_BASE;
 
     /* id */
-    if (port->id) {
-        free(port->id);
-    }
+    free(port->id);
     port->id = string_pool_read_dup(strings_ptr, base_ptr + PORT_CONFIG_OFFS_ID);
     if (!port->id) {
         char dummy_id[7];
@@ -353,9 +351,7 @@ void port_load(port_t *port, uint8 *config_data) {
     /* unit */
     if (port->type == PORT_TYPE_NUMBER) {
         if (string_pool_read(strings_ptr, base_ptr + PORT_CONFIG_OFFS_UNIT)) {
-            if (port->unit) {
-                free(port->unit);
-            }
+            free(port->unit);
             port->unit = string_pool_read_dup(strings_ptr, base_ptr + PORT_CONFIG_OFFS_UNIT);
         }
         DEBUG_PORT(port, "unit = \"%s\"", port->unit ? port->unit : "");
@@ -393,7 +389,7 @@ void port_load(port_t *port, uint8 *config_data) {
 
     /* sampling_interval */
     memcpy(&port->sampling_interval, base_ptr + PORT_CONFIG_OFFS_SAMP_INT, 4);
-    port->last_sample_time = -LLONG_MAX;
+    port->last_sample_time_ms = -LLONG_MAX;
 
     DEBUG_PORT(port, "sampling_interval = %d ms", port->sampling_interval);
 
@@ -401,7 +397,7 @@ void port_load(port_t *port, uint8 *config_data) {
     if (!port->heart_beat_interval) {
         port->heart_beat_interval = PORT_DEF_HEART_BEAT_INT;
     }
-    port->last_heart_beat_time = -LLONG_MAX;
+    port->last_heart_beat_time_ms = -LLONG_MAX;
 
     DEBUG_PORT(port, "heart_beat_interval = %d ms", port->heart_beat_interval);
 
@@ -699,13 +695,15 @@ void ports_rebuild_change_dep_mask(void) {
 
 port_t *port_create(void) {
     port_t *port = zalloc(sizeof(port_t));
+
     port->value = UNDEFINED;
     port->change_reason = CHANGE_REASON_NATIVE;
+    port->sequence_pos = -1;
 
     return port;
 }
 
-void port_cleanup(port_t *port) {
+void port_cleanup(port_t *port, bool free_id) {
     DEBUG_PORT(port, "cleaning up");
 
     /* Free choices */
@@ -714,18 +712,14 @@ void port_cleanup(port_t *port) {
         port->choices = NULL;
     }
 
-    /* Don't free ID as it's needed by port_unregister() */
+    free(port->id);
+    port->id = NULL;
 
-    /* Free display name */
-    if (port->display_name) {
-        free(port->display_name);
-        port->display_name = NULL;
-    }
-    /* Free unit */
-    if (port->unit) {
-        free(port->unit);
-        port->unit = NULL;
-    }
+    free(port->display_name);
+    port->display_name = NULL;
+
+    free(port->unit);
+    port->unit = NULL;
 
     /* Destroy value expression */
     if (port->expr) {
@@ -737,18 +731,17 @@ void port_cleanup(port_t *port) {
         expr_free(port->transform_read);
         port->transform_read = NULL;
     }
-    if (port->stransform_read) {
-        free(port->stransform_read);
-        port->stransform_read = NULL;
-    }
+
+    free(port->stransform_read);
+    port->stransform_read = NULL;
+
     if (port->transform_write) {
         expr_free(port->transform_write);
         port->transform_write = NULL;
     }
-    if (port->stransform_write) {
-        free(port->stransform_write);
-        port->stransform_write = NULL;
-    }
+
+    free(port->stransform_write);
+    port->stransform_write = NULL;
 
     /* Cancel sequence */
     if (port->sequence_pos >= 0) {
@@ -958,7 +951,12 @@ void port_sequence_cancel(port_t *port) {
     free(port->sequence_delays);
     port->sequence_pos = -1;
     port->sequence_repeat = -1;
-    os_timer_disarm(&port->sequence_timer);
+
+    if (port->sequence_timer) {
+        os_timer_disarm(port->sequence_timer);
+    }
+    free(port->sequence_timer);
+    port->sequence_timer = NULL;
 }
 
 void port_expr_remove(port_t *port) {
@@ -969,10 +967,8 @@ void port_expr_remove(port_t *port) {
         port->expr = NULL;
     }
 
-    if (port->sexpr) {
-        free(port->sexpr);
-        port->sexpr = NULL;
-    }
+    free(port->sexpr);
+    port->sexpr = NULL;
 }
 
 bool port_set_value(port_t *port, double value, char reason) {

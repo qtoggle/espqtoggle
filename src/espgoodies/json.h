@@ -48,30 +48,16 @@
 #endif
 
 
-#pragma pack(push, 1)
-
 typedef struct json {
-
-    char                  type;
 
     union {
 
         struct {
-            uint16        len;
-            struct json **children;
-        } list_data;
-
-        struct {
-            uint8         len;
             char        **keys;
             struct json **children;
-        } obj_data;
+        };
 
-        struct {
-            uint16        len;
-            char        **chunks;
-        } stringified_data;
-
+        char            **chunks;
         bool              bool_value;
         int32             int_value;
         double            double_value;
@@ -79,9 +65,10 @@ typedef struct json {
 
     };
 
-} json_t;
+    uint16                len;
+    char                  type;
 
-#pragma pack(pop)
+} json_t;
 
 
 json_t ICACHE_FLASH_ATTR *json_parse(char *input);

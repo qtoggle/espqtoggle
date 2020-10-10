@@ -523,9 +523,7 @@ bool wait_uart_cmd(peripheral_t *peripheral, uint8 cmd, uint8 **data, uint16 *da
         free(frame);
 
         if (c != cmd) {
-            if (d) {
-                free(d);
-            }
+            free(d);
             continue;
         }
 

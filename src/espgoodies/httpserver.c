@@ -116,10 +116,7 @@ void handle_request(httpserver_context_t *hc) {
 }
 
 void httpserver_set_name(char *name) {
-    if (server_name) {
-        free(server_name);
-    }
-
+    free(server_name);
     server_name = strdup(name);
     DEBUG_HTTPSERVER("server name set to %s", name);
 }
@@ -408,10 +405,8 @@ void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
 }
 
 void httpserver_context_reset(httpserver_context_t *hc) {
-    if (hc->body) {
-        free(hc->body);
-        hc->body = NULL;
-    }
+    free(hc->body);
+    hc->body = NULL;
     
     if (hc->header_count) {
         int i;

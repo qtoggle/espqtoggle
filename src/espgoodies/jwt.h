@@ -30,8 +30,8 @@
 
 typedef struct {
 
-    uint8   alg;
     json_t *claims;
+    uint8   alg;
 
 } jwt_t;
 

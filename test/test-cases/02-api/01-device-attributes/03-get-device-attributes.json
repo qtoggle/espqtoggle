@@ -83,6 +83,7 @@
                                 "enum": [
                                     "expressions",
                                     "firmware",
+                                    "backup",
                                     "listen",
                                     "webhooks",
                                     "ssl",

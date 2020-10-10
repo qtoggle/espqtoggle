@@ -45,11 +45,11 @@ typedef struct expr {
     };
 
     char         *port_id;
-    uint16        len;     /* Used for value history queue size */
 
     void         *func;
-    int8          argc;
     struct expr **args;
+    int8          argc;
+    uint16        len;     /* Used for value history queue size */
 
 } expr_t;
 
@@ -68,8 +68,8 @@ typedef double (*func_callback_t)(expr_t *expr, int argc, double *args);
 typedef struct {
 
     char            *name;
-    int8             argc; /* If negative, acts as a minimum */
     func_callback_t  callback;
+    int8             argc; /* If negative, acts as a minimum */
 
 } func_t;
 

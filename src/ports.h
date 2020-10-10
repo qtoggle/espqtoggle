@@ -160,12 +160,16 @@ typedef struct attrdef {
 
 typedef struct port {
 
+    /* Various 1-byte sized members put together to optimize structure size */
+    int8               slot;
+    char               change_reason;         /* Last value-change reason */
+    bool               integer;
+    char               type;
+
     struct peripheral *peripheral;
 
-    int8               slot;                  /* Slot number */
     double             value;                 /* Current value */
 
-    char               change_reason;         /* Last value-change reason */
     uint64             change_dep_mask;       /* Port change dependency mask */
 
     int                aux;                   /* Member used internally for dependency loops & more */
@@ -173,7 +177,7 @@ typedef struct port {
 
     /* Sampling */
     uint32             sampling_interval;
-    int64              last_sample_time;      /* In milliseconds, since boot */
+    int64              last_sample_time_ms;
     uint32             min_sampling_interval;
     uint32             max_sampling_interval;
     uint32             def_sampling_interval;
@@ -181,7 +185,6 @@ typedef struct port {
     /* Value constraints */
     double             min;
     double             max;
-    bool               integer;
     double             step;
     char             **choices;
 
@@ -194,7 +197,7 @@ typedef struct port {
     char              *stransform_read;
 
     /* Sequence */
-    os_timer_t         sequence_timer;
+    os_timer_t        *sequence_timer;
     int16              sequence_len;
     int16              sequence_pos;
     int                sequence_repeat;
@@ -204,13 +207,12 @@ typedef struct port {
     /* Common attributes */
     char              *id;
     char              *display_name;
-    char               type;
     char              *unit;
     uint32             flags;
 
     /* Heart beat */
     int                heart_beat_interval;
-    uint64             last_heart_beat_time;  /* In milliseconds, since boot */
+    uint64             last_heart_beat_time_ms;
 
     /* Callbacks */
     double             (*read_value)(struct port *port);
@@ -246,7 +248,7 @@ int8   ICACHE_FLASH_ATTR  ports_next_slot(void);
 void   ICACHE_FLASH_ATTR  ports_rebuild_change_dep_mask(void);
 
 port_t ICACHE_FLASH_ATTR *port_create(void);
-void   ICACHE_FLASH_ATTR  port_cleanup(port_t *port);
+void   ICACHE_FLASH_ATTR  port_cleanup(port_t *port, bool free_id);
 void   ICACHE_FLASH_ATTR  port_register(port_t *port);
 bool   ICACHE_FLASH_ATTR  port_unregister(port_t *port);
 port_t ICACHE_FLASH_ATTR *port_find_by_id(char *id);

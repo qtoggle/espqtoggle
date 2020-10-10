@@ -74,30 +74,19 @@ static void ICACHE_FLASH_ATTR on_ota_auto_latest(char *version, char *date, char
 
 
 void ota_init(char *cv, char *lu, char *lsu, char *lbu, char *ut) {
-    if (current_version) {
-        free(current_version);
-    }
-
+    free(current_version);
     current_version = strdup(cv);
 
-    if (latest_url) {
-        free(latest_url);
-    }
+    free(latest_url);
     latest_url = strdup(lu);
 
-    if (latest_stable_url) {
-        free(latest_stable_url);
-    }
+    free(latest_stable_url);
     latest_stable_url = strdup(lsu);
 
-    if (latest_beta_url) {
-        free(latest_beta_url);
-    }
+    free(latest_beta_url);
     latest_beta_url = strdup(lbu);
 
-    if (url_template) {
-        free(url_template);
-    }
+    free(url_template);
     url_template = strdup(ut);
 
     DEBUG_OTA("using latest URL \"%s\"", latest_url);
@@ -404,10 +393,8 @@ void on_ota_head_response(
         DEBUG_OTA("head: got status %d", status);
 
         /* ota_url should already be set at this point */
-        if (ota_url) {
-            free(ota_url);
-            ota_url = NULL;
-        }
+        free(ota_url);
+        ota_url = NULL;
     }
 
     if (callback) {

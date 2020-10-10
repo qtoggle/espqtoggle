@@ -75,7 +75,6 @@ typedef struct peripheral {
     uint16  type_id;
     uint16  flags;
     uint8  *params;
-
     void   *user_data; /* In-memory user state */
 
 } peripheral_t;
