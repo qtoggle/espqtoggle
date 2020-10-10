@@ -79,11 +79,11 @@
 
 typedef struct {
 
-    uint8 bssid[WIFI_BSSID_LEN];
-    char  ssid[WIFI_SSID_MAX_LEN];
-    int   channel;
-    int   rssi;
-    int   auth_mode;
+    uint8  bssid[WIFI_BSSID_LEN];
+    char   ssid[WIFI_SSID_MAX_LEN];
+    uint32 channel;
+    int32  rssi;
+    int32  auth_mode;
 
 } wifi_scan_result_t;
 

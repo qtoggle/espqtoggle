@@ -1,11 +1,11 @@
 {
-    "name": "backup-security",
+    "name": "backup-endpoints-security",
     "instructions": [
         {
             "name": "json-http-client",
             "params": {
                 "method": "GET",
-                "path": "/backup",
+                "path": "/backup/endpoints",
                 "headers": {
                     "Authorization": "Bearer inexistent"
                 },
@@ -16,7 +16,7 @@
             "name": "json-http-client",
             "params": {
                 "method": "GET",
-                "path": "/backup",
+                "path": "/backup/endpoints",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_VIEWONLY}"
                 },
@@ -27,7 +27,7 @@
             "name": "json-http-client",
             "params": {
                 "method": "GET",
-                "path": "/backup",
+                "path": "/backup/endpoints",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_NORMAL}"
                 },

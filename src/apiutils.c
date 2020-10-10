@@ -37,10 +37,8 @@ double get_choice_value_num(char *choice) {
 
 char *get_choice_value_str(char *choice) {
     static char *value = NULL;  /* Acts as a reentrant buffer */
-    if (value) {
-        free(value);
-        value = NULL;
-    }
+    free(value);
+    value = NULL;
 
     char *p = strchr(choice, ':');
     if (p) {
@@ -55,10 +53,8 @@ char *get_choice_value_str(char *choice) {
 
 char *get_choice_display_name(char *choice) {
     static char *display_name = NULL;  /* Acts as a reentrant buffer */
-    if (display_name) {
-        free(display_name);
-        display_name = NULL;
-    }
+    free(display_name);
+    display_name = NULL;
 
     char *p = strchr(choice, ':');
     if (p) {

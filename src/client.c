@@ -499,9 +499,7 @@ void on_http_request(
 
     done:
 
-    if (jwt_str) {
-        free(jwt_str);
-    }
+    free(jwt_str);
 
     if (jwt) {
         jwt_free(jwt);

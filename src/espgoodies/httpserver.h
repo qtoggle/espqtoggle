@@ -79,7 +79,7 @@ typedef struct {
     char                    query[HTTP_MAX_QUERY_LEN + 1];
 
     uint8                   method;
-    int                     content_length;
+    int32                   content_length;
 
     char                  **header_names;
     char                  **header_values;
@@ -88,8 +88,8 @@ typedef struct {
     char                    header_value[HTTP_MAX_HEADER_VALUE_LEN + 1];
 
     char                   *body;
-    int                     body_len;
-    int                     body_alloc_len;
+    int32                   body_len;
+    int32                   body_alloc_len;
 
     http_invalid_callback_t invalid_callback;
     http_timeout_callback_t timeout_callback;

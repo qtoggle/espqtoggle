@@ -31,8 +31,8 @@
 typedef struct {
 
     gpio_interrupt_handler_t  handler;
-    uint8                     gpio_no;
     void                     *arg;
+    uint8                     gpio_no;
     uint8                     type;
 
 } intr_details_t;

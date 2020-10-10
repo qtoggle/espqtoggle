@@ -410,15 +410,9 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
 
     response:
 
-    if (part1) {
-        free(part1);
-    }
-    if (part2) {
-        free(part2);
-    }
-    if (part3) {
-        free(part3);
-    }
+    free(part1);
+    free(part2);
+    free(part3);
 
     return response_json;
 }
@@ -1484,10 +1478,12 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
     /* type */
     child = json_obj_lookup_key(request_json, "type");
     if (!child) {
+        port_cleanup(new_port, /* free_id = */ TRUE);
         free(new_port);
         return MISSING_FIELD(response_json, "type");
     }
     if (json_get_type(child) != JSON_TYPE_STR) {
+        port_cleanup(new_port, /* free_id = */ TRUE);
         free(new_port);
         return INVALID_FIELD(response_json, "type");
     }
@@ -1500,6 +1496,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
         new_port->type = PORT_TYPE_BOOLEAN;
     }
     else {
+        port_cleanup(new_port, /* free_id = */ TRUE);
         free(new_port);
         return INVALID_FIELD(response_json, "type");
     }
@@ -1516,6 +1513,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
             new_port->min = json_double_get(child);
         }
         else {
+            port_cleanup(new_port, /* free_id = */ TRUE);
             free(new_port);
             return INVALID_FIELD(response_json, "min");
         }
@@ -1536,12 +1534,14 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
             new_port->max = json_double_get(child);
         }
         else {
+            port_cleanup(new_port, /* free_id = */ TRUE);
             free(new_port);
             return INVALID_FIELD(response_json, "max");
         }
 
         /* min must be <= max */
         if (!IS_UNDEFINED(new_port->min) && new_port->min > new_port->max) {
+            port_cleanup(new_port, /* free_id = */ TRUE);
             free(new_port);
             return INVALID_FIELD(response_json, "max");
         }
@@ -1556,6 +1556,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
     child = json_obj_lookup_key(request_json, "integer");
     if (child) {
         if (json_get_type(child) != JSON_TYPE_BOOL) {
+            port_cleanup(new_port, /* free_id = */ TRUE);
             free(new_port);
             return INVALID_FIELD(response_json, "integer");
         }
@@ -1575,6 +1576,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
             new_port->step = json_double_get(child);
         }
         else {
+            port_cleanup(new_port, /* free_id = */ TRUE);
             free(new_port);
             return INVALID_FIELD(response_json, "step");
         }
@@ -1589,12 +1591,14 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
     child = json_obj_lookup_key(request_json, "choices");
     if (child && new_port->type == PORT_TYPE_NUMBER) {
         if (json_get_type(child) != JSON_TYPE_LIST) {
+            port_cleanup(new_port, /* free_id = */ TRUE);
             free(new_port);
             return INVALID_FIELD(response_json, "choices");
         }
 
         int len = json_list_get_len(child);
         if (len < 1 || len > 256) {
+            port_cleanup(new_port, /* free_id = */ TRUE);
             free(new_port);
             return INVALID_FIELD(response_json, "choices");
         }
@@ -1603,7 +1607,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
         for (i = 0; i < len; i++) {
             c = json_list_value_at(child, i);
             if (json_get_type(c) != JSON_TYPE_OBJ) {
-                free_choices(new_port->choices);
+                port_cleanup(new_port, /* free_id = */ TRUE);
                 free(new_port);
                 return INVALID_FIELD(response_json, "choices");
             }
@@ -1611,7 +1615,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
             /* value */
             c2 = json_obj_lookup_key(c, "value");
             if (!c2) {
-                free_choices(new_port->choices);
+                port_cleanup(new_port, /* free_id = */ TRUE);
                 free(new_port);
                 return INVALID_FIELD(response_json, "choices");
             }
@@ -1623,7 +1627,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
                 new_port->choices[i] = strdup(dtostr(json_double_get(c2), /* decimals = */ -1));
             }
             else {
-                free_choices(new_port->choices);
+                port_cleanup(new_port, /* free_id = */ TRUE);
                 free(new_port);
                 return INVALID_FIELD(response_json, "choices");
             }
@@ -1632,7 +1636,7 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
             c2 = json_obj_lookup_key(c, "display_name");
             if (c2) {
                 if (json_get_type(c2) != JSON_TYPE_STR) {
-                    free_choices(new_port->choices);
+                    port_cleanup(new_port, /* free_id = */ TRUE);
                     free(new_port);
                     return INVALID_FIELD(response_json, "choices");
                 }
@@ -1655,6 +1659,8 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
     new_port->sequence_pos = -1;
 
     if (!virtual_port_register(new_port)) {
+        port_cleanup(new_port, /* free_id = */ TRUE);
+        free(new_port);
         return API_ERROR(response_json, 500, "port-register-error");
     }
 
@@ -1714,7 +1720,7 @@ json_t *api_put_ports(json_t *query_json, json_t *request_json, int *code) {
             port_ids[port_ids_len - 1] = strdup(port->id);
         }
 
-        port_cleanup(port);
+        port_cleanup(port, /* free_id = */ FALSE);
         if (IS_PORT_VIRTUAL(port)) {
             virtual_port_unregister(port);
         }
@@ -2185,7 +2191,7 @@ json_t *api_delete_port(port_t *port, json_t *query_json, int *code) {
 
     event_push_port_remove(port);
 
-    port_cleanup(port);
+    port_cleanup(port, /* free_id = */ FALSE);
 
     if (!virtual_port_unregister(port)) {
         return API_ERROR(response_json, 500, "port-unregister-error");
@@ -2379,9 +2385,10 @@ json_t *api_patch_port_sequence(port_t *port, json_t *query_json, json_t *reques
     }
     
     /* Start sequence timer */
-    os_timer_disarm(&port->sequence_timer);
-    os_timer_setfn(&port->sequence_timer, on_sequence_timer, port);
-    os_timer_arm(&port->sequence_timer, 1, /* repeat = */ FALSE);
+    port->sequence_timer = zalloc(sizeof(os_timer_t));
+    os_timer_disarm(port->sequence_timer);
+    os_timer_setfn(port->sequence_timer, on_sequence_timer, port);
+    os_timer_arm(port->sequence_timer, 1, /* repeat = */ FALSE);
 
     response_json = json_obj_new();
     *code = 204;
@@ -2472,10 +2479,7 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
             return INVALID_FIELD(response_json, "host");
         }
 
-        if (webhooks_host) {
-            free(webhooks_host);
-        }
-
+        free(webhooks_host);
         webhooks_host = strdup(json_str_get(host_json));
         DEBUG_WEBHOOKS("host set to \"%s\"", webhooks_host);
     }
@@ -2505,10 +2509,7 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
             return INVALID_FIELD(response_json, "path");
         }
 
-        if (webhooks_path) {
-            free(webhooks_path);
-        }
-
+        free(webhooks_path);
         webhooks_path = strdup(json_str_get(path_json));
         DEBUG_WEBHOOKS("path set to \"%s\"", webhooks_path);
     }
@@ -2941,7 +2942,7 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
             continue;
         }
 
-        port_cleanup(p);
+        port_cleanup(p, /* free_id = */ FALSE);
 
         if (!port_unregister(p)) {
             return API_ERROR(response_json, 500, "port-unregister-error");
@@ -3783,7 +3784,7 @@ void on_sequence_timer(void *arg) {
 
         DEBUG_PORT(port, "sequence delay of %d ms", port->sequence_delays[port->sequence_pos]);
 
-        os_timer_arm(&port->sequence_timer, port->sequence_delays[port->sequence_pos], /* repeat = */ FALSE);
+        os_timer_arm(port->sequence_timer, port->sequence_delays[port->sequence_pos], /* repeat = */ FALSE);
         port->sequence_pos++;
     }
     else { /* Sequence ended */
@@ -3798,12 +3799,7 @@ void on_sequence_timer(void *arg) {
             on_sequence_timer(arg);
         }
         else { /* Single iteration or repeat ended */
-            os_timer_disarm(&port->sequence_timer);
-            free(port->sequence_values);
-            free(port->sequence_delays);
-            port->sequence_pos = -1;
-            port->sequence_repeat = -1;
-
+            port_sequence_cancel(port);
             DEBUG_PORT(port, "sequence done");
 
             if (IS_PORT_PERSISTED(port)) {
@@ -3831,11 +3827,9 @@ void on_ota_latest(char *version, char *date, char *url) {
         api_conn_reset();
     }
 
-    if (version) {
-        free(version);
-        free(date);
-        free(url);
-    }
+    free(version);
+    free(date);
+    free(url);
 }
 
 void on_ota_perform(int code) {

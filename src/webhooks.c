@@ -42,8 +42,8 @@
 typedef struct webhooks_queue_node {
 
     event_t                    *event;
-    char                        retries_left;
     struct webhooks_queue_node *next;
+    char                        retries_left;
 
 } webhooks_queue_node_t;
 

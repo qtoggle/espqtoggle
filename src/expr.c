@@ -352,10 +352,8 @@ double _timems_callback(expr_t *expr, int argc, double *args) {
 
 double _delay_callback(expr_t *expr, int argc, double *args) {
     if (argc < 1) { /* Called from expr_free() */
-        if (expr->paux) {
-            free(expr->paux);
-            expr->paux = NULL;
-        }
+        free(expr->paux);
+        expr->paux = NULL;
         return FALSE;
     }
 
@@ -523,10 +521,8 @@ double _integ_callback(expr_t *expr, int argc, double *args) {
 
 bool _filter_callback(expr_t *expr, int argc, double *args) {
     if (argc < 1) { /* Called from expr_free() */
-        if (expr->paux) {
-            free(expr->paux);
-            expr->paux = NULL;
-        }
+        free(expr->paux);
+        expr->paux = NULL;
         return FALSE;
     }
 
@@ -1081,10 +1077,8 @@ expr_t *parse_literal_expr(char *input, int abs_pos) {
 }
 
 void set_parse_error(char *reason, char *token, int32 pos) {
-    if (parse_error.token) {
-        free(parse_error.token);
-        parse_error.token = NULL;
-    }
+    free(parse_error.token);
+    parse_error.token = NULL;
 
     if (token) {
         if (!strcmp(reason, "unexpected-character")) {
@@ -1207,12 +1201,9 @@ void expr_free(expr_t *expr) {
     if (func_needs_free(expr)) {
         ((func_t *) expr->func)->callback(expr, -1, NULL);
     }
-    if (expr->args) {
-        free(expr->args);
-    }
-    if (expr->port_id) {
-        free(expr->port_id);
-    }
+
+    free(expr->args);
+    free(expr->port_id);
     free(expr);
 }
 

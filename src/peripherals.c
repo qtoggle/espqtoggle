@@ -166,9 +166,7 @@ void peripheral_make_ports(peripheral_t *peripheral, char *port_ids[], uint8 por
             }
 
             DEBUG_PORT(ports[i], "id = \"%s\"", port_ids[i]);
-            if (ports[i]->id) {
-                free(ports[i]->id);
-            }
+            free(ports[i]->id);
             ports[i]->id = strdup(port_ids[i]);
         }
     }

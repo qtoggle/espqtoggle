@@ -134,18 +134,18 @@ void core_poll(void) {
             continue;
         }
 
-        if (p->heart_beat && (now_ms - p->last_heart_beat_time >= p->heart_beat_interval)) {
-            p->last_heart_beat_time = now_ms;
+        if (p->heart_beat && (now_ms - p->last_heart_beat_time_ms >= p->heart_beat_interval)) {
+            p->last_heart_beat_time_ms = now_ms;
             p->heart_beat(p);
         }
 
         /* Don't read value more often than indicated by sampling interval */
-        if (now_ms - p->last_sample_time < p->sampling_interval) {
+        if (now_ms - p->last_sample_time_ms < p->sampling_interval) {
             continue;
         }
 
         value = p->read_value(p);
-        p->last_sample_time = now_ms;
+        p->last_sample_time_ms = now_ms;
         if (IS_UNDEFINED(value)) {
             continue;
         }

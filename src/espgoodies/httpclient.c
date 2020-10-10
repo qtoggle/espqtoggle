@@ -26,20 +26,20 @@
 /* Internal request state */
 typedef struct {
 
+    struct espconn  *connection;
     char            *path;
-    uint16           port;
     char            *method;
     uint8           *body;
-    int              body_len;
     char            *headers;
     char            *hostname;
     char            *buffer;
-    int              buffer_size;
-    uint8            ip_addr[4];
-    bool             secure;
+    int32            body_len;
+    int32            buffer_size;
     http_callback_t  callback;
     os_timer_t       timer;
-    struct espconn  *connection;
+    uint16           port;
+    uint8            ip_addr[4];
+    bool             secure;
 
 } request_args_t;
 
@@ -445,10 +445,7 @@ void timeout_callback(void *arg) {
 
 
 void httpclient_set_user_agent(char *agent) {
-    if (user_agent) {
-        free(user_agent);
-    }
-
+    free(user_agent);
     user_agent = strdup(agent);
 
     DEBUG_HTTPCLIENT("user agent set to \"%s\"", agent);

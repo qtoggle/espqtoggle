@@ -1,0 +1,30 @@
+{
+    "name": "get-backup-endpoints",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/backup/endpoints",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": [
+                    {
+                        "path": "/peripherals",
+                        "display_name": "Peripherals",
+                        "restore_method": "PUT",
+                        "reconnect": false
+                    },
+                    {
+                        "path": "/system",
+                        "display_name": "System Configuration",
+                        "restore_method": "PATCH",
+                        "reconnect": false
+                    }
+                ]
+            }
+        }
+    ]
+}

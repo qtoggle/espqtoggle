@@ -128,10 +128,7 @@ json_t *event_to_json(event_t *event, json_refs_ctx_t *json_refs_ctx) {
 }
 
 void event_free(event_t *event) {
-    if (event->port_id) {
-        free(event->port_id);
-    }
-
+    free(event->port_id);
     free(event);
 }
 
