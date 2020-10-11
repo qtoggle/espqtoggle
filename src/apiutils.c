@@ -221,7 +221,7 @@ bool validate_wifi_key(char *key) {
 }
 
 bool validate_wifi_bssid(char *bssid_str, uint8 *bssid) {
-    int len = 0;
+    int i, len = 0;
     char *s = bssid_str;
     char t[3] = {0, 0, 0};
 
@@ -241,7 +241,9 @@ bool validate_wifi_bssid(char *bssid_str, uint8 *bssid) {
         t[0] = s[0]; t[1] = s[1];
         bssid[len++] = strtol(t, NULL, 16);
 
-        s += 3;
+        for (i = 0; i < 3 && *s; i++) {
+            s++;
+        }
     }
 
     if (len != WIFI_BSSID_LEN && len != 0) {
