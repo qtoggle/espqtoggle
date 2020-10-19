@@ -109,7 +109,7 @@ json_t ICACHE_FLASH_ATTR *api_patch_port_value(port_t *port, json_t *query_json,
 json_t ICACHE_FLASH_ATTR *api_patch_port_sequence(port_t *port, json_t *query_json, json_t *request_json, int *code);
 
 json_t ICACHE_FLASH_ATTR *api_get_webhooks(json_t *query_json, int *code);
-json_t ICACHE_FLASH_ATTR *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code);
+json_t ICACHE_FLASH_ATTR *api_put_webhooks(json_t *query_json, json_t *request_json, int *code);
 
 json_t ICACHE_FLASH_ATTR *api_get_wifi(json_t *query_json, int *code);
 

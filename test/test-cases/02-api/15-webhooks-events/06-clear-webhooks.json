@@ -4,13 +4,28 @@
         {
             "name": "json-http-client",
             "params": {
-                "method": "PATCH",
+                "method": "PUT",
                 "path": "/webhooks",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "body": {
-                    "enabled": false
+                    "enabled": false,
+                    "scheme": "http",
+                    "host": "",
+                    "port": 8080,
+                    "path": "",
+                    "password": "",
+                    "events": [
+                        "value-change",
+                        "port-update",
+                        "port-add",
+                        "port-remove",
+                        "device-update",
+                        "full-update"
+                    ],
+                    "timeout": 2,
+                    "retries": 0
                 },
                 "expected_status": 204
             }
