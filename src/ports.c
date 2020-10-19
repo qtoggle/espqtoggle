@@ -712,8 +712,10 @@ void port_cleanup(port_t *port, bool free_id) {
         port->choices = NULL;
     }
 
-    free(port->id);
-    port->id = NULL;
+    if (free_id) {
+        free(port->id);
+        port->id = NULL;
+    }
 
     free(port->display_name);
     port->display_name = NULL;
