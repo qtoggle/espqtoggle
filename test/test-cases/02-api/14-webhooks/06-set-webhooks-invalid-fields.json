@@ -1,5 +1,5 @@
 {
-    "name": "set-webhooks-missing-fields",
+    "name": "set-webhooks-invalid-scheme",
     "instructions": [
         {
             "name": "json-http-client",
@@ -10,39 +10,8 @@
                     "Authorization": "Bearer ${TEST_JWT_ADMIN}"
                 },
                 "body": {
-                    "scheme": "http",
-                    "host": "{{HOST_IP_ADDRESS}}",
-                    "port": 8080,
-                    "path": "/webhooks",
-                    "password": "${TEST_PASSWORD}_webhooks",
-                    "events": [
-                        "value-change",
-                        "port-update",
-                        "port-add",
-                        "port-remove",
-                        "device-update",
-                        "full-update"
-                    ],
-                    "timeout": 2,
-                    "retries": 0
-                },
-                "expected_status": 400,
-                "expected_body": {
-                    "error": "missing-field",
-                    "field": "enabled"
-                }
-            }
-        },
-        {
-            "name": "json-http-client",
-            "params": {
-                "method": "PUT",
-                "path": "/webhooks",
-                "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
-                },
-                "body": {
                     "enabled": true,
+                    "scheme": "invalid",
                     "host": "{{HOST_IP_ADDRESS}}",
                     "port": 8080,
                     "path": "/webhooks",
@@ -60,7 +29,7 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "missing-field",
+                    "error": "invalid-field",
                     "field": "scheme"
                 }
             }
@@ -76,6 +45,7 @@
                 "body": {
                     "enabled": true,
                     "scheme": "http",
+                    "host": "",
                     "port": 8080,
                     "path": "/webhooks",
                     "password": "${TEST_PASSWORD}_webhooks",
@@ -92,7 +62,7 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "missing-field",
+                    "error": "invalid-field",
                     "field": "host"
                 }
             }
@@ -109,6 +79,7 @@
                     "enabled": true,
                     "scheme": "http",
                     "host": "{{HOST_IP_ADDRESS}}",
+                    "port": "invalid",
                     "path": "/webhooks",
                     "password": "${TEST_PASSWORD}_webhooks",
                     "events": [
@@ -124,7 +95,7 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "missing-field",
+                    "error": "invalid-field",
                     "field": "port"
                 }
             }
@@ -142,6 +113,7 @@
                     "scheme": "http",
                     "host": "{{HOST_IP_ADDRESS}}",
                     "port": 8080,
+                    "path": "",
                     "password": "${TEST_PASSWORD}_webhooks",
                     "events": [
                         "value-change",
@@ -156,7 +128,7 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "missing-field",
+                    "error": "invalid-field",
                     "field": "path"
                 }
             }
@@ -175,6 +147,7 @@
                     "host": "{{HOST_IP_ADDRESS}}",
                     "port": 8080,
                     "path": "/webhooks",
+                    "password": {"invalid": true},
                     "events": [
                         "value-change",
                         "port-update",
@@ -188,7 +161,7 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "missing-field",
+                    "error": "invalid-field",
                     "field": "password"
                 }
             }
@@ -208,12 +181,46 @@
                     "port": 8080,
                     "path": "/webhooks",
                     "password": "${TEST_PASSWORD}_webhooks",
+                    "events": [
+                        "invalid",
+                        "port-update",
+                        "port-add",
+                        "port-remove",
+                        "device-update",
+                        "full-update"
+                    ],
                     "timeout": 2,
                     "retries": 0
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "missing-field",
+                    "error": "invalid-field",
+                    "field": "events"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PUT",
+                "path": "/webhooks",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "enabled": true,
+                    "scheme": "http",
+                    "host": "{{HOST_IP_ADDRESS}}",
+                    "port": 8080,
+                    "path": "/webhooks",
+                    "password": "${TEST_PASSWORD}_webhooks",
+                    "events": {"invalid": true},
+                    "timeout": 2,
+                    "retries": 0
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid-field",
                     "field": "events"
                 }
             }
@@ -241,11 +248,12 @@
                         "device-update",
                         "full-update"
                     ],
+                    "timeout": {"invalid": true},
                     "retries": 0
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "missing-field",
+                    "error": "invalid-field",
                     "field": "timeout"
                 }
             }
@@ -273,11 +281,12 @@
                         "device-update",
                         "full-update"
                     ],
-                    "timeout": 2
+                    "timeout": 2,
+                    "retries": {"invalud": true}
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "missing-field",
+                    "error": "invalid-field",
                     "field": "retries"
                 }
             }
