@@ -4,13 +4,28 @@
         {
             "name": "json-http-client",
             "params": {
-                "method": "PATCH",
+                "method": "PUT",
                 "path": "/webhooks",
                 "headers": {
                     "Authorization": "Bearer inexistent"
                 },
                 "body": {
-                    "enabled": false
+                    "enabled": true,
+                    "scheme": "http",
+                    "host": "{{HOST_IP_ADDRESS}}",
+                    "port": 8080,
+                    "path": "/webhooks",
+                    "password": "${TEST_PASSWORD}_webhooks",
+                    "events": [
+                        "value-change",
+                        "port-update",
+                        "port-add",
+                        "port-remove",
+                        "device-update",
+                        "full-update"
+                    ],
+                    "timeout": 2,
+                    "retries": 0
                 },
                 "expected_status": 401
             }
@@ -18,13 +33,28 @@
         {
             "name": "json-http-client",
             "params": {
-                "method": "PATCH",
+                "method": "PUT",
                 "path": "/webhooks",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_VIEWONLY}"
                 },
                 "body": {
-                    "enabled": false
+                    "enabled": true,
+                    "scheme": "http",
+                    "host": "{{HOST_IP_ADDRESS}}",
+                    "port": 8080,
+                    "path": "/webhooks",
+                    "password": "${TEST_PASSWORD}_webhooks",
+                    "events": [
+                        "value-change",
+                        "port-update",
+                        "port-add",
+                        "port-remove",
+                        "device-update",
+                        "full-update"
+                    ],
+                    "timeout": 2,
+                    "retries": 0
                 },
                 "expected_status": 403
             }
@@ -32,17 +62,31 @@
         {
             "name": "json-http-client",
             "params": {
-                "method": "PATCH",
+                "method": "PUT",
                 "path": "/webhooks",
                 "headers": {
                     "Authorization": "Bearer ${TEST_JWT_NORMAL}"
                 },
                 "body": {
-                    "enabled": false
+                    "enabled": true,
+                    "scheme": "http",
+                    "host": "{{HOST_IP_ADDRESS}}",
+                    "port": 8080,
+                    "path": "/webhooks",
+                    "password": "${TEST_PASSWORD}_webhooks",
+                    "events": [
+                        "value-change",
+                        "port-update",
+                        "port-add",
+                        "port-remove",
+                        "device-update",
+                        "full-update"
+                    ],
+                    "timeout": 2,
+                    "retries": 0
                 },
                 "expected_status": 403
             }
         }
     ]
 }
-

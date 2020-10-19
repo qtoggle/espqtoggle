@@ -320,8 +320,8 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
         if (method == HTTP_METHOD_GET) {
             response_json = api_get_webhooks(query_json, code);
         }
-        else if (method == HTTP_METHOD_PATCH) {
-            response_json = api_patch_webhooks(query_json, request_json, code);
+        else if (method == HTTP_METHOD_PUT) {
+            response_json = api_put_webhooks(query_json, request_json, code);
         }
         else {
             RESPOND_NO_SUCH_FUNCTION(response_json);
@@ -2433,7 +2433,7 @@ json_t *api_get_webhooks(json_t *query_json, int *code) {
     return response_json;
 }
 
-json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) {
+json_t *api_put_webhooks(json_t *query_json, json_t *request_json, int *code) {
     DEBUG_API("updating webhooks parameters");
 
     json_t *response_json = json_obj_new();
@@ -2446,175 +2446,180 @@ json_t *api_patch_webhooks(json_t *query_json, json_t *request_json, int *code) 
         return API_ERROR(response_json, 400, "invalid-request");
     }
 
+    /* Enabled */
+    json_t *enabled_json = json_obj_lookup_key(request_json, "enabled");
+    if (!enabled_json) {
+        return MISSING_FIELD(response_json, "enabled");
+    }
+    if (json_get_type(enabled_json) != JSON_TYPE_BOOL) {
+        return INVALID_FIELD(response_json, "enabled");
+    }
+
+    bool enabled = json_bool_get(enabled_json);
+
     /* Scheme */
     json_t *scheme_json = json_obj_lookup_key(request_json, "scheme");
-    if (scheme_json) {
-        if (json_get_type(scheme_json) != JSON_TYPE_STR) {
-            return INVALID_FIELD(response_json, "scheme");
-        }
+    if (!scheme_json) {
+        return MISSING_FIELD(response_json, "scheme");
+    }
+    if (json_get_type(scheme_json) != JSON_TYPE_STR) {
+        return INVALID_FIELD(response_json, "scheme");
+    }
 
+    bool scheme_https = FALSE;
 #ifdef _SSL
-        if (!strcmp(json_str_get(scheme_json), "https")) {
-            device_flags |= DEVICE_FLAG_WEBHOOKS_HTTPS;
-            DEBUG_WEBHOOKS("scheme set to HTTPS");
-        }
-        else
+    if (!strcmp(json_str_get(scheme_json), "https")) {
+        scheme_https = TRUE;
+    }
+    else
 #endif
-        if (!strcmp(json_str_get(scheme_json), "http")) {
-            DEBUG_WEBHOOKS("scheme set to HTTP");
-            device_flags &= ~DEVICE_FLAG_WEBHOOKS_HTTPS;
-        }
-        else {
-            return INVALID_FIELD(response_json, "scheme");
-        }
+    if (strcmp(json_str_get(scheme_json), "http")) {
+        return INVALID_FIELD(response_json, "scheme");
     }
 
     /* Host */
     json_t *host_json = json_obj_lookup_key(request_json, "host");
-    if (host_json) {
-        if (json_get_type(host_json) != JSON_TYPE_STR) {
-            return INVALID_FIELD(response_json, "host");
-        }
-        if (strlen(json_str_get(host_json)) == 0) {
-            return INVALID_FIELD(response_json, "host");
-        }
-
-        free(webhooks_host);
-        webhooks_host = strdup(json_str_get(host_json));
-        DEBUG_WEBHOOKS("host set to \"%s\"", webhooks_host);
+    if (!host_json) {
+        return MISSING_FIELD(response_json, "host");
+    }
+    if (json_get_type(host_json) != JSON_TYPE_STR) {
+        return INVALID_FIELD(response_json, "host");
+    }
+    if (strlen(json_str_get(host_json)) == 0 && enabled) {
+        return INVALID_FIELD(response_json, "host");
     }
 
     /* Port */
     json_t *port_json = json_obj_lookup_key(request_json, "port");
-    if (port_json) {
-        if (json_get_type(port_json) != JSON_TYPE_INT) {
-            return INVALID_FIELD(response_json, "port");
-        }
-
-        if (json_int_get(port_json) < 0 || json_int_get(port_json) > 65535) {
-            return INVALID_FIELD(response_json, "port");
-        }
-
-        webhooks_port = json_int_get(port_json);
-        DEBUG_WEBHOOKS("port set to %d", webhooks_port);
+    if (!port_json) {
+        return MISSING_FIELD(response_json, "port");
+    }
+    if (json_get_type(port_json) != JSON_TYPE_INT) {
+        return INVALID_FIELD(response_json, "port");
+    }
+    if (json_int_get(port_json) < 1 || json_int_get(port_json) > 65535) {
+        return INVALID_FIELD(response_json, "port");
     }
 
     /* Path */
     json_t *path_json = json_obj_lookup_key(request_json, "path");
-    if (path_json) {
-        if (json_get_type(path_json) != JSON_TYPE_STR) {
-            return INVALID_FIELD(response_json, "path");
-        }
-        if (strlen(json_str_get(path_json)) == 0) {
-            return INVALID_FIELD(response_json, "path");
-        }
-
-        free(webhooks_path);
-        webhooks_path = strdup(json_str_get(path_json));
-        DEBUG_WEBHOOKS("path set to \"%s\"", webhooks_path);
+    if (!path_json) {
+        return MISSING_FIELD(response_json, "path");
+    }
+    if (json_get_type(path_json) != JSON_TYPE_STR) {
+        return INVALID_FIELD(response_json, "path");
+    }
+    if (strlen(json_str_get(path_json)) == 0 && enabled) {
+        return INVALID_FIELD(response_json, "path");
     }
 
     /* Password */
     json_t *password_json = json_obj_lookup_key(request_json, "password");
-    if (password_json) {
-        if (json_get_type(password_json) != JSON_TYPE_STR) {
-            return INVALID_FIELD(response_json, "password");
-        }
-
-        char *password = json_str_get(password_json);
-        char *password_hash = sha256_hex(password);
-        strcpy(webhooks_password_hash, password_hash);
-        free(password_hash);
-        DEBUG_WEBHOOKS("password set");
+    if (!password_json) {
+        return MISSING_FIELD(response_json, "password");
+    }
+    if (json_get_type(password_json) != JSON_TYPE_STR) {
+        return INVALID_FIELD(response_json, "password");
     }
 
     /* Events */
     json_t *event_json, *events_json = json_obj_lookup_key(request_json, "events");
-    if (events_json) {
-        if (json_get_type(events_json) != JSON_TYPE_LIST) {
+    if (!events_json) {
+        return MISSING_FIELD(response_json, "events");
+    }
+    if (json_get_type(events_json) != JSON_TYPE_LIST) {
+        return INVALID_FIELD(response_json, "events");
+    }
+
+    int i, e, len = json_list_get_len(events_json);
+    uint8 events_mask = 0;
+    for (i = 0; i < len; i++) {
+        event_json = json_list_value_at(events_json, i);
+        if (json_get_type(event_json) != JSON_TYPE_STR) {
             return INVALID_FIELD(response_json, "events");
         }
 
-        int i, e, len = json_list_get_len(events_json);
-        uint8 events_mask = 0;
-        for (i = 0; i < len; i++) {
-            event_json = json_list_value_at(events_json, i);
-            if (json_get_type(event_json) != JSON_TYPE_STR) {
-                return INVALID_FIELD(response_json, "events");
+        for (e = EVENT_TYPE_MIN; e <= EVENT_TYPE_MAX; e++) {
+            if (!strcmp(json_str_get(event_json), EVENT_TYPES_STR[e])) {
+                events_mask |= BIT(e);
+                break;
             }
-
-            for (e = EVENT_TYPE_MIN; e <= EVENT_TYPE_MAX; e++) {
-                if (!strcmp(json_str_get(event_json), EVENT_TYPES_STR[e])) {
-                    events_mask |= BIT(e);
-                    break;
-                }
-            }
-
-            if (e > EVENT_TYPE_MAX) {
-                return INVALID_FIELD(response_json, "events");
-            }
-
-            DEBUG_WEBHOOKS("event mask includes %s", EVENT_TYPES_STR[e]);
         }
 
-        webhooks_events_mask = events_mask;
+        if (e > EVENT_TYPE_MAX) {
+            return INVALID_FIELD(response_json, "events");
+        }
+
+        DEBUG_WEBHOOKS("event mask includes %s", EVENT_TYPES_STR[e]);
     }
 
     /* Timeout */
     json_t *timeout_json = json_obj_lookup_key(request_json, "timeout");
-    if (timeout_json) {
-        if (json_get_type(timeout_json) != JSON_TYPE_INT) {
-            return INVALID_FIELD(response_json, "timeout");
-        }
-
-        if (json_int_get(timeout_json) < WEBHOOKS_MIN_TIMEOUT || json_int_get(timeout_json) > WEBHOOKS_MAX_TIMEOUT) {
-            return INVALID_FIELD(response_json, "timeout");
-        }
-
-        webhooks_timeout = json_int_get(timeout_json);
-        DEBUG_WEBHOOKS("timeout set to %d", webhooks_timeout);
+    if (!timeout_json) {
+        return MISSING_FIELD(response_json, "timeout");
+    }
+    if (json_get_type(timeout_json) != JSON_TYPE_INT) {
+        return INVALID_FIELD(response_json, "timeout");
+    }
+    if (json_int_get(timeout_json) < WEBHOOKS_MIN_TIMEOUT || json_int_get(timeout_json) > WEBHOOKS_MAX_TIMEOUT) {
+        return INVALID_FIELD(response_json, "timeout");
     }
 
     /* Retries */
     json_t *retries_json = json_obj_lookup_key(request_json, "retries");
-    if (retries_json) {
-        if (json_get_type(retries_json) != JSON_TYPE_INT) {
-            return INVALID_FIELD(response_json, "retries");
-        }
-
-        if (json_int_get(retries_json) < WEBHOOKS_MIN_RETRIES || json_int_get(retries_json) > WEBHOOKS_MAX_RETRIES) {
-            return INVALID_FIELD(response_json, "retries");
-        }
-
-        webhooks_retries = json_int_get(retries_json);
-        DEBUG_WEBHOOKS("retries set to %d", webhooks_retries);
+    if (!retries_json) {
+        return MISSING_FIELD(response_json, "retries");
+    }
+    if (json_get_type(retries_json) != JSON_TYPE_INT) {
+        return INVALID_FIELD(response_json, "retries");
+    }
+    if (json_int_get(retries_json) < WEBHOOKS_MIN_RETRIES || json_int_get(retries_json) > WEBHOOKS_MAX_RETRIES) {
+        return INVALID_FIELD(response_json, "retries");
     }
 
-    /* Enabled */
-    json_t *enabled_json = json_obj_lookup_key(request_json, "enabled");
-    if (enabled_json) {
-        if (json_get_type(enabled_json) != JSON_TYPE_BOOL) {
-            return INVALID_FIELD(response_json, "enabled");
-        }
-
-        bool enabled = json_bool_get(enabled_json);
-        if (enabled) {
-            /* We can't enable webhooks unless we have a host and a path */
-            if (!webhooks_host || !webhooks_host[0]) {
-                return MISSING_FIELD(response_json, "host");
-            }
-            if (!webhooks_path || !webhooks_path[0]) {
-                return MISSING_FIELD(response_json, "path");
-            }
-
-            device_flags |= DEVICE_FLAG_WEBHOOKS_ENABLED;
-            DEBUG_WEBHOOKS("enabled");
-        }
-        else {
-            device_flags &= ~DEVICE_FLAG_WEBHOOKS_ENABLED;
-            DEBUG_WEBHOOKS("disabled");
-        }
+    /* Now that we've validated input data, we can apply changes */
+    if (enabled) {
+        device_flags |= DEVICE_FLAG_WEBHOOKS_ENABLED;
+        DEBUG_WEBHOOKS("enabled");
     }
+    else {
+        device_flags &= ~DEVICE_FLAG_WEBHOOKS_ENABLED;
+        DEBUG_WEBHOOKS("disabled");
+    }
+
+    if (scheme_https) {
+        device_flags |= DEVICE_FLAG_WEBHOOKS_HTTPS;
+        DEBUG_WEBHOOKS("scheme set to HTTPS");
+    }
+    else {
+        DEBUG_WEBHOOKS("scheme set to HTTP");
+        device_flags &= ~DEVICE_FLAG_WEBHOOKS_HTTPS;
+    }
+
+    free(webhooks_host);
+    webhooks_host = strdup(json_str_get(host_json));
+    DEBUG_WEBHOOKS("host set to \"%s\"", webhooks_host);
+
+    webhooks_port = json_int_get(port_json);
+    DEBUG_WEBHOOKS("port set to %d", webhooks_port);
+
+    free(webhooks_path);
+    webhooks_path = strdup(json_str_get(path_json));
+    DEBUG_WEBHOOKS("path set to \"%s\"", webhooks_path);
+
+    char *password = json_str_get(password_json);
+    char *password_hash = sha256_hex(password);
+    strcpy(webhooks_password_hash, password_hash);
+    free(password_hash);
+    DEBUG_WEBHOOKS("password set");
+
+    webhooks_events_mask = events_mask;
+
+    webhooks_timeout = json_int_get(timeout_json);
+    DEBUG_WEBHOOKS("timeout set to %d", webhooks_timeout);
+
+    webhooks_retries = json_int_get(retries_json);
+    DEBUG_WEBHOOKS("retries set to %d", webhooks_retries);
 
     config_mark_for_saving();
 
