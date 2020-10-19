@@ -1389,13 +1389,13 @@ json_t *api_get_backup_endpoints(json_t *query_json, int *code) {
     json_obj_append(peripherals_json, "path", json_str_new("/peripherals"));
     json_obj_append(peripherals_json, "display_name", json_str_new("Peripherals"));
     json_obj_append(peripherals_json, "restore_method", json_str_new("PUT"));
-    json_obj_append(peripherals_json, "reconnect", json_bool_new(FALSE));
+    json_obj_append(peripherals_json, "order", json_int_new(5));
 
     json_t *system_json = json_obj_new();
     json_obj_append(system_json, "path", json_str_new("/system"));
     json_obj_append(system_json, "display_name", json_str_new("System Configuration"));
     json_obj_append(system_json, "restore_method", json_str_new("PATCH"));
-    json_obj_append(system_json, "reconnect", json_bool_new(FALSE));
+    json_obj_append(system_json, "order", json_int_new(6));
 
     json_list_append(response_json, peripherals_json);
     json_list_append(response_json, system_json);
