@@ -330,6 +330,7 @@ int user_rf_cal_sector_set(void) {
 }
 
 void user_init(void) {
+    system_timer_reinit();
 #ifdef _DEBUG
     debug_uart_setup(_DEBUG_UART_NO);
     os_delay_us(10000);
@@ -354,7 +355,7 @@ void user_init(void) {
     system_config_load();
     check_update_fw_config();
     config_init();
-    system_config_init();
+    system_init();
 #ifdef _OTA
     ota_init(
         /* current_version = */   FW_VERSION,

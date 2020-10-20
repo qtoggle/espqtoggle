@@ -246,7 +246,7 @@ bool validate_wifi_bssid(char *bssid_str, uint8 *bssid) {
         }
     }
 
-    if (len != WIFI_BSSID_LEN && len != 0) {
+    if (len != WIFI_BSSID_LEN) {
         return FALSE;
     }
 

@@ -81,6 +81,7 @@ void   ICACHE_FLASH_ATTR  api_conn_save(void);
 void   ICACHE_FLASH_ATTR  api_conn_restore(void);
 
 json_t ICACHE_FLASH_ATTR *api_get_device(json_t *query_json, int *code);
+json_t ICACHE_FLASH_ATTR *api_put_device(json_t *query_json, json_t *request_json, int *code);
 json_t ICACHE_FLASH_ATTR *api_patch_device(json_t *query_json, json_t *request_json, int *code);
 
 json_t ICACHE_FLASH_ATTR *api_post_reset(json_t *query_json, json_t *request_json, int *code);

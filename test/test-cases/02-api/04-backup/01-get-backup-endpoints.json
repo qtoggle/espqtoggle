@@ -15,13 +15,13 @@
                         "path": "/peripherals",
                         "display_name": "Peripherals",
                         "restore_method": "PUT",
-                        "reconnect": false
+                        "order": 5
                     },
                     {
                         "path": "/system",
                         "display_name": "System Configuration",
                         "restore_method": "PATCH",
-                        "reconnect": false
+                        "order": 6
                     }
                 ]
             }

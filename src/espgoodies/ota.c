@@ -268,6 +268,7 @@ void on_ota_finish_check(void *arg) {
     struct upgrade_server_info *info = arg;
     if (info->upgrade_flag) {
         DEBUG_OTA("finished");
+        system_reset_callback(/* factory = */ FALSE);
         system_upgrade_reboot();
     }
     else {
