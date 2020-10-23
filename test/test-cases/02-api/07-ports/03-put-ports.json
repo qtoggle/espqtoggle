@@ -1,5 +1,5 @@
 {
-    "name": "set-ports",
+    "name": "put-ports",
     "instructions": [
         {
             "name": "json-http-client",

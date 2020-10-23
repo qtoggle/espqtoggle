@@ -137,6 +137,14 @@ static json_t ICACHE_FLASH_ATTR *_invalid_expression_error(
                                      int32 pos
                                  );
 
+static json_t ICACHE_FLASH_ATTR *device_from_json(
+                                     json_t *json,
+                                     int *code,
+                                     bool *needs_reset,
+                                     bool *needs_sleep_reset,
+                                     bool *config_name_changed,
+                                     bool ignore_unknown
+                                 );
 static json_t ICACHE_FLASH_ATTR *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx);
 static json_t ICACHE_FLASH_ATTR *device_attrdefs_to_json(void);
 
@@ -197,8 +205,7 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
         RESPOND_NO_SUCH_FUNCTION(response_json);
     }
 
-
-    /* Determine the api call */
+    /* Determine the API endpoint and method */
 
     if (!strcmp(part1, "device")) {
         if (part2) {
@@ -210,6 +217,9 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
             }
             else if (method == HTTP_METHOD_PATCH) {
                 response_json = api_patch_device(query_json, request_json, code);
+            }
+            else if (method == HTTP_METHOD_PUT) {
+                response_json = api_put_device(query_json, request_json, code);
             }
             else {
                 RESPOND_NO_SUCH_FUNCTION(response_json);
@@ -904,10 +914,10 @@ json_t *api_get_device(json_t *query_json, int *code) {
     return device_to_json();
 }
 
-json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
-    DEBUG_API("updating device attributes");
+json_t *api_put_device(json_t *query_json, json_t *request_json, int *code) {
+    DEBUG_API("restoring device");
 
-    json_t *response_json = json_obj_new();
+    json_t *response_json = NULL;
     
     if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
         return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
@@ -917,307 +927,71 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
         return API_ERROR(response_json, 400, "invalid-request");
     }
 
-    int i;
-    bool needs_reset = FALSE;
-    bool config_name_changed = FALSE;
+    /* Reset attributes to default values; network-related attributes will be left untouched, though */
+    free(device_name);
+    char default_device_name[API_MAX_DEVICE_NAME_LEN];
+    snprintf(default_device_name, sizeof(default_device_name), DEFAULT_HOSTNAME, system_get_chip_id());
+    device_name = strdup(default_device_name);
+
+    free(device_display_name);
+    device_display_name = strdup("");
+
+    memcpy(device_admin_password_hash, EMPTY_SHA256_HEX, SHA256_HEX_LEN);
+    memcpy(device_normal_password_hash, EMPTY_SHA256_HEX, SHA256_HEX_LEN);
+    memcpy(device_viewonly_password_hash, EMPTY_SHA256_HEX, SHA256_HEX_LEN);
+
 #ifdef _SLEEP
-    bool needs_sleep_reset = FALSE;
+    sleep_set_wake_interval(SLEEP_WAKE_INTERVAL_MIN);
+    sleep_set_wake_duration(SLEEP_WAKE_DURATION_MIN);
 #endif
-    char *key;
-    json_t *child;
-    for (i = 0; i < json_obj_get_len(request_json); i++) {
-        key = json_obj_key_at(request_json, i);
-        child = json_obj_value_at(request_json, i);
 
-        if (!strcmp(key, "name")) {
-            if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(response_json, key);
-            }
-            
-            char *value = json_str_get(child);
-            if (!validate_id(value) || strlen(json_str_get(child)) > API_MAX_DEVICE_NAME_LEN) {
-                return INVALID_FIELD(response_json, key);
-            }
-            
-            free(device_name);
-            device_name = strdup(value);
-            
-            DEBUG_DEVICE("name set to \"%s\"", device_name);
-
-            httpserver_set_name(device_name);
-        }
-        else if (!strcmp(key, "display_name")) {
-            if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            char *value = json_str_get(child);
-            if (strlen(json_str_get(child)) > API_MAX_DEVICE_DISP_NAME_LEN) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            free(device_display_name);
-            device_display_name = strdup(value);
-            
-            DEBUG_DEVICE("display name set to \"%s\"", device_display_name);
-        }
-        else if (!strcmp(key, "admin_password")) {
-            if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(response_json, key);
-            }
-            
-            char *password = json_str_get(child);
-            char *password_hash = sha256_hex(password);
-            strcpy(device_admin_password_hash, password_hash);
-            free(password_hash);
-            DEBUG_DEVICE("admin password set");
-        }
-        else if (!strcmp(key, "normal_password")) {
-            if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(response_json, key);
-            }
-            
-            char *password = json_str_get(child);
-            char *password_hash = sha256_hex(password);
-            strcpy(device_normal_password_hash, password_hash);
-            free(password_hash);
-            DEBUG_DEVICE("normal password set");
-        }
-        else if (!strcmp(key, "viewonly_password")) {
-            if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(response_json, key);
-            }
-            
-            char *password = json_str_get(child);
-            char *password_hash = sha256_hex(password);
-            strcpy(device_viewonly_password_hash, password_hash);
-            free(password_hash);
-            DEBUG_DEVICE("view-only password set");
-        }
-        else if (!strcmp(key, "ip_address")) {
-            if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            char *ip_address_str = json_str_get(child);
-            ip_addr_t ip_address = {0};
-            if (ip_address_str[0]) { /* Manual */
-                uint8 bytes[4];
-                if (!validate_ip_address(ip_address_str, bytes)) {
-                    return INVALID_FIELD(response_json, key);
-                }
-
-                IP4_ADDR(&ip_address, bytes[0], bytes[1], bytes[2], bytes[3]);
-            }
-
-            wifi_set_ip_address(ip_address);
-            needs_reset = TRUE;
-        }
-        else if (!strcmp(key, "ip_netmask")) {
-            if (json_get_type(child) != JSON_TYPE_INT) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            int netmask = json_int_get(child);
-            if (!validate_num(netmask, 0, 31, /* integer = */ TRUE, /* step = */ 0, /* choices = */ NULL)) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            wifi_set_netmask(netmask);
-            needs_reset = TRUE;
-        }
-        else if (!strcmp(key, "ip_gateway")) {
-            if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            char *gateway_str = json_str_get(child);
-            ip_addr_t gateway = {0};
-            if (gateway_str[0]) { /* Manual */
-                uint8 bytes[4];
-                if (!validate_ip_address(gateway_str, bytes)) {
-                    return INVALID_FIELD(response_json, key);
-                }
-
-                IP4_ADDR(&gateway, bytes[0], bytes[1], bytes[2], bytes[3]);
-            }
-
-            wifi_set_gateway(gateway);
-            needs_reset = TRUE;
-        }
-        else if (!strcmp(key, "ip_dns")) {
-            if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            char *dns_str = json_str_get(child);
-            ip_addr_t dns = {0};
-            if (dns_str[0]) { /* Manual */
-                uint8 bytes[4];
-                if (!validate_ip_address(dns_str, bytes)) {
-                    return INVALID_FIELD(response_json, key);
-                }
-
-                IP4_ADDR(&dns, bytes[0], bytes[1], bytes[2], bytes[3]);
-            }
-
-            wifi_set_dns(dns);
-            needs_reset = TRUE;
-        }
-        else if (!strcmp(key, "wifi_ssid")) {
-            if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            char *ssid = json_str_get(child);
-            if (!validate_wifi_ssid(ssid)) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            wifi_set_ssid(ssid);
-            needs_reset = TRUE;
-        }
-        else if (!strcmp(key, "wifi_key")) {
-            if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            char *psk = json_str_get(child);
-            if (!validate_wifi_key(psk)) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            wifi_set_psk(psk);
-            needs_reset = TRUE;
-        }
-        else if (!strcmp(key, "wifi_bssid")) {
-            if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            char *bssid_str = json_str_get(child);
-            uint8 bssid[WIFI_BSSID_LEN];
-            if (!validate_wifi_bssid(bssid_str, bssid)) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            wifi_set_bssid(bssid);
-            needs_reset = TRUE;
-        }
-#ifdef _SLEEP
-        else if (!strcmp(key, "sleep_wake_interval")) {
-            if (json_get_type(child) != JSON_TYPE_INT) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            uint32 interval = json_int_get(child);
-            bool valid = validate_num(
-                interval,
-                SLEEP_WAKE_INTERVAL_MIN,
-                SLEEP_WAKE_INTERVAL_MAX,
-                /* integer = */ TRUE,
-                /* step = */ 0,
-                /* choices = */ NULL
-            );
-            if (!valid) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            sleep_set_wake_interval(interval);
-
-            needs_sleep_reset = TRUE;
-        }
-        else if (!strcmp(key, "sleep_wake_duration")) {
-            if (json_get_type(child) != JSON_TYPE_INT) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            uint32 duration = json_int_get(child);
-            bool valid = validate_num(
-                duration,
-                SLEEP_WAKE_DURATION_MIN,
-                SLEEP_WAKE_DURATION_MAX,
-                /* integer = */ TRUE,
-                /* step = */ 0,
-                /* choices = */ NULL
-            );
-            if (!valid) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            sleep_set_wake_duration(duration);
-
-            needs_sleep_reset = TRUE;
-        }
-#endif
 #ifdef _OTA
-        else if (!strcmp(key, "firmware_auto_update")) {
-            if (json_get_type(child) != JSON_TYPE_BOOL) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            if (json_bool_get(child)) {
-                device_flags |= DEVICE_FLAG_OTA_AUTO_UPDATE;
-                DEBUG_OTA("firmware auto update enabled");
-            }
-            else {
-                device_flags &= ~DEVICE_FLAG_OTA_AUTO_UPDATE;
-                DEBUG_OTA("firmware auto update disabled");
-            }
-        }
-        else if (!strcmp(key, "firmware_beta_enabled")) {
-            if (json_get_type(child) != JSON_TYPE_BOOL) {
-                return INVALID_FIELD(response_json, key);
-            }
-
-            if (json_bool_get(child)) {
-                device_flags |= DEVICE_FLAG_OTA_BETA_ENABLED;
-                DEBUG_OTA("firmware beta enabled");
-            }
-            else {
-                device_flags &= ~DEVICE_FLAG_OTA_BETA_ENABLED;
-                DEBUG_OTA("firmware beta disabled");
-            }
-        }
+    device_flags &= ~DEVICE_FLAG_OTA_AUTO_UPDATE;
+    device_flags &= ~DEVICE_FLAG_OTA_BETA_ENABLED;
 #endif
-        else if (!strcmp(key, "config_name")) {
-            if (json_get_type(child) != JSON_TYPE_STR) {
-                return INVALID_FIELD(response_json, key);
-            }
 
-            char *config_name = json_str_get(child);
-            strncpy(device_config_name, config_name, API_MAX_DEVICE_CONFIG_NAME_LEN);
-            device_config_name[API_MAX_DEVICE_CONFIG_NAME_LEN - 1] = 0;
+    device_config_name[0] = 0;
 
-            config_name_changed = TRUE;
-            DEBUG_DEVICE("config name set to \"%s\"", device_config_name);
+    bool needs_reset, needs_sleep_reset, config_name_changed;
+    response_json = device_from_json(
+        request_json,
+        code,
+        &needs_reset,
+        &needs_sleep_reset,
+        &config_name_changed,
+        /* ignore_unknown = */ TRUE
+    );
 
-            device_provisioning_version = 0; /* Also reset the provisioning version */
-        }
-        else if (!strcmp(key, "version") ||
-                 !strcmp(key, "api_version") ||
-                 !strcmp(key, "vendor") ||
-#ifdef _OTA
-                 !strcmp(key, "firmware") ||
-#endif
-#ifdef _BATTERY
-                 !strcmp(key, "battery_level") ||
-                 !strcmp(key, "battery_voltage") ||
-#endif
-                 !strcmp(key, "listen") ||
-                 !strcmp(key, "uptime") ||
-                 !strcmp(key, "mem_usage") ||
-                 !strcmp(key, "flash_size") ||
-                 !strcmp(key, "debug") ||
-                 !strcmp(key, "chip_id") ||
-                 !strcmp(key, "flash_id")) {
+    config_mark_for_saving();
 
-            return ATTR_NOT_MODIFIABLE(response_json, key);
-        }
-        else {
-            return NO_SUCH_ATTR(response_json, key);
-        }
+    /* Inform consumers of the changes */
+    event_push_device_update();
+
+    return response_json;
+}
+
+json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
+    DEBUG_API("updating device attributes");
+
+    json_t *response_json = NULL;
+
+    if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
     }
+
+    if (json_get_type(request_json) != JSON_TYPE_OBJ) {
+        return API_ERROR(response_json, 400, "invalid-request");
+    }
+
+    bool needs_reset, needs_sleep_reset, config_name_changed;
+    response_json = device_from_json(
+        request_json,
+        code,
+        &needs_reset,
+        &needs_sleep_reset,
+        &config_name_changed,
+        /* ignore_unknown = */ FALSE
+    );
 
     if (config_name_changed) {
         /* If a new configuration name as been set, start the provisioning process */
@@ -1240,9 +1014,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
     }
 #endif
     
-    *code = 204;
-    
-    /* Add a device change event */
+    /* Inform consumers of the changes */
     event_push_device_update();
 
     return response_json;
@@ -3480,6 +3252,358 @@ json_t *_invalid_expression_error(json_t *response_json, char *field, char *reas
     return response_json;
 }
 
+
+json_t *device_from_json(
+    json_t *json,
+    int *code,
+    bool *needs_reset,
+    bool *needs_sleep_reset,
+    bool *config_name_changed,
+    bool ignore_unknown
+) {
+    *needs_reset = FALSE;
+    *config_name_changed = FALSE;
+    *needs_sleep_reset = FALSE;
+
+    json_t *response_json = NULL;
+
+    int i;
+    char *key;
+    json_t *child;
+    for (i = 0; i < json_obj_get_len(json); i++) {
+        key = json_obj_key_at(json, i);
+        child = json_obj_value_at(json, i);
+
+        if (!strcmp(key, "name")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            char *value = json_str_get(child);
+            if (!validate_id(value) || strlen(json_str_get(child)) > API_MAX_DEVICE_NAME_LEN) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            free(device_name);
+            device_name = strdup(value);
+
+            DEBUG_DEVICE("name set to \"%s\"", device_name);
+
+            httpserver_set_name(device_name);
+        }
+        else if (!strcmp(key, "display_name")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            char *value = json_str_get(child);
+            if (strlen(json_str_get(child)) > API_MAX_DEVICE_DISP_NAME_LEN) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            free(device_display_name);
+            device_display_name = strdup(value);
+
+            DEBUG_DEVICE("display name set to \"%s\"", device_display_name);
+        }
+        else if (!strcmp(key, "admin_password")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            char *password = json_str_get(child);
+            char *password_hash = sha256_hex(password);
+            strcpy(device_admin_password_hash, password_hash);
+            free(password_hash);
+            DEBUG_DEVICE("admin password set");
+        }
+        else if (!strcmp(key, "normal_password")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            char *password = json_str_get(child);
+            char *password_hash = sha256_hex(password);
+            strcpy(device_normal_password_hash, password_hash);
+            free(password_hash);
+            DEBUG_DEVICE("normal password set");
+        }
+        else if (!strcmp(key, "viewonly_password")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            char *password = json_str_get(child);
+            char *password_hash = sha256_hex(password);
+            strcpy(device_viewonly_password_hash, password_hash);
+            free(password_hash);
+            DEBUG_DEVICE("view-only password set");
+        }
+        else if (!strcmp(key, "admin_password_hash")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            char *password_hash = json_str_get(child);
+            strcpy(device_admin_password_hash, password_hash);
+            DEBUG_DEVICE("admin password set");
+        }
+        else if (!strcmp(key, "normal_password_hash")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            char *password_hash = json_str_get(child);
+            strcpy(device_normal_password_hash, password_hash);
+            DEBUG_DEVICE("normal password set");
+        }
+        else if (!strcmp(key, "viewonly_password_hash")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            char *password_hash = json_str_get(child);
+            strcpy(device_viewonly_password_hash, password_hash);
+            DEBUG_DEVICE("view-only password set");
+        }
+        else if (!strcmp(key, "ip_address")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            char *ip_address_str = json_str_get(child);
+            ip_addr_t ip_address = {0};
+            if (ip_address_str[0]) { /* Manual */
+                uint8 bytes[4];
+                if (!validate_ip_address(ip_address_str, bytes)) {
+                    return INVALID_FIELD(response_json, key);
+                }
+
+                IP4_ADDR(&ip_address, bytes[0], bytes[1], bytes[2], bytes[3]);
+            }
+
+            wifi_set_ip_address(ip_address);
+            *needs_reset = TRUE;
+        }
+        else if (!strcmp(key, "ip_netmask")) {
+            if (json_get_type(child) != JSON_TYPE_INT) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            int netmask = json_int_get(child);
+            if (!validate_num(netmask, 0, 31, /* integer = */ TRUE, /* step = */ 0, /* choices = */ NULL)) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            wifi_set_netmask(netmask);
+            *needs_reset = TRUE;
+        }
+        else if (!strcmp(key, "ip_gateway")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            char *gateway_str = json_str_get(child);
+            ip_addr_t gateway = {0};
+            if (gateway_str[0]) { /* Manual */
+                uint8 bytes[4];
+                if (!validate_ip_address(gateway_str, bytes)) {
+                    return INVALID_FIELD(response_json, key);
+                }
+
+                IP4_ADDR(&gateway, bytes[0], bytes[1], bytes[2], bytes[3]);
+            }
+
+            wifi_set_gateway(gateway);
+            *needs_reset = TRUE;
+        }
+        else if (!strcmp(key, "ip_dns")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            char *dns_str = json_str_get(child);
+            ip_addr_t dns = {0};
+            if (dns_str[0]) { /* Manual */
+                uint8 bytes[4];
+                if (!validate_ip_address(dns_str, bytes)) {
+                    return INVALID_FIELD(response_json, key);
+                }
+
+                IP4_ADDR(&dns, bytes[0], bytes[1], bytes[2], bytes[3]);
+            }
+
+            wifi_set_dns(dns);
+            *needs_reset = TRUE;
+        }
+        else if (!strcmp(key, "wifi_ssid")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            char *ssid = json_str_get(child);
+            if (!validate_wifi_ssid(ssid)) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            wifi_set_ssid(ssid);
+            *needs_reset = TRUE;
+        }
+        else if (!strcmp(key, "wifi_key")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            char *psk = json_str_get(child);
+            if (!validate_wifi_key(psk)) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            wifi_set_psk(psk);
+            *needs_reset = TRUE;
+        }
+        else if (!strcmp(key, "wifi_bssid")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            char *bssid_str = json_str_get(child);
+            if (bssid_str[0]) {
+                uint8 bssid[WIFI_BSSID_LEN];
+                if (!validate_wifi_bssid(bssid_str, bssid)) {
+                    return INVALID_FIELD(response_json, key);
+                }
+
+                wifi_set_bssid(bssid);
+            }
+            else {
+                wifi_set_bssid(NULL);
+            }
+            *needs_reset = TRUE;
+        }
+#ifdef _SLEEP
+        else if (!strcmp(key, "sleep_wake_interval")) {
+            if (json_get_type(child) != JSON_TYPE_INT) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            uint32 interval = json_int_get(child);
+            bool valid = validate_num(
+                interval,
+                SLEEP_WAKE_INTERVAL_MIN,
+                SLEEP_WAKE_INTERVAL_MAX,
+                /* integer = */ TRUE,
+                /* step = */ 0,
+                /* choices = */ NULL
+            );
+            if (!valid) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            sleep_set_wake_interval(interval);
+
+            *needs_sleep_reset = TRUE;
+        }
+        else if (!strcmp(key, "sleep_wake_duration")) {
+            if (json_get_type(child) != JSON_TYPE_INT) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            uint32 duration = json_int_get(child);
+            bool valid = validate_num(
+                duration,
+                SLEEP_WAKE_DURATION_MIN,
+                SLEEP_WAKE_DURATION_MAX,
+                /* integer = */ TRUE,
+                /* step = */ 0,
+                /* choices = */ NULL
+            );
+            if (!valid) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            sleep_set_wake_duration(duration);
+
+            *needs_sleep_reset = TRUE;
+        }
+#endif
+#ifdef _OTA
+        else if (!strcmp(key, "firmware_auto_update")) {
+            if (json_get_type(child) != JSON_TYPE_BOOL) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            if (json_bool_get(child)) {
+                device_flags |= DEVICE_FLAG_OTA_AUTO_UPDATE;
+                DEBUG_OTA("firmware auto update enabled");
+            }
+            else {
+                device_flags &= ~DEVICE_FLAG_OTA_AUTO_UPDATE;
+                DEBUG_OTA("firmware auto update disabled");
+            }
+        }
+        else if (!strcmp(key, "firmware_beta_enabled")) {
+            if (json_get_type(child) != JSON_TYPE_BOOL) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            if (json_bool_get(child)) {
+                device_flags |= DEVICE_FLAG_OTA_BETA_ENABLED;
+                DEBUG_OTA("firmware beta enabled");
+            }
+            else {
+                device_flags &= ~DEVICE_FLAG_OTA_BETA_ENABLED;
+                DEBUG_OTA("firmware beta disabled");
+            }
+        }
+#endif
+        else if (!strcmp(key, "config_name")) {
+            if (json_get_type(child) != JSON_TYPE_STR) {
+                return INVALID_FIELD(response_json, key);
+            }
+
+            char *config_name = json_str_get(child);
+            strncpy(device_config_name, config_name, API_MAX_DEVICE_CONFIG_NAME_LEN);
+            device_config_name[API_MAX_DEVICE_CONFIG_NAME_LEN - 1] = 0;
+
+            *config_name_changed = TRUE;
+            DEBUG_DEVICE("config name set to \"%s\"", device_config_name);
+
+            device_provisioning_version = 0; /* Also reset the provisioning version */
+        }
+        else if (!strcmp(key, "version") ||
+                 !strcmp(key, "api_version") ||
+                 !strcmp(key, "vendor") ||
+#ifdef _OTA
+                 !strcmp(key, "firmware") ||
+#endif
+#ifdef _BATTERY
+                 !strcmp(key, "battery_level") ||
+                 !strcmp(key, "battery_voltage") ||
+#endif
+                 !strcmp(key, "listen") ||
+                 !strcmp(key, "uptime") ||
+                 !strcmp(key, "mem_usage") ||
+                 !strcmp(key, "flash_size") ||
+                 !strcmp(key, "debug") ||
+                 !strcmp(key, "chip_id") ||
+                 !strcmp(key, "flash_id")) {
+
+            if (!ignore_unknown) {
+                return ATTR_NOT_MODIFIABLE(response_json, key);
+            }
+        }
+        else {
+            if (!ignore_unknown) {
+                return NO_SUCH_ATTR(response_json, key);
+            }
+        }
+    }
+
+    *code = 204;
+
+    return json_obj_new();
+}
 
 json_t *port_attrdefs_to_json(port_t *port, json_refs_ctx_t *json_refs_ctx) {
     json_t *json = json_obj_new();

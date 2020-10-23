@@ -20,6 +20,7 @@
 #include <limits.h>
 #include <user_interface.h>
 #include <gpio.h>
+#include <os_type.h>
 
 #include "espgoodies/battery.h"
 #include "espgoodies/common.h"
@@ -33,15 +34,18 @@
 #include "espgoodies/system.h"
 
 
-#define RESET_DELAY                3000 /* Milliseconds */
+#define RESET_DELAY 3000 /* Milliseconds */
 
-#define SETUP_MODE_IDLE            0
-#define SETUP_MODE_PRESSED         1
-#define SETUP_MODE_TRIGGERED       2
-#define SETUP_MODE_RESET           3
+#define SETUP_MODE_IDLE      0
+#define SETUP_MODE_PRESSED   1
+#define SETUP_MODE_TRIGGERED 2
+#define SETUP_MODE_RESET     3
 
 #define RTC_UNEXP_RESET_COUNT_ADDR RTC_USER_ADDR + 0 /* 130 * 4 bytes = 520 */
 #define MAX_UNEXP_RESET_COUNT      16
+
+#define TASK_QUEUE_SIZE       8
+#define TASK_ID_SYSTEM_UPDATE 100
 
 
 static int8                         setup_button_pin = -1;
@@ -66,7 +70,12 @@ static int8                         setup_mode_ap_client_count = 0;
 
 static uint32                       fw_version_int = 0;
 
+static os_event_t                   task_queue[TASK_QUEUE_SIZE];
+static system_task_handler_t        task_handler = NULL;
 
+
+static void ICACHE_FLASH_ATTR system_task(os_event_t *e);
+static void ICACHE_FLASH_ATTR update(void);
 static void ICACHE_FLASH_ATTR on_system_reset(void *arg);
 static void ICACHE_FLASH_ATTR on_setup_mode_ap_client(bool connected, ip_addr_t ip_address, uint8 *mac);
 
@@ -167,7 +176,7 @@ void system_config_save(void) {
     free(config_data);
 }
 
-void system_config_init(void) {
+void system_init(void) {
     if (setup_button_pin >= 0) {
         gpio_configure_input(setup_button_pin, !setup_button_level);
         if (gpio_read_value(setup_button_pin) == setup_button_level) {
@@ -178,6 +187,17 @@ void system_config_init(void) {
     if (status_led_pin >= 0) {
         gpio_configure_output(status_led_pin, !status_led_level);
     }
+
+    system_os_task(system_task, USER_TASK_PRIO_0, task_queue, TASK_QUEUE_SIZE);
+    system_task_schedule(TASK_ID_SYSTEM_UPDATE, NULL);
+}
+
+void system_task_set_handler(system_task_handler_t handler) {
+    task_handler = handler;
+}
+
+void system_task_schedule(uint32 task_id, void *param) {
+    system_os_post(USER_TASK_PRIO_0, task_id, (os_param_t) param);
 }
 
 uint32 system_uptime(void) {
@@ -232,6 +252,22 @@ void system_reset(bool delayed) {
 void system_reset_set_callbacks(system_reset_callback_t callback, system_reset_callback_t factory_callback) {
     reset_callback = callback;
     reset_factory_callback = factory_callback;
+}
+
+void system_reset_callback(bool factory) {
+    if (factory) {
+        if (reset_factory_callback) {
+            reset_factory_callback();
+        }
+    }
+    else {
+        if (reset_callback) {
+            reset_callback();
+        }
+    }
+
+    wifi_save_config(); /* This will save configuration only if changed */
+    rtc_reset();
 }
 
 void system_check_reboot_loop(void) {
@@ -385,7 +421,26 @@ bool system_setup_mode_has_ap_clients(void) {
     return setup_mode_ap_client_count > 0;
 }
 
-void system_update(void) {
+
+void system_task(os_event_t *e) {
+    switch (e->sig) {
+        case TASK_ID_SYSTEM_UPDATE: {
+            /* Schedule next system update */
+            system_os_post(USER_TASK_PRIO_0, TASK_ID_SYSTEM_UPDATE, (os_param_t) NULL);
+            update();
+
+            break;
+        }
+
+        default: {
+            if (task_handler) {
+                task_handler(e->sig, (void *) e->par);
+            }
+        }
+    }
+}
+
+void update(void) {
     uint64 now_us = system_uptime_us();
     uint64 now_ms = now_us / 1000;
 
@@ -457,12 +512,10 @@ void system_update(void) {
     }
 }
 
-
 void on_system_reset(void *arg) {
     DEBUG_SYSTEM("resetting");
 
-    /* This will save configuration only if changed */
-    wifi_save_config();
+    wifi_save_config(); /* This will save configuration only if changed */
     rtc_reset();
     system_restart();
 }

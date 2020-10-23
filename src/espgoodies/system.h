@@ -54,11 +54,16 @@
 
 typedef void (*system_reset_callback_t)(void);
 typedef void (*system_setup_mode_callback_t)(bool active);
+typedef void (*system_task_handler_t)(uint32 task_id, void *param);
 
 
 void   ICACHE_FLASH_ATTR system_config_load(void);
 void   ICACHE_FLASH_ATTR system_config_save(void);
-void   ICACHE_FLASH_ATTR system_config_init(void);
+
+void   ICACHE_FLASH_ATTR system_init(void);
+
+void   ICACHE_FLASH_ATTR system_task_set_handler(system_task_handler_t handler);
+void   ICACHE_FLASH_ATTR system_task_schedule(uint32 task_id, void *param);
 
 uint32 ICACHE_FLASH_ATTR system_uptime(void);
 uint64 ICACHE_FLASH_ATTR system_uptime_ms(void);
@@ -73,6 +78,7 @@ void   ICACHE_FLASH_ATTR system_reset_set_callbacks(
                              system_reset_callback_t callback,
                              system_reset_callback_t factory_callback
                          );
+void   ICACHE_FLASH_ATTR system_reset_callback(bool factory);
 void   ICACHE_FLASH_ATTR system_check_reboot_loop(void);
 
 void   ICACHE_FLASH_ATTR system_get_fw_version(version_t *version);
@@ -92,8 +98,6 @@ void   ICACHE_FLASH_ATTR system_setup_mode_set_callback(system_setup_mode_callba
 bool   ICACHE_FLASH_ATTR system_setup_mode_active(void);
 void   ICACHE_FLASH_ATTR system_setup_mode_toggle(void);
 bool   ICACHE_FLASH_ATTR system_setup_mode_has_ap_clients(void);
-
-void   ICACHE_FLASH_ATTR system_update(void);
 
 
 #endif /* _ESPGOODIES_SYSTEM_H */

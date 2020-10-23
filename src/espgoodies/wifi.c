@@ -171,6 +171,10 @@ void wifi_save_config(void) {
             DEBUG_WIFI("saving configuration");
         }
 
+        /* system_restore() is needed here as without it, wifi_station_set_config() appears to be messing out the Wi-Fi
+         * configuration stored in flash */
+        system_restore();
+
         if (!wifi_station_set_config(&cached_station_config)) {
             DEBUG_WIFI("wifi_station_set_config() failed");
         }
@@ -290,7 +294,7 @@ void wifi_station_enable(char *hostname, wifi_connect_callback_t callback) {
     if (!wifi_station_set_reconnect_policy(!ap_enabled)) {
         DEBUG_WIFI("wifi_station_set_reconnect_policy() failed");
     }
-    if (!wifi_station_set_auto_connect(TRUE)) {
+    if (!wifi_station_get_auto_connect() && !wifi_station_set_auto_connect(TRUE)) {
         DEBUG_WIFI("wifi_station_set_auto_connect() failed");
     }
     DEBUG_WIFI("setting hostname to \"%s\"", hostname);
@@ -398,7 +402,7 @@ void wifi_station_temporary_enable(
     if (!wifi_station_set_reconnect_policy(FALSE)) {
         DEBUG_WIFI("wifi_station_set_reconnect_policy() failed");
     }
-    if (!wifi_station_set_auto_connect(FALSE)) {
+    if (wifi_station_get_auto_connect() && !wifi_station_set_auto_connect(FALSE)) {
         DEBUG_WIFI("wifi_station_set_auto_connect() failed");
     }
     DEBUG_WIFI("setting hostname to \"%s\"", hostname);

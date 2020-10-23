@@ -1,5 +1,5 @@
 {
-    "name": "set-ports-security",
+    "name": "put-ports-security",
     "instructions": [
         {
             "name": "json-http-client",

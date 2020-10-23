@@ -31,11 +31,8 @@
 #include "core.h"
 
 
-#define TASK_QUEUE_SIZE      8
-
-#define TASK_POLL            0x02
-#define TASK_LISTEN_RESPOND  0x03
-#define TASK_UPDATE_SYSTEM   0x04
+#define TASK_ID_POLL           1
+#define TASK_ID_LISTEN_RESPOND 2
 
 #define CONFIG_SAVE_INTERVAL 5    /* Seconds */
 
@@ -56,20 +53,17 @@ static bool       polling_enabled = FALSE;
 static uint32     value_change_trigger_mask = 0;
 #endif
 
-static os_event_t task_queue[TASK_QUEUE_SIZE];
 
-
-static void ICACHE_FLASH_ATTR core_task(os_event_t *e);
+static void ICACHE_FLASH_ATTR core_task_handler(uint32 task_id, void *param);
 static void ICACHE_FLASH_ATTR handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_mask);
 
 
 void core_init(void) {
-    system_os_task(core_task, USER_TASK_PRIO_0, task_queue, TASK_QUEUE_SIZE);
-    system_os_post(USER_TASK_PRIO_0, TASK_UPDATE_SYSTEM, (os_param_t) NULL);
+    system_task_set_handler(core_task_handler);
 }
 
 void core_listen_respond(session_t *session) {
-    system_os_post(USER_TASK_PRIO_0, TASK_LISTEN_RESPOND, (os_param_t) session);
+    system_task_schedule(TASK_ID_LISTEN_RESPOND, session);
 }
 
 void core_enable_polling(void) {
@@ -79,7 +73,7 @@ void core_enable_polling(void) {
 
     DEBUG_CORE("enabling polling");
     polling_enabled = TRUE;
-    system_os_post(USER_TASK_PRIO_0, TASK_POLL, (os_param_t) NULL);
+    system_task_schedule(TASK_ID_POLL, NULL);
 }
 
 void core_disable_polling(void) {
@@ -98,7 +92,6 @@ void core_poll(void) {
         return;
     }
 #endif
-
     static uint64 change_mask = -1;
     uint32 change_reasons_expression_mask = 0;
 
@@ -222,28 +215,20 @@ void config_ensure_saved(void) {
 }
 
 
-void core_task(os_event_t *e) {
-    switch (e->sig) {
-        case TASK_POLL: {
+void core_task_handler(uint32 task_id, void *param) {
+    switch (task_id) {
+        case TASK_ID_POLL: {
             if (polling_enabled) {
                 /* Schedule next polling */
-                system_os_post(USER_TASK_PRIO_0, TASK_POLL, (os_param_t) NULL);
+                system_task_schedule(TASK_ID_POLL, NULL);
                 core_poll();
             }
 
             break;
         }
 
-        case TASK_UPDATE_SYSTEM: {
-            /* Schedule next system update */
-            system_os_post(USER_TASK_PRIO_0, TASK_UPDATE_SYSTEM, (os_param_t) NULL);
-            system_update();
-
-            break;
-        }
-
-        case TASK_LISTEN_RESPOND: {
-            session_t *session = (session_t *) e->par;
+        case TASK_ID_LISTEN_RESPOND: {
+            session_t *session = (session_t *) param;
 
             /* Between event_push and this task, another listen request might have been received for this session,
              * which would have eaten up our queued events */

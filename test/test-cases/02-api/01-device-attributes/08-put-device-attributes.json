@@ -1,0 +1,253 @@
+{
+    "name": "put-device-attributes",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PUT",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "name": "testdevice_put",
+                    "display_name": "Test Display Name PUT",
+                    "version": "ignored",
+                    "api_version": {"ignored": true},                    
+                    "vendor": "ignored",
+                    "admin_password": "",
+                    "normal_password": "",
+                    "viewonly_password": "",
+                    "flags": "ignored",
+                    "uptime": "ignored",
+                    "virtual_ports": "ignored",
+                    "ip_address": "1.2.3.4",
+                    "ip_netmask": 8,
+                    "ip_gateway": "1.2.3.1",
+                    "ip_dns": "1.2.3.2",
+                    "ip_address_current": "ignored",
+                    "ip_netmask_current": "ignored",
+                    "ip_gateway_current": "ignored",
+                    "ip_dns_current": "ignored",
+                    "wifi_ssid": "invalid1",
+                    "wifi_key": "invalid1",
+                    "wifi_bssid": "11:22:33:44:55:66",
+                    "wifi_bssid_current": "ignored",
+                    "wifi_signal_strength": "ignored",
+                    "mem_usage": "ignored",
+                    "flash_size": "ignored",
+                    "firmware_auto_update": true,
+                    "firmware_beta_enabled": false,
+                    "flash_id": "ignored",
+                    "chip_id": "ignored",
+                    "config_name": "invalid",
+                    "sleep_wake_interval": 1,
+                    "sleep_wake_duration": 1,
+                    "definitions": "ignored",
+                    "inexistent": "ignored"
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/device",
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "required": [
+                        "name",
+                        "display_name",
+                        "admin_password",
+                        "normal_password",
+                        "viewonly_password",
+                        "ip_address",
+                        "ip_netmask",
+                        "ip_gateway",
+                        "ip_dns",
+                        "wifi_ssid",
+                        "wifi_key",
+                        "wifi_bssid",
+                        "firmware_auto_update",
+                        "firmware_beta_enabled",
+                        "config_name",
+                        "sleep_wake_interval",
+                        "sleep_wake_duration"
+                    ],
+                    "properties": {
+                        "name": {
+                            "enum": ["testdevice_put"]
+                        },
+                        "display_name": {
+                            "enum": ["Test Display Name PUT"]
+                        },
+                        "admin_password": {
+                            "enum": [""]
+                        },
+                        "normal_password": {
+                            "enum": [""]
+                        },
+                        "viewonly_password": {
+                            "enum": [""]
+                        },
+                        "ip_address": {
+                            "enum": ["1.2.3.4"]
+                        },
+                        "ip_netmask": {
+                            "enum": [8]
+                        },
+                        "ip_gateway": {
+                            "enum": ["1.2.3.1"]
+                        },
+                        "ip_dns": {
+                            "enum": ["1.2.3.2"]
+                        },
+                        "wifi_ssid": {
+                            "enum": ["invalid1"]
+                        },
+                        "wifi_key": {
+                            "enum": ["invalid1"]
+                        },
+                        "wifi_bssid": {
+                            "enum": ["11:22:33:44:55:66"]
+                        },
+                        "firmware_auto_update": {
+                            "enum": [true]
+                        },
+                        "firmware_beta_enabled": {
+                            "enum": [false]
+                        },
+                        "config_name": {
+                            "enum": ["invalid"]
+                        },
+                        "sleep_wake_interval": {
+                            "enum": [1]
+                        },
+                        "sleep_wake_duration": {
+                            "enum": [1]
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PUT",
+                "path": "/device",
+                "body": {
+                    "name": "testdevice",
+                    "display_name": "Test Display Name",
+                    "admin_password": "${TEST_PASSWORD}",
+                    "normal_password": "${TEST_PASSWORD}",
+                    "viewonly_password": "${TEST_PASSWORD}",
+                    "ip_address": "${TEST_NETWORK_DEVICE_IP}",
+                    "ip_netmask": ${TEST_NETWORK_MASK},
+                    "ip_gateway": "${TEST_NETWORK_HOST_IP}",
+                    "ip_dns": "${TEST_NETWORK_HOST_IP}",
+                    "wifi_ssid": "${TEST_SSID}",
+                    "wifi_key": "${TEST_PSK}",
+                    "wifi_bssid": "",
+                    "firmware_auto_update": false,
+                    "firmware_beta_enabled": true,
+                    "config_name": "",
+                    "sleep_wake_interval": 0,
+                    "sleep_wake_duration": 0
+                },
+                "expected_status": 204,
+                "expected_body": null
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "required": [
+                        "name",
+                        "display_name",
+                        "admin_password",
+                        "normal_password",
+                        "viewonly_password",
+                        "ip_address",
+                        "ip_netmask",
+                        "ip_gateway",
+                        "ip_dns",
+                        "wifi_ssid",
+                        "wifi_key",
+                        "wifi_bssid",
+                        "firmware_auto_update",
+                        "firmware_beta_enabled",
+                        "config_name",
+                        "sleep_wake_interval",
+                        "sleep_wake_duration"
+                    ],
+                    "properties": {
+                        "name": {
+                            "enum": ["testdevice"]
+                        },
+                        "display_name": {
+                            "enum": ["Test Display Name"]
+                        },
+                        "admin_password": {
+                            "enum": ["set"]
+                        },
+                        "normal_password": {
+                            "enum": ["set"]
+                        },
+                        "viewonly_password": {
+                            "enum": ["set"]
+                        },
+                        "ip_address": {
+                            "enum": ["${TEST_NETWORK_DEVICE_IP}"]
+                        },
+                        "ip_netmask": {
+                            "enum": [${TEST_NETWORK_MASK}]
+                        },
+                        "ip_gateway": {
+                            "enum": ["${TEST_NETWORK_HOST_IP}"]
+                        },
+                        "ip_dns": {
+                            "enum": ["${TEST_NETWORK_HOST_IP}"]
+                        },
+                        "wifi_ssid": {
+                            "enum": ["${TEST_SSID}"]
+                        },
+                        "wifi_key": {
+                            "enum": ["${TEST_PSK}"]
+                        },
+                        "wifi_bssid": {
+                            "enum": [""]
+                        },
+                        "firmware_auto_update": {
+                            "enum": [false]
+                        },
+                        "firmware_beta_enabled": {
+                            "enum": [true]
+                        },
+                        "config_name": {
+                            "enum": [""]
+                        },
+                        "sleep_wake_interval": {
+                            "enum": [0]
+                        },
+                        "sleep_wake_duration": {
+                            "enum": [0]
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
