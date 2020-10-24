@@ -16,6 +16,7 @@
                     "host": "{{HOST_IP_ADDRESS}}",
                     "port": 8080,
                     "path": "/webhooks",
+                    "password_hash": "94e8466d492cb77021ee30eaa75fad3c4ecb25873403e0a62d0ecab2544439fe",
                     "events": [
                         "value-change",
                         "port-update",

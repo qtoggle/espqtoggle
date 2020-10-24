@@ -180,6 +180,39 @@
                     "host": "{{HOST_IP_ADDRESS}}",
                     "port": 8080,
                     "path": "/webhooks",
+                    "password_hash": "invalid",
+                    "events": [
+                        "value-change",
+                        "port-update",
+                        "port-add",
+                        "port-remove",
+                        "device-update",
+                        "full-update"
+                    ],
+                    "timeout": 2,
+                    "retries": 0
+                },
+                "expected_status": 400,
+                "expected_body": {
+                    "error": "invalid-field",
+                    "field": "password_hash"
+                }
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "PUT",
+                "path": "/webhooks",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "body": {
+                    "enabled": true,
+                    "scheme": "http",
+                    "host": "{{HOST_IP_ADDRESS}}",
+                    "port": 8080,
+                    "path": "/webhooks",
                     "password": "${TEST_PASSWORD}_webhooks",
                     "events": [
                         "invalid",

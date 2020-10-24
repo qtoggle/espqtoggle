@@ -259,7 +259,13 @@ void device_save(uint8 *config_data, uint32 *strings_offs) {
         DEBUG_WEBHOOKS("no more strings pool space");
     }
 
-    if (!string_pool_write(strings_ptr, strings_offs, webhooks_password_hash, config_data + CONFIG_OFFS_WEBHOOKS_PASSWORD)) {
+    bool result = string_pool_write(
+        strings_ptr,
+        strings_offs,
+        webhooks_password_hash,
+        config_data + CONFIG_OFFS_WEBHOOKS_PASSWORD
+    );
+    if (!result) {
         DEBUG_WEBHOOKS("no more strings pool space");
     }
 

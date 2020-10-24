@@ -2187,6 +2187,7 @@ json_t *api_get_webhooks(json_t *query_json, int *code) {
     json_obj_append(response_json, "host", json_str_new(webhooks_host ? webhooks_host : ""));
     json_obj_append(response_json, "port", json_int_new(webhooks_port));
     json_obj_append(response_json, "path", json_str_new(webhooks_path ? webhooks_path : ""));
+    json_obj_append(response_json, "password_hash", json_str_new(webhooks_password_hash));
 
     json_t *json_events = json_list_new();
 
@@ -2288,11 +2289,22 @@ json_t *api_put_webhooks(json_t *query_json, json_t *request_json, int *code) {
 
     /* Password */
     json_t *password_json = json_obj_lookup_key(request_json, "password");
-    if (!password_json) {
+    json_t *password_hash_json = json_obj_lookup_key(request_json, "password_hash");
+    if (!password_json && !password_hash_json) {
+        /* At least one of the two must be supplied */
         return MISSING_FIELD(response_json, "password");
     }
-    if (json_get_type(password_json) != JSON_TYPE_STR) {
+    if (password_json && json_get_type(password_json) != JSON_TYPE_STR) {
         return INVALID_FIELD(response_json, "password");
+    }
+    if (password_hash_json) {
+        if (json_get_type(password_hash_json) != JSON_TYPE_STR) {
+            return INVALID_FIELD(response_json, "password_hash");
+        }
+        char *password_hash = json_str_get(password_hash_json);
+        if (strlen(password_hash) != SHA256_HEX_LEN) {
+            return INVALID_FIELD(response_json, "password_hash");
+        }
     }
 
     /* Events */
@@ -2380,8 +2392,14 @@ json_t *api_put_webhooks(json_t *query_json, json_t *request_json, int *code) {
     webhooks_path = strdup(json_str_get(path_json));
     DEBUG_WEBHOOKS("path set to \"%s\"", webhooks_path);
 
-    char *password = json_str_get(password_json);
-    char *password_hash = sha256_hex(password);
+    char *password_hash;
+    if (password_json) {
+        char *password = json_str_get(password_json);
+        password_hash = sha256_hex(password);
+    }
+    else { /* Assuming password_hash supplied */
+        password_hash = strdup(json_str_get(password_hash_json));
+    }
     strcpy(webhooks_password_hash, password_hash);
     free(password_hash);
     DEBUG_WEBHOOKS("password set");
