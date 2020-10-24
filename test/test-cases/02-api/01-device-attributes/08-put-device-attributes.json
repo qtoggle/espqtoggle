@@ -142,6 +142,9 @@
             "params": {
                 "method": "PUT",
                 "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
                 "body": {
                     "name": "testdevice",
                     "display_name": "Test Display Name",
