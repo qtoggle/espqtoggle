@@ -29,7 +29,8 @@
 #include "device.h"
 
 
-#define NULL_HASH "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+#define NULL_HASH             "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+#define DEFAULT_WEBHOOKS_PORT 80
 
 
 char   *device_name = NULL;
@@ -146,6 +147,9 @@ void device_load(uint8 *config_data) {
     }
 
     memcpy(&webhooks_port, config_data + CONFIG_OFFS_WEBHOOKS_PORT, 2);
+    if (!webhooks_port) {
+        webhooks_port = DEFAULT_WEBHOOKS_PORT;
+    }
     DEBUG_WEBHOOKS("webhooks port = %d", webhooks_port);
 
     if ((webhooks_path = string_pool_read_dup(strings_ptr, config_data + CONFIG_OFFS_WEBHOOKS_PATH))) {

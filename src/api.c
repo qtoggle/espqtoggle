@@ -936,10 +936,6 @@ json_t *api_put_device(json_t *query_json, json_t *request_json, int *code) {
     free(device_display_name);
     device_display_name = strdup("");
 
-    memcpy(device_admin_password_hash, EMPTY_SHA256_HEX, SHA256_HEX_LEN);
-    memcpy(device_normal_password_hash, EMPTY_SHA256_HEX, SHA256_HEX_LEN);
-    memcpy(device_viewonly_password_hash, EMPTY_SHA256_HEX, SHA256_HEX_LEN);
-
 #ifdef _SLEEP
     sleep_set_wake_interval(SLEEP_WAKE_INTERVAL_MIN);
     sleep_set_wake_duration(SLEEP_WAKE_DURATION_MIN);
@@ -951,6 +947,11 @@ json_t *api_put_device(json_t *query_json, json_t *request_json, int *code) {
 #endif
 
     device_config_name[0] = 0;
+
+    /* Ignore any supplied clear-text password */
+    json_free(json_obj_pop_key(request_json, "admin_password"));
+    json_free(json_obj_pop_key(request_json, "normal_password"));
+    json_free(json_obj_pop_key(request_json, "viewonly_password"));
 
     bool needs_reset, needs_sleep_reset, config_name_changed;
     response_json = device_from_json(

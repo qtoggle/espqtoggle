@@ -49,12 +49,12 @@ typedef struct webhooks_queue_node {
 
 
 char   *webhooks_host = NULL;
-uint16  webhooks_port = 80;
+uint16  webhooks_port = 0;
 char   *webhooks_path = NULL;
 char    webhooks_password_hash[SHA256_HEX_LEN + 1] = {0};
 uint8   webhooks_events_mask = 0;
 int     webhooks_timeout = 0;
-int     webhooks_retries = 3;
+int     webhooks_retries = 0;
 
 static webhooks_queue_node_t *queue = NULL;
 static int                    queue_len = 0;
