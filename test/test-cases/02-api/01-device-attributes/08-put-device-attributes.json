@@ -89,13 +89,13 @@
                             "enum": ["Test Display Name PUT"]
                         },
                         "admin_password": {
-                            "enum": [""]
+                            "enum": ["set"]
                         },
                         "normal_password": {
-                            "enum": [""]
+                            "enum": ["set"]
                         },
                         "viewonly_password": {
-                            "enum": [""]
+                            "enum": ["set"]
                         },
                         "ip_address": {
                             "enum": ["1.2.3.4"]
