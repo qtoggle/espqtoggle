@@ -55,6 +55,9 @@
             "params": {
                 "method": "GET",
                 "path": "/device",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
                 "expected_status": 200,
                 "expected_body_schema": {
                     "type": "object",
@@ -142,9 +145,9 @@
                 "body": {
                     "name": "testdevice",
                     "display_name": "Test Display Name",
-                    "admin_password": "${TEST_PASSWORD}",
-                    "normal_password": "${TEST_PASSWORD}",
-                    "viewonly_password": "${TEST_PASSWORD}",
+                    "admin_password_hash": "10a6e6cc8311a3e2bcc09bf6c199adecd5dd59408c343e926b129c4914f3cb01",
+                    "normal_password_hash": "10a6e6cc8311a3e2bcc09bf6c199adecd5dd59408c343e926b129c4914f3cb01",
+                    "viewonly_password_hash": "10a6e6cc8311a3e2bcc09bf6c199adecd5dd59408c343e926b129c4914f3cb01",
                     "ip_address": "${TEST_NETWORK_DEVICE_IP}",
                     "ip_netmask": ${TEST_NETWORK_MASK},
                     "ip_gateway": "${TEST_NETWORK_HOST_IP}",
