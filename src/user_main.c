@@ -49,6 +49,10 @@
 #define CONNECT_TIMEOUT_SETUP_MODE   300 /* Seconds */
 #define SETUP_MODE_IDLE_TIMEOUT      300 /* Seconds */
 
+#define WIFI_AUTO_SCAN_INTERVAL    60  /* Seconds */
+#define WIFI_MIN_RSSI_THRESHOLD    -75
+#define WIFI_BETTER_RSSI_THRESHOLD 10
+
 #ifndef FW_BASE_URL
 #define FW_BASE_URL           ""
 #define FW_BASE_OTA_PATH      ""
@@ -139,7 +143,13 @@ void main_init(void) {
     os_timer_arm(&wifi_connect_timeout_setup_mode_timer, CONNECT_TIMEOUT_SETUP_MODE * 1000, /* repeat = */ FALSE);
 
     if (wifi_get_ssid()) {
-        wifi_station_enable(device_name, on_wifi_connect);
+        wifi_station_enable(
+            device_name,
+            on_wifi_connect,
+            WIFI_AUTO_SCAN_INTERVAL,
+            WIFI_MIN_RSSI_THRESHOLD,
+            WIFI_BETTER_RSSI_THRESHOLD
+        );
     }
 }
 

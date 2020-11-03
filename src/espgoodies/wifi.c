@@ -56,11 +56,17 @@ static bool                      station_enabled = FALSE;
 static bool                      temporary_station_enabled = FALSE;
 static bool                      temporary_connect_timer_armed = FALSE;
 
+static os_timer_t                auto_scan_timer;
+static uint32                    auto_scan_interval = 0;
+static int8                      min_rssi_threshold = 0;
+static int8                      better_rssi_threshold = 0;
+
 
 static void ICACHE_FLASH_ATTR ensure_station_config_read(void);
 static void ICACHE_FLASH_ATTR on_wifi_event(System_Event_t *evt);
 static void ICACHE_FLASH_ATTR on_wifi_scan_done(void *arg, STATUS status);
 static void ICACHE_FLASH_ATTR on_temporary_connect(void *arg);
+static void ICACHE_FLASH_ATTR on_auto_scan(void *arg);
 static int  ICACHE_FLASH_ATTR compare_wifi_rssi(const void *a, const void *b);
 
 
@@ -153,7 +159,7 @@ void wifi_set_bssid(uint8 *bssid) {
     cached_station_config.bssid_set = (bssid != NULL);
 
     if (bssid) {
-        DEBUG_WIFI("BSSID set to " BSSID_FMT, BSSID2STR(bssid));
+        DEBUG_WIFI("BSSID set to " WIFI_BSSID_FMT, WIFI_BSSID2STR(bssid));
     }
     else {
         DEBUG_WIFI("BSSID unset");
@@ -231,7 +237,7 @@ ip_addr_t wifi_get_dns_current(void) {
 
 void wifi_set_ip_address(ip_addr_t ip_address) {
     if (ip_address.addr) {  /* Manual */
-        DEBUG_WIFI("IP address: using manual: " IP_FMT, IP2STR(&ip_address.addr));
+        DEBUG_WIFI("IP address: using manual: " WIFI_IP_FMT, IP2STR(&ip_address.addr));
         memcpy(&manual_ip_address, &ip_address, sizeof(ip_addr_t));
     }
     else {  /* DHCP */
@@ -253,7 +259,7 @@ void wifi_set_netmask(uint8 netmask) {
 
 void wifi_set_gateway(ip_addr_t gateway) {
     if (gateway.addr) {  /* Manual */
-        DEBUG_WIFI("gateway: using manual: " IP_FMT, IP2STR(&gateway.addr));
+        DEBUG_WIFI("gateway: using manual: " WIFI_IP_FMT, IP2STR(&gateway.addr));
         memcpy(&manual_gateway, &gateway, sizeof(ip_addr_t));
     }
     else {  /* DHCP */
@@ -264,7 +270,7 @@ void wifi_set_gateway(ip_addr_t gateway) {
 
 void wifi_set_dns(ip_addr_t dns) {
     if (dns.addr) {  /* Manual */
-        DEBUG_WIFI("DNS: using manual: " IP_FMT, IP2STR(&dns.addr));
+        DEBUG_WIFI("DNS: using manual: " WIFI_IP_FMT, IP2STR(&dns.addr));
         memcpy(&manual_dns, &dns, sizeof(ip_addr_t));
     }
     else {  /* DHCP */
@@ -273,7 +279,13 @@ void wifi_set_dns(ip_addr_t dns) {
     }
 }
 
-void wifi_station_enable(char *hostname, wifi_connect_callback_t callback) {
+void wifi_station_enable(
+    char *hostname,
+    wifi_connect_callback_t callback,
+    uint32 _auto_scan_interval,
+    int8 _min_rssi_threshold,
+    int8 _better_rssi_threshold
+) {
     if (station_enabled) {
         DEBUG_WIFI("station already enabled");
         return;
@@ -306,9 +318,9 @@ void wifi_station_enable(char *hostname, wifi_connect_callback_t callback) {
     if (cached_station_config.ssid[0]) {
         if (cached_station_config.bssid_set) {
             DEBUG_WIFI(
-                "connecting to SSID=\"%s\", BSSID=" BSSID_FMT,
+                "connecting to SSID=\"%s\", BSSID=" WIFI_BSSID_FMT,
                 (char *) cached_station_config.ssid,
-                BSSID2STR(cached_station_config.bssid)
+                WIFI_BSSID2STR(cached_station_config.bssid)
             );
         }
         else {
@@ -357,6 +369,16 @@ void wifi_station_enable(char *hostname, wifi_connect_callback_t callback) {
             DEBUG_WIFI("starting DHCP client");
             wifi_station_dhcpc_start();
         }
+    }
+
+    auto_scan_interval = _auto_scan_interval;
+    min_rssi_threshold = _min_rssi_threshold;
+    better_rssi_threshold = _better_rssi_threshold;
+
+    if (auto_scan_interval) {
+        os_timer_disarm(&auto_scan_timer);
+        os_timer_setfn(&auto_scan_timer, on_auto_scan, NULL);
+        os_timer_arm(&auto_scan_timer, auto_scan_interval * 1000, /* repeat = */ FALSE);
     }
 }
 
@@ -411,7 +433,7 @@ void wifi_station_temporary_enable(
     }
 
     if (bssid) {
-        DEBUG_WIFI("connecting to SSID=\"%s\", BSSID=" BSSID_FMT, (char *) ssid, BSSID2STR(bssid));
+        DEBUG_WIFI("connecting to SSID=\"%s\", BSSID=" WIFI_BSSID_FMT, (char *) ssid, WIFI_BSSID2STR(bssid));
     }
     else {
         DEBUG_WIFI("connecting to SSID=\"%s\", no particular BSSID", (char *) ssid);
@@ -689,9 +711,9 @@ void on_wifi_event(System_Event_t *evt) {
      switch (evt->event) {
          case EVENT_STAMODE_DISCONNECTED:
              DEBUG_WIFI(
-                 "disconnected from SSID \"%s\", BSSID " BSSID_FMT ", reason %d",
+                 "disconnected from SSID \"%s\", BSSID " WIFI_BSSID_FMT ", reason %d",
                  evt->event_info.disconnected.ssid,
-                 BSSID2STR(evt->event_info.disconnected.bssid),
+                 WIFI_BSSID2STR(evt->event_info.disconnected.bssid),
                  evt->event_info.disconnected.reason
              );
 
@@ -719,7 +741,7 @@ void on_wifi_event(System_Event_t *evt) {
              break;
 
          case EVENT_STAMODE_GOT_IP:
-             DEBUG_WIFI("connected and ready at " IP_FMT, IP2STR(&evt->event_info.got_ip.ip));
+             DEBUG_WIFI("connected and ready at " WIFI_IP_FMT, IP2STR(&evt->event_info.got_ip.ip));
 
              if (station_connect_callback && !station_connected) {
                  station_connect_callback(TRUE);
@@ -734,7 +756,7 @@ void on_wifi_event(System_Event_t *evt) {
               break;
 
          case EVENT_SOFTAPMODE_STACONNECTED:
-             DEBUG_WIFI("AP client with MAC "MAC_FMT " connected", MAC2STR(evt->event_info.distribute_sta_ip.mac));
+             DEBUG_WIFI("AP client with MAC "WIFI_MAC_FMT " connected", MAC2STR(evt->event_info.distribute_sta_ip.mac));
 
              /* In case temporary connection is enabled, stop attempting to connect as soon as the first AP client
               * connects. Continuously attempting to connect breaks the communication with the new AP client, probably
@@ -746,7 +768,7 @@ void on_wifi_event(System_Event_t *evt) {
 
          case EVENT_SOFTAPMODE_DISTRIBUTE_STA_IP:
              DEBUG_WIFI(
-                 "AP client with MAC " MAC_FMT " was given IP " IP_FMT,
+                 "AP client with MAC " WIFI_MAC_FMT " was given IP " WIFI_IP_FMT,
                  MAC2STR(evt->event_info.distribute_sta_ip.mac),
                  IP2STR(&evt->event_info.distribute_sta_ip.ip.addr)
              );
@@ -758,7 +780,10 @@ void on_wifi_event(System_Event_t *evt) {
              break;
 
          case EVENT_SOFTAPMODE_STADISCONNECTED: {
-             DEBUG_WIFI("AP client with MAC "MAC_FMT " disconnected", MAC2STR(evt->event_info.distribute_sta_ip.mac));
+             DEBUG_WIFI(
+                 "AP client with MAC " WIFI_MAC_FMT " disconnected",
+                 MAC2STR(evt->event_info.distribute_sta_ip.mac)
+             );
 
              if (ap_client_callback) {
                  ap_client_callback(FALSE, (ip_addr_t){0}, evt->event_info.distribute_sta_ip.mac);
@@ -793,11 +818,11 @@ void on_wifi_scan_done(void *arg, STATUS status) {
     while (result) {
         result->ssid[result->ssid_len] = 0;
         DEBUG_WIFI(
-            "found SSID=\"%s\", channel=%d, RSSI=%d, BSSID=" BSSID_FMT,
+            "found SSID=\"%s\", channel=%d, RSSI=%d, BSSID=" WIFI_BSSID_FMT,
             result->ssid,
             result->channel,
             result->rssi,
-            BSSID2STR(result->bssid)
+            WIFI_BSSID2STR(result->bssid)
         );
 
         results = realloc(results, sizeof(wifi_scan_result_t) * (len + 1));
@@ -815,7 +840,46 @@ void on_wifi_scan_done(void *arg, STATUS status) {
 
     qsort(results, len, sizeof(wifi_scan_result_t), compare_wifi_rssi);
 
-    callback(results, len);
+    if (callback) {
+        callback(results, len);
+    }
+
+    /* Jump to a better AP, if:
+     *  * we're in pure station mode
+     *  * we're currently connected
+     *  * we don't have a particular BSSID specified
+     *  * auto scan is enabled
+     *  * we actually found a considerably better AP */
+
+    wifi_scan_result_t *best_result = len > 0 ? results + 0 : NULL;
+    int32 rssi = wifi_station_get_rssi();
+
+    if (!callback && /* automatic AP scan */
+        station_enabled &&
+        !ap_enabled &&
+        station_connected &&
+        wifi_get_bssid() == NULL && /* we don't have a particular BSSID specified */
+        auto_scan_interval && /* automatic AP scan mechanism enabled */
+        rssi < min_rssi_threshold &&
+        best_result != NULL &&
+        best_result->rssi - rssi > better_rssi_threshold &&
+        /* Don't include the first BSSID byte into comparison as it's prone to change */
+        memcmp(wifi_get_bssid_current() + 1, best_result->bssid + 1, WIFI_BSSID_LEN - 1)) {
+
+        DEBUG_WIFI(
+            "we have a better AP with BSSID " WIFI_BSSID_FMT " and RSSI %d > %d",
+            WIFI_BSSID2STR(best_result->bssid),
+            best_result->rssi,
+            rssi
+        );
+
+        if (!wifi_station_disconnect()) {
+            DEBUG_WIFI("wifi_station_disconnect() failed");
+        }
+        if (!wifi_station_connect()) {
+            DEBUG_WIFI("wifi_station_connect() failed");
+        }
+    }
 }
 
 void on_temporary_connect(void *arg) {
@@ -823,6 +887,25 @@ void on_temporary_connect(void *arg) {
     if (!wifi_station_connect()) {
         DEBUG_WIFI("wifi_station_connect() failed");
     }
+}
+
+void on_auto_scan(void *arg) {
+    if (!station_enabled || !auto_scan_interval) {
+        return; /* Auto-scanning is disabled as soon as the device leaves station mode */
+    }
+
+    /* Only scan in pure station mode, but keep scheduling the next call */
+    int32 rssi = wifi_station_get_rssi();
+    if (!ap_enabled && rssi < min_rssi_threshold) {
+        DEBUG_WIFI("scanning for a better AP (RSSI is %d)", rssi);
+        wifi_scan(/* callback = */ NULL);
+    }
+    else {
+        DEBUG_WIFI("skipping auto-scan");
+    }
+
+    /* Schedule next call */
+    os_timer_arm(&auto_scan_timer, auto_scan_interval * 1000, /* repeat = */ FALSE);
 }
 
 int compare_wifi_rssi(const void *a, const void *b) {
