@@ -691,7 +691,7 @@ json_t *device_to_json(void) {
     /* IP configuration */
     ip_addr_t ip = wifi_get_ip_address();
     if (ip.addr) {
-        snprintf(value, 256, IP_FMT, IP2STR(&ip));
+        snprintf(value, 256, WIFI_IP_FMT, IP2STR(&ip));
         json_obj_append(json, "ip_address", json_str_new(value));
     }
     else {
@@ -702,7 +702,7 @@ json_t *device_to_json(void) {
 
     ip = wifi_get_gateway();
     if (ip.addr) {
-        snprintf(value, 256, IP_FMT, IP2STR(&ip));
+        snprintf(value, 256, WIFI_IP_FMT, IP2STR(&ip));
         json_obj_append(json, "ip_gateway", json_str_new(value));
     }
     else {
@@ -711,7 +711,7 @@ json_t *device_to_json(void) {
 
     ip = wifi_get_dns();
     if (ip.addr) {
-        snprintf(value, 256, IP_FMT, IP2STR(&ip));
+        snprintf(value, 256, WIFI_IP_FMT, IP2STR(&ip));
         json_obj_append(json, "ip_dns", json_str_new(value));
     }
     else {
@@ -721,7 +721,7 @@ json_t *device_to_json(void) {
     /* Current IP info */
     ip = wifi_get_ip_address_current();
     if (ip.addr) {
-        snprintf(value, 256, IP_FMT, IP2STR(&ip));
+        snprintf(value, 256, WIFI_IP_FMT, IP2STR(&ip));
         json_obj_append(json, "ip_address_current", json_str_new(value));
     }
     else {
@@ -732,7 +732,7 @@ json_t *device_to_json(void) {
 
     ip = wifi_get_gateway_current();
     if (ip.addr) {
-        snprintf(value, 256, IP_FMT, IP2STR(&ip));
+        snprintf(value, 256, WIFI_IP_FMT, IP2STR(&ip));
         json_obj_append(json, "ip_gateway_current", json_str_new(value));
     }
     else {
@@ -741,7 +741,7 @@ json_t *device_to_json(void) {
 
     ip = wifi_get_dns_current();
     if (ip.addr) {
-        snprintf(value, 256, IP_FMT, IP2STR(&ip));
+        snprintf(value, 256, WIFI_IP_FMT, IP2STR(&ip));
         json_obj_append(json, "ip_dns_current", json_str_new(value));
     }
     else {
@@ -768,7 +768,7 @@ json_t *device_to_json(void) {
     }
 
     if (bssid) {
-        snprintf(value, 256, "%02X:%02X:%02X:%02X:%02X:%02X", BSSID2STR(bssid));
+        snprintf(value, 256, "%02X:%02X:%02X:%02X:%02X:%02X", WIFI_BSSID2STR(bssid));
         json_obj_append(json, "wifi_bssid", json_str_new(value));
     }
     else {
@@ -790,7 +790,7 @@ json_t *device_to_json(void) {
             current_bssid_str,
             sizeof(current_bssid_str),
             "%02X:%02X:%02X:%02X:%02X:%02X",
-            BSSID2STR(wifi_get_bssid_current())
+            WIFI_BSSID2STR(wifi_get_bssid_current())
         );
     }
     json_obj_append(json, "wifi_bssid_current", json_str_new(current_bssid_str));

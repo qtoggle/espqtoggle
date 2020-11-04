@@ -389,7 +389,7 @@ void dns_callback(const char * hostname, ip_addr_t *addr, void * arg) {
         free(req);
     }
     else {
-        DEBUG_HTTPCLIENT("DNS found %s -> " IP_FMT, hostname, IP2STR(addr));
+        DEBUG_HTTPCLIENT("DNS found %s -> " WIFI_IP_FMT, hostname, IP2STR(addr));
 
         struct espconn * conn = (struct espconn *)malloc(sizeof(struct espconn));
         conn->type = ESPCONN_TCP;

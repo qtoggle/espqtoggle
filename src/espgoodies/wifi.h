@@ -30,10 +30,10 @@
 #define DEBUG_WIFI(...)      {}
 #endif
 
-#define BSSID_FMT                  "%02X:%02X:%02X:%02X:%02X:%02X"
-#define BSSID2STR(bssid)           MAC2STR(bssid)
-#define MAC_FMT                    BSSID_FMT
-#define IP_FMT                     "%d.%d.%d.%d"
+#define WIFI_BSSID_FMT             "%02X:%02X:%02X:%02X:%02X:%02X"
+#define WIFI_BSSID2STR(bssid)      MAC2STR(bssid)
+#define WIFI_MAC_FMT               WIFI_BSSID_FMT
+#define WIFI_IP_FMT                "%d.%d.%d.%d"
 
 #define WIFI_EVENT_CONNECTED       1
 #define WIFI_EVENT_DISCONNECTED    2
@@ -121,7 +121,13 @@ void      ICACHE_FLASH_ATTR  wifi_set_netmask(uint8 netmask);
 void      ICACHE_FLASH_ATTR  wifi_set_gateway(ip_addr_t gateway);
 void      ICACHE_FLASH_ATTR  wifi_set_dns(ip_addr_t dns);
 
-void      ICACHE_FLASH_ATTR  wifi_station_enable(char *hostname, wifi_connect_callback_t callback);
+void      ICACHE_FLASH_ATTR  wifi_station_enable(
+                                 char *hostname,
+                                 wifi_connect_callback_t callback,
+                                 uint32 auto_scan_interval,
+                                 int8 min_rssi_threshold,
+                                 int8 better_rssi_threshold
+                             );
 void      ICACHE_FLASH_ATTR  wifi_station_disable(void);
 bool      ICACHE_FLASH_ATTR  wifi_station_is_connected(void);
 void      ICACHE_FLASH_ATTR  wifi_station_temporary_enable(
