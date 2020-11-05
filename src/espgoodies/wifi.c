@@ -60,6 +60,9 @@ static os_timer_t                auto_scan_timer;
 static uint32                    auto_scan_interval = 0;
 static int8                      min_rssi_threshold = 0;
 static int8                      better_rssi_threshold = 0;
+static uint8                     better_bssid[WIFI_BSSID_LEN];
+static uint8                     better_counter = 0;
+static uint8                     better_count = 0;
 
 
 static void ICACHE_FLASH_ATTR ensure_station_config_read(void);
@@ -166,6 +169,11 @@ void wifi_set_bssid(uint8 *bssid) {
     }
 
     cached_station_config_changed = TRUE;
+}
+
+int wifi_bssid_cmp(uint8 *bssid1, uint8 *bssid2) {
+    /* Ignore the first byte as it may actually change */
+    return memcmp(bssid1 + 1, bssid2 + 1, WIFI_BSSID_LEN - 1);
 }
 
 void wifi_save_config(void) {
@@ -284,7 +292,8 @@ void wifi_station_enable(
     wifi_connect_callback_t callback,
     uint32 _auto_scan_interval,
     int8 _min_rssi_threshold,
-    int8 _better_rssi_threshold
+    int8 _better_rssi_threshold,
+    uint8 _better_count
 ) {
     if (station_enabled) {
         DEBUG_WIFI("station already enabled");
@@ -374,6 +383,7 @@ void wifi_station_enable(
     auto_scan_interval = _auto_scan_interval;
     min_rssi_threshold = _min_rssi_threshold;
     better_rssi_threshold = _better_rssi_threshold;
+    better_count = _better_count;
 
     if (auto_scan_interval) {
         os_timer_disarm(&auto_scan_timer);
@@ -849,7 +859,9 @@ void on_wifi_scan_done(void *arg, STATUS status) {
      *  * we're currently connected
      *  * we don't have a particular BSSID specified
      *  * auto scan is enabled
-     *  * we actually found a considerably better AP */
+     *  * we actually found a considerably better AP
+     *  * it's not the same AP to which we're currently connected
+     *  * the better AP RSSI is consistently higher than the current one */
 
     wifi_scan_result_t *best_result = len > 0 ? results + 0 : NULL;
     int32 rssi = wifi_station_get_rssi();
@@ -863,15 +875,31 @@ void on_wifi_scan_done(void *arg, STATUS status) {
         rssi < min_rssi_threshold &&
         best_result != NULL &&
         best_result->rssi - rssi > better_rssi_threshold &&
-        /* Don't include the first BSSID byte into comparison as it's prone to change */
-        memcmp(wifi_get_bssid_current() + 1, best_result->bssid + 1, WIFI_BSSID_LEN - 1)) {
+        !strncmp(best_result->ssid, wifi_get_ssid(), 32) &&
+        wifi_bssid_cmp(wifi_get_bssid_current(), best_result->bssid) && /* ignore currently connected AP */
+        (!better_bssid[0] || !wifi_bssid_cmp(better_bssid, best_result->bssid)) /* same better AP as the last time */
+    ) {
+        better_counter++;
+        memcpy(better_bssid, best_result->bssid, WIFI_BSSID_LEN);
 
         DEBUG_WIFI(
-            "we have a better AP with BSSID " WIFI_BSSID_FMT " and RSSI %d > %d",
+            "we have a better AP with BSSID " WIFI_BSSID_FMT " and RSSI %d > %d (counter = %d)",
             WIFI_BSSID2STR(best_result->bssid),
             best_result->rssi,
-            rssi
+            rssi,
+            better_counter
         );
+    }
+    else {
+        better_counter = 0;
+        memset(better_bssid, 0, WIFI_BSSID_LEN);
+    }
+
+    if (better_counter >= better_count) {
+        DEBUG_WIFI("attempting to reconnect to better AP");
+
+        better_counter = 0;
+        memset(better_bssid, 0, WIFI_BSSID_LEN);
 
         if (!wifi_station_disconnect()) {
             DEBUG_WIFI("wifi_station_disconnect() failed");

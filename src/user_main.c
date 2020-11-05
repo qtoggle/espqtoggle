@@ -22,6 +22,7 @@
 #include <mem.h>
 #include <user_interface.h>
 #include <version.h>
+#include <spi_flash.h>
 
 #include "espgoodies/common.h"
 #include "espgoodies/crypto.h"
@@ -50,8 +51,9 @@
 #define SETUP_MODE_IDLE_TIMEOUT      300 /* Seconds */
 
 #define WIFI_AUTO_SCAN_INTERVAL    60  /* Seconds */
-#define WIFI_MIN_RSSI_THRESHOLD    -75
-#define WIFI_BETTER_RSSI_THRESHOLD 10
+#define WIFI_MIN_RSSI_THRESHOLD    -80
+#define WIFI_BETTER_RSSI_THRESHOLD 15
+#define WIFI_BETTER_COUNT          2
 
 #ifndef FW_BASE_URL
 #define FW_BASE_URL           ""
@@ -100,6 +102,7 @@ static void ICACHE_FLASH_ATTR on_wifi_connect_timeout_setup_mode(void *arg);
 void check_update_fw_config(void) {
     version_t fw_version;
     system_get_fw_version(&fw_version);
+
     if ((fw_version.major > FW_VERSION_MAJOR) ||
         (fw_version.major == 0 &&
          fw_version.minor == 0 &&
@@ -148,7 +151,8 @@ void main_init(void) {
             on_wifi_connect,
             WIFI_AUTO_SCAN_INTERVAL,
             WIFI_MIN_RSSI_THRESHOLD,
-            WIFI_BETTER_RSSI_THRESHOLD
+            WIFI_BETTER_RSSI_THRESHOLD,
+            WIFI_BETTER_COUNT
         );
     }
 }
@@ -349,6 +353,8 @@ void user_init(void) {
     DEBUG_SYSTEM("espQToggle  " FW_VERSION);
     DEBUG_SYSTEM("API Version " API_VERSION);
     DEBUG_SYSTEM("SDK Version " ESP_SDK_VERSION_STRING);
+    DEBUG_SYSTEM("Chip ID     %08X", system_get_chip_id());
+    DEBUG_SYSTEM("Flash ID    %08X", spi_flash_get_id());
 
 #else /* !_DEBUG */
     debug_uart_setup(DEBUG_UART_DISABLE);

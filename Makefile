@@ -2,9 +2,9 @@
 VERSION ?= 0.0.0-unknown.0
 
 DEBUG ?= true
-DEBUG_FLAGS ?= battery dnsserver flashcfg html httpclient httpserver json ota rtc sleep system tcpserver wifi 	\
-               gpio hspi onewire pwm uart 																		\
-               api config core device espqtclient events expr peripherals ports sessions virtual webhooks 		\
+DEBUG_FLAGS ?= battery dnsserver flashcfg html httpclient httpserver json ota rtc sleep system tcpserver wifi \
+               gpio hspi onewire pwm uart                                                                     \
+               api config core device espqtclient events expr peripherals ports sessions virtual webhooks     \
                adcp bl0937 bl0940 dhtxx ds18x20 gpiop pwmp shelly_ht tuya_mcu v9821
 DEBUG_IP ?= # 192.168.0.1
 DEBUG_PORT ?= 48879

@@ -104,6 +104,8 @@ void      ICACHE_FLASH_ATTR  wifi_set_ssid(char *ssid);
 void      ICACHE_FLASH_ATTR  wifi_set_psk(char *psk);
 void      ICACHE_FLASH_ATTR  wifi_set_bssid(uint8 *bssid);
 
+int       ICACHE_FLASH_ATTR  wifi_bssid_cmp(uint8 *bssid1, uint8 *bssid2);
+
 void      ICACHE_FLASH_ATTR  wifi_save_config(void);
 
 ip_addr_t ICACHE_FLASH_ATTR  wifi_get_ip_address(void);
@@ -126,7 +128,8 @@ void      ICACHE_FLASH_ATTR  wifi_station_enable(
                                  wifi_connect_callback_t callback,
                                  uint32 auto_scan_interval,
                                  int8 min_rssi_threshold,
-                                 int8 better_rssi_threshold
+                                 int8 better_rssi_threshold,
+                                 uint8 better_count
                              );
 void      ICACHE_FLASH_ATTR  wifi_station_disable(void);
 bool      ICACHE_FLASH_ATTR  wifi_station_is_connected(void);
