@@ -434,6 +434,8 @@ uint8 *wait_uart_frame(peripheral_t *peripheral, uint16 *frame_len, uint32 timeo
     bool instant = timeout_ms == 0;
 
     while (timeout_ms > 0 || instant) {
+        system_soft_wdt_feed();
+
         if (!instant) {
             os_delay_us(1000);
             timeout_ms--;
