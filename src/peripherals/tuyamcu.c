@@ -771,7 +771,7 @@ void process_next_frame(peripheral_t *peripheral) {
         case CMD_RESET_CHANGE:
             /* Toggle setup mode */
             DEBUG_TUYA_MCU(peripheral, "got RESET command");
-            system_setup_mode_toggle();
+            system_setup_mode_toggle(/* external = */ TRUE);
             send_empty_cmd(peripheral, cmd);
             break;
 

@@ -391,12 +391,12 @@ bool system_setup_mode_active(void) {
     return setup_mode;
 }
 
-void system_setup_mode_toggle(void) {
+void system_setup_mode_toggle(bool external) {
     if (setup_mode) {
-        DEBUG_SYSTEM("exiting setup mode");
+        DEBUG_SYSTEM("exiting setup mode (external = %d)", external);
 
         if (setup_mode_callback) {
-            setup_mode_callback(FALSE);
+            setup_mode_callback(FALSE, external);
         }
 
         system_reset(/* delayed = */ FALSE);
@@ -404,7 +404,7 @@ void system_setup_mode_toggle(void) {
     else {
         setup_mode = TRUE;
 
-        DEBUG_SYSTEM("entering setup mode");
+        DEBUG_SYSTEM("entering setup mode (external = %d)", external);
 
         char ssid[WIFI_SSID_MAX_LEN + 1];
         snprintf(ssid, sizeof(ssid), DEFAULT_HOSTNAME, system_get_chip_id());
@@ -412,7 +412,7 @@ void system_setup_mode_toggle(void) {
         dnsserver_start_captive();
 
         if (setup_mode_callback) {
-            setup_mode_callback(TRUE);
+            setup_mode_callback(TRUE, external);
         }
     }
 }
@@ -469,7 +469,7 @@ void update(void) {
     /* Enter setup mode if setup button was held pressed enough */
     if (setup_mode_state == SETUP_MODE_PRESSED && now_ms - setup_mode_button_time_ms > setup_button_hold * 1000) {
         setup_mode_state = SETUP_MODE_TRIGGERED;
-        system_setup_mode_toggle();
+        system_setup_mode_toggle(/* external = */ TRUE);
     }
 
     /* Read setup mode pin state */
