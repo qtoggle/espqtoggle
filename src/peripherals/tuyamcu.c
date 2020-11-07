@@ -32,6 +32,7 @@
 #include "espgoodies/wifi.h"
 
 #include "common.h"
+#include "core.h"
 #include "peripherals.h"
 #include "ports.h"
 
@@ -115,17 +116,24 @@
 #define DP_TYPE_ENUM    0x04
 #define DP_TYPE_FAULT   0x05
 
-#define PARAM_DP_FLAG_TYPE_MASK    0x0F
-#define PARAM_DP_FLAG_WRITABLE     4
-#define PARAM_DP_FLAG_ENUM_AS_BOOL 8
+#define PARAM_DP_FLAG_TYPE_MASK      0x0F
+#define PARAM_DP_FLAG_WRITABLE       4
+#define PARAM_DP_FLAG_HAS_DEF_VALUE  5
+#define PARAM_DP_FLAG_DEF_BOOL_VALUE 6
+#define PARAM_DP_FLAG_ENUM_AS_BOOL   8
 
-#define FLAG_NO_FORCE_COORDINATED_SETUP 0
-#define PARAM_NO_POLLING_INTERVAL       0
+#define FLAG_FORCE_COORDINATED_SETUP   0
+#define FLAG_RESTORE_DEF_ENTER_SETUP   1
+#define FLAG_RESTORE_DEF_EXIT_SETUP    2
+#define FLAG_RESTORE_NO_INTERNAL_SETUP 3
+
+#define PARAM_NO_POLLING_INTERVAL      0
 
 
 typedef struct {
 
     uint32 value;
+    uint32 def_value;
     uint16 flags;
     uint8  dp_id;
     bool   valid;
@@ -249,13 +257,15 @@ static void   ICACHE_FLASH_ATTR send_net_status_cmd(peripheral_t *peripheral, ui
 static void   ICACHE_FLASH_ATTR init(peripheral_t *peripheral);
 static void   ICACHE_FLASH_ATTR cleanup(peripheral_t *peripheral);
 static void   ICACHE_FLASH_ATTR make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len);
+static void   ICACHE_FLASH_ATTR handle_setup_mode(peripheral_t *peripheral, bool active, bool external);
 
 
 peripheral_type_t peripheral_type_tuya_mcu = {
 
     .init = init,
     .cleanup = cleanup,
-    .make_ports = make_ports
+    .make_ports = make_ports,
+    .handle_setup_mode = handle_setup_mode
 
 };
 
@@ -566,7 +576,7 @@ double read_value(port_t *port) {
         return dp_details->value == dp_details->true_value;
     }
 
-    return dp_details->value;
+    return (int32) dp_details->value;
 }
 
 bool write_value(port_t *port, double value) {
@@ -725,7 +735,7 @@ void init_mcu(peripheral_t *peripheral) {
         DEBUG_TUYA_MCU(peripheral, "timeout waiting for setup type");
     }
 
-    if (PERIPHERAL_GET_FLAG(peripheral, FLAG_NO_FORCE_COORDINATED_SETUP)) {
+    if (PERIPHERAL_GET_FLAG(peripheral, FLAG_FORCE_COORDINATED_SETUP)) {
         DEBUG_TUYA_MCU(peripheral, "force coordinated setup");
         user_data->flags &= ~BIT(FLAG_SELF_SETUP);
     }
@@ -1025,7 +1035,7 @@ uint8 compute_net_status(void) {
     else if (wifi_station_is_connected()) {
         return NET_STATUS_CONNECTED_CLOUD;
     }
-    else {
+    else { /* Not yet connected */
         return NET_STATUS_AP; /* This will make the LED blink slowly, even though we're not actually in AP mode */
     }
 }
@@ -1044,7 +1054,16 @@ void send_net_status_cmd(peripheral_t *peripheral, uint8 cmd) {
     uint8 status = compute_net_status();
     uint16 frame_len;
     uint8 *frame = make_frame(peripheral, cmd, &status, 1, &frame_len);
+
     uint16 size = uart_write(UART_NO, frame, frame_len, WRITE_TIMEOUT);
+    if (size != frame_len) {
+        DEBUG_TUYA_MCU(peripheral, "failed to write frame");
+    }
+
+    /* Send the status again, as some MCUs appear to ignore some of these frames */
+    os_delay_us(200000);
+
+    size = uart_write(UART_NO, frame, frame_len, WRITE_TIMEOUT);
     free(frame);
     if (size != frame_len) {
         DEBUG_TUYA_MCU(peripheral, "failed to write frame");
@@ -1084,8 +1103,8 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
      * Flags:
      *  * Bit 0-3: port type
      *  * Bit 4:   writable
-     *  * Bit 5:   reserved
-     *  * Bit 6:   reserved
+     *  * Bit 5:   has default value (extra 4 bytes indicate signed 32-bit value, for numeric ports)
+     *  * Bit 6:   default bool value
      *  * Bit 7:   reserved
      *  * Bit 8:   treat enum as bool (2 extra bytes indicate false and true values)
      */
@@ -1130,6 +1149,18 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
                 continue;
         }
 
+        /* default value */
+        if (dp_details->flags & BIT(PARAM_DP_FLAG_HAS_DEF_VALUE)) {
+            if (port->type == PORT_TYPE_BOOLEAN) {
+                dp_details->def_value = !!(dp_details->flags & BIT(PARAM_DP_FLAG_DEF_BOOL_VALUE));;
+            }
+            else { /* Assuming number */
+                dp_details->def_value = *(int32 *) p; p += 4;
+            }
+
+            port->value = dp_details->value;
+        }
+
         /* writable */
         if (dp_details->flags & BIT(PARAM_DP_FLAG_WRITABLE)) {
             port->flags |= PORT_FLAG_WRITABLE;
@@ -1157,5 +1188,37 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
     for (int i = 0; i < dp_count; i++) {
         ports[i]->user_data = user_data->dp_details + i;
         user_data->dp_details_pos_by_id[user_data->dp_details[i].dp_id] = i;
+    }
+}
+
+void handle_setup_mode(peripheral_t *peripheral, bool active, bool external) {
+    if (active && !PERIPHERAL_GET_FLAG(peripheral, FLAG_RESTORE_DEF_ENTER_SETUP)) {
+        return;
+    }
+    if (!active && !PERIPHERAL_GET_FLAG(peripheral, FLAG_RESTORE_DEF_EXIT_SETUP)) {
+        return;
+    }
+    if (!external && PERIPHERAL_GET_FLAG(peripheral, FLAG_RESTORE_NO_INTERNAL_SETUP)) {
+        return;
+    }
+
+    DEBUG_TUYA_MCU(peripheral, "restoring default port values");
+
+    for (int i = 0; i < all_ports_count; i++) {
+        port_t *port = all_ports[i];
+        if (port->peripheral != peripheral) {
+            continue; /* Not our port */
+        }
+
+        dp_details_t *dp_details = port->user_data;
+        if (dp_details->flags & BIT(PARAM_DP_FLAG_HAS_DEF_VALUE)) {
+            /* Use port->value so that the config save call can properly pick it up*/
+            port->value = (int32) dp_details->def_value;
+            DEBUG_PORT(port, "setting default value %s", dtostr(port->value, -1));
+            port_set_value(port, port->value, CHANGE_REASON_NATIVE);
+            if (IS_PORT_PERSISTED(port)) {
+                config_mark_for_saving();
+            }
+        }
     }
 }
