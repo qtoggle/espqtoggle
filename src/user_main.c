@@ -86,7 +86,7 @@ static void ICACHE_FLASH_ATTR on_system_ready(void);
 static void ICACHE_FLASH_ATTR on_system_reset(void);
 static void ICACHE_FLASH_ATTR on_system_sleep(uint32 interval);
 
-static void ICACHE_FLASH_ATTR on_setup_mode(bool active);
+static void ICACHE_FLASH_ATTR on_setup_mode(bool active, bool external);
 static void ICACHE_FLASH_ATTR on_setup_mode_idle_timeout(void *);
 
 #ifdef _OTA
@@ -167,7 +167,7 @@ void on_system_ready(void) {
         /* If no SSID set (no Wi-Fi network configured), enter setup mode */
         DEBUG_SYSTEM("no SSID configured");
         if (!system_setup_mode_active()) {
-            system_setup_mode_toggle();
+            system_setup_mode_toggle(/* external = */ FALSE);
         }
     }
 }
@@ -190,7 +190,7 @@ void on_system_sleep(uint32 interval) {
     tcp_server_stop();
 }
 
-void on_setup_mode(bool active) {
+void on_setup_mode(bool active, bool external) {
     os_timer_disarm(&setup_mode_idle_timer);
 
     if (active) {
@@ -212,7 +212,7 @@ void on_setup_mode(bool active) {
 
     /* Pass setup mode event to all registered peripherals */
     for (int i = 0; i < all_peripherals_count; i++) {
-        peripheral_handle_setup_mode(all_peripherals[i], active);
+        peripheral_handle_setup_mode(all_peripherals[i], active, external);
     }
 
 }
@@ -231,7 +231,7 @@ void on_setup_mode_idle_timeout(void *arg) {
     }
 
     DEBUG_SYSTEM("setup mode idle timeout");
-    system_setup_mode_toggle();
+    system_setup_mode_toggle(/* external = */ FALSE);
 }
 
 #ifdef _OTA
@@ -329,7 +329,7 @@ void on_wifi_connect_timeout_core_polling(void *arg) {
 void on_wifi_connect_timeout_setup_mode(void *arg) {
     if (!system_setup_mode_active()) {
         DEBUG_SYSTEM("Wi-Fi connection timeout, switching to setup mode");
-        system_setup_mode_toggle();
+        system_setup_mode_toggle(/* external = */ FALSE);
     }
 }
 
