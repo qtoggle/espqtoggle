@@ -211,6 +211,16 @@ void peripheral_unregister(peripheral_t *peripheral) {
     DEBUG_PERIPHERAL(peripheral, "unregistered");
 }
 
+void peripheral_handle_setup_mode(peripheral_t *peripheral, bool active) {
+    DEBUG_PERIPHERAL(peripheral, "handling setup mode active = %d", active);
+
+    peripheral_type_t *type = all_peripheral_types[peripheral->type_id - 1 /* Type IDs start at 1 */];
+    if (type->handle_setup_mode) {
+        type->handle_setup_mode(peripheral, active);
+    }
+}
+
+
 void peripheral_load(peripheral_t *peripheral, uint8 *config_data) {
     uint8 *data = config_data + CONFIG_OFFS_PERIPHERALS_BASE + peripheral->index * CONFIG_PERIPHERAL_SIZE;
     uint16 type_id;

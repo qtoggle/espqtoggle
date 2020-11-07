@@ -209,6 +209,12 @@ void on_setup_mode(bool active) {
             );
         }
     }
+
+    /* Pass setup mode event to all registered peripherals */
+    for (int i = 0; i < all_peripherals_count; i++) {
+        peripheral_handle_setup_mode(all_peripherals[i], active);
+    }
+
 }
 
 void on_setup_mode_idle_timeout(void *arg) {

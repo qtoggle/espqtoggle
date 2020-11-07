@@ -84,6 +84,7 @@ typedef struct {
     void (*init)(peripheral_t *peripheral);
     void (*cleanup)(peripheral_t *peripheral);
     void (*make_ports)(peripheral_t *peripheral, port_t **ports, uint8 *ports_len);
+    void (*handle_setup_mode)(peripheral_t *peripheral, bool active);
 
 } peripheral_type_t;
 
@@ -101,6 +102,7 @@ void ICACHE_FLASH_ATTR peripheral_free(peripheral_t *peripheral);
 void ICACHE_FLASH_ATTR peripheral_make_ports(peripheral_t *peripheral, char *port_ids[], uint8 port_ids_len);
 void ICACHE_FLASH_ATTR peripheral_register(peripheral_t *peripheral);
 void ICACHE_FLASH_ATTR peripheral_unregister(peripheral_t *peripheral);
+void ICACHE_FLASH_ATTR peripheral_handle_setup_mode(peripheral_t *peripheral, bool active);
 
 
 #endif /* _PERIPHERALS_H */
