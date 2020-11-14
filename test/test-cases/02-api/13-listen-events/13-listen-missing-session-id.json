@@ -11,8 +11,8 @@
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "missing-field",
-                    "field": "session_id"
+                    "error": "missing-header",
+                    "header": "Session-Id"
                 }
             }
         }

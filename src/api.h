@@ -42,6 +42,8 @@
 
 #define API_MAX_EXPR_LEN               1024
 
+#define API_MAX_SESSION_ID_LEN         32
+
 #define API_MAX_DEVICE_NAME_LEN        32
 #define API_MAX_DEVICE_DISP_NAME_LEN   64
 #define API_MAX_DEVICE_CONFIG_NAME_LEN 64
@@ -55,7 +57,6 @@
 #define API_DEFAULT_LISTEN_TIMEOUT     60
 #define API_MIN_LISTEN_TIMEOUT         1
 #define API_MAX_LISTEN_TIMEOUT         3600
-#define API_MAX_LISTEN_SESSION_ID_LEN  32
 
 #define API_PORT_TYPE_BOOLEAN          "boolean"
 #define API_PORT_TYPE_NUMBER           "number"

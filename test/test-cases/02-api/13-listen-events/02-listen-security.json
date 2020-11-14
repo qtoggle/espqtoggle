@@ -5,9 +5,10 @@
             "name": "json-http-client",
             "params": {
                 "method": "GET",
-                "path": "/listen?session_id=test&timeout=1",
+                "path": "/listen?timeout=1",
                 "headers": {
-                    "Authorization": "Bearer inexistent"
+                    "Authorization": "Bearer inexistent",
+                    "Session-Id": "test"
                 },
                 "expected_status": 401
             }
@@ -16,9 +17,10 @@
             "name": "json-http-client",
             "params": {
                 "method": "GET",
-                "path": "/listen?session_id=test&timeout=1",
+                "path": "/listen?timeout=1",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_VIEWONLY}"
+                    "Authorization": "Bearer ${TEST_JWT_VIEWONLY}",
+                    "Session-Id": "test"
                 },
                 "expected_status": 200
             }
@@ -27,9 +29,10 @@
             "name": "json-http-client",
             "params": {
                 "method": "GET",
-                "path": "/listen?session_id=test&timeout=1",
+                "path": "/listen?timeout=1",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_NORMAL}"
+                    "Authorization": "Bearer ${TEST_JWT_NORMAL}",
+                    "Session-Id": "test"
                 },
                 "expected_status": 200
             }

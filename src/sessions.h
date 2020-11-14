@@ -51,7 +51,7 @@ typedef struct session_queue_node {
 typedef struct {
 
     /* A session is unused if the length of its id is 0 */
-    char                  id[API_MAX_LISTEN_SESSION_ID_LEN + 1];
+    char                  id[API_MAX_SESSION_ID_LEN + 1];
     session_queue_node_t *queue;
     int32                 queue_len;
     int32                 timeout;

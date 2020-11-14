@@ -86,8 +86,8 @@ session_t *session_create(char *id, struct espconn *conn, int timeout, int acces
 
     /* Initialize the session */
     session_t *session = sessions + free_slot;
-    strncpy(session->id, id, API_MAX_LISTEN_SESSION_ID_LEN);
-    session->id[API_MAX_LISTEN_SESSION_ID_LEN] = 0;
+    strncpy(session->id, id, API_MAX_SESSION_ID_LEN);
+    session->id[API_MAX_SESSION_ID_LEN] = 0;
     session->queue = NULL;
     session->queue_len = 0;
     session->timeout = timeout;

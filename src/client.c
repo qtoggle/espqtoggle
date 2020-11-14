@@ -77,7 +77,16 @@ static void ICACHE_FLASH_ATTR  on_http_request(
                                    char *body
                                );
 
-static void ICACHE_FLASH_ATTR  respond_error_field(struct espconn *conn, int status, char *error, char *field);
+static void ICACHE_FLASH_ATTR  respond_error_extra(
+                                   struct espconn *conn,
+                                   int status,
+                                   char *error,
+                                   char *extra_name,
+                                   char *extra_value
+                               );
+
+#define respond_error_field(conn, status, error, field)   respond_error_extra(conn, status, error, "field", field)
+#define respond_error_header(conn, status, error, header) respond_error_extra(conn, status, error, "header", header)
 
 
 void *on_tcp_conn(struct espconn *conn) {
@@ -191,7 +200,10 @@ void on_http_request(
     char *jwt_str = NULL;
     jwt_t *jwt = NULL;
     int i;
+    char c, *s;
     uint8 access_level = API_ACCESS_LEVEL_NONE;
+    char *authorization = NULL;
+    char *session_id = NULL;
 
     if (api_conn_busy()) {
         DEBUG_ESPQTCLIENT_CONN(conn, "api busy");
@@ -240,12 +252,13 @@ void on_http_request(
         }
     }
 
-    /* Look for Authorization header */
-    char *authorization = NULL;
+    /* Look for our headers */
     for (i = 0; i < header_count; i++) {
         if (!strcasecmp(header_names[i], "Authorization")) {
             authorization = header_values[i];
-            break;
+        }
+        if (!strcasecmp(header_names[i], "Session-Id")) {
+            session_id = header_values[i];
         }
     }
 
@@ -384,6 +397,22 @@ void on_http_request(
 
     skip_auth:
 
+    /* Validate session id, if supplied */
+    if (session_id) {
+        s = session_id;
+        while ((c = *s++)) {
+            if (!isalnum((int) c) && (c != '-')) {
+                respond_error_header(conn, 400, "invalid-header", "Session-Id");
+                goto done;
+            }
+        }
+
+        if (strlen(session_id) > API_MAX_SESSION_ID_LEN) {
+            respond_error_header(conn, 400, "invalid-header", "Session-Id");
+            goto done;
+        }
+    }
+
     /* Treat the listen API call separately */
     if (!strncmp(path, "/listen", 7) && method == HTTP_METHOD_GET) {
         DEBUG_ESPQTCLIENT_CONN(conn, "received listen request");
@@ -406,28 +435,13 @@ void on_http_request(
         }
 #endif
 
-        /* session_id argument */
-        json_t *session_id_json = json_obj_lookup_key(query_json, "session_id");
-        if (!session_id_json) {
-            respond_error_field(conn, 400, "missing-field", "session_id");
-            goto done;
-        }
-        char *session_id = json_str_get(session_id_json);
-
-        char c, *s = session_id;
-        while ((c = *s++)) {
-            if (!isalnum((int) c) && (c != '-')) {
-                respond_error_field(conn, 400, "invalid-field", "session_id");
-                goto done;
-            }
-        }
-
-        if (strlen(session_id) > API_MAX_LISTEN_SESSION_ID_LEN) {
-            respond_error_field(conn, 400, "invalid-field", "session_id");
+        /* Listen requires session id */
+        if (!session_id || session_id[0] == '\0') {
+            respond_error_header(conn, 400, "missing-header", "Session-Id");
             goto done;
         }
 
-        /* Timeout argument */
+        /* timeout argument */
         json_t *timeout_json = json_obj_lookup_key(query_json, "timeout");
         int timeout = API_DEFAULT_LISTEN_TIMEOUT;
         if (timeout_json) {
@@ -506,10 +520,10 @@ void on_http_request(
     json_free(request_json);
 }
 
-void respond_error_field(struct espconn *conn, int status, char *error, char *field) {
+void respond_error_extra(struct espconn *conn, int status, char *error, char *extra_name, char *extra_value) {
     json_t *json = json_obj_new();
     json_obj_append(json, "error", json_str_new(error));
-    json_obj_append(json, "field", json_str_new(field));
+    json_obj_append(json, extra_name, json_str_new(extra_value));
 
     respond_json(conn, status, json);
 }
