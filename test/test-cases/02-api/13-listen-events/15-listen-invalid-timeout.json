@@ -5,9 +5,10 @@
             "name": "json-http-client",
             "params": {
                 "method": "GET",
-                "path": "/listen?session_id=test&timeout=0",
+                "path": "/listen?timeout=0",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}",
+                    "Session-Id": "test"
                 },
                 "expected_status": 400,
                 "expected_body": {
@@ -20,9 +21,10 @@
             "name": "json-http-client",
             "params": {
                 "method": "GET",
-                "path": "/listen?session_id=test&timeout=3601",
+                "path": "/listen?timeout=3601",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}",
+                    "Session-Id": "test"
                 },
                 "expected_status": 400,
                 "expected_body": {
@@ -35,9 +37,10 @@
             "name": "json-http-client",
             "params": {
                 "method": "GET",
-                "path": "/listen?session_id=test&timeout=invalid",
+                "path": "/listen?timeout=invalid",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}",
+                    "Session-Id": "test"
                 },
                 "expected_status": 400,
                 "expected_body": {
@@ -48,4 +51,3 @@
         }
     ]
 }
-

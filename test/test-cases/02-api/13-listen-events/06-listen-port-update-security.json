@@ -21,9 +21,10 @@
             "name": "json-http-client",
             "params": {
                 "method": "GET",
-                "path": "/listen?session_id=test-listen-p-u-security&timeout=3",
+                "path": "/listen?timeout=3",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_VIEWONLY}"
+                    "Authorization": "Bearer ${TEST_JWT_VIEWONLY}",
+                    "Session-Id": "test-listen-p-u-security"
                 },
                 "expected_status": 200,
                 "expected_body_schema": {
@@ -79,9 +80,10 @@
             "name": "json-http-client",
             "params": {
                 "method": "GET",
-                "path": "/listen?session_id=test-listen-p-u-security2&timeout=3",
+                "path": "/listen?timeout=3",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_NORMAL}"
+                    "Authorization": "Bearer ${TEST_JWT_NORMAL}",
+                    "Session-Id": "test-listen-p-u-security2"
                 },
                 "expected_status": 200,
                 "expected_body_schema": {

@@ -5,14 +5,15 @@
             "name": "json-http-client",
             "params": {
                 "method": "GET",
-                "path": "/listen?session_id=inv@lid&timeout=1",
+                "path": "/listen?timeout=1",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}",
+                    "Session-Id": "inv@lid"
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid-field",
-                    "field": "session_id"
+                    "error": "invalid-header",
+                    "header": "Session-Id"
                 }
             }
         },
@@ -20,17 +21,17 @@
             "name": "json-http-client",
             "params": {
                 "method": "GET",
-                "path": "/listen?session_id=averyveryveryverylongsessionidtext&timeout=1",
+                "path": "/listen?timeout=1",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}",
+                    "Session-Id": "averyveryveryverylongsessionidtext"
                 },
                 "expected_status": 400,
                 "expected_body": {
-                    "error": "invalid-field",
-                    "field": "session_id"
+                    "error": "invalid-header",
+                    "header": "Session-Id"
                 }
             }
         }
     ]
 }
-

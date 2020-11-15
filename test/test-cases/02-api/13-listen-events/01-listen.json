@@ -5,9 +5,10 @@
             "name": "json-http-client",
             "params": {
                 "method": "GET",
-                "path": "/listen?session_id=test-{{TEST_CASE_NAME}}&timeout=1",
+                "path": "/listen?timeout=1",
                 "headers": {
-                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}",
+                    "Session-Id": "test-{{TEST_CASE_NAME}}"
                 },
                 "expected_status": 200,
                 "expected_body": [
