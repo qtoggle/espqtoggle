@@ -175,6 +175,9 @@ bool virtual_port_register(port_t *port) {
     port->read_value = read_value;
     port->write_value = write_value;
 
+    /* Initial value of a virtual port must be unavailable */
+    virtual_values[port->slot - PORT_SLOT_VIRTUAL0] = UNDEFINED;
+
     return TRUE;
 }
 

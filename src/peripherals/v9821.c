@@ -353,7 +353,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
     port_t *reactive_power_port = port_new();
     reactive_power_port->slot = -1;
     reactive_power_port->type = PORT_TYPE_NUMBER;
-    reactive_power_port->unit = "VA";
+    reactive_power_port->unit = "VAR";
     reactive_power_port->read_value = read_reactive_power;
     reactive_power_port->configure = configure;
     ports[(*ports_len)++] = reactive_power_port;
@@ -361,7 +361,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
     port_t *apparent_power_port = port_new();
     apparent_power_port->slot = -1;
     apparent_power_port->type = PORT_TYPE_NUMBER;
-    apparent_power_port->unit = "VAR";
+    apparent_power_port->unit = "VA";
     apparent_power_port->read_value = read_apparent_power;
     apparent_power_port->configure = configure;
     ports[(*ports_len)++] = apparent_power_port;

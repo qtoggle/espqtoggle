@@ -1223,9 +1223,6 @@ json_t *api_post_ports(json_t *query_json, json_t *request_json, int *code) {
     /* Will automatically allocate slot */
     new_port->slot = -1;
 
-    /* value */
-    new_port->value = 0;
-
     /* id */
     child = json_obj_lookup_key(request_json, "id");
     if (!child) {

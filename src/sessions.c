@@ -189,7 +189,7 @@ void session_push(session_t *session, int type, char *port_id) {
 
     session_queue_node_t *n, *pn;
 
-    /* Deduplicate change & update events */
+    /* Deduplicate update events */
     if (type == EVENT_TYPE_PORT_UPDATE ||
         type == EVENT_TYPE_DEVICE_UPDATE ||
         type == EVENT_TYPE_FULL_UPDATE) {
