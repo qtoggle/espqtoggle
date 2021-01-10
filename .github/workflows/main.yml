@@ -92,7 +92,7 @@ jobs:
         uses: actions/checkout@master
       - name: Extract version from tag
         id: tagName
-        uses: olegtarasov/get-tag@v2
+        uses: olegtarasov/get-tag@v2.1
         with:
           tagRegex: "version-(.*)"
       - name: Build
