@@ -20,7 +20,7 @@
 #include "espgoodies/httpclient.h"
 
 
-#define BUFFER_SIZE_MAX 5000 /* Size of http responses that will cause an error */
+#define BUFFER_SIZE_MAX 8192 /* Size of http responses that will cause an error */
 
 
 /* Internal request state */
