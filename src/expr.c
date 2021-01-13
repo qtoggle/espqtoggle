@@ -105,6 +105,8 @@ static bool      ICACHE_FLASH_ATTR  _filter_callback(expr_t *expr, int argc, dou
 static double    ICACHE_FLASH_ATTR  _fmavg_callback(expr_t *expr, int argc, double *args);
 static double    ICACHE_FLASH_ATTR  _fmedian_callback(expr_t *expr, int argc, double *args);
 
+static double    ICACHE_FLASH_ATTR  _available_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _default_callback(expr_t *expr, int argc, double *args);
 static double    ICACHE_FLASH_ATTR  _acc_callback(expr_t *expr, int argc, double *args);
 static double    ICACHE_FLASH_ATTR  _accinc_callback(expr_t *expr, int argc, double *args);
 static double    ICACHE_FLASH_ATTR  _hyst_callback(expr_t *expr, int argc, double *args);
@@ -161,11 +163,21 @@ double _mul_callback(expr_t *expr, int argc, double *args) {
 }
 
 double _div_callback(expr_t *expr, int argc, double *args) {
-    return args[0] / args[1];
+    if (args[1] != 0) {
+        return args[0] / args[1];
+    }
+    else {
+        return UNDEFINED;
+    }
 }
 
 double _mod_callback(expr_t *expr, int argc, double *args) {
-    return (int) args[0] % (int) args[1];
+    if (args[1] != 0) {
+        return (int) args[0] % (int) args[1];
+    }
+    else {
+        return UNDEFINED;
+    }
 }
 
 double _pow_callback(expr_t *expr, int argc, double *args) {
@@ -623,6 +635,14 @@ double _fmedian_callback(expr_t *expr, int argc, double *args) {
     return result;
 }
 
+double _available_callback(expr_t *expr, int argc, double *args) {
+    return !IS_UNDEFINED(args[0]);
+}
+
+double _default_callback(expr_t *expr, int argc, double *args) {
+    return IS_UNDEFINED(args[0]) ? args[1] : args[0];
+}
+
 double _acc_callback(expr_t *expr, int argc, double *args) {
     double value = args[0];
     double accumulator = args[1];
@@ -759,61 +779,65 @@ double _lut_common_callback(expr_t *expr, int argc, double *args, uint8 interpol
 }
 
 
-func_t _add =      {.name = "ADD",      .argc = -2, .callback = _add_callback};
-func_t _sub =      {.name = "SUB",      .argc = 2,  .callback = _sub_callback};
-func_t _mul =      {.name = "MUL",      .argc = -2, .callback = _mul_callback};
-func_t _div =      {.name = "DIV",      .argc = 2,  .callback = _div_callback};
-func_t _mod =      {.name = "MOD",      .argc = 2,  .callback = _mod_callback};
-func_t _pow =      {.name = "POW",      .argc = 2,  .callback = _pow_callback};
+func_t _add =       {.name = "ADD",       .argc = -2, .callback = _add_callback};
+func_t _sub =       {.name = "SUB",       .argc = 2,  .callback = _sub_callback};
+func_t _mul =       {.name = "MUL",       .argc = -2, .callback = _mul_callback};
+func_t _div =       {.name = "DIV",       .argc = 2,  .callback = _div_callback};
+func_t _mod =       {.name = "MOD",       .argc = 2,  .callback = _mod_callback};
+func_t _pow =       {.name = "POW",       .argc = 2,  .callback = _pow_callback};
 
-func_t _and =      {.name = "AND",      .argc = -2, .callback = _and_callback};
-func_t _or =       {.name = "OR",       .argc = -2, .callback = _or_callback};
-func_t _not =      {.name = "NOT",      .argc = 1,  .callback = _not_callback};
-func_t _xor =      {.name = "XOR",      .argc = 2,  .callback = _xor_callback};
+func_t _and =       {.name = "AND",       .argc = -2, .callback = _and_callback};
+func_t _or =        {.name = "OR",        .argc = -2, .callback = _or_callback};
+func_t _not =       {.name = "NOT",       .argc = 1,  .callback = _not_callback};
+func_t _xor =       {.name = "XOR",       .argc = 2,  .callback = _xor_callback};
 
-func_t _bitand =   {.name = "BITAND",   .argc = 2,  .callback = _bitand_callback};
-func_t _bitor =    {.name = "BITOR",    .argc = 2,  .callback = _bitor_callback};
-func_t _bitnot =   {.name = "BITNOT",   .argc = 1,  .callback = _bitnot_callback};
-func_t _bitxor =   {.name = "BITXOR",   .argc = 2,  .callback = _bitxor_callback};
-func_t _shl =      {.name = "SHL",      .argc = 2,  .callback = _shl_callback};
-func_t _shr =      {.name = "SHR",      .argc = 2,  .callback = _shr_callback};
+func_t _bitand =    {.name = "BITAND",    .argc = 2,  .callback = _bitand_callback};
+func_t _bitor =     {.name = "BITOR",     .argc = 2,  .callback = _bitor_callback};
+func_t _bitnot =    {.name = "BITNOT",    .argc = 1,  .callback = _bitnot_callback};
+func_t _bitxor =    {.name = "BITXOR",    .argc = 2,  .callback = _bitxor_callback};
+func_t _shl =       {.name = "SHL",       .argc = 2,  .callback = _shl_callback};
+func_t _shr =       {.name = "SHR",       .argc = 2,  .callback = _shr_callback};
 
-func_t _if =       {.name = "IF",       .argc = 3,  .callback = _if_callback};
-func_t _eq =       {.name = "EQ",       .argc = 2,  .callback = _eq_callback};
-func_t _gt =       {.name = "GT",       .argc = 2,  .callback = _gt_callback};
-func_t _gte =      {.name = "GTE",      .argc = 2,  .callback = _gte_callback};
-func_t _lt =       {.name = "LT",       .argc = 2,  .callback = _lt_callback};
-func_t _lte =      {.name = "LTE",      .argc = 2,  .callback = _lte_callback};
+func_t _if =        {.name = "IF",        .argc = 3,  .callback = _if_callback};
+func_t _eq =        {.name = "EQ",        .argc = 2,  .callback = _eq_callback};
+func_t _gt =        {.name = "GT",        .argc = 2,  .callback = _gt_callback};
+func_t _gte =       {.name = "GTE",       .argc = 2,  .callback = _gte_callback};
+func_t _lt =        {.name = "LT",        .argc = 2,  .callback = _lt_callback};
+func_t _lte =       {.name = "LTE",       .argc = 2,  .callback = _lte_callback};
 
-func_t _abs =      {.name = "ABS",      .argc = 1,  .callback = _abs_callback};
-func_t _sgn =      {.name = "SGN",      .argc = 1,  .callback = _sgn_callback};
+func_t _abs =       {.name = "ABS",       .argc = 1,  .callback = _abs_callback};
+func_t _sgn =       {.name = "SGN",       .argc = 1,  .callback = _sgn_callback};
 
-func_t _min =      {.name = "MIN",      .argc = -2, .callback = _min_callback};
-func_t _max =      {.name = "MAX",      .argc = -2, .callback = _max_callback};
-func_t _avg =      {.name = "AVG",      .argc = -2, .callback = _avg_callback};
+func_t _min =       {.name = "MIN",       .argc = -2, .callback = _min_callback};
+func_t _max =       {.name = "MAX",       .argc = -2, .callback = _max_callback};
+func_t _avg =       {.name = "AVG",       .argc = -2, .callback = _avg_callback};
 
-func_t _floor =    {.name = "FLOOR",    .argc = 1,  .callback = _floor_callback};
-func_t _ceil =     {.name = "CEIL",     .argc = 1,  .callback = _ceil_callback};
-func_t _round =    {.name = "ROUND",    .argc = -1, .callback = _round_callback};
+func_t _floor =     {.name = "FLOOR",     .argc = 1,  .callback = _floor_callback};
+func_t _ceil =      {.name = "CEIL",      .argc = 1,  .callback = _ceil_callback};
+func_t _round =     {.name = "ROUND",     .argc = -1, .callback = _round_callback};
 
-func_t _time =     {.name = "TIME",     .argc = 0,  .callback = _time_callback};
-func_t _timems =   {.name = "TIMEMS",   .argc = 0,  .callback = _timems_callback};
+func_t _time =      {.name = "TIME",      .argc = 0,  .callback = _time_callback};
+func_t _timems =    {.name = "TIMEMS",    .argc = 0,  .callback = _timems_callback};
 
-func_t _delay =    {.name = "DELAY",    .argc = 2,  .callback = _delay_callback};
-func_t _sample =   {.name = "SAMPLE",   .argc = 2,  .callback = _sample_callback};
-func_t _freeze =   {.name = "FREEZE",   .argc = 2,  .callback = _freeze_callback};
-func_t _held =     {.name = "HELD",     .argc = 3,  .callback = _held_callback};
-func_t _deriv =    {.name = "DERIV",    .argc = 2,  .callback = _deriv_callback};
-func_t _integ =    {.name = "INTEG",    .argc = 3,  .callback = _integ_callback};
-func_t _fmavg =    {.name = "FMAVG",    .argc = 3,  .callback = _fmavg_callback};
-func_t _fmedian =  {.name = "FMEDIAN",  .argc = 3,  .callback = _fmedian_callback};
+func_t _delay =     {.name = "DELAY",     .argc = 2,  .callback = _delay_callback};
+func_t _sample =    {.name = "SAMPLE",    .argc = 2,  .callback = _sample_callback};
+func_t _freeze =    {.name = "FREEZE",    .argc = 2,  .callback = _freeze_callback};
+func_t _held =      {.name = "HELD",      .argc = 3,  .callback = _held_callback};
+func_t _deriv =     {.name = "DERIV",     .argc = 2,  .callback = _deriv_callback};
+func_t _integ =     {.name = "INTEG",     .argc = 3,  .callback = _integ_callback};
+func_t _fmavg =     {.name = "FMAVG",     .argc = 3,  .callback = _fmavg_callback};
+func_t _fmedian =   {.name = "FMEDIAN",   .argc = 3,  .callback = _fmedian_callback};
 
-func_t _acc =      {.name = "ACC",      .argc = 2,  .callback = _acc_callback};
-func_t _accinc =   {.name = "ACCINC",   .argc = 2,  .callback = _accinc_callback};
-func_t _hyst =     {.name = "HYST",     .argc = 3,  .callback = _hyst_callback};
-func_t _sequence = {.name = "SEQUENCE", .argc = -2, .callback = _sequence_callback};
-func_t _lut =      {.name = "LUT",      .argc = -5, .callback = _lut_callback};
-func_t _lutli =    {.name = "LUTLI",    .argc = -5, .callback = _lutli_callback};
+func_t _available = {.name = "AVAILABLE", .argc = 1,  .callback = _available_callback,
+                     .flags = EXPR_FUNC_FLAG_ACCEPT_UNDEFINED};
+func_t _default =   {.name = "DEFAULT",   .argc = 2,  .callback = _default_callback,
+                     .flags = EXPR_FUNC_FLAG_ACCEPT_UNDEFINED};
+func_t _acc =       {.name = "ACC",       .argc = 2,  .callback = _acc_callback};
+func_t _accinc =    {.name = "ACCINC",    .argc = 2,  .callback = _accinc_callback};
+func_t _hyst =      {.name = "HYST",      .argc = 3,  .callback = _hyst_callback};
+func_t _sequence =  {.name = "SEQUENCE",  .argc = -2, .callback = _sequence_callback};
+func_t _lut =       {.name = "LUT",       .argc = -5, .callback = _lut_callback};
+func_t _lutli =     {.name = "LUTLI",     .argc = -5, .callback = _lutli_callback};
 
 func_t *funcs[] = {
     &_add,
@@ -865,6 +889,8 @@ func_t *funcs[] = {
     &_fmavg,
     &_fmedian,
 
+    &_available,
+    &_default,
     &_acc,
     &_accinc,
     &_hyst,
@@ -1168,16 +1194,20 @@ expr_parse_error_t *expr_parse_get_error(void) {
 
 double expr_eval(expr_t *expr) {
     if (expr->func) { /* Function */
+        func_t *func = expr->func;
+
         int i;
         double eval_args[expr->argc];
         for (i = 0; i < expr->argc; i++) {
-            if (IS_UNDEFINED(eval_args[i] = expr_eval(expr->args[i]))) {
+            if (IS_UNDEFINED(eval_args[i] = expr_eval(expr->args[i])) &&
+                !(func->flags & EXPR_FUNC_FLAG_ACCEPT_UNDEFINED)) {
+
                 /* If any of the inner expressions is undefined, the outer expression itself is undefined */
                 return UNDEFINED;
             }
         }
 
-        return ((func_t *) expr->func)->callback(expr, expr->argc, eval_args);
+        return func->callback(expr, expr->argc, eval_args);
     }
     else if (expr->port_id) { /* Port value */
         port_t *port = port_find_by_id(expr->port_id);
