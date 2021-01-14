@@ -11,7 +11,7 @@
                 },
                 "body": {
                     "values": [true, false],
-                    "delays": [1000, 1000],
+                    "delays": [2000, 2000],
                     "repeat": 2
                 },
                 "expected_status": 204,
@@ -33,7 +33,7 @@
         {
             "name": "sleep",
             "params": {
-                "duration": 1000
+                "duration": 2000
             }
         },
         {
@@ -51,7 +51,7 @@
         {
             "name": "sleep",
             "params": {
-                "duration": 1000
+                "duration": 2000
             }
         },
         {
@@ -69,7 +69,7 @@
         {
             "name": "sleep",
             "params": {
-                "duration": 1000
+                "duration": 2000
             }
         },
         {
@@ -87,7 +87,19 @@
         {
             "name": "sleep",
             "params": {
-                "duration": 750
+                "duration": 2000
+            }
+        },
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/ports/gpio0/value",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body": false
             }
         }
     ]

@@ -35,7 +35,7 @@
                     "integer": true,
                     "expression": "",
                     "transform_write": "",
-                    "value": 0,
+                    "value": null,
                     "definitions": {}
                 }
             }
@@ -97,7 +97,7 @@
                     ],
                     "expression": "",
                     "transform_write": "",
-                    "value": 0,
+                    "value": null,
                     "definitions": {}
                 }
             }

@@ -112,7 +112,7 @@
                                     "enum": [""]
                                 },
                                 "value": {
-                                    "enum": [0]
+                                    "enum": [null]
                                 },
                                 "definitions": {
                                     "type": "object"
