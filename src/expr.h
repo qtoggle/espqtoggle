@@ -29,6 +29,8 @@
 #define DEBUG_EXPR(...)      {}
 #endif
 
+#define EXPR_FUNC_FLAG_ACCEPT_UNDEFINED 0x01
+
 
 typedef struct expr {
 
@@ -70,6 +72,7 @@ typedef struct {
     char            *name;
     func_callback_t  callback;
     int8             argc; /* If negative, acts as a minimum */
+    int8             flags;
 
 } func_t;
 
