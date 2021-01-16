@@ -21,6 +21,7 @@
 
 
 #include "espgoodies/json.h"
+#include "espgoodies/tcpserver.h"
 
 
 #ifdef _DEBUG_ESPQTCLIENT

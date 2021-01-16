@@ -179,11 +179,13 @@ int wifi_bssid_cmp(uint8 *bssid1, uint8 *bssid2) {
 void wifi_save_config(void) {
     if (cached_station_config_changed) {
         if (!station_enabled) {
-            DEBUG_WIFI("attempt to save configuration while station disabled");
+            /* In AP-only mode, we have to enable station mode for saving */
+            if (!wifi_set_opmode_current(ap_enabled ? STATIONAP_MODE : STATION_MODE)) {
+                DEBUG_WIFI("wifi_set_opmode_current() failed");
+            }
         }
-        else {
-            DEBUG_WIFI("saving configuration");
-        }
+
+        DEBUG_WIFI("saving configuration");
 
         /* system_restore() is needed here as without it, wifi_station_set_config() appears to be messing out the Wi-Fi
          * configuration stored in flash */
@@ -597,8 +599,10 @@ void wifi_ap_disable(void) {
 
 bool wifi_scan(wifi_scan_callback_t callback) {
     if (!station_enabled && !temporary_station_enabled) {
-        DEBUG_WIFI("cannot scan when station disabled");
-        return FALSE;
+        /* In AP-only mode, we have to temporarily enable station mode for scanning */
+        if (!wifi_set_opmode_current(ap_enabled ? STATIONAP_MODE : STATION_MODE)) {
+            DEBUG_WIFI("wifi_set_opmode_current() failed");
+        }
     }
 
     if (scanning) {
@@ -895,7 +899,7 @@ void on_wifi_scan_done(void *arg, STATUS status) {
         memset(better_bssid, 0, WIFI_BSSID_LEN);
     }
 
-    if (better_counter >= better_count) {
+    if (better_count && better_counter >= better_count) {
         DEBUG_WIFI("attempting to reconnect to better AP");
 
         better_counter = 0;
