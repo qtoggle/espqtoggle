@@ -279,7 +279,7 @@ void on_http_request(
     }
 
     /* Parse Authorization header */
-    jwt_str = http_parse_auth_token_header(authorization);
+    jwt_str = http_parse_auth_header(authorization, "Bearer");
     if (!jwt_str) {
         if (unprotected) {
             goto skip_auth;

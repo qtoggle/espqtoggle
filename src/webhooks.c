@@ -203,7 +203,7 @@ void do_webhook_request(event_t *event) {
     char *jwt_str = jwt_dump(jwt, webhooks_password_hash);
     jwt_free(jwt);
 
-    char *auth_header = http_build_auth_token_header(jwt_str);
+    char *auth_header = http_build_auth_header(jwt_str, "Bearer");
     free(jwt_str);
 
     int header_count = 1;

@@ -24,8 +24,8 @@
 
 
 json_t ICACHE_FLASH_ATTR *http_parse_url_encoded(char *input);
-char   ICACHE_FLASH_ATTR *http_build_auth_token_header(char *token);
-char   ICACHE_FLASH_ATTR *http_parse_auth_token_header(char *header);
+char   ICACHE_FLASH_ATTR *http_build_auth_header(char *token, char *type);
+char   ICACHE_FLASH_ATTR *http_parse_auth_header(char *header, char *type);
 
 
 #endif /* _ESPGOODIES_HTTPUTILS_H */

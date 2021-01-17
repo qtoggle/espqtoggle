@@ -89,15 +89,15 @@ json_t *http_parse_url_encoded(char *input) {
     return json;
 }
 
-char *http_build_auth_token_header(char *token) {
-    int len = 8 + strlen(token); /* Len("Bearer" + " " + token) */
+char *http_build_auth_header(char *token, char *type) {
+    int len = 8 + strlen(token); /* strlen("Bearer" + " " + token) */
     char *header = malloc(len);
-    snprintf(header, len, "Bearer %s", token);
+    snprintf(header, len, "%s %s", type, token);
 
     return header;
 }
 
-char *http_parse_auth_token_header(char *header) {
+char *http_parse_auth_header(char *header, char *type) {
     /* Look for the first space */
     char *p = header;
     while (*p && *p != ' ') {
@@ -109,8 +109,8 @@ char *http_parse_auth_token_header(char *header) {
         return NULL;
     }
 
-    if (strncasecmp(header, "Bearer", p - header)) {
-        /* Header does not start with "Bearer" */
+    if (strncasecmp(header, type, p - header)) {
+        /* Header does not start with given type */
         return NULL;
     }
 
