@@ -22,6 +22,7 @@
 #include <mem.h>
 
 #include "espgoodies/common.h"
+#include "espgoodies/crypto.h"
 #include "espgoodies/utils.h"
 #include "espgoodies/httputils.h"
 
@@ -126,6 +127,38 @@ char *http_parse_auth_header(char *header, char *type) {
 
     /* Everything that's left is token */
     return strdup(p);
+}
+
+bool http_decode_basic_auth(char *basic_auth, char **username, char **password) {
+    char *decoded = (char *) b64_decode(basic_auth);
+    if (!decoded) {
+        return FALSE;
+    }
+
+    if (decoded[0] == ':') {
+        /* Special case where username is empty */
+        *username = strdup("");
+        *password = strdup(decoded + 1);
+        free(decoded);
+        return TRUE;
+    }
+
+    char *token = strtok(decoded, ":");
+    if (!token) {
+        free(decoded);
+        return FALSE;
+    }
+    *username = strdup(token);
+
+    token = strtok(NULL, ":");
+    if (token) {
+        *password = strdup(token);
+    }
+    else {
+        *password = strdup("");
+    }
+
+    return TRUE;
 }
 
 
