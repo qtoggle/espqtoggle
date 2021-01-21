@@ -21,6 +21,7 @@
 #include <mem.h>
 #include <c_types.h>
 #include <eagle_soc.h>
+#include <gpio.h>
 
 #include "espgoodies/common.h"
 
@@ -44,7 +45,7 @@
 #define SPIUDUMMY   BIT(29) /* DUMMY phase */
 #define SPIUMOSI    BIT(27) /* MOSI phase */
 #define SPICWBO     BIT(26) /* SPI_WR_BIT_ORDER */
-#define SPICRBO     BIT(25) /* SPI_RD_BIT_ODER */
+#define SPICRBO     BIT(25) /* SPI_RD_BIT_ORDER */
 #define SPIBUSY     BIT(18) /* SPI_USR */
 #define SPIUSME     BIT(7)  /* SPI_CK_OUT_EDGE, SPI master edge (0: falling, 1: rising) */
 #define SPIUSSE     BIT(6)  /* SPI Slave Edge (0:falling, 1:rising), SPI_CK_I_EDGE */
@@ -87,13 +88,14 @@ static void   ICACHE_FLASH_ATTR set_data_bits(uint16 bits);
 static void   ICACHE_FLASH_ATTR transfer_chunked(uint8 *out_buff, uint8 *in_buff, uint32 len);
 static void   ICACHE_FLASH_ATTR transfer_chunk64(uint8 *out_buff, uint8 *in_buff, uint8 len);
 static void   ICACHE_FLASH_ATTR transfer_aligned(uint8 *out_buff, uint8 *in_buff, uint8 len);
+static uint8  ICACHE_FLASH_ATTR transfer_byte(uint8 byte);
 
 
 void hspi_setup(uint8 bit_order, bool cpol, bool cpha, uint32 freq) {
     PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDI_U, 2); /* GPIO12 becomes MISO */
     PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTCK_U, 2); /* GPIO13 becomes MOSI */
     PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTMS_U, 2); /* GPIO14 becomes SCLK */
-    PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U, 2); /* GPIO15 becomes CS */
+    PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U, 3); /* GPIO15 stays GPIO */
 
     SPI1C = 0;
 
@@ -163,9 +165,11 @@ void hspi_transfer(uint8 *out_buff, uint8 *in_buff, uint32 len) {
     DEBUG_HSPI("writing %s", out_hex);
 #endif
 
+    GPIO_OUTPUT_SET(15, FALSE);
+
     /* out_buff may not be 32 bit-aligned */
     while ((((uint32) out_buff) & 3) && (len > 0)) {
-        *(in_buff++) = hspi_transfer_byte(*(out_buff++));
+        *(in_buff++) = transfer_byte(*(out_buff++));
         len--;
     }
 
@@ -179,9 +183,11 @@ void hspi_transfer(uint8 *out_buff, uint8 *in_buff, uint32 len) {
     len -= len4;
 
     while (len > 0) {
-        *(in_buff++) = hspi_transfer_byte(*(out_buff++));
+        *(in_buff++) = transfer_byte(*(out_buff++));
         len--;
     }
+
+    GPIO_OUTPUT_SET(15, TRUE);
 
 #if defined(_DEBUG_HSPI) && defined(_DEBUG)
     char in_hex[orig_len * 3 + 1];
@@ -194,13 +200,11 @@ void hspi_transfer(uint8 *out_buff, uint8 *in_buff, uint32 len) {
 }
 
 uint8 hspi_transfer_byte(uint8 byte) {
-    while (SPI1CMD & SPIBUSY) {}
-    set_data_bits(8);
-    SPI1W0 = byte;
-    SPI1CMD |= SPIBUSY;
-    while (SPI1CMD & SPIBUSY) {}
+    GPIO_OUTPUT_SET(15, FALSE);
+    uint8 value = transfer_byte(byte);
+    GPIO_OUTPUT_SET(15, TRUE);
 
-    return SPI1W0 & 0xFF;
+    return value;
 }
 
 
@@ -383,4 +387,14 @@ void transfer_aligned(uint8 *out_buff, uint8 *in_buff, uint8 len) {
             *(in_buff++) = *(fifo_ptr_b++);
         }
     }
+}
+
+uint8 transfer_byte(uint8 byte) {
+    while (SPI1CMD & SPIBUSY) {}
+    set_data_bits(8);
+    SPI1W0 = byte;
+    SPI1CMD |= SPIBUSY;
+    while (SPI1CMD & SPIBUSY) {}
+
+    return SPI1W0 & 0xFF;
 }
