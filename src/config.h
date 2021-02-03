@@ -69,7 +69,7 @@
 void ICACHE_FLASH_ATTR config_init(void);
 void ICACHE_FLASH_ATTR config_save(void);
 void ICACHE_FLASH_ATTR config_factory_reset(void);
-void ICACHE_FLASH_ATTR config_start_auto_provisioning(bool ignore_version);
+void ICACHE_FLASH_ATTR config_start_auto_provisioning(void);
 bool ICACHE_FLASH_ATTR config_is_provisioning(void);
 
 bool ICACHE_FLASH_ATTR config_apply_json_provisioning(json_t *config, bool force);

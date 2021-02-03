@@ -137,7 +137,7 @@ void config_factory_reset(void) {
     free(config_data);
 }
 
-void config_start_auto_provisioning(bool ignore_version) {
+void config_start_auto_provisioning(void) {
     if (provisioning) {
         DEBUG_CONFIG("provisioning: busy");
         return;
@@ -146,15 +146,10 @@ void config_start_auto_provisioning(bool ignore_version) {
     /* No automatic configuration if:
      *  * no config_name specified
      *  * config_name starts with "custom/"
-     *  * provisioning_config version is 0
      */
 
     if (!device_config_name[0] || !strncmp(device_config_name, "custom/", 7)) {
         DEBUG_CONFIG("provisioning: no configuration");
-        return;
-    }
-    if (device_provisioning_version == 0 && !ignore_version) {
-        DEBUG_CONFIG("provisioning: skipping due to null version");
         return;
     }
 

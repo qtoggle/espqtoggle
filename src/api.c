@@ -996,7 +996,7 @@ json_t *api_patch_device(json_t *query_json, json_t *request_json, int *code) {
 
     if (config_name_changed) {
         /* If a new configuration name as been set, start the provisioning process */
-        config_start_auto_provisioning(/* ignore_version = */ TRUE);
+        config_start_auto_provisioning();
     }
 
     config_mark_for_saving();
