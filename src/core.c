@@ -203,6 +203,7 @@ void update_port_expression(port_t *port) {
 void config_mark_for_saving(void) {
     DEBUG_CORE("marking config for saving");
     config_needs_saving = TRUE;
+    last_config_save_time = now; /* Never save to flash right away, effectively delaying with CONFIG_SAVE_INTERVAL */
 }
 
 void config_ensure_saved(void) {
