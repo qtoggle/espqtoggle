@@ -63,6 +63,7 @@
 #define FW_LATEST_STABLE_FILE "/latest_stable"
 #define FW_LATEST_BETA_FILE   "/latest_beta"
 #define FW_AUTO_MIN_INTERVAL  24 /* Hours */
+#define FW_AUTO_INTERVAL      60 /* Seconds */
 
 
 static bool       wifi_first_time_connected = FALSE;
@@ -237,6 +238,9 @@ void on_setup_mode_idle_timeout(void *arg) {
 #ifdef _OTA
 
 void on_ota_auto_timer(void *arg) {
+    /* Schedule next call */
+    os_timer_arm(&ota_auto_timer, FW_AUTO_INTERVAL * 1000, /* repeat = */ FALSE);
+
     if (!(device_flags & DEVICE_FLAG_OTA_AUTO_UPDATE)) {
         return;
     }
@@ -350,7 +354,6 @@ int user_rf_cal_sector_set(void) {
 }
 
 void user_init(void) {
-    system_timer_reinit();
 #ifdef _DEBUG
     debug_uart_setup(_DEBUG_UART_NO);
     os_delay_us(10000);
@@ -389,7 +392,7 @@ void user_init(void) {
 
     os_timer_disarm(&ota_auto_timer);
     os_timer_setfn(&ota_auto_timer, on_ota_auto_timer, NULL);
-    os_timer_arm(&ota_auto_timer, 60 * 1000, /* repeat = */ TRUE);
+    os_timer_arm(&ota_auto_timer, FW_AUTO_INTERVAL * 1000, /* repeat = */ FALSE);
 #endif
     wifi_init();
     client_init();
