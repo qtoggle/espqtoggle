@@ -621,12 +621,8 @@ void ports_init(uint8 *config_data) {
             else if (IS_UNDEFINED(port->last_read_value)) {
                 if (IS_PORT_ENABLED(port)) {
                     /* Initial value is given by the read value */
-                    port->last_read_value = port->read_value(port);
+                    port->last_read_value = port_read_value(port);
                     if (!IS_UNDEFINED(port->last_read_value)) {
-                        if (port->transform_read) {
-                            port->last_read_value = expr_eval(port->transform_read);
-                        }
-
                         DEBUG_PORT(port, "using read value %s", dtostr(port->last_read_value, -1));
                     }
                 }
@@ -971,6 +967,23 @@ void port_expr_remove(port_t *port) {
 
     free(port->sexpr);
     port->sexpr = NULL;
+}
+
+double port_read_value(port_t *port) {
+    double value = port->read_value(port);
+    if (IS_UNDEFINED(value)) {
+        return UNDEFINED;
+    }
+
+    if (port->transform_read) {
+        /* Temporarily set the new value to the port, so that the transform expression uses the newly read value */
+        double prev_value = port->last_read_value;
+        port->last_read_value = value;
+        value = expr_eval(port->transform_read);
+        port->last_read_value = prev_value;
+    }
+
+    return value;
 }
 
 bool port_write_value(port_t *port, double value, char reason) {

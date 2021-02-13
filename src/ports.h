@@ -256,6 +256,7 @@ port_t ICACHE_FLASH_ATTR *port_find_by_slot(uint8 slot);
 void   ICACHE_FLASH_ATTR  port_rebuild_change_dep_mask(port_t *port);
 void   ICACHE_FLASH_ATTR  port_sequence_cancel(port_t *port);
 void   ICACHE_FLASH_ATTR  port_expr_remove(port_t *port);
+double ICACHE_FLASH_ATTR  port_read_value(port_t *port);
 bool   ICACHE_FLASH_ATTR  port_write_value(port_t *port, double value, char reason);
 json_t ICACHE_FLASH_ATTR *port_make_json_value(port_t *port);
 void   ICACHE_FLASH_ATTR  port_enable(port_t *port);

@@ -137,23 +137,10 @@ void core_poll(void) {
             continue;
         }
 
-        value = p->read_value(p);
         p->last_sample_time_ms = now_ms;
+        value = port_read_value(p);
         if (IS_UNDEFINED(value)) {
             continue;
-        }
-
-        if (p->transform_read) {
-            /* Temporarily set the new value to the port, so that the transform expression uses the newly read value */
-            double prev_value = p->last_read_value;
-            p->last_read_value = value;
-            value = expr_eval(p->transform_read);
-            p->last_read_value = prev_value;
-
-            /* Ignore invalid value yielded by expression */
-            if (IS_UNDEFINED(value)) {
-                continue;
-            }
         }
 
         if (p->last_read_value != value) {
