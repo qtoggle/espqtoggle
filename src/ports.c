@@ -639,7 +639,7 @@ void ports_init(uint8 *config_data) {
             }
 
             if (!IS_UNDEFINED(port->last_read_value) && IS_PORT_ENABLED(port)) {
-                port_set_value(port, port->last_read_value, CHANGE_REASON_NATIVE);
+                port_write_value(port, port->last_read_value, CHANGE_REASON_NATIVE);
             }
         }
         else { /* Read-only ports start as undefined */
@@ -973,7 +973,7 @@ void port_expr_remove(port_t *port) {
     port->sexpr = NULL;
 }
 
-bool port_set_value(port_t *port, double value, char reason) {
+bool port_write_value(port_t *port, double value, char reason) {
     if (port->transform_write) {
         /* Temporarily set the port value to the new value, so that the write transform expression takes the new value
          * into consideration when evaluating the result */

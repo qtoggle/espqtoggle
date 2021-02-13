@@ -1215,7 +1215,7 @@ void handle_setup_mode(peripheral_t *peripheral, bool active, bool external) {
             /* Use port->value so that the config save call can properly pick it up*/
             port->last_read_value = (int32) dp_details->def_value;
             DEBUG_PORT(port, "setting default value %s", dtostr(port->last_read_value, -1));
-            port_writew_value(port, port->last_read_value, CHANGE_REASON_NATIVE);
+            port_write_value(port, port->last_read_value, CHANGE_REASON_NATIVE);
             if (IS_PORT_PERSISTED(port)) {
                 config_mark_for_saving();
             }

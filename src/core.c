@@ -334,6 +334,6 @@ void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_m
 
         DEBUG_PORT(p, "expression \"%s\" evaluated to %s", p->sexpr, dtostr(value, -1));
 
-        port_writew_value(p, value, CHANGE_REASON_EXPRESSION);
+        port_write_value(p, value, CHANGE_REASON_EXPRESSION);
     }
 }
