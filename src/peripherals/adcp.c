@@ -62,7 +62,6 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
     port->max = 1000;
     port->integer = TRUE;
     port->read_value = read_value;
-    port->value = UNDEFINED;
 
     ports[(*ports_len)++] = port;
 }

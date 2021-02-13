@@ -377,13 +377,13 @@ void port_load(port_t *port, uint8 *config_data) {
 
     /* value */
     if (IS_PORT_PERSISTED(port)) {
-        memcpy(&port->value, base_ptr + PORT_CONFIG_OFFS_VALUE, sizeof(double));
+        memcpy(&port->last_read_value, base_ptr + PORT_CONFIG_OFFS_VALUE, sizeof(double));
 
-        if (IS_UNDEFINED(port->value)) {
+        if (IS_UNDEFINED(port->last_read_value)) {
             DEBUG_PORT(port, "persisted value = (undefined)");
         }
         else {
-            DEBUG_PORT(port, "persisted value = %s", dtostr(port->value, -1));
+            DEBUG_PORT(port, "persisted value = %s", dtostr(port->last_read_value, -1));
         }
     }
 
@@ -540,7 +540,7 @@ void port_save(port_t *port, uint8 *config_data, uint32 *strings_offs) {
     memcpy(base_ptr + PORT_CONFIG_OFFS_FLAGS, &port->flags, 4);
 
     /* value */
-    memcpy(base_ptr + PORT_CONFIG_OFFS_VALUE, &port->value, sizeof(double));
+    memcpy(base_ptr + PORT_CONFIG_OFFS_VALUE, &port->last_read_value, sizeof(double));
 
     /* min */
     memcpy(base_ptr + PORT_CONFIG_OFFS_MIN, &port->min, sizeof(double));
@@ -616,18 +616,18 @@ void ports_init(uint8 *config_data) {
         /* Initial port value */
         if (IS_PORT_WRITABLE(port)) {
             if (IS_PORT_PERSISTED(port)) {
-                DEBUG_PORT(port, "using persisted value %s", dtostr(port->value, -1));
+                DEBUG_PORT(port, "using persisted value %s", dtostr(port->last_read_value, -1));
             }
-            else if (IS_UNDEFINED(port->value)) {
+            else if (IS_UNDEFINED(port->last_read_value)) {
                 if (IS_PORT_ENABLED(port)) {
                     /* Initial value is given by the read value */
-                    port->value = port->read_value(port);
-                    if (!IS_UNDEFINED(port->value)) {
+                    port->last_read_value = port->read_value(port);
+                    if (!IS_UNDEFINED(port->last_read_value)) {
                         if (port->transform_read) {
-                            port->value = expr_eval(port->transform_read);
+                            port->last_read_value = expr_eval(port->transform_read);
                         }
 
-                        DEBUG_PORT(port, "using read value %s", dtostr(port->value, -1));
+                        DEBUG_PORT(port, "using read value %s", dtostr(port->last_read_value, -1));
                     }
                 }
                 else {
@@ -635,15 +635,15 @@ void ports_init(uint8 *config_data) {
                 }
             }
             else { /* Not persisted but initially defined (normally by peripheral */
-                DEBUG_PORT(port, "using initial value %s", dtostr(port->value, -1));
+                DEBUG_PORT(port, "using initial value %s", dtostr(port->last_read_value, -1));
             }
 
-            if (!IS_UNDEFINED(port->value) && IS_PORT_ENABLED(port)) {
-                port_set_value(port, port->value, CHANGE_REASON_NATIVE);
+            if (!IS_UNDEFINED(port->last_read_value) && IS_PORT_ENABLED(port)) {
+                port_set_value(port, port->last_read_value, CHANGE_REASON_NATIVE);
             }
         }
         else { /* Read-only ports start as undefined */
-            port->value = UNDEFINED;
+            port->last_read_value = UNDEFINED;
         }
     }
 }
@@ -696,7 +696,7 @@ void ports_rebuild_change_dep_mask(void) {
 port_t *port_new(void) {
     port_t *port = zalloc(sizeof(port_t));
 
-    port->value = UNDEFINED;
+    port->last_read_value = UNDEFINED;
     port->change_reason = CHANGE_REASON_NATIVE;
     port->sequence_pos = -1;
 
@@ -977,10 +977,10 @@ bool port_set_value(port_t *port, double value, char reason) {
     if (port->transform_write) {
         /* Temporarily set the port value to the new value, so that the write transform expression takes the new value
          * into consideration when evaluating the result */
-        double old_value = port->value;
-        port->value = value;
+        double old_value = port->last_read_value;
+        port->last_read_value = value;
         value = expr_eval(port->transform_write);
-        port->value = old_value;
+        port->last_read_value = old_value;
 
         /* Ignore invalid values yielded by transform expression */
         if (IS_UNDEFINED(value)) {
@@ -1001,16 +1001,16 @@ bool port_set_value(port_t *port, double value, char reason) {
 }
 
 json_t *port_make_json_value(port_t *port) {
-    if (IS_UNDEFINED(port->value) || !IS_PORT_ENABLED(port)) {
+    if (IS_UNDEFINED(port->last_read_value) || !IS_PORT_ENABLED(port)) {
         return json_null_new();
     }
 
     switch (port->type) {
         case PORT_TYPE_BOOLEAN:
-            return json_bool_new(port->value);
+            return json_bool_new(port->last_read_value);
 
         case PORT_TYPE_NUMBER:
-            return json_double_new(port->value);
+            return json_double_new(port->last_read_value);
     }
 
     return NULL;

@@ -148,11 +148,8 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
 
     port->slot = user_data->pin; /* Try to use slot corresponding to GPIO pin */
     port->type = PORT_TYPE_BOOLEAN;
-    if (PERIPHERAL_GET_FLAG(peripheral, FLAG_NO_IGNORE_DEF_VAL)) {
-        port->value = UNDEFINED;
-    }
-    else {
-        port->value = PERIPHERAL_GET_FLAG(peripheral, FLAG_NO_DEF_VAL);
+    if (!PERIPHERAL_GET_FLAG(peripheral, FLAG_NO_IGNORE_DEF_VAL)) {
+        port->last_read_value = PERIPHERAL_GET_FLAG(peripheral, FLAG_NO_DEF_VAL);
     }
 
     if (user_data->output) {

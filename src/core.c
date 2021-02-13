@@ -145,10 +145,10 @@ void core_poll(void) {
 
         if (p->transform_read) {
             /* Temporarily set the new value to the port, so that the transform expression uses the newly read value */
-            double prev_value = p->value;
-            p->value = value;
+            double prev_value = p->last_read_value;
+            p->last_read_value = value;
             value = expr_eval(p->transform_read);
-            p->value = prev_value;
+            p->last_read_value = prev_value;
 
             /* Ignore invalid value yielded by expression */
             if (IS_UNDEFINED(value)) {
@@ -156,8 +156,8 @@ void core_poll(void) {
             }
         }
 
-        if (p->value != value) {
-            if (IS_UNDEFINED(p->value)) {
+        if (p->last_read_value != value) {
+            if (IS_UNDEFINED(p->last_read_value)) {
                 DEBUG_PORT(
                     p,
                     "detected value change: (undefined) -> %s, reason = %c",
@@ -169,13 +169,13 @@ void core_poll(void) {
                 DEBUG_PORT(
                     p,
                     "detected value change: %s -> %s, reason = %c",
-                    dtostr(p->value, -1),
+                    dtostr(p->last_read_value, -1),
                     dtostr(value, -1),
                     p->change_reason
                 );
             }
 
-            p->value = value;
+            p->last_read_value = value;
             change_mask |= 1ULL << p->slot;
 
             /* Remember and reset change reason */
@@ -328,12 +328,12 @@ void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_m
         }
 
         /* Check if value has changed after expression evaluation */
-        if (value == p->value) {
+        if (value == p->last_read_value) {
             continue;
         }
 
         DEBUG_PORT(p, "expression \"%s\" evaluated to %s", p->sexpr, dtostr(value, -1));
 
-        port_set_value(p, value, CHANGE_REASON_EXPRESSION);
+        port_writew_value(p, value, CHANGE_REASON_EXPRESSION);
     }
 }
