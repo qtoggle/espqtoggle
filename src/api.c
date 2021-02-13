@@ -2002,6 +2002,7 @@ json_t *api_get_port_value(port_t *port, json_t *query_json, int *code) {
 
 json_t *api_patch_port_value(port_t *port, json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = json_obj_new();
+    double value = 0;
 
     if (api_access_level < API_ACCESS_LEVEL_NORMAL) {
         return FORBIDDEN(response_json, API_ACCESS_LEVEL_NORMAL);
@@ -2020,7 +2021,8 @@ json_t *api_patch_port_value(port_t *port, json_t *query_json, json_t *request_j
             return API_ERROR(response_json, 400, "invalid-value");
         }
 
-        if (!port_write_value(port, json_bool_get(request_json), CHANGE_REASON_API)) {
+        value = json_bool_get(request_json);
+        if (!port_write_value(port, value, CHANGE_REASON_API)) {
             return API_ERROR(response_json, 400, "invalid-value");
         }
     }
@@ -2031,7 +2033,7 @@ json_t *api_patch_port_value(port_t *port, json_t *query_json, json_t *request_j
             return API_ERROR(response_json, 400, "invalid-value");
         }
 
-        double value = (
+        value = (
             json_get_type(request_json) == JSON_TYPE_INT ?
             json_int_get(request_json) :
             json_double_get(request_json)
@@ -2045,9 +2047,15 @@ json_t *api_patch_port_value(port_t *port, json_t *query_json, json_t *request_j
             return API_ERROR(response_json, 400, "invalid-value");
         }
     }
-
-    *code = 204;
     
+    double after_value = port_read_value(port);
+    if (!IS_UNDEFINED(after_value) && abs(after_value - value) < 1e9) {
+        *code = 204;
+    }
+    else {
+        *code = 202; /* Value was not applied right away */
+    }
+
     return response_json;
 }
 
