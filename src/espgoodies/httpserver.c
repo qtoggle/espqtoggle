@@ -43,6 +43,7 @@
 
 #define STATUS_MSG_200 "OK"
 #define STATUS_MSG_201 "Created"
+#define STATUS_MSG_202 "Accepted"
 #define STATUS_MSG_204 "No Content"
 
 #define STATUS_MSG_400 "Bad Request"
@@ -450,6 +451,10 @@ uint8 *httpserver_build_response(
 
         case 201:
             status_msg = STATUS_MSG_201;
+            break;
+
+        case 202:
+            status_msg = STATUS_MSG_202;
             break;
 
         case 204:

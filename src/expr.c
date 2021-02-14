@@ -1212,7 +1212,7 @@ double expr_eval(expr_t *expr) {
     else if (expr->port_id) { /* Port value */
         port_t *port = port_find_by_id(expr->port_id);
         if (port && IS_PORT_ENABLED(port)) {
-            return port->value;
+            return port->last_read_value;
         }
         else {
             return UNDEFINED;

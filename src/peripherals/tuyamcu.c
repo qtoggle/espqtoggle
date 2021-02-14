@@ -1158,7 +1158,7 @@ void make_ports(peripheral_t *peripheral, port_t **ports, uint8 *ports_len) {
                 dp_details->def_value = *(int32 *) p; p += 4;
             }
 
-            port->value = dp_details->value;
+            port->last_read_value = dp_details->value;
         }
 
         /* writable */
@@ -1213,9 +1213,9 @@ void handle_setup_mode(peripheral_t *peripheral, bool active, bool external) {
         dp_details_t *dp_details = port->user_data;
         if (dp_details->flags & BIT(PARAM_DP_FLAG_HAS_DEF_VALUE)) {
             /* Use port->value so that the config save call can properly pick it up*/
-            port->value = (int32) dp_details->def_value;
-            DEBUG_PORT(port, "setting default value %s", dtostr(port->value, -1));
-            port_set_value(port, port->value, CHANGE_REASON_NATIVE);
+            port->last_read_value = (int32) dp_details->def_value;
+            DEBUG_PORT(port, "setting default value %s", dtostr(port->last_read_value, -1));
+            port_write_value(port, port->last_read_value, CHANGE_REASON_NATIVE);
             if (IS_PORT_PERSISTED(port)) {
                 config_mark_for_saving();
             }

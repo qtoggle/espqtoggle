@@ -1934,8 +1934,8 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
     port_configure(port);
 
     /* Write the value to port; this allows using persistent value when enabling a port later */
-    if (IS_PORT_ENABLED(port) && IS_PORT_WRITABLE(port) && !IS_UNDEFINED(port->value)) {
-        port_set_value(port, port->value, CHANGE_REASON_NATIVE);
+    if (IS_PORT_ENABLED(port) && IS_PORT_WRITABLE(port) && !IS_UNDEFINED(port->last_read_value)) {
+        port_write_value(port, port->last_read_value, CHANGE_REASON_NATIVE);
     }
 
     config_mark_for_saving();
@@ -2002,6 +2002,8 @@ json_t *api_get_port_value(port_t *port, json_t *query_json, int *code) {
 
 json_t *api_patch_port_value(port_t *port, json_t *query_json, json_t *request_json, int *code) {
     json_t *response_json = json_obj_new();
+    double desired_value = 0;
+    double old_value = port->last_read_value;
 
     if (api_access_level < API_ACCESS_LEVEL_NORMAL) {
         return FORBIDDEN(response_json, API_ACCESS_LEVEL_NORMAL);
@@ -2020,7 +2022,8 @@ json_t *api_patch_port_value(port_t *port, json_t *query_json, json_t *request_j
             return API_ERROR(response_json, 400, "invalid-value");
         }
 
-        if (!port_set_value(port, json_bool_get(request_json), CHANGE_REASON_API)) {
+        desired_value = json_bool_get(request_json);
+        if (!port_write_value(port, desired_value, CHANGE_REASON_API)) {
             return API_ERROR(response_json, 400, "invalid-value");
         }
     }
@@ -2031,23 +2034,29 @@ json_t *api_patch_port_value(port_t *port, json_t *query_json, json_t *request_j
             return API_ERROR(response_json, 400, "invalid-value");
         }
 
-        double value = (
+        desired_value = (
             json_get_type(request_json) == JSON_TYPE_INT ?
             json_int_get(request_json) :
             json_double_get(request_json)
         );
 
-        if (!validate_num(value, port->min, port->max, port->integer, port->step, port->choices)) {
+        if (!validate_num(desired_value, port->min, port->max, port->integer, port->step, port->choices)) {
             return API_ERROR(response_json, 400, "invalid-value");
         }
 
-        if (!port_set_value(port, value, CHANGE_REASON_API)) {
+        if (!port_write_value(port, desired_value, CHANGE_REASON_API)) {
             return API_ERROR(response_json, 400, "invalid-value");
         }
     }
-
-    *code = 204;
     
+    double after_value = port_read_value(port);
+    if (IS_UNDEFINED(after_value) || (abs(after_value - old_value) < 1e-9 && abs(old_value - desired_value) > 1e-9)) {
+        *code = 202; /* Value was not applied (right away) */
+    }
+    else {
+        *code = 204;
+    }
+
     return response_json;
 }
 
@@ -3921,7 +3930,7 @@ void on_sequence_timer(void *arg) {
     port_t *port = arg;
 
     if (port->sequence_pos < port->sequence_len) {
-        port_set_value(port, port->sequence_values[port->sequence_pos], CHANGE_REASON_SEQUENCE);
+        port_write_value(port, port->sequence_values[port->sequence_pos], CHANGE_REASON_SEQUENCE);
 
         DEBUG_PORT(port, "sequence delay of %d ms", port->sequence_delays[port->sequence_pos]);
 
