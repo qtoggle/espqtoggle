@@ -105,6 +105,8 @@ void config_init(void) {
                 free(p->sexpr);
                 p->sexpr = NULL;
             }
+
+            update_port_expression(p);
         }
 
         port_rebuild_change_dep_mask(p);

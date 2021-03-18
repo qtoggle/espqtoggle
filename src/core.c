@@ -173,9 +173,7 @@ void core_poll(void) {
         }
     }
 
-    if (change_mask || force_eval_expressions_mask) {
-        handle_value_changes(change_mask, change_reasons_expression_mask);
-    }
+    handle_value_changes(change_mask, change_reasons_expression_mask);
 
     change_mask = 0;
 }
@@ -231,7 +229,7 @@ void core_task_handler(uint32 task_id, void *param) {
 
 void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_mask) {
     /* Also consider ports whose expressions were marked for forced evaluation */
-    change_mask |= force_eval_expressions_mask;
+    uint64 forced_mask = force_eval_expressions_mask;
     force_eval_expressions_mask = 0;
 
     /* Trigger value-change events; save persisted ports */
@@ -290,17 +288,18 @@ void handle_value_changes(uint64 change_mask, uint32 change_reasons_expression_m
 
         /* If port expression depends on port itself and the change reason is the evaluation of its expression, prevent
          * evaluating its expression again to avoid evaluation loops */
-        if ((change_mask & (1ULL << p->slot)) &&
-            (change_reasons_expression_mask & (1UL << p->slot)) &&
-            (p->change_dep_mask & (1ULL << p->slot))) {
+        uint64 slot_bit_value = 1ULL << p->slot;
+        if ((change_mask & slot_bit_value) &&
+            (change_reasons_expression_mask & slot_bit_value) &&
+            (p->change_dep_mask & slot_bit_value)) {
+
+            DEBUG_CORE("skipping evaluation of port \"%s\" expression to prevent loops", p->id);
             continue;
         }
 
-        /* Evaluate a port's expression when:
-         * - one of its deps changed
-         * - its own value changed */
+        /* Evaluate a port's expression when one of its deps changed */
 
-        if (!(change_mask & p->change_dep_mask) && !(change_mask & (1ULL << p->slot))) {
+        if (!(change_mask & p->change_dep_mask) && !(forced_mask & slot_bit_value)) {
             continue;
         }
 
