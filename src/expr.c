@@ -649,7 +649,7 @@ double _rising_callback(expr_t *expr, int argc, double *args) {
     double value = args[0];
     double result = 0;
 
-    if (value && !expr->value) {
+    if (!IS_UNDEFINED(expr->value) && value > expr->value) {
         result = 1;
     }
 
@@ -662,7 +662,7 @@ double _falling_callback(expr_t *expr, int argc, double *args) {
     double value = args[0];
     double result = 0;
 
-    if (!IS_UNDEFINED(expr->value) && !value && expr->value) {
+    if (!IS_UNDEFINED(expr->value) && value < expr->value) {
         result = 1;
     }
 
