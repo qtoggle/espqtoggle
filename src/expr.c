@@ -107,6 +107,8 @@ static double    ICACHE_FLASH_ATTR  _fmedian_callback(expr_t *expr, int argc, do
 
 static double    ICACHE_FLASH_ATTR  _available_callback(expr_t *expr, int argc, double *args);
 static double    ICACHE_FLASH_ATTR  _default_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _rising_callback(expr_t *expr, int argc, double *args);
+static double    ICACHE_FLASH_ATTR  _falling_callback(expr_t *expr, int argc, double *args);
 static double    ICACHE_FLASH_ATTR  _acc_callback(expr_t *expr, int argc, double *args);
 static double    ICACHE_FLASH_ATTR  _accinc_callback(expr_t *expr, int argc, double *args);
 static double    ICACHE_FLASH_ATTR  _hyst_callback(expr_t *expr, int argc, double *args);
@@ -643,6 +645,32 @@ double _default_callback(expr_t *expr, int argc, double *args) {
     return IS_UNDEFINED(args[0]) ? args[1] : args[0];
 }
 
+double _rising_callback(expr_t *expr, int argc, double *args) {
+    double value = args[0];
+    double result = 0;
+
+    if (value && !expr->value) {
+        result = 1;
+    }
+
+    expr->value = value;
+
+    return result;
+}
+
+double _falling_callback(expr_t *expr, int argc, double *args) {
+    double value = args[0];
+    double result = 0;
+
+    if (!IS_UNDEFINED(expr->value) && !value && expr->value) {
+        result = 1;
+    }
+
+    expr->value = value;
+
+    return result;
+}
+
 double _acc_callback(expr_t *expr, int argc, double *args) {
     double value = args[0];
     double accumulator = args[1];
@@ -832,6 +860,8 @@ func_t _available = {.name = "AVAILABLE", .argc = 1,  .callback = _available_cal
                      .flags = EXPR_FUNC_FLAG_ACCEPT_UNDEFINED};
 func_t _default =   {.name = "DEFAULT",   .argc = 2,  .callback = _default_callback,
                      .flags = EXPR_FUNC_FLAG_ACCEPT_UNDEFINED};
+func_t _rising =    {.name = "RISING",    .argc = 1,  .callback = _rising_callback};
+func_t _falling =   {.name = "FALLING",   .argc = 1,  .callback = _falling_callback};
 func_t _acc =       {.name = "ACC",       .argc = 2,  .callback = _acc_callback};
 func_t _accinc =    {.name = "ACCINC",    .argc = 2,  .callback = _accinc_callback};
 func_t _hyst =      {.name = "HYST",      .argc = 3,  .callback = _hyst_callback};
@@ -891,6 +921,8 @@ func_t *funcs[] = {
 
     &_available,
     &_default,
+    &_rising,
+    &_falling,
     &_acc,
     &_accinc,
     &_hyst,
