@@ -51,6 +51,8 @@
 #define RESPONSE_HEADER   {0xFE, 0x01, 0x08}
 #define RESPONSE_LEN      36
 
+#define MAX_READ_ERRORS   5
+
 
 typedef struct {
 
@@ -64,6 +66,7 @@ typedef struct {
     double  last_frequency;
     int64   last_read_time_ms;
     bool    configured;
+    uint8   read_error_count;
 
     port_t *active_power_port; /* Needed for sampling interval */
 
@@ -303,8 +306,17 @@ void read_data_if_needed(peripheral_t *peripheral) {
     if (delta >= active_power_port->sampling_interval) {
         user_data->last_read_time_ms = now_ms;
         DEBUG_V9821(peripheral, "data reading is needed");
-        if (!read_data(peripheral)) {
+        if (read_data(peripheral)) {
+            user_data->read_error_count = 0;
+        }
+        else {
             reset_read_values(user_data);
+            user_data->read_error_count++;
+        }
+
+        if (user_data->read_error_count > MAX_READ_ERRORS) {
+            DEBUG_V9821(peripheral, "resetting due to read errors");
+            system_reset(/* delayed = */ TRUE);
         }
     }
 }
