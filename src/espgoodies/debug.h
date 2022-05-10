@@ -27,7 +27,7 @@
 #define DEBUG_UART_DISABLE -1
 
 
-void ICACHE_FLASH_ATTR debug_uart_setup(int8 uart_no);
+void ICACHE_FLASH_ATTR debug_uart_setup(int8 uart_no, bool alt);
 int8 ICACHE_FLASH_ATTR debug_uart_get_no(void);
 
 

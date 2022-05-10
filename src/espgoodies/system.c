@@ -501,8 +501,11 @@ void update(void) {
             if (!wifi_station_is_connected()) {
                 new_led_value = (now_us * 2 / 1000000) % 2;
             }
-            else {
+            else if (setup_mode_state == SETUP_MODE_TRIGGERED) {
                 new_led_value = !status_led_level;
+            }
+            else {
+                return;
             }
         }
 

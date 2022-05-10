@@ -355,7 +355,7 @@ int user_rf_cal_sector_set(void) {
 
 void user_init(void) {
 #ifdef _DEBUG
-    debug_uart_setup(_DEBUG_UART_NO);
+    debug_uart_setup(_DEBUG_UART_NO, _DEBUG_UART_ALT);
     os_delay_us(10000);
 
     printf("\n\n");
@@ -366,7 +366,7 @@ void user_init(void) {
     DEBUG_SYSTEM("Flash ID    %08X", spi_flash_get_id());
 
 #else /* !_DEBUG */
-    debug_uart_setup(DEBUG_UART_DISABLE);
+    debug_uart_setup(DEBUG_UART_DISABLE, /* alt = */ FALSE);
 #endif /* _DEBUG */
 
     system_reset_set_callbacks(on_system_reset, config_factory_reset);

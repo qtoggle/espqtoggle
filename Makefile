@@ -9,6 +9,7 @@ DEBUG_FLAGS ?= battery dnsserver flashcfg html httpclient httpserver json ota rt
 DEBUG_IP ?= # 192.168.0.1
 DEBUG_PORT ?= 48879
 DEBUG_UART_NO ?= 0
+DEBUG_UART_ALT ?= false
 
 OTA     ?= true
 SSL     ?= false
@@ -170,6 +171,7 @@ VPATH = $(SRC_MAIN_DIR)
 ifeq ($(DEBUG), true)
     CFLAGS += -D_DEBUG
     CFLAGS += -D_DEBUG_UART_NO=$(DEBUG_UART_NO)
+    CFLAGS += -D_DEBUG_UART_ALT=$(DEBUG_UART_ALT)
 ifneq ($(DEBUG_IP),)
     CFLAGS += -D_DEBUG_IP=\"$(DEBUG_IP)\"
     CFLAGS += -D_DEBUG_PORT=$(DEBUG_PORT)
@@ -216,6 +218,7 @@ buildinfo:
 	$(vecho) " *" VERSION = $(VERSION)
 	$(vecho) " *" DEBUG = $(DEBUG)
 	$(vecho) " *" DEBUG_UART_NO = $(DEBUG_UART_NO)
+	$(vecho) " *" DEBUG_UART_ALT = $(DEBUG_UART_ALT)
 	$(vecho) " *" DEBUG_IP = $(DEBUG_IP):$(DEBUG_PORT)
 	$(vecho) " *" DEBUG_FLAGS = $(DEBUG_FLAGS)
 	$(vecho) " *" OTA = $(OTA)
