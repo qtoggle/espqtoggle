@@ -100,10 +100,11 @@ void uart_setup(uint8 uart_no, uint32 baud, uint8 parity, uint8 stop_bits, bool 
 
     DEBUG_UART(
         uart_no,
-        "baud=%d, parity=%c, stop_bits=%s",
+        "baud=%d, parity=%c, stop_bits=%s, alt=%d",
         baud,
         parity == UART_PARITY_NONE ? 'N' : parity == UART_PARITY_EVEN ? 'E' : 'O',
-        stop_bits == UART_STOP_BITS_1 ? "1" : stop_bits == UART_STOP_BITS_15 ? "1.5" : "2"
+        stop_bits == UART_STOP_BITS_1 ? "1" : stop_bits == UART_STOP_BITS_15 ? "1.5" : "2",
+        alt
     );
 }
 

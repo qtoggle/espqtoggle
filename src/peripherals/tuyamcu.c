@@ -105,10 +105,11 @@
 #define RESET_AP_MODE    0x01
 
 #define FLAG_CONFIGURED   0
-#define FLAG_LOW_POWER    1
-#define FLAG_IR           2
-#define FLAG_SELF_SETUP   3
-#define FLAG_NO_HEARTBEAT 4
+#define FLAG_MCU_READY    1
+#define FLAG_LOW_POWER    2
+#define FLAG_IR           3
+#define FLAG_SELF_SETUP   4
+#define FLAG_NO_HEARTBEAT 5
 
 #define DP_TYPE_BOOLEAN 0x01
 #define DP_TYPE_NUMBER  0x02
@@ -126,6 +127,7 @@
 #define FLAG_RESTORE_DEF_ENTER_SETUP   1
 #define FLAG_RESTORE_DEF_EXIT_SETUP    2
 #define FLAG_RESTORE_NO_INTERNAL_SETUP 3
+#define FLAG_USE_ALT_UART_PINS         4
 
 #define PARAM_NO_POLLING_INTERVAL      0
 
@@ -625,15 +627,20 @@ void configure(port_t *port, bool enabled) {
 #ifdef _DEBUG
         /* Switch debug to second UART */
         if (debug_uart_get_no() == UART_NO) {
-            debug_uart_setup(1 - UART_NO);
+            debug_uart_setup(1 - UART_NO, _DEBUG_UART_ALT);
         }
 #endif
         DEBUG_TUYA_MCU(peripheral, "configuring serial port");
-        uart_setup(UART_NO, UART_BAUD, UART_PARITY, UART_STOP_BITS);
+        uart_setup(
+            UART_NO,
+            UART_BAUD,
+            UART_PARITY,
+            UART_STOP_BITS,
+            PERIPHERAL_GET_FLAG(peripheral, FLAG_USE_ALT_UART_PINS)
+        );
         uart_buff_setup(UART_NO, UART_BUFF_SIZE);
         user_data->flags |= BIT(FLAG_CONFIGURED);
 
-        DEBUG_TUYA_MCU(peripheral, "initializing MCU");
         init_mcu(peripheral);
     }
 }
@@ -645,6 +652,8 @@ void init_mcu(peripheral_t *peripheral) {
     uint8 *frame = make_frame_empty(peripheral, CMD_HEARTBEAT, &frame_len);
     uint8 *data;
 
+    DEBUG_TUYA_MCU(peripheral, "initializing MCU");
+
     /* Send heartbeat detection */
     DEBUG_TUYA_MCU(peripheral, "detecting initial heartbeat");
     send_empty_cmd(peripheral, CMD_HEARTBEAT);
@@ -655,6 +664,7 @@ void init_mcu(peripheral_t *peripheral) {
     }
     else {
         DEBUG_TUYA_MCU(peripheral, "timeout waiting for initial heartbeat");
+        return;
     }
 
     os_delay_us(200000);
@@ -666,6 +676,7 @@ void init_mcu(peripheral_t *peripheral) {
     free(frame);
     if (size != frame_len) {
         DEBUG_TUYA_MCU(peripheral, "failed to write frame");
+        return;
     }
 
     if (wait_uart_cmd(peripheral, CMD_PROD_INFO, &data, &data_len, SYNC_TIMEOUT)) {
@@ -703,10 +714,12 @@ void init_mcu(peripheral_t *peripheral) {
         }
         else {
             DEBUG_TUYA_MCU(peripheral, "failed o parse product info");
+            return;
         }
     }
     else {
         DEBUG_TUYA_MCU(peripheral, "timeout waiting for product info");
+        return;
     }
 
     os_delay_us(200000);
@@ -718,12 +731,12 @@ void init_mcu(peripheral_t *peripheral) {
     free(frame);
     if (size != frame_len) {
         DEBUG_TUYA_MCU(peripheral, "failed to write frame");
+        return;
     }
 
     if (wait_uart_cmd(peripheral, CMD_SETUP_TYPE, &data, &data_len, SYNC_TIMEOUT)) {
         if (data_len >= 2) {
             user_data->flags |= BIT(FLAG_SELF_SETUP);
-
             DEBUG_TUYA_MCU(peripheral, "self setup type: status = %d, reset = %d", data[0], data[1]);
         }
         else {
@@ -733,6 +746,7 @@ void init_mcu(peripheral_t *peripheral) {
     }
     else {
         DEBUG_TUYA_MCU(peripheral, "timeout waiting for setup type");
+        return;
     }
 
     if (PERIPHERAL_GET_FLAG(peripheral, FLAG_FORCE_COORDINATED_SETUP)) {
@@ -753,6 +767,10 @@ void init_mcu(peripheral_t *peripheral) {
     DEBUG_TUYA_MCU(peripheral, "querying initial DP values");
     send_empty_cmd(peripheral, CMD_DP_QUERY);
     user_data->last_polling_time_ms = system_uptime_ms();
+
+    /* Mark the MCU as initialized */
+    user_data->flags |= BIT(FLAG_MCU_READY);
+    DEBUG_TUYA_MCU(peripheral, "MCU initialized");
 
     /* Parsing of DPs will be done during one of the following update() calls */
 }
@@ -855,10 +873,16 @@ void update(peripheral_t *peripheral) {
     /* Detect heartbeat timeouts */
     uint64 now_ms = system_uptime_ms();
     if (now_ms - user_data->last_heartbeat_time_ms > HEARTBEAT_INTERVAL) {
-        DEBUG_TUYA_MCU(peripheral, "sending HEARTBEAT command");
-        send_empty_cmd(peripheral, CMD_HEARTBEAT);
+        if (!(user_data->flags & BIT(FLAG_MCU_READY))) {
+            init_mcu(peripheral);
+        }
+        else {
+            DEBUG_TUYA_MCU(peripheral, "sending HEARTBEAT command");
+            send_empty_cmd(peripheral, CMD_HEARTBEAT);
+            user_data->heartbeat_pending = TRUE;
+        }
+
         user_data->last_heartbeat_time_ms = now_ms;
-        user_data->heartbeat_pending = TRUE;
     }
 
     if (user_data->heartbeat_pending && now_ms - user_data->last_heartbeat_time_ms > SYNC_TIMEOUT) {
@@ -966,7 +990,6 @@ void process_mem_info_cmd(peripheral_t *peripheral) {
 
 void process_wifi_strength_cmd(peripheral_t *peripheral) {
     uint16 frame_len;
-
     int8 rssi = wifi_station_get_rssi();
     if (rssi < -100) {
         rssi = -100;
