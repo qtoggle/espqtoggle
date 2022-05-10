@@ -67,7 +67,7 @@ static void uart_interrupt_handler(void *arg);
 static void handle_interrupt(uint8 uart_no);
 
 
-void uart_setup(uint8 uart_no, uint32 baud, uint8 parity, uint8 stop_bits) {
+void uart_setup(uint8 uart_no, uint32 baud, uint8 parity, uint8 stop_bits, bool alt) {
     /* Baud rate */
     uart_div_modify(uart_no, UART_CLK_FREQ / baud);
 
@@ -82,8 +82,16 @@ void uart_setup(uint8 uart_no, uint32 baud, uint8 parity, uint8 stop_bits) {
 
     /* Set GPIO rx/tx functions */
     if (uart_no == 0) {
-        PIN_FUNC_SELECT(gpio_get_mux(1), FUNC_U0TXD);
-        PIN_FUNC_SELECT(gpio_get_mux(3), FUNC_U0RXD);
+        if (alt) { /* use alternative GPIO13/GPIO15 pins instead of GPIO1/GPIO3 */
+            PIN_FUNC_SELECT(gpio_get_mux(13), 4);  /* 4 is FUNC_U0RXD_ALT */
+            PIN_FUNC_SELECT(gpio_get_mux(15), 4);  /* 4 is FUNC_U0TXD_ALT */
+            system_uart_swap();
+        }
+        else {
+            PIN_FUNC_SELECT(gpio_get_mux(1), FUNC_U0TXD);
+            PIN_FUNC_SELECT(gpio_get_mux(3), FUNC_U0RXD);
+            system_uart_de_swap();
+        }
     }
     else { /* Assuming uart == 1 */
         PIN_FUNC_SELECT(gpio_get_mux(2), FUNC_U1TXD_BK);

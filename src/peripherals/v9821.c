@@ -333,11 +333,11 @@ void configure(port_t *port, bool enabled) {
 #ifdef _DEBUG
         /* Switch debug to second UART */
         if (debug_uart_get_no() == UART_NO) {
-            debug_uart_setup(1 - UART_NO);
+            debug_uart_setup(1 - UART_NO, _DEBUG_UART_ALT);
         }
 #endif
         DEBUG_V9821(peripheral, "configuring serial port");
-        uart_setup(UART_NO, UART_BAUD, UART_PARITY, UART_STOP_BITS);
+        uart_setup(UART_NO, UART_BAUD, UART_PARITY, UART_STOP_BITS, /* alt = */ FALSE);
         user_data->configured = TRUE;
     }
 }

@@ -41,7 +41,7 @@
 #endif
 
 
-void   ICACHE_FLASH_ATTR uart_setup(uint8 uart_no, uint32 baud, uint8 parity, uint8 stop_bits);
+void   ICACHE_FLASH_ATTR uart_setup(uint8 uart_no, uint32 baud, uint8 parity, uint8 stop_bits, bool alt);
 uint16 ICACHE_FLASH_ATTR uart_read(uint8 uart_no, uint8 *buff, uint16 max_len, uint32 timeout_us);
 uint16 ICACHE_FLASH_ATTR uart_write(uint8 uart_no, uint8 *buff, uint16 len, uint32 timeout_us);
 void   ICACHE_FLASH_ATTR uart_write_char(uint8 uart_no, char c);
