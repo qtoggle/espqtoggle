@@ -43,12 +43,10 @@ jobs:
           fetch-depth: 0
       - name: Build
         run: |
-          export VERSION="$(/opt/makever.sh)"
           make clean
           make -j4
       - name: TestMyESP helper
         run: |
-          export VERSION="$(/opt/makever.sh)"
           extra_opts=""
           if [[ "${{ github.event.inputs.verbose }}" == "yes" ]]; then
               extra_opts+="--verbose"
