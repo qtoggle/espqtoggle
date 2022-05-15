@@ -239,6 +239,7 @@ void on_setup_mode_idle_timeout(void *arg) {
 
 void on_ota_auto_timer(void *arg) {
     /* Schedule next call */
+    os_timer_disarm(&ota_auto_timer);
     os_timer_arm(&ota_auto_timer, FW_AUTO_INTERVAL * 1000, /* repeat = */ FALSE);
 
     if (!(device_flags & DEVICE_FLAG_OTA_AUTO_UPDATE)) {
