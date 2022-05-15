@@ -92,22 +92,15 @@ jobs:
         uses: actions/checkout@master
       - name: Extract version from tag
         id: tagName
-        uses: little-core-labs/get-git-tag@v3.0.2
+        uses: olegtarasov/get-tag@v2.1
         with:
-          tagRegex: "version-(.*)"
+          tagRegex: "version-(?<version>.*)"
       - name: Build
         run: |
           export DEBUG=false
-          export VERSION="$(/opt/makever.sh)"
+          export VERSION="${{ steps.tagName.outputs.version }}"
           make clean
           make -j4
-          for flash_freq in 20 26 40 80; do
-              for flash_mode in qio qout dio dout; do
-                  rm -f build/firmware.bin
-                  make FLASH_MODE=${flash_mode} FLASH_FREQ=${flash_freq}
-                  mv build/firmware.bin build/firmware-${flash_mode}-${flash_freq}.bin
-              done
-          done
       - name: Setup s3cmd
         run: |
           echo "[default]" > ~/.s3cfg
@@ -115,19 +108,20 @@ jobs:
           echo "secret_key = ${{ secrets.AWS_SECRET_KEY }}" >> ~/.s3cfg
       - name: Upload to S3
         run: |
-          if [[ "${GIT_TAG_NAME}" =~ beta.[0-9]+$ ]]; then  # beta version
+          VERSION="${{ steps.tagName.outputs.version }}"
+          if [[ "${VERSION}" =~ beta.[0-9]+$ ]]; then  # beta version
               latest_file="latest_beta"
-          elif [[ "${GIT_TAG_NAME}" =~ alpha.[0-9]+$ ]]; then  # alpha version
+          elif [[ "${VERSION}" =~ alpha.[0-9]+$ ]]; then  # alpha version
               latest_file="latest_alpha"
           else  # stable version
               latest_file="latest_stable"
           fi
-          echo "Version: ${GIT_TAG_NAME}" > build/${latest_file}
+          echo "Version: ${VERSION}" > build/${latest_file}
           echo -n "Date: " >> build/${latest_file}
           date "+%Y-%m-%d" >> build/${latest_file}
 
-          s3cmd put -P --guess-mime-type build/user*.bin  s3://${S3_BUCKET}/${S3_FOLDER}/${GIT_TAG_NAME}/
-          s3cmd put -P --guess-mime-type build/firmware-*.bin s3://${S3_BUCKET}/${S3_FOLDER}/${GIT_TAG_NAME}/
+          s3cmd put -P --guess-mime-type build/user*.bin  s3://${S3_BUCKET}/${S3_FOLDER}/${VERSION}/
+          s3cmd put -P --guess-mime-type build/firmware.bin s3://${S3_BUCKET}/${S3_FOLDER}/${VERSION}/
           s3cmd put -P --guess-mime-type build/${latest_file} s3://${S3_BUCKET}/${S3_FOLDER}/${latest_file}
           s3cmd put -P --guess-mime-type build/${latest_file} s3://${S3_BUCKET}/${S3_FOLDER}/latest
 
