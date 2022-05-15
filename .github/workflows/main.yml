@@ -47,6 +47,7 @@ jobs:
           make -j4
       - name: TestMyESP helper
         run: |
+          export VERSION=0.0.0-unknown.0
           extra_opts=""
           if [[ "${{ github.event.inputs.verbose }}" == "yes" ]]; then
               extra_opts+="--verbose"
