@@ -33,7 +33,7 @@
 
 
 #define MAX_NAME_LEN 16
-#define MAX_ARGS     16
+#define MAX_ARGS     32
 #define MAX_HIST_LEN 32
 
 #define LUT_INTERPOLATION_CLOSEST 0
