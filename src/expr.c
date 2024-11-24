@@ -773,7 +773,9 @@ double _lut_common_callback(expr_t *expr, int argc, double *args, uint8 interpol
     qsort(points, length, sizeof(double) * 2, compare_double);
 
     if (x < points[0]) {
-        return points[1];
+        double result = points[1];
+        free(points);
+        return result;
     }
 
     for (uint32 i = 0; i < length - 1; i++) {
@@ -785,6 +787,9 @@ double _lut_common_callback(expr_t *expr, int argc, double *args, uint8 interpol
         if (x > x2) {
             continue;
         }
+
+        free(points);
+        points = NULL;
 
         if (interpolation == LUT_INTERPOLATION_CLOSEST) {
             if (x - x1 < x2 - x) {
@@ -803,6 +808,7 @@ double _lut_common_callback(expr_t *expr, int argc, double *args, uint8 interpol
         }
     }
 
+    free(points);
     return points[2 * length - 1];
 }
 
