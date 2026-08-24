@@ -108,7 +108,7 @@
                             "enum": ["${TEST_NETWORK_HOST_IP}"]
                         },
                         "ip_dns": {
-                            "enum": ["${TEST_NETWORK_HOST_IP}"]
+                            "enum": ["1.1.1.1"]
                         },
                         "ip_address_current": {
                             "enum": ["${TEST_NETWORK_DEVICE_IP}"]
@@ -120,7 +120,7 @@
                             "enum": ["${TEST_NETWORK_HOST_IP}"]
                         },
                         "ip_dns_current": {
-                            "enum": ["${TEST_NETWORK_HOST_IP}"]
+                            "enum": ["1.1.1.1"]
                         },
                         "wifi_ssid": {
                             "enum": ["${TEST_SSID}"]
