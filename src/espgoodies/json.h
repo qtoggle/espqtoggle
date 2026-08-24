@@ -37,6 +37,10 @@
 #define JSON_MAX_VALUE_LEN      1024
 #define JSON_MAX_VALUE_LIST_LEN 4096
 
+/* Parsing is iterative, but json_free()/json_dump_rec()/json_dup() all recurse once per nesting level, so the
+ * depth of a parsed document has to be bounded to keep them off the end of the stack */
+#define JSON_MAX_NESTING_DEPTH  16
+
 #define JSON_FREE_NOTHING       0
 #define JSON_FREE_MEMBERS       1
 #define JSON_FREE_EVERYTHING    2

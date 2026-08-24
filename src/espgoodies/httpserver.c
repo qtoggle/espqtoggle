@@ -59,13 +59,27 @@ static char   *server_name = NULL;
 static uint32  request_timeout = 8;
 
 
-static void ICACHE_FLASH_ATTR handle_header_value_ready(httpserver_context_t *hc);
+static bool ICACHE_FLASH_ATTR handle_header_value_ready(httpserver_context_t *hc);
 static void ICACHE_FLASH_ATTR handle_invalid(httpserver_context_t *hc, char c);
 static void ICACHE_FLASH_ATTR handle_request(httpserver_context_t *hc);
 static void ICACHE_FLASH_ATTR handle_request_timeout(void *arg);
 
 
-void handle_header_value_ready(httpserver_context_t *hc) {
+bool handle_header_value_ready(httpserver_context_t *hc) {
+    /* Without a cap, a request with enough headers exhausts the heap; header_count is a uint8 and would wrap
+     * as well, orphaning everything collected so far */
+    if (hc->header_count >= HTTP_MAX_HEADERS) {
+        DEBUG_HTTPSERVER_CTX(hc, "too many headers (max %d)", HTTP_MAX_HEADERS);
+        return FALSE;
+    }
+
+    /* The count on its own leaves the worst case far too large, since each header may be nearly 290 bytes */
+    uint32 size = strlen(hc->header_name) + strlen(hc->header_value) + 2;
+    if (hc->headers_size + size > HTTP_MAX_HEADERS_SIZE) {
+        DEBUG_HTTPSERVER_CTX(hc, "headers too large (max %d bytes)", HTTP_MAX_HEADERS_SIZE);
+        return FALSE;
+    }
+
     if (!strcasecmp(hc->header_name, "Content-Length")) {
         hc->content_length = strtol(hc->header_value, NULL, 10);
     }
@@ -76,6 +90,9 @@ void handle_header_value_ready(httpserver_context_t *hc) {
 
     hc->header_names[hc->header_count] = strdup(hc->header_name);
     hc->header_values[hc->header_count++] = strdup(hc->header_value);
+    hc->headers_size += size;
+
+    return TRUE;
 }
 
 void handle_invalid(httpserver_context_t *hc, char c) {
@@ -160,7 +177,10 @@ void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
         }
 
         case HTTP_STATE_INVALID: {
-            handle_invalid(hc, c);
+            /* The callback already fired on the transition into this state. Calling it again per byte would
+             * build and send a fresh 400 for every remaining byte of the request: the response is well under
+             * SEND_PACKET_SIZE, so tcp_send() takes its single-packet path, which never sets send_buffer and
+             * therefore never trips the "pending data" guard. Ignore the rest of the request instead. */
             break;
         }
 
@@ -308,7 +328,11 @@ void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
 
         case HTTP_STATE_HEADER_VALUE: {
             if (c == '\r' || c == '\n') {
-                handle_header_value_ready(hc);
+                if (!handle_header_value_ready(hc)) {
+                    hc->req_state = HTTP_STATE_INVALID;
+                    handle_invalid(hc, c);
+                    break;
+                }
 
                 if (c == '\n') {
                     hc->req_state = HTTP_STATE_HEADER_VALUE_READY_NL;

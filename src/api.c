@@ -1778,11 +1778,15 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 return INVALID_FIELD(response_json, key);
             }
 
-            if (port->transform_write) {
+            /* Keyed on the text, not the parsed expression: a transform whose text was kept after a
+             * failed parse has the former but not the latter, and would otherwise leak here */
+            if (port->transform_write || port->stransform_write) {
                 DEBUG_PORT(port, "removing write transform");
-                expr_free(port->transform_write);
+                if (port->transform_write) {
+                    expr_free(port->transform_write);
+                    port->transform_write = NULL;
+                }
                 free(port->stransform_write);
-                port->transform_write = NULL;
                 port->stransform_write = NULL;
             }
 
@@ -1822,11 +1826,15 @@ json_t *api_patch_port(port_t *port, json_t *query_json, json_t *request_json, i
                 return INVALID_FIELD(response_json, key);
             }
 
-            if (port->transform_read) {
+            /* Keyed on the text, not the parsed expression: a transform whose text was kept after a
+             * failed parse has the former but not the latter, and would otherwise leak here */
+            if (port->transform_read || port->stransform_read) {
                 DEBUG_PORT(port, "removing read transform");
-                expr_free(port->transform_read);
+                if (port->transform_read) {
+                    expr_free(port->transform_read);
+                    port->transform_read = NULL;
+                }
                 free(port->stransform_read);
-                port->transform_read = NULL;
                 port->stransform_read = NULL;
             }
 
