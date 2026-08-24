@@ -36,6 +36,16 @@
 #define MAX_ARGS     32
 #define MAX_HIST_LEN 32
 
+/* parse_rec() uses 240 bytes of stack per nesting level (measured with -fstack-usage), against a stack of a
+ * few kB, so the nesting depth of an expression has to be bounded */
+#define MAX_EXPR_DEPTH     8
+
+/* Bases that need the multiplication loop have either run off to infinity or collapsed to zero well before
+ * this many iterations, so going further would only feed the watchdog */
+#define MAX_POW_EXP        1024
+/* A double carries about 15 significant decimal digits; more is meaningless and just burns cycles */
+#define MAX_ROUND_DECIMALS 15
+
 #define LUT_INTERPOLATION_CLOSEST 0
 #define LUT_INTERPOLATION_LINEAR  1
 
@@ -118,7 +128,7 @@ static double    ICACHE_FLASH_ATTR  _lutli_callback(expr_t *expr, int argc, doub
 
 static double    ICACHE_FLASH_ATTR  _lut_common_callback(expr_t *expr, int argc, double *args, uint8 interpolation);
 
-expr_t           ICACHE_FLASH_ATTR *parse_rec(char *port_id, char *input, int len, int abs_pos);
+expr_t           ICACHE_FLASH_ATTR *parse_rec(char *port_id, char *input, int len, int abs_pos, int depth);
 static expr_t    ICACHE_FLASH_ATTR *parse_port_id_expr(char *port_id, char *input, int abs_pos);
 static expr_t    ICACHE_FLASH_ATTR *parse_literal_expr(char *input, int abs_pos);
 static void      ICACHE_FLASH_ATTR  set_parse_error(char *reason, char *token, int32 pos);
@@ -126,6 +136,7 @@ static literal_t ICACHE_FLASH_ATTR *find_literal_by_name(char *name);
 static func_t    ICACHE_FLASH_ATTR *find_func_by_name(char *name);
 static int       ICACHE_FLASH_ATTR  check_loops_rec(port_t *the_port, int level, expr_t *expr);
 static bool      ICACHE_FLASH_ATTR  func_needs_free(expr_t *expr);
+static int       ICACHE_FLASH_ATTR  clamp_to_int(double d);
 
 
 static literal_t _false = {.name = "false", .value = 0};
@@ -192,16 +203,61 @@ double _pow_callback(expr_t *expr, int argc, double *args) {
     if (exp == 0) {
         return 1;
     }
-    if (exp == 1) {
-        return base;
-    }
-    if (exp == 0.5) {
-        return sqrt(base);
+
+    /* A negative exponent is the reciprocal of the positive power. The sign is normalised here, before the
+     * cap below, so that a large negative exponent is bounded too. Previously the loop simply never ran for a
+     * negative exponent and every base quietly came back as 1. */
+    bool reciprocal = exp < 0;
+    if (reciprocal) {
+        exp = -exp;
+
+        if (base == 0) {
+            return UNDEFINED; /* Division by zero */
+        }
     }
 
-    double result = 1;
-    while (exp-- > 0) {
-        result *= base;
+    double result;
+
+    if (exp == 1) {
+        result = base;
+    }
+    else if (exp == 0.5) {
+        result = sqrt(base);
+    }
+    /* These bases have an exactly determined power however large the exponent is, so they are answered before
+     * the cap below rather than being reported as undefined. The loop runs ceil(exp) times, which is what
+     * decides the sign for base -1. */
+    else if (base == 0) {
+        result = 0; /* A negative exponent over base 0 returned above */
+    }
+    else if (base == 1) {
+        result = 1;
+    }
+    else if (base == -1) {
+        /* Alternates with the exponent's parity. Derived with floor() rather than fmod(), which this
+         * toolchain's libm cannot link. Exact for every finite exponent: halving a double is exact, and every
+         * double from 2^53 up is already an even integer. */
+        double e = ceil(exp);
+        result = e - 2 * floor(e / 2) == 0 ? 1 : -1;
+    }
+    /* Every remaining base needs the loop, so the exponent has to stay bounded. Testing fabs(base) > 1 instead
+     * would leave |base| < 1 unbounded, which spins the watchdog just as effectively. */
+    else if (exp > MAX_POW_EXP) {
+        return UNDEFINED;
+    }
+    else {
+        result = 1;
+        while (exp-- > 0) {
+            result *= base;
+        }
+    }
+
+    if (reciprocal) {
+        if (result == 0) {
+            return UNDEFINED; /* Underflowed to zero, so the reciprocal is not representable */
+        }
+
+        return 1 / result;
     }
 
     return result;
@@ -337,20 +393,26 @@ double _ceil_callback(expr_t *expr, int argc, double *args) {
 
 double _round_callback(expr_t *expr, int argc, double *args) {
     double value = args[0];
-    int i;
+    int i, decimals = 0;
 
     if (argc > 1) {
-        for (i = 0; i < args[1]; i++) {
-            value *= 10;
+        /* Clamp to a range a double can actually represent; the comparisons also reject NaN */
+        if (args[1] > MAX_ROUND_DECIMALS) {
+            decimals = MAX_ROUND_DECIMALS;
         }
+        else if (args[1] > 0) {
+            decimals = args[1];
+        }
+    }
+
+    for (i = 0; i < decimals; i++) {
+        value *= 10;
     }
 
     value = round(value);
 
-    if (argc > 1) {
-        for (i = 0; i < args[1]; i++) {
-            value /= 10;
-        }
+    for (i = 0; i < decimals; i++) {
+        value /= 10;
     }
 
     return value;
@@ -422,10 +484,24 @@ double _delay_callback(expr_t *expr, int argc, double *args) {
     return result;
 }
 
+/* Durations, intervals and counts all come from arbitrary sub-expressions, so they may hold any double at
+ * all. Converting one that is out of range to an integer type is undefined (C99 6.3.1.4), so they are clamped
+ * to [0, INT_MAX] first. The negated comparison also catches NaN. */
+int clamp_to_int(double d) {
+    if (!(d > 0)) {
+        return 0;
+    }
+    if (d > INT_MAX) {
+        return INT_MAX;
+    }
+
+    return (int) d;
+}
+
 double _sample_callback(expr_t *expr, int argc, double *args) {
     uint64 time_ms = system_uptime_ms();
     uint64 last_eval_time_ms = expr->aux; /* aux flag is used to store last eval time */
-    uint64 duration = args[1];
+    uint64 duration = clamp_to_int(args[1]);
 
     /* Don't return newly evaluated value unless required duration has passed */
     if (time_ms - last_eval_time_ms < duration) {
@@ -443,7 +519,7 @@ double _freeze_callback(expr_t *expr, int argc, double *args) {
 
     if (expr->aux < 0 || IS_UNDEFINED(expr->value)) { /* Idle || very first call */
         double value = args[0];
-        int64 duration = args[1];
+        int64 duration = clamp_to_int(args[1]);
 
         if (value != expr->value) {
             /* Value change detected, starting timer */
@@ -466,7 +542,7 @@ double _held_callback(expr_t *expr, int argc, double *args) {
     uint64 time_ms = system_uptime_ms();
     double value = args[0];
     double fixed_value = args[1];
-    int duration = args[2];
+    int duration = clamp_to_int(args[2]);
     bool result = FALSE;
 
     if (!expr->aux) { /* Very first expression eval call */
@@ -544,8 +620,8 @@ bool _filter_callback(expr_t *expr, int argc, double *args) {
     uint64 time_ms = system_uptime_ms();
     double value = args[0];
     double *values = expr->paux; /* expr->paux flag is used as a pointer to a value history queue */
-    int width = (int) args[1];
-    int sampling_interval = args[2];
+    int width = clamp_to_int(args[1]);
+    int sampling_interval = clamp_to_int(args[2]);
 
     /* Limit width to reasonable values */
     if (width > MAX_HIST_LEN) {
@@ -729,23 +805,31 @@ double _sequence_callback(expr_t *expr, int argc, double *args) {
     }
     else {
         int num_values = argc / 2; /* We have pairs of values and delays */
-        int i, delay_so_far = 0, total_delay = 0;
+        int i;
+        /* Both accumulated as doubles: the gate below only constrains the total, so an individual delay may
+         * still be far outside int range, and narrowing one to int would be undefined */
+        double delay_so_far = 0, total_delay = 0;
 
-        /* Compute the total delay */
+        /* Compute the total delay; accumulated as a double so that large delays can't overflow silently */
         for (i = 0; i < num_values; i++) {
             if (2 * i + 1 < argc) {
                 total_delay += args[2 * i + 1];
             }
         }
 
-        /* Always work modulo total_delay, to create repeat effect */
-        delta = delta % (int) total_delay;
+        /* A total delay below 1ms truncates to zero and would divide by zero below; anything beyond INT_MAX
+         * can't be used as a modulus either. Both comparisons also reject NaN. In those cases the sequence
+         * simply stays on its first value. */
+        if (total_delay >= 1 && total_delay <= INT_MAX) {
+            /* Always work modulo total_delay, to create repeat effect */
+            delta = delta % (int) total_delay;
 
-        for (i = 0; i < num_values; i++) {
-            delay_so_far += (2 * i + 1) < argc ? args[2 * i + 1] : 0;
-            if (delay_so_far >= delta) {
-                result = args[2 * i];
-                break;
+            for (i = 0; i < num_values; i++) {
+                delay_so_far += (2 * i + 1) < argc ? args[2 * i + 1] : 0;
+                if (delay_so_far >= delta) {
+                    result = args[2 * i];
+                    break;
+                }
             }
         }
     }
@@ -943,20 +1027,26 @@ func_t *funcs[] = {
 };
 
 
-expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
+expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos, int depth) {
     if (!len) {
         DEBUG_EXPR("empty expression");
         set_parse_error("empty-expression", /* token = */ NULL, /* pos = */ -1);
         return NULL;
     }
 
+    if (depth > MAX_EXPR_DEPTH) {
+        DEBUG_EXPR("expression nested too deeply at position %d", abs_pos);
+        set_parse_error("too-deeply-nested", /* token = */ NULL, abs_pos);
+        return NULL;
+    }
+
     int level = 0, pos = 0, skip_pos = 0, c, l;
     char *b = NULL, *e = NULL, *s = input;
     int i, argc = 0;
-    /* These hold argument delimiters: the opening parenthesis, one per comma and the closing parenthesis,
-     * which is one more than the maximum number of arguments */
+    /* Holds argument delimiters: the opening parenthesis, one per comma and the closing parenthesis, which is
+     * one more than the maximum number of arguments. The offset of each delimiter is not stored separately,
+     * since s and pos advance in lockstep and so argp[i] is always input + <its offset>. */
     char *argp[MAX_ARGS + 1];
-    uint32 arg_pos[MAX_ARGS + 1];
 
     /* Skip leading whitespace */
     while (*s && isspace((int) *s) && pos < len) {
@@ -985,7 +1075,6 @@ expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
                 }
 
                 argp[0] = s;
-                arg_pos[0] = pos;
                 b = s + 1;
                 argc = 1;
             }
@@ -998,7 +1087,6 @@ expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
             }
             else if (level == 1) {
                 argp[argc] = s;
-                arg_pos[argc] = pos;
                 e = s - 1;
             }
 
@@ -1011,7 +1099,6 @@ expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
                 return NULL;
             }
 
-            arg_pos[argc] = pos;
             argp[argc++] = s;
         }
 
@@ -1036,20 +1123,24 @@ expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
             argc = 0;
         }
 
-        expr_t *args[argc];
+        /* Parsed straight into the heap array that the expression ends up owning, rather than into a local
+         * one: that keeps this frame (which recurses) as small as possible */
+        expr_t **args = argc ? malloc(sizeof(expr_t *) * argc) : NULL;
 
         for (i = 0; i < argc; i++) {
             l = argp[i + 1] - argp[i] - 1;
             if (l == 0) {
                 DEBUG_EXPR("empty argument");
                 /* When encountering empty argument expression, following character is unexpected */
-                set_parse_error("unexpected-character", argp[i + 1], abs_pos + arg_pos[i] + 1);
+                set_parse_error("unexpected-character", argp[i + 1], abs_pos + (argp[i] - input) + 1);
                 while (i > 0) expr_free(args[--i]);
+                free(args);
                 return NULL;
             }
-            if (!(args[i] = parse_rec(port_id, argp[i] + 1, l, abs_pos + arg_pos[i] + 1))) {
+            if (!(args[i] = parse_rec(port_id, argp[i] + 1, l, abs_pos + (argp[i] - input) + 1, depth + 1))) {
                 /* An error occurred, free everything and give up */
                 while (i > 0) expr_free(args[--i]);
+                free(args);
                 return NULL;
             }
         }
@@ -1059,6 +1150,7 @@ expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
             DEBUG_EXPR("no such function \"%s\"", name);
             set_parse_error("unknown-function", /* token = */ name, abs_pos + skip_pos);
             while (argc > 0) expr_free(args[--argc]);
+            free(args);
             return NULL;
         }
 
@@ -1066,6 +1158,7 @@ expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
             DEBUG_EXPR("invalid number of arguments to function \"%s\"", name);
             set_parse_error("invalid-number-of-arguments", /* token = */ name, abs_pos + skip_pos);
             while (argc > 0) expr_free(args[--argc]);
+            free(args);
             return NULL;
         }
 
@@ -1073,12 +1166,7 @@ expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
         expr->value = UNDEFINED;
         expr->func = func;
         expr->argc = argc;
-        if (argc) {
-            expr->args = malloc(sizeof(expr_t *) * argc);
-            for (i = 0; i < argc; i++) {
-                expr->args[i] = args[i];
-            }
-        }
+        expr->args = args; /* Ownership transferred */
 
         return expr;
     }
@@ -1232,7 +1320,7 @@ bool func_needs_free(expr_t *expr) {
 
 
 expr_t *expr_parse(char *port_id, char *input, int len) {
-    return parse_rec(port_id, input, len, /* abs_pos = */ 1);
+    return parse_rec(port_id, input, len, /* abs_pos = */ 1, /* depth = */ 1);
 }
 
 expr_parse_error_t *expr_parse_get_error(void) {

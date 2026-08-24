@@ -55,7 +55,7 @@ static void   ICACHE_FLASH_ATTR  ctx_set_key(ctx_t *ctx, char *key);
 static void   ICACHE_FLASH_ATTR  ctx_clear_key(ctx_t *ctx);
 static json_t ICACHE_FLASH_ATTR *ctx_get_current(ctx_t *ctx);
 static bool   ICACHE_FLASH_ATTR  ctx_add(ctx_t *ctx, json_t *json);
-static void   ICACHE_FLASH_ATTR  ctx_push(ctx_t *ctx, json_t *json);
+static bool   ICACHE_FLASH_ATTR  ctx_push(ctx_t *ctx, json_t *json);
 static json_t ICACHE_FLASH_ATTR *ctx_pop(ctx_t *ctx);
 static void   ICACHE_FLASH_ATTR  ctx_free(ctx_t *ctx);
 
@@ -70,7 +70,7 @@ json_t *json_parse(char *input) {
     json_t *json, *root = NULL;
 
     /* Remove all whitespace at the end of input */
-    while (isspace((int) input[length - 1])) {
+    while (length > 0 && isspace((int) input[length - 1])) {
         length--;
     }
 
@@ -93,7 +93,11 @@ json_t *json_parse(char *input) {
                     return NULL;
                 }
 
-                ctx_push(ctx, json_obj_new());
+                if (!ctx_push(ctx, json_obj_new())) {
+                    DEBUG_JSON("nesting too deep at pos %d", pos);
+                    ctx_free(ctx);
+                    return NULL;
+                }
 
                 /* Waiting for a key, not an element */
                 waiting_elem = FALSE;
@@ -123,7 +127,11 @@ json_t *json_parse(char *input) {
                     return NULL;
                 }
 
-                ctx_push(ctx, json_list_new());
+                if (!ctx_push(ctx, json_list_new())) {
+                    DEBUG_JSON("nesting too deep at pos %d", pos);
+                    ctx_free(ctx);
+                    return NULL;
+                }
                 pos++;
                 break;
 
@@ -1098,15 +1106,16 @@ json_t *ctx_get_current(ctx_t *ctx) {
     return ctx->stack[ctx->stack_size - 1].json;
 }
 
+/* Takes ownership of json in all cases: when the element cannot be added it is freed rather than leaked */
 bool ctx_add(ctx_t *ctx, json_t *json) {
     if (ctx->stack_size < 1) {
-        ctx_push(ctx, json);
-        return TRUE;
+        return ctx_push(ctx, json);
     }
 
     json_t *current = ctx->stack[ctx->stack_size - 1].json;
     if (current->type == JSON_TYPE_LIST) {
         if (ctx_has_key(ctx)) {
+            json_free(json);
             return FALSE; /* Refuse to add to list if key is set */
         }
 
@@ -1114,6 +1123,7 @@ bool ctx_add(ctx_t *ctx, json_t *json) {
     }
     else if (current->type == JSON_TYPE_OBJ) {
         if (!ctx_has_key(ctx)) {
+            json_free(json);
             return FALSE; /* Refuse to add to object if key is unset */
         }
 
@@ -1121,16 +1131,25 @@ bool ctx_add(ctx_t *ctx, json_t *json) {
         ctx_clear_key(ctx);
     }
     else {
+        json_free(json);
         return FALSE; /* Cannot add child to to primitive element */
     }
 
     return TRUE;
 }
 
-void ctx_push(ctx_t *ctx, json_t *json) {
+/* Takes ownership of json in all cases: when the element cannot be pushed it is freed rather than leaked */
+bool ctx_push(ctx_t *ctx, json_t *json) {
+    if (ctx->stack_size >= JSON_MAX_NESTING_DEPTH) {
+        json_free(json);
+        return FALSE;
+    }
+
     ctx->stack = realloc(ctx->stack, sizeof(stack_t) * (++ctx->stack_size));
     ctx->stack[ctx->stack_size - 1].json = json;
     ctx->stack[ctx->stack_size - 1].key = NULL;
+
+    return TRUE;
 }
 
 json_t *ctx_pop(ctx_t *ctx) {
@@ -1160,25 +1179,17 @@ json_t *ctx_pop(ctx_t *ctx) {
 }
 
 void ctx_free(ctx_t *ctx) {
-    if (ctx->stack_size) {
-        /* Will free all JSON elements in hierarchy */
-        json_free(ctx->stack[0].json);
-
-        /* Current element is not part of hierarchy */
-        if (ctx->stack_size > 1) {
-            json_free(ctx->stack[ctx->stack_size - 1].json);
-        }
-
-        /* Free keys */
-        int i;
-        for (i = 0; i < ctx->stack_size; i++) {
-            free(ctx->stack[i].key);
-        }
-
-        free(ctx->stack);
-        ctx->stack_size = 0;
-        ctx->stack = NULL;
+    /* Elements are only attached to their parent when they are popped, so every element still on the stack is
+     * an independent hierarchy and has to be freed separately */
+    uint32 i;
+    for (i = 0; i < ctx->stack_size; i++) {
+        json_free(ctx->stack[i].json);
+        free(ctx->stack[i].key);
     }
+
+    free(ctx->stack);
+    ctx->stack_size = 0;
+    ctx->stack = NULL;
 
     free(ctx);
 }

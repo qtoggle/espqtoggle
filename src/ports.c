@@ -425,9 +425,9 @@ void port_load(port_t *port, uint8 *config_data) {
                 DEBUG_PORT(port, "write transform successfully parsed");
             }
             else {
-                DEBUG_PORT(port, "write transform parse failed");
-                free(port->stransform_write);
-                port->stransform_write = NULL;
+                /* Kept rather than dropped, for the same reason as the value expression: ports_save() would
+                 * otherwise write the removal back to flash and lose it permanently */
+                DEBUG_PORT(port, "write transform parse failed, keeping it inactive");
             }
         }
     }
@@ -442,9 +442,9 @@ void port_load(port_t *port, uint8 *config_data) {
             DEBUG_PORT(port, "read transform successfully parsed");
         }
         else {
-            DEBUG_PORT(port, "read transform parse failed");
-            free(port->stransform_read);
-            port->stransform_read = NULL;
+            /* Kept rather than dropped, for the same reason as the value expression: ports_save() would
+             * otherwise write the removal back to flash and lose it permanently */
+            DEBUG_PORT(port, "read transform parse failed, keeping it inactive");
         }
     }
 
@@ -1044,9 +1044,11 @@ void port_enable(port_t *port) {
             DEBUG_PORT(port, "value expression successfully parsed");
         }
         else {
-            DEBUG_PORT(port, "value expression parse failed");
-            free(port->sexpr);
-            port->sexpr = NULL;
+            /* Keep the stored expression rather than dropping it. It parsed when it was set, so a
+             * failure here means the firmware changed (a stricter limit, say) or the config is damaged.
+             * Dropping it would write the removal back to flash on the next save and lose it for good;
+             * this way the port just runs without an active expression until the user fixes it. */
+            DEBUG_PORT(port, "value expression parse failed, keeping it inactive");
         }
 
         update_port_expression(port);

@@ -101,9 +101,11 @@ void config_init(void) {
                 DEBUG_PORT(p, "value expression successfully parsed");
             }
             else {
-                DEBUG_PORT(p, "value expression parse failed");
-                free(p->sexpr);
-                p->sexpr = NULL;
+                /* Keep the stored expression rather than dropping it. It parsed when it was set, so a
+                 * failure here means the firmware changed (a stricter limit, say) or the config is damaged.
+                 * Dropping it would write the removal back to flash on the next save and lose it for good;
+                 * this way the port just runs without an active expression until the user fixes it. */
+                DEBUG_PORT(p, "value expression parse failed, keeping it inactive");
             }
 
             update_port_expression(p);

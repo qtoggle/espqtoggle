@@ -52,6 +52,21 @@
 #define HTTP_MAX_METHOD_LEN              8
 #define HTTP_MAX_PATH_LEN                64
 #define HTTP_MAX_QUERY_LEN               64
+#define HTTP_MAX_HEADERS                 32
+/* The count alone does not bound memory: 32 headers at maximum name+value length is ~9kB per context, and
+ * MAX_PARALLEL_HTTP_REQ contexts accumulate independently. This budget is what actually bounds it, at
+ * 4 x 3kB = 12kB worst case.
+ *
+ * Sized against measured traffic, since setup mode serves the HTML page to real browsers and rejecting one
+ * would leave the device unconfigurable. Note the total counts *truncated* lengths, as append_max_len() caps
+ * each name at HTTP_MAX_HEADER_NAME_LEN and each value at HTTP_MAX_HEADER_VALUE_LEN first, so no single
+ * header can contribute more than ~290 bytes however long the client makes it:
+ *
+ *   Chrome 122 navigation (15 headers)      617 B
+ *   the same plus three max-length cookies 1409 B
+ *   qToggle API client (5 headers)          302 B
+ */
+#define HTTP_MAX_HEADERS_SIZE            3072
 #define HTTP_MAX_HEADER_NAME_LEN         32
 #define HTTP_MAX_HEADER_VALUE_LEN        256
 #define HTTP_MAX_BODY_LEN                10240
@@ -84,6 +99,7 @@ typedef struct {
     char                  **header_names;
     char                  **header_values;
     uint8                   header_count;
+    uint16                  headers_size; /* Bytes of header names and values held for this context */
     char                    header_name[HTTP_MAX_HEADER_NAME_LEN + 1];
     char                    header_value[HTTP_MAX_HEADER_VALUE_LEN + 1];
 
