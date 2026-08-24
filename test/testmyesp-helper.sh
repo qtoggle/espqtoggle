@@ -166,7 +166,7 @@ function run_job() {
     max_time=$((timeout + timeout / 10))
     query="wait=${wait}"
     
-    status=$(curl -Ss -m ${max_time} --out ${response_file} -w "%{http_code}" \
+    status=$(curl -Ss -m ${max_time} --output ${response_file} -w "%{http_code}" \
                   -H "Authorization: Bearer ${jwt}" \
                   -H "Content-Type: application/json" \
                   "${server_url}/jobs?${query}" --data-binary "@${data_file}")
