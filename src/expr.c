@@ -808,8 +808,11 @@ double _lut_common_callback(expr_t *expr, int argc, double *args, uint8 interpol
         }
     }
 
+    /* x is past the last point; read the last y before releasing the points */
+    double result = points[2 * length - 1];
     free(points);
-    return points[2 * length - 1];
+
+    return result;
 }
 
 
@@ -950,8 +953,10 @@ expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
     int level = 0, pos = 0, skip_pos = 0, c, l;
     char *b = NULL, *e = NULL, *s = input;
     int i, argc = 0;
-    char *argp[MAX_ARGS];
-    uint32 arg_pos[MAX_ARGS];
+    /* These hold argument delimiters: the opening parenthesis, one per comma and the closing parenthesis,
+     * which is one more than the maximum number of arguments */
+    char *argp[MAX_ARGS + 1];
+    uint32 arg_pos[MAX_ARGS + 1];
 
     /* Skip leading whitespace */
     while (*s && isspace((int) *s) && pos < len) {
@@ -960,7 +965,7 @@ expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
         skip_pos++;
     }
 
-    char name[MAX_NAME_LEN] = {0};
+    char name[MAX_NAME_LEN + 1] = {0};
     while ((c = *s) && (c != '(') && (pos < len)) {
         append_max_len(name, c, MAX_NAME_LEN);
         s++;
@@ -1000,10 +1005,14 @@ expr_t *parse_rec(char *port_id, char *input, int len, int abs_pos) {
             level--;
         }
         else if (c == ',' && level == 1) {
-            if (argc < MAX_ARGS) {
-                arg_pos[argc] = pos;
-                argp[argc++] = s;
+            if (argc >= MAX_ARGS) {
+                DEBUG_EXPR("too many arguments to function \"%s\"", name);
+                set_parse_error("invalid-number-of-arguments", /* token = */ name, abs_pos + skip_pos);
+                return NULL;
             }
+
+            arg_pos[argc] = pos;
+            argp[argc++] = s;
         }
 
         s++;

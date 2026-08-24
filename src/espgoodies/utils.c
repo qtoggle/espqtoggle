@@ -274,7 +274,7 @@ bool call_later(call_later_callback_t callback, void *arg, uint32 delay_ms) {
     }
 
     /* Allocate new timer */
-    call_later_timers = realloc(call_later_timers, sizeof(os_timer_t *) * call_later_timers_count + 1);
+    call_later_timers = realloc(call_later_timers, sizeof(os_timer_t *) * (call_later_timers_count + 1));
     os_timer_t *timer = call_later_timers[call_later_timers_count++] = malloc(sizeof(os_timer_t));
 
     /* Allocate new callback wrapper argument structure */
