@@ -21,7 +21,7 @@ jobs:
         shell: bash
     timeout-minutes: 1800
     env:
-      TESTMYESP_SERVER: https://testmyesp.qtoggle.io
+      TESTMYESP_SERVER: http://testmyesp.qtoggle.io:9999
       TEST_JWT_ADMIN_EMPTY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJxVG9nZ2xlIiwidXNyIjoiYWRtaW4iLCJvcmkiOiJjb25zdW1lciJ9.H3TvAcQmDhSel5igbz_kfD_hExMfLJeRA5_aDZ1rOEY
       TEST_JWT_ADMIN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJxVG9nZ2xlIiwidXNyIjoiYWRtaW4iLCJvcmkiOiJjb25zdW1lciJ9.G5sk6HuwGnN78yszwiDqz_CpL86GVXVooIqyVBxD55g
       TEST_JWT_NORMAL: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJxVG9nZ2xlIiwidXNyIjoibm9ybWFsIiwib3JpIjoiY29uc3VtZXIifQ.NZ47Ds0o6rRLoxmf7BUaMoP02bg-5gbk6iGwz7Is1L4
