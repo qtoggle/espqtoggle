@@ -422,11 +422,13 @@ void httpserver_context_reset(httpserver_context_t *hc) {
         hc->header_count = 0;
     }
 
+    /* Disarm before wiping the context: memset() would destroy the timer's internal linkage, leaving it armed
+     * and pointing at a recycled context */
+    os_timer_disarm(&hc->timer);
+
     int slot_index = hc->slot_index;
     memset(hc, 0, sizeof(httpserver_context_t));
     hc->slot_index = slot_index; /* Restore slot index */
-
-    os_timer_disarm(&hc->timer);
 }
 
 uint8 *httpserver_build_response(

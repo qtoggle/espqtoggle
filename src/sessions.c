@@ -199,23 +199,28 @@ void session_push(session_t *session, int type, char *port_id) {
 
         /* Find the oldest (first pushed, last in queue) event */
         while (n) {
+            /* Remember the next node before we possibly free the current one */
+            session_queue_node_t *nn = n->next;
+
             if ((n->event->type == type) && (!port_id || !strcmp(port_id, n->event->port_id))) {
                 DEBUG_SESSION(session->id, "dropping similar %s event", EVENT_TYPES_STR[type]);
 
-                /* Drop the event */
+                /* Drop the event; pn stays put, since n is leaving the queue */
                 if (pn) {
-                    pn->next = n->next;
+                    pn->next = nn;
                 }
                 else {
-                    session->queue = n->next;
+                    session->queue = nn;
                 }
                 event_free(n->event);
                 free(n);
                 session->queue_len--;
             }
+            else {
+                pn = n;
+            }
 
-            pn = n;
-            n = n->next;
+            n = nn;
         }
     }
 

@@ -359,7 +359,15 @@ json_t *json_parse(char *input) {
                         i++;
                     }
 
-                    strncpy(s, input + pos, i - pos + 1);
+                    /* Refuse over-long numeric tokens rather than truncating them, which would silently
+                     * change the parsed value */
+                    if (i - pos > JSON_MAX_VALUE_LEN) {
+                        DEBUG_JSON("number too long at pos %d", pos);
+                        ctx_free(ctx);
+                        return NULL;
+                    }
+
+                    memcpy(s, input + pos, i - pos);
                     s[i - pos] = 0;
                     if (point_seen) { /* floating point */
                         ctx_add(ctx, json_double_new(strtod(s, NULL)));

@@ -3370,6 +3370,10 @@ json_t *device_from_json(
             }
 
             char *password_hash = json_str_get(child);
+            if (!validate_password_hash(password_hash)) {
+                return INVALID_FIELD(response_json, key);
+            }
+
             strcpy(device_admin_password_hash, password_hash);
             DEBUG_DEVICE("admin password set");
         }
@@ -3379,6 +3383,10 @@ json_t *device_from_json(
             }
 
             char *password_hash = json_str_get(child);
+            if (!validate_password_hash(password_hash)) {
+                return INVALID_FIELD(response_json, key);
+            }
+
             strcpy(device_normal_password_hash, password_hash);
             DEBUG_DEVICE("normal password set");
         }
@@ -3388,6 +3396,10 @@ json_t *device_from_json(
             }
 
             char *password_hash = json_str_get(child);
+            if (!validate_password_hash(password_hash)) {
+                return INVALID_FIELD(response_json, key);
+            }
+
             strcpy(device_viewonly_password_hash, password_hash);
             DEBUG_DEVICE("view-only password set");
         }

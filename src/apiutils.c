@@ -21,6 +21,7 @@
 #include <mem.h>
 
 #include "espgoodies/common.h"
+#include "espgoodies/crypto.h"
 #include "espgoodies/sleep.h"
 #include "espgoodies/utils.h"
 #include "espgoodies/wifi.h"
@@ -187,6 +188,23 @@ bool validate_id(char *id) {
     return TRUE;
 }
 
+bool validate_password_hash(char *hash) {
+    /* A password hash must be exactly a SHA256 hex digest; anything else would overflow the fixed-size
+     * buffers it gets copied into */
+    if (strlen(hash) != SHA256_HEX_LEN) {
+        return FALSE;
+    }
+
+    int c;
+    while ((c = *hash++)) {
+        if (!IS_HEX(c)) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
 bool validate_ip_address(char *ip, uint8 *a) {
     a[0] = 0;
     char *s = ip;
@@ -226,12 +244,13 @@ bool validate_wifi_bssid(char *bssid_str, uint8 *bssid) {
     char t[3] = {0, 0, 0};
 
     while (TRUE) {
-        if (len > WIFI_BSSID_LEN) {
-            return FALSE;
-        }
-
         if (!s[0]) {
             break;
+        }
+
+        /* Checked here rather than at the top of the loop, so that a complete BSSID doesn't get rejected */
+        if (len >= WIFI_BSSID_LEN) {
+            return FALSE; /* Too many octets */
         }
 
         if (!s[1]) {

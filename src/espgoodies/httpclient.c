@@ -16,6 +16,7 @@
 #include <limits.h>
 
 #include "espgoodies/common.h"
+#include "espgoodies/utils.h"
 #include "espgoodies/wifi.h"
 #include "espgoodies/httpclient.h"
 
@@ -40,11 +41,24 @@ typedef struct {
     uint16           port;
     uint8            ip_addr[4];
     bool             secure;
+    bool             timed_out; /* Timed out before a connection existed; dns_callback() must dispose of req */
 
 } request_args_t;
 
 
+typedef struct {
+
+    http_callback_t callback;
+    int             status;
+
+} deferred_error_t;
+
+
 static char *user_agent = NULL;
+
+
+static void ICACHE_FLASH_ATTR deferred_error_callback(void *arg);
+static void ICACHE_FLASH_ATTR report_request_error(http_callback_t callback, int status);
 
 
 void ICACHE_FLASH_ATTR http_raw_request(
@@ -70,6 +84,32 @@ static void ICACHE_FLASH_ATTR dns_callback(const char * hostname, ip_addr_t *add
 static void ICACHE_FLASH_ATTR timeout_callback(void *arg);
 
 
+void deferred_error_callback(void *arg) {
+    deferred_error_t *de = arg;
+
+    de->callback("", 0, de->status, NULL, NULL, 0, NULL);
+    free(de);
+}
+
+/* Rejecting a request outright must still look asynchronous to the caller. Reporting inline would re-enter the
+ * caller before httpclient_request() has returned, which for queue-driven callers such as webhooks means
+ * recursing once per queued item. */
+void report_request_error(http_callback_t callback, int status) {
+    if (!callback) {
+        return;
+    }
+
+    deferred_error_t *de = malloc(sizeof(deferred_error_t));
+    de->callback = callback;
+    de->status = status;
+
+    if (!call_later(deferred_error_callback, de, /* delay_ms = */ 1)) {
+        /* No timer slot available; report inline rather than not at all */
+        free(de);
+        callback("", 0, status, NULL, NULL, 0, NULL);
+    }
+}
+
 void http_raw_request(
     char *hostname,
     uint16 port,
@@ -84,7 +124,7 @@ void http_raw_request(
 ) {
     DEBUG_HTTPCLIENT("DNS request");
 
-    request_args_t *req = (request_args_t *)malloc(sizeof(request_args_t));
+    request_args_t *req = (request_args_t *)zalloc(sizeof(request_args_t));
     req->hostname = strdup(hostname);
     req->path = strdup(path);
     req->port = port;
@@ -99,6 +139,12 @@ void http_raw_request(
     req->body = malloc(body_len + 1);
     memcpy(req->body, body, body_len);
     req->body[body_len] = '\0'; /* Null-terminate body so that we can log it as a string */
+
+    /* Arm the timeout timer before starting the lookup: dns_callback() may run synchronously and dispose of
+     * req, and it disarms the timer itself when it does */
+    os_timer_disarm(&req->timer);
+    os_timer_setfn(&req->timer, timeout_callback, req);
+    os_timer_arm(&req->timer, timeout * 1000, /* repeat = */ FALSE);
 
     ip_addr_t addr;
     err_t error = espconn_gethostbyname((struct espconn *)req, // It seems we don't need a real espconn pointer here.
@@ -120,11 +166,6 @@ void http_raw_request(
         }
         dns_callback(hostname, NULL, req); /* Handle all DNS errors the same way */
     }
-
-    /* Timeout timer */
-    os_timer_disarm(&req->timer);
-    os_timer_setfn(&req->timer, timeout_callback, req);
-    os_timer_arm(&req->timer, timeout * 1000, /* repeat = */ FALSE);
 }
 
 int chunked_decode(char *chunked, int size) {
@@ -138,8 +179,21 @@ int chunked_decode(char *chunked, int size) {
         if (i <= 0)
             break;
         //[chunk-size-end-ptr]
-        src = (char *)os_strstr(src, "\r\n") + 2;
+        char *crlf = (char *)os_strstr(src, "\r\n");
+        if (crlf == NULL) {
+            break; /* Malformed chunk header */
+        }
+        src = crlf + 2;
         //[chunk-data]
+        if (src >= end) {
+            break; /* Truncated response */
+        }
+        if (i > (int) (end - src)) {
+            /* The chunk header announces more data than was actually received, which happens with any
+             * truncated response; move only what we really have */
+            DEBUG_HTTPCLIENT("chunk size %d exceeds %d remaining bytes", i, (int) (end - src));
+            i = end - src;
+        }
         os_memmove(&chunked[dst], src, i);
         src += i + 2; /* CRLF */
         dst += i;
@@ -280,16 +334,22 @@ void disconnect_callback(void * arg) {
             else {
                 http_status = strtol(req->buffer + strlen(version10), NULL, 10);
                 /* Find body and zero terminate headers */
-                body = (char *)os_strstr(req->buffer, "\r\n\r\n") + 2;
-                *body++ = '\0';
-                *body++ = '\0';
+                char *head_end = (char *)os_strstr(req->buffer, "\r\n\r\n");
+                if (head_end == NULL) {
+                    DEBUG_HTTPCLIENT("no header/body separator in response");
+                }
+                else {
+                    body = head_end + 2;
+                    *body++ = '\0';
+                    *body++ = '\0';
 
-                body_size = req->buffer_size - (body - req->buffer);
+                    body_size = req->buffer_size - (body - req->buffer);
 
-                if(os_strstr(req->buffer, "Transfer-Encoding: chunked"))
-                {
-                    body_size = chunked_decode(body, body_size);
-                    body[body_size] = '\0';
+                    if(os_strstr(req->buffer, "Transfer-Encoding: chunked"))
+                    {
+                        body_size = chunked_decode(body, body_size);
+                        body[body_size] = '\0';
+                    }
                 }
             }
         }
@@ -373,8 +433,16 @@ void error_callback(void *arg, int8 errType) {
 void dns_callback(const char * hostname, ip_addr_t *addr, void * arg) {
     request_args_t * req = (request_args_t *)arg;
 
-    if (addr == NULL) {
-        DEBUG_HTTPCLIENT("DNS failed for %s", hostname);
+    if (addr == NULL || req->timed_out) {
+        if (req->timed_out) {
+            /* The request was already reported as timed out; nothing else owns req, so release it here rather
+             * than opening a connection nobody is waiting for */
+            DEBUG_HTTPCLIENT("DNS completed after timeout for %s", hostname);
+        }
+        else {
+            DEBUG_HTTPCLIENT("DNS failed for %s", hostname);
+        }
+
         if (req->callback) {
             req->callback("", 0, HTTP_STATUS_DNS_ERROR, NULL, NULL, 0, NULL);
         }
@@ -435,6 +503,14 @@ void timeout_callback(void *arg) {
         req->buffer[0] = 0;
     }
 
+    if (!req->connection) {
+        /* Timed out before the connection was created (still resolving DNS). We must not free req here, since
+         * dns_callback() still holds it; flag it instead so that it disposes of req when it runs */
+        DEBUG_HTTPCLIENT("timeout while still resolving DNS");
+        req->timed_out = TRUE;
+        return;
+    }
+
 #ifdef _SSL
         if (req->secure)
             espconn_secure_disconnect(req->connection);
@@ -479,6 +555,7 @@ void httpclient_request(
         url += strlen("https://"); // Get rid of the protocol.
     } else {
         DEBUG_HTTPCLIENT("URL is not HTTP or HTTPS %s", url);
+        report_request_error(callback, HTTP_STATUS_INVALID_URL);
         return;
     }
 
@@ -492,6 +569,14 @@ void httpclient_request(
         colon = NULL; // Limit the search to characters before the path.
     }
 
+    /* The hostname ends at the port separator, or at the path when no port is given */
+    int host_len = (colon ? colon : path) - url;
+    if (host_len >= (int) sizeof(hostname)) {
+        DEBUG_HTTPCLIENT("hostname too long (%d bytes) in %s", host_len, url);
+        report_request_error(callback, HTTP_STATUS_INVALID_URL);
+        return;
+    }
+
     if (colon == NULL) { // The port is not present.
         os_memcpy(hostname, url, path - url);
         hostname[path - url] = '\0';
@@ -500,6 +585,7 @@ void httpclient_request(
         port = strtol(colon + 1, NULL, 10);
         if (port == 0) {
             DEBUG_HTTPCLIENT("port error %s", url);
+            report_request_error(callback, HTTP_STATUS_INVALID_URL);
             return;
         }
 

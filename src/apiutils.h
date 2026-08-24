@@ -42,6 +42,7 @@ bool   ICACHE_FLASH_ATTR  choices_equal(char **choices1, char **choices2);
 int    ICACHE_FLASH_ATTR  validate_num(double value, double min, double max, bool integer, double step, char **choices);
 int    ICACHE_FLASH_ATTR  validate_str(char *value, char **choices);
 bool   ICACHE_FLASH_ATTR  validate_id(char *id);
+bool   ICACHE_FLASH_ATTR  validate_password_hash(char *hash);
 bool   ICACHE_FLASH_ATTR  validate_ip_address(char *ip, uint8 *a);
 bool   ICACHE_FLASH_ATTR  validate_wifi_ssid(char *ssid);
 bool   ICACHE_FLASH_ATTR  validate_wifi_key(char *key);

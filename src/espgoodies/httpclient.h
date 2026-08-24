@@ -18,8 +18,9 @@
 #define DEBUG_HTTPCLIENT(...)      {}
 #endif
 
-#define HTTP_STATUS_DNS_ERROR 590
-#define HTTP_STATUS_TIMEOUT   591
+#define HTTP_STATUS_DNS_ERROR   590
+#define HTTP_STATUS_TIMEOUT     591
+#define HTTP_STATUS_INVALID_URL 592
 
 #define HTTP_DEF_TIMEOUT      20
 
