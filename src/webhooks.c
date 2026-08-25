@@ -232,6 +232,10 @@ void do_webhook_request(event_t *event) {
             on_webhook_response,
             webhooks_timeout
         );
+
+        /* http_raw_request() copies the body, so the shared dump buffer can go back to the allocator if this
+         * event made it grow large */
+        json_dump_r_release();
     }
 
     free(auth_header);

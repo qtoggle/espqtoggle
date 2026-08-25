@@ -211,10 +211,25 @@ char *hmac_sha256_hex(char *s, char *key) {
 char *b64_encode(uint8 *data, int len, bool padding) {
     int i = 0;
     int j = 0;
-    char *enc = malloc(1);
     int size = 0;
     uint8 buf[4];
     uint8 tmp[3];
+
+    if (len < 0) {
+        len = 0;
+    }
+
+    /* Work out the exact output length up front so the buffer can be allocated once: each group of 3 input bytes
+     * makes 4 characters, while a remainder of 1 or 2 bytes makes 2 or 3 characters, rounded up to 4 when padding
+     * is requested. Growing the buffer as we go costs one realloc per output byte, which fragments this allocator
+     * badly for something called on every authenticated request. */
+    int rem = len % 3;
+    int enc_len = (len / 3) * 4;
+    if (rem) {
+        enc_len += padding ? 4 : rem + 1;
+    }
+
+    char *enc = malloc(enc_len + 1);
 
     /* Parse until end of source */
     while (len--) {
@@ -228,9 +243,8 @@ char *b64_encode(uint8 *data, int len, bool padding) {
             buf[2] = ((tmp[1] & 0x0f) << 2) + ((tmp[2] & 0xc0) >> 6);
             buf[3] = tmp[2] & 0x3f;
 
-            /* Allocate 4 new bytes for enc and then translate each encoded buffer part by index from the base 64 index
-             * table into enc unsigned char array */
-            enc = realloc(enc, size + 4);
+            /* Translate each encoded buffer part by index from the base 64 index table into enc unsigned char
+             * array */
             for (i = 0; i < 4; i++) {
                 enc[size++] = b64_table[buf[i]];
             }
@@ -253,23 +267,19 @@ char *b64_encode(uint8 *data, int len, bool padding) {
         buf[2] = ((tmp[1] & 0x0f) << 2) + ((tmp[2] & 0xc0) >> 6);
         buf[3] = tmp[2] & 0x3f;
 
-        /* Perform same write to enc with new allocation */
+        /* Perform same write to enc */
         for (j = 0; (j < i + 1); j++) {
-            enc = realloc(enc, size + 1);
             enc[size++] = b64_table[buf[j]];
         }
 
         if (padding) {
             /* While there is still a remainder, append = to enc */
             while ((i++ < 3)) {
-                enc = realloc(enc, size + 1);
                 enc[size++] = '=';
             }
         }
     }
 
-    /* Make sure we have enough space to add 0 character at end */
-    enc = realloc(enc, size + 1);
     enc[size] = '\0';
 
     return enc;
@@ -300,9 +310,19 @@ int b64_value(char c) {
 
 uint8 *b64_decode(char *s) {
     int i = 0, j, v, size = 0;
-    uint8 *dec = malloc(1);
     uint8 buf[3];
     uint8 tmp[4];
+
+    /* Work out the exact output length up front so the buffer can be allocated once: each group of 4 characters
+     * makes 3 bytes, while a remainder of 2 or 3 characters makes 1 or 2 bytes, a single leftover character
+     * encoding nothing. Everything from the first padding character on is ignored, as it is below. */
+    int len = 0;
+    while (s[len] && s[len] != '=') {
+        len++;
+    }
+
+    int rem = len % 4;
+    uint8 *dec = malloc((len / 4) * 3 + (rem > 1 ? rem - 1 : 0) + 1);
 
     /* Parse until end of source or start of padding */
     while (*s && *s != '=') {
@@ -322,7 +342,6 @@ uint8 *b64_decode(char *s) {
             buf[1] = ((tmp[1] & 0xf) << 4) + ((tmp[2] & 0x3c) >> 2);
             buf[2] = ((tmp[2] & 0x3) << 6) + tmp[3];
 
-            dec = realloc(dec, size + 3);
             for (i = 0; i < 3; i++) {
                 dec[size++] = buf[i];
             }
@@ -341,14 +360,11 @@ uint8 *b64_decode(char *s) {
         buf[1] = ((tmp[1] & 0xf) << 4) + ((tmp[2] & 0x3c) >> 2);
         buf[2] = ((tmp[2] & 0x3) << 6) + tmp[3];
 
-        dec = realloc(dec, size + i - 1);
         for (j = 0; j < i - 1; j++) {
             dec[size++] = buf[j];
         }
     }
 
-    /* Make sure we have enough space to add 0 character at end */
-    dec = realloc(dec, size + 1);
     dec[size] = 0;
 
     return dec;
