@@ -96,6 +96,8 @@ static void  ICACHE_FLASH_ATTR  sha256_transform(sha256_ctx_t *ctx, uint8 *data)
 static void  ICACHE_FLASH_ATTR  sha256_update(sha256_ctx_t *ctx, uint8 *data, uint32 len);
 static uint8 ICACHE_FLASH_ATTR *sha256_final(sha256_ctx_t *ctx);
 
+static int   ICACHE_FLASH_ATTR  b64_value(char c);
+
 
 uint8 *sha1(uint8 *data, int len) {
     uint32 state[5];
@@ -209,10 +211,25 @@ char *hmac_sha256_hex(char *s, char *key) {
 char *b64_encode(uint8 *data, int len, bool padding) {
     int i = 0;
     int j = 0;
-    char *enc = malloc(1);
     int size = 0;
     uint8 buf[4];
     uint8 tmp[3];
+
+    if (len < 0) {
+        len = 0;
+    }
+
+    /* Work out the exact output length up front so the buffer can be allocated once: each group of 3 input bytes
+     * makes 4 characters, while a remainder of 1 or 2 bytes makes 2 or 3 characters, rounded up to 4 when padding
+     * is requested. Growing the buffer as we go costs one realloc per output byte, which fragments this allocator
+     * badly for something called on every authenticated request. */
+    int rem = len % 3;
+    int enc_len = (len / 3) * 4;
+    if (rem) {
+        enc_len += padding ? 4 : rem + 1;
+    }
+
+    char *enc = malloc(enc_len + 1);
 
     /* Parse until end of source */
     while (len--) {
@@ -226,9 +243,8 @@ char *b64_encode(uint8 *data, int len, bool padding) {
             buf[2] = ((tmp[1] & 0x0f) << 2) + ((tmp[2] & 0xc0) >> 6);
             buf[3] = tmp[2] & 0x3f;
 
-            /* Allocate 4 new bytes for enc and then translate each encoded buffer part by index from the base 64 index
-             * table into enc unsigned char array */
-            enc = realloc(enc, size + 4);
+            /* Translate each encoded buffer part by index from the base 64 index table into enc unsigned char
+             * array */
             for (i = 0; i < 4; i++) {
                 enc[size++] = b64_table[buf[i]];
             }
@@ -251,114 +267,104 @@ char *b64_encode(uint8 *data, int len, bool padding) {
         buf[2] = ((tmp[1] & 0x0f) << 2) + ((tmp[2] & 0xc0) >> 6);
         buf[3] = tmp[2] & 0x3f;
 
-        /* Perform same write to enc with new allocation */
+        /* Perform same write to enc */
         for (j = 0; (j < i + 1); j++) {
-            enc = realloc(enc, size + 1);
             enc[size++] = b64_table[buf[j]];
         }
 
         if (padding) {
             /* While there is still a remainder, append = to enc */
             while ((i++ < 3)) {
-                enc = realloc(enc, size + 1);
                 enc[size++] = '=';
             }
         }
     }
 
-    /* Make sure we have enough space to add 0 character at end */
-    enc = realloc(enc, size + 1);
     enc[size] = '\0';
 
     return enc;
 }
 
+/* Maps a base64 character to its 6-bit value, accepting both the standard alphabet (+ /) and the URL-safe
+ * one (- _): JWTs are encoded with the latter and HTTP Basic auth uses the former, and the two only differ in
+ * these last two characters, so accepting both is unambiguous. Returns -1 for anything else. */
+int b64_value(char c) {
+    if (c >= 'A' && c <= 'Z') {
+        return c - 'A';
+    }
+    if (c >= 'a' && c <= 'z') {
+        return c - 'a' + 26;
+    }
+    if (c >= '0' && c <= '9') {
+        return c - '0' + 52;
+    }
+    if (c == '+' || c == '-') {
+        return 62;
+    }
+    if (c == '/' || c == '_') {
+        return 63;
+    }
+
+    return -1;
+}
+
 uint8 *b64_decode(char *s) {
-  int i = 0;
-  int j = 0;
-  int l, size = 0;
-  int len = strlen(s);
-  uint8 *dec = NULL;
-  uint8 buf[3];
-  uint8 tmp[4];
+    int i = 0, j, v, size = 0;
+    uint8 buf[3];
+    uint8 tmp[4];
 
-  dec = malloc(1);
+    /* Work out the exact output length up front so the buffer can be allocated once: each group of 4 characters
+     * makes 3 bytes, while a remainder of 2 or 3 characters makes 1 or 2 bytes, a single leftover character
+     * encoding nothing. Everything from the first padding character on is ignored, as it is below. */
+    int len = 0;
+    while (s[len] && s[len] != '=') {
+        len++;
+    }
 
-    /* Parse until end of source */
-    while (len--) {
-        /* Break if char is = or not base64 char */
-        if (s[j] == '=') {
-            break;
+    int rem = len % 4;
+    uint8 *dec = malloc((len / 4) * 3 + (rem > 1 ? rem - 1 : 0) + 1);
+
+    /* Parse until end of source or start of padding */
+    while (*s && *s != '=') {
+        v = b64_value(*s++);
+        if (v < 0) {
+            /* Refuse outright rather than returning silent garbage: the previous code left the character's
+             * raw ASCII value in place when it was missing from the table */
+            free(dec);
+            return NULL;
         }
 
-        if (!(isalnum((int) s[j]) || '+' == s[j] || '/' == s[j])) {
-            break;
-        }
+        tmp[i++] = v;
 
-        /* Read up to 4 bytes at a time into tmp */
-        tmp[i++] = s[j++];
-
-        /* If 4 bytes read then decode into buf **/
+        /* If 4 characters read then decode into buf */
         if (i == 4) {
-            /* Translate values in tmp from table */
-            for (i = 0; i < 4; i++) {
-                /* Find translation char in b64_table */
-                for (l = 0; l < 64; l++) {
-                    if (tmp[i] == b64_table[l]) {
-                        tmp[i] = l;
-                        break;
-                    }
-                }
-            }
-
-            /* Decode */
             buf[0] = (tmp[0] << 2) + ((tmp[1] & 0x30) >> 4);
             buf[1] = ((tmp[1] & 0xf) << 4) + ((tmp[2] & 0x3c) >> 2);
             buf[2] = ((tmp[2] & 0x3) << 6) + tmp[3];
 
-            /* Write decoded buffer to dec */
-            dec = realloc(dec, size + 3);
             for (i = 0; i < 3; i++) {
                 dec[size++] = buf[i];
             }
 
-            /* Reset */
             i = 0;
         }
     }
 
-    /* Remainder */
-    if (i > 0) {
-        /* Fill tmp with 0 at most 4 times */
-        for (j = i; j < 4; ++j) {
+    /* Remainder; a single leftover character encodes nothing */
+    if (i > 1) {
+        for (j = i; j < 4; j++) {
             tmp[j] = 0;
         }
 
-        /* Translate remainder */
-        for (j = 0; j < 4; j++) {
-            /* Find translation char in b64_table */
-            for (l = 0; l < 64; l++) {
-                if (tmp[j] == b64_table[l]) {
-                    tmp[j] = l;
-                    break;
-                }
-            }
-        }
-
-        /* Decode remainder */
         buf[0] = (tmp[0] << 2) + ((tmp[1] & 0x30) >> 4);
         buf[1] = ((tmp[1] & 0xf) << 4) + ((tmp[2] & 0x3c) >> 2);
         buf[2] = ((tmp[2] & 0x3) << 6) + tmp[3];
 
-        /* Write remainder decoded buffer to dec */
-        dec = realloc(dec, size + (i - 1));
-        for (j = 0; (j < i - 1); j++) {
+        for (j = 0; j < i - 1; j++) {
             dec[size++] = buf[j];
         }
     }
 
-    /* Make sure we have enough space to add 0 character at end */
-    dec = realloc(dec, size + 1);
     dec[size] = 0;
 
     return dec;

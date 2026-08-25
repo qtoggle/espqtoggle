@@ -310,7 +310,9 @@ void on_ota_latest_response(
                 while (*pname && isspace((int) *pname)) {  /* Skip leading spaces */
                     pname++;
                 }
-                while (*pname && isspace((int) pname[strlen(pname)])) {  /* Remove trailing spaces */
+                /* strlen() - 1, not strlen(): the latter is the NUL terminator, which is never a space,
+                 * so this loop never ran. Guarded by *pname, so the index cannot go negative. */
+                while (*pname && isspace((int) pname[strlen(pname) - 1])) {  /* Remove trailing spaces */
                     pname[strlen(pname) - 1] = 0;
                 }
 
@@ -321,7 +323,9 @@ void on_ota_latest_response(
                 while (*pvalue && isspace((int) *pvalue)) {  /* Skip leading spaces */
                     pvalue++;
                 }
-                while (*pvalue && isspace((int) pvalue[strlen(pvalue)])) {  /* Remove trailing spaces */
+                /* strlen() - 1, not strlen(): the latter is the NUL terminator, which is never a space,
+                 * so this loop never ran. Guarded by *pvalue, so the index cannot go negative. */
+                while (*pvalue && isspace((int) pvalue[strlen(pvalue) - 1])) {  /* Remove trailing spaces */
                     pvalue[strlen(pvalue) - 1] = 0;
                 }
 

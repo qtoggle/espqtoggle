@@ -32,7 +32,10 @@
 #include "espgoodies/utils.h"
 
 
-#define REALLOC_CHUNK_SIZE    8
+/* Growth granularity for realloc_chunks(). Buffers that grow a token at a time (JSON dumps) or a packet at
+ * a time (HTTP request bodies) call it constantly, so a small chunk means one realloc per few bytes on an
+ * allocator that fragments badly. 64 wastes at most 63 bytes per buffer. */
+#define REALLOC_CHUNK_SIZE    64
 #define DTOSTR_BUF_LEN        32
 #define MAX_CALL_LATER_TIMERS 16
 

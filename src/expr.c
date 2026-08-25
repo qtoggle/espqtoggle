@@ -340,7 +340,9 @@ double _lte_callback(expr_t *expr, int argc, double *args) {
 }
 
 double _abs_callback(expr_t *expr, int argc, double *args) {
-    return abs(args[0]);
+    /* fabs(), not abs(): the integer one truncates the value, and narrowing an out-of-range double to int is
+     * undefined */
+    return fabs(args[0]);
 }
 
 double _sgn_callback(expr_t *expr, int argc, double *args) {
@@ -349,8 +351,10 @@ double _sgn_callback(expr_t *expr, int argc, double *args) {
 
 double _min_callback(expr_t *expr, int argc, double *args) {
     int i;
-    double m = INT_MAX;
-    for (i = 0; i < argc; i++) {
+    /* Seeded from the first argument rather than an integer bound, which would clamp any value outside
+     * [-INT_MAX, INT_MAX]. The parser guarantees at least two arguments. */
+    double m = args[0];
+    for (i = 1; i < argc; i++) {
         if (args[i] < m) {
             m = args[i];
         }
@@ -361,8 +365,10 @@ double _min_callback(expr_t *expr, int argc, double *args) {
 
 double _max_callback(expr_t *expr, int argc, double *args) {
     int i;
-    double m = -INT_MAX;
-    for (i = 0; i < argc; i++) {
+    /* Seeded from the first argument rather than an integer bound, which would clamp any value outside
+     * [-INT_MAX, INT_MAX]. The parser guarantees at least two arguments. */
+    double m = args[0];
+    for (i = 1; i < argc; i++) {
         if (args[i] > m) {
             m = args[i];
         }

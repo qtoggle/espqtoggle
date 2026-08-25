@@ -32,6 +32,10 @@
 
 #define STRINGIFIED_CHUNK_SIZE 128
 
+/* Size beyond which the shared dump buffer is handed back to the allocator by json_dump_r_release()
+ * instead of being kept for the next dump. See the comment on that function. */
+#define JSON_DUMP_R_KEEP_SIZE  2048
+
 
 typedef struct {
 
@@ -58,6 +62,10 @@ static bool   ICACHE_FLASH_ATTR  ctx_add(ctx_t *ctx, json_t *json);
 static bool   ICACHE_FLASH_ATTR  ctx_push(ctx_t *ctx, json_t *json);
 static json_t ICACHE_FLASH_ATTR *ctx_pop(ctx_t *ctx);
 static void   ICACHE_FLASH_ATTR  ctx_free(ctx_t *ctx);
+
+
+static char *dump_buffer = NULL;
+static int   dump_buffer_size = 0;
 
 
 json_t *json_parse(char *input) {
@@ -452,8 +460,6 @@ char *json_dump(json_t *json, uint8 free_mode) {
 
 char *json_dump_r(json_t *json, uint8 free_mode) {
     int len = 0;
-    static char *dump_buffer = NULL;
-    static int dump_buffer_size = 0;
 
     json_dump_rec(json, &dump_buffer, &len, &dump_buffer_size, free_mode);
     dump_buffer_size = realloc_chunks(&dump_buffer, dump_buffer_size, len + 1);
@@ -462,12 +468,33 @@ char *json_dump_r(json_t *json, uint8 free_mode) {
     return dump_buffer;
 }
 
+/* Releases the buffer json_dump_r() shares between calls, but only once it has grown past
+ * JSON_DUMP_R_KEEP_SIZE. Keeping it below that size is the whole point of json_dump_r(): the buffer grows
+ * REALLOC_CHUNK_SIZE bytes at a time, so a dump into a cold buffer costs one realloc per chunk of output,
+ * while a dump into one that is already large enough costs none. Ordinary responses stay on that free path.
+ *
+ * A one-off large response is the case worth reclaiming: it would otherwise raise the floor of a ~40kB heap
+ * by its own size for the rest of the uptime, and this allocator reboots the device when it cannot satisfy a
+ * request. Callers invoke this once they are done with the pointer json_dump_r() returned - the pointer is
+ * invalid afterwards, as it already was after any subsequent json_dump_r() call. */
+void json_dump_r_release(void) {
+    if (dump_buffer_size > JSON_DUMP_R_KEEP_SIZE) {
+        free(dump_buffer);
+        dump_buffer = NULL;
+        dump_buffer_size = 0;
+    }
+}
+
 void json_stringify(json_t *json) {
     if (json->type == JSON_TYPE_STRINGIFIED) {
         return; /* Already stringified */
     }
 
     char *stringified = json_dump_r(json, /* free_mode = */ JSON_FREE_MEMBERS);
+
+    /* JSON_FREE_MEMBERS only clears the union for the types that own memory. For an int, double, bool or null
+     * it still holds the value bits, which would then be realloc()ed as if they were a pointer. */
+    json->chunks = NULL;
 
     uint16 i = 0, chunks = 0, chunk, pos;
     char c, *s = stringified;

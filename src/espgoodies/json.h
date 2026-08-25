@@ -78,6 +78,7 @@ typedef struct json {
 json_t ICACHE_FLASH_ATTR *json_parse(char *input);
 char   ICACHE_FLASH_ATTR *json_dump(json_t *json, uint8 free_mode);
 char   ICACHE_FLASH_ATTR *json_dump_r(json_t *json, uint8 free_mode);
+void   ICACHE_FLASH_ATTR  json_dump_r_release(void);
 void   ICACHE_FLASH_ATTR  json_stringify(json_t *json);
 void   ICACHE_FLASH_ATTR  json_free(json_t *json);
 json_t ICACHE_FLASH_ATTR *json_dup(json_t *json);

@@ -74,7 +74,7 @@ json_t *http_parse_url_encoded(char *input) {
                     value[0] = 0;
                 }
                 else {
-                    append_max_len(value, c, JSON_MAX_VALUE_LIST_LEN);
+                    append_max_len(value, c, JSON_MAX_VALUE_LEN);
                 }
 
                 break;
@@ -84,6 +84,8 @@ json_t *http_parse_url_encoded(char *input) {
 
     /* Append the last value that hasn't yet been processed, if any */
     if (*name) {
+        unescape_url_encoded_value(value);
+
         json_obj_append(json, name, json_str_new(value));
     }
 
@@ -110,7 +112,9 @@ char *http_parse_auth_header(char *header, char *type) {
         return NULL;
     }
 
-    if (strncasecmp(header, type, p - header)) {
+    /* The lengths have to match too, or a shorter prefix is accepted: comparing only up to the space made
+     * "B <token>" pass as "Bearer" */
+    if (p - header != (int) strlen(type) || strncasecmp(header, type, p - header)) {
         /* Header does not start with given type */
         return NULL;
     }
@@ -135,28 +139,19 @@ bool http_decode_basic_auth(char *basic_auth, char **username, char **password) 
         return FALSE;
     }
 
-    if (decoded[0] == ':') {
-        /* Special case where username is empty */
-        *username = strdup("");
-        *password = strdup(decoded + 1);
-        free(decoded);
-        return TRUE;
-    }
-
-    char *token = strtok(decoded, ":");
-    if (!token) {
+    /* RFC 7617: the credentials split at the *first* colon, and everything after it is the password, colons
+     * included. strtok() would both stop at the wrong colon and collapse consecutive ones. */
+    char *sep = strchr(decoded, ':');
+    if (!sep) {
         free(decoded);
         return FALSE;
     }
-    *username = strdup(token);
 
-    token = strtok(NULL, ":");
-    if (token) {
-        *password = strdup(token);
-    }
-    else {
-        *password = strdup("");
-    }
+    *sep = 0;
+    *username = strdup(decoded);   /* Empty when the colon comes first */
+    *password = strdup(sep + 1);
+
+    free(decoded);
 
     return TRUE;
 }

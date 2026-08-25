@@ -26,6 +26,23 @@
 typedef uint8 *(*sign_func_t)(uint8 *data, int data_len, uint8 *key, int key_len);
 
 
+static bool ICACHE_FLASH_ATTR signature_equal(char *a, char *b, int len);
+
+
+/* Constant-time equality, so that a mismatching signature reveals nothing about how many of its leading
+ * characters were correct */
+bool signature_equal(char *a, char *b, int len) {
+    uint8 diff = 0;
+    int i;
+
+    for (i = 0; i < len; i++) {
+        diff |= (uint8) a[i] ^ (uint8) b[i];
+    }
+
+    return diff == 0;
+}
+
+
 jwt_t *jwt_new(uint8 alg, json_t *claims) {
     jwt_t *jwt = zalloc(sizeof(jwt_t));
 
@@ -118,6 +135,10 @@ jwt_t *jwt_parse(char *jwt_str) {
     /* Parse header */
     char *header_str = (char *) b64_decode(header_b64);
     free(header_b64);
+    if (!header_str) {
+        /* Not valid base64 */
+        return NULL;
+    }
 
     json_t *header = json_parse(header_str);
     free(header_str);
@@ -155,9 +176,13 @@ jwt_t *jwt_parse(char *jwt_str) {
     free(alg_str);
 
     /* Parse payload */
-    char *payload_b64 = strndup(p1 + 1, p2 - p1);
+    char *payload_b64 = strndup(p1 + 1, p2 - p1 - 1);
     char *payload_str = (char *) b64_decode(payload_b64);
     free(payload_b64);
+    if (!payload_str) {
+        /* Not valid base64 */
+        return NULL;
+    }
 
     json_t *claims = json_parse(payload_str);
     free(payload_str);
@@ -219,13 +244,18 @@ bool jwt_validate(char *jwt_str, uint8 alg, char *secret) {
     free(local_signature);
 
     char *signature_b64 = p + 1;
-    /* Remove any padding */
+
+    /* Ignore any padding. Done by shortening the length rather than by writing terminators, both to keep the
+     * caller's string intact and because an empty signature would otherwise index [-1]. */
     int l = strlen(signature_b64);
-    while (signature_b64[l - 1] == '=') {
-        signature_b64[l - 1] = 0;
+    while (l > 0 && signature_b64[l - 1] == '=') {
         l--;
     }
-    bool valid = !strcmp(signature_b64, local_signature_b64);
+
+    /* The length is not secret, so it can be compared directly; the contents are, so they are not */
+    bool valid = (l == (int) strlen(local_signature_b64)) && signature_equal(signature_b64,
+                                                                            local_signature_b64,
+                                                                            l);
     free(local_signature_b64);
 
     return valid;

@@ -177,7 +177,7 @@ void attr_set_param_uint32(port_t *port, attrdef_t *attrdef, int64 value) {
         attr_set_user_data_cache(port, attrdef, v);
     }
 
-    PERIPHERAL_PARAM_SINT32(port->peripheral, attrdef->storage_param_no) = v;
+    PERIPHERAL_PARAM_UINT32(port->peripheral, attrdef->storage_param_no) = v;
 }
 
 int64 attr_get_param_sint32(port_t *port, attrdef_t *attrdef) {
@@ -197,7 +197,7 @@ void attr_set_param_sint32(port_t *port, attrdef_t *attrdef, int64 value) {
         attr_set_user_data_cache(port, attrdef, v);
     }
 
-    PERIPHERAL_PARAM_UINT16(port->peripheral, attrdef->storage_param_no) = v;
+    PERIPHERAL_PARAM_SINT32(port->peripheral, attrdef->storage_param_no) = v;
 }
 
 int64 attr_get_param_sint64(port_t *port, attrdef_t *attrdef) {
@@ -233,7 +233,7 @@ void attr_set_param_double(port_t *port, attrdef_t *attrdef, double value) {
         attr_set_user_data_cache(port, attrdef, value);
     }
 
-    PERIPHERAL_PARAM_UINT16(port->peripheral, attrdef->storage_param_no) = value;
+    PERIPHERAL_PARAM_DOUBLE(port->peripheral, attrdef->storage_param_no) = value;
 }
 
 int attr_get_flag(port_t *port, attrdef_t *attrdef) {

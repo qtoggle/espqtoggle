@@ -2979,10 +2979,18 @@ json_t *api_put_peripherals(json_t *query_json, json_t *request_json, int *code)
             memcpy(peripheral->params + PERIPHERAL_CONFIG_OFFS_INT32_PARAMS, int32_params, int32_param_count * 4);
         }
         if (int64_param_count) {
-            memcpy(peripheral->params + PERIPHERAL_CONFIG_OFFS_INT64_PARAMS, int64_params, int64_param_count * 4);
+            memcpy(
+                peripheral->params + PERIPHERAL_CONFIG_OFFS_INT64_PARAMS,
+                int64_params,
+                int64_param_count * sizeof(int64_params[0])
+            );
         }
         if (double_param_count) {
-            memcpy(peripheral->params + PERIPHERAL_CONFIG_OFFS_DOUBLE_PARAMS, double_params, double_param_count * 4);
+            memcpy(
+                peripheral->params + PERIPHERAL_CONFIG_OFFS_DOUBLE_PARAMS,
+                double_params,
+                double_param_count * sizeof(double_params[0])
+            );
         }
 
         peripheral_init(peripheral);

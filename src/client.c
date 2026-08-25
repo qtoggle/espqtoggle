@@ -414,7 +414,7 @@ void on_http_request(
     }
 
     /* Treat the listen API call separately */
-    if (!strncmp(path, "/listen", 7) && method == HTTP_METHOD_GET) {
+    if (!strcmp(path, "/listen") && method == HTTP_METHOD_GET) {
         DEBUG_ESPQTCLIENT_CONN(conn, "received listen request");
 
         if (access_level < API_ACCESS_LEVEL_VIEWONLY) {
@@ -588,6 +588,10 @@ void respond_json(struct espconn *conn, int status, json_t *json) {
     else {
         DEBUG_ESPQTCLIENT_CONN(conn, "responding with status %d", status);
     }
+
+    /* The body has been copied into the response by now, so the shared dump buffer can go back to the
+     * allocator if this response made it grow large */
+    json_dump_r_release();
 
     tcp_send(conn, response, len, /* free on sent = */ TRUE);
 
