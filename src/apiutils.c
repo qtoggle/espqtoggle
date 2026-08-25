@@ -206,15 +206,30 @@ bool validate_password_hash(char *hash) {
 }
 
 bool validate_ip_address(char *ip, uint8 *a) {
-    a[0] = 0;
     char *s = ip;
-    int c, i = 0;
+    int c, i = 0, digits = 0, octet = 0;
+
+    a[0] = 0;
+
     while ((c = *s++)) {
         if (isdigit(c)) {
-            a[i] = a[i] * 10 + (c - '0');
+            /* Accumulated in an int and range-checked: a uint8 would wrap silently, so "999.1.1.1" used to
+             * validate as 231.1.1.1 */
+            if (++digits > 3) {
+                return FALSE;
+            }
+
+            octet = octet * 10 + (c - '0');
+            if (octet > 255) {
+                return FALSE;
+            }
+
+            a[i] = octet;
         }
-        else if ((c == '.') && (i < 3)) {
+        else if (c == '.' && i < 3 && digits) {
             i++;
+            digits = 0;
+            octet = 0;
             a[i] = 0;
         }
         else {
@@ -222,11 +237,8 @@ bool validate_ip_address(char *ip, uint8 *a) {
         }
     }
 
-    if (i < 3) {
-        return FALSE;
-    }
-
-    return TRUE;
+    /* Four octets, and the last one actually had digits: "1.2.3." used to pass as 1.2.3.0 */
+    return i == 3 && digits > 0;
 }
 
 bool validate_wifi_ssid(char *ssid) {

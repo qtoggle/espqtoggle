@@ -414,7 +414,7 @@ void on_http_request(
     }
 
     /* Treat the listen API call separately */
-    if (!strncmp(path, "/listen", 7) && method == HTTP_METHOD_GET) {
+    if (!strcmp(path, "/listen") && method == HTTP_METHOD_GET) {
         DEBUG_ESPQTCLIENT_CONN(conn, "received listen request");
 
         if (access_level < API_ACCESS_LEVEL_VIEWONLY) {

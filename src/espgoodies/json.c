@@ -469,6 +469,10 @@ void json_stringify(json_t *json) {
 
     char *stringified = json_dump_r(json, /* free_mode = */ JSON_FREE_MEMBERS);
 
+    /* JSON_FREE_MEMBERS only clears the union for the types that own memory. For an int, double, bool or null
+     * it still holds the value bits, which would then be realloc()ed as if they were a pointer. */
+    json->chunks = NULL;
+
     uint16 i = 0, chunks = 0, chunk, pos;
     char c, *s = stringified;
 

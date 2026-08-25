@@ -60,13 +60,16 @@
 #define PERIPHERAL_SET_FLAG(p, no, v)  {if (v) (p)->flags |= BIT(no); else (p)->flags &= ~BIT(no);}
 #define PERIPHERAL_PARAM_UINT8(p, no)  (p)->params[no]
 #define PERIPHERAL_PARAM_SINT8(p, no)  ((int8 *) (p)->params)[no]
-#define PERIPHERAL_PARAM_UINT16(p, no) ((uint16 *) (p)->params)[no + 8]
-#define PERIPHERAL_PARAM_SINT16(p, no) ((int16 *) (p)->params)[no + 8]
-#define PERIPHERAL_PARAM_UINT32(p, no) ((uint32 *) (p)->params)[no + 16]
-#define PERIPHERAL_PARAM_SINT32(p, no) ((int32 *) (p)->params)[no + 16]
-#define PERIPHERAL_PARAM_UINT64(p, no) ((uint64 *) (p)->params)[no + 32]
-#define PERIPHERAL_PARAM_SINT64(p, no) ((uint64*) (p)->params)[no + 32]
-#define PERIPHERAL_PARAM_DOUBLE(p, no) ((double *) (p)->params)[no + 32]
+/* These index *elements*, not bytes, so each base is the byte offset above divided by the element size:
+ * 0x08 / 2, 0x10 / 4 and 0x20 / 8 all come to 4. Using the byte offsets directly (8, 16, 32) put UINT32 at
+ * byte 64 and UINT64 at byte 256, both well outside the 56-byte params block. */
+#define PERIPHERAL_PARAM_UINT16(p, no) ((uint16 *) (p)->params)[no + 4]
+#define PERIPHERAL_PARAM_SINT16(p, no) ((int16 *) (p)->params)[no + 4]
+#define PERIPHERAL_PARAM_UINT32(p, no) ((uint32 *) (p)->params)[no + 4]
+#define PERIPHERAL_PARAM_SINT32(p, no) ((int32 *) (p)->params)[no + 4]
+#define PERIPHERAL_PARAM_UINT64(p, no) ((uint64 *) (p)->params)[no + 4]
+#define PERIPHERAL_PARAM_SINT64(p, no) ((int64 *) (p)->params)[no + 4]
+#define PERIPHERAL_PARAM_DOUBLE(p, no) ((double *) (p)->params)[no + 4]
 
 
 typedef struct peripheral {

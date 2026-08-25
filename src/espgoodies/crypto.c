@@ -96,6 +96,8 @@ static void  ICACHE_FLASH_ATTR  sha256_transform(sha256_ctx_t *ctx, uint8 *data)
 static void  ICACHE_FLASH_ATTR  sha256_update(sha256_ctx_t *ctx, uint8 *data, uint32 len);
 static uint8 ICACHE_FLASH_ATTR *sha256_final(sha256_ctx_t *ctx);
 
+static int   ICACHE_FLASH_ATTR  b64_value(char c);
+
 
 uint8 *sha1(uint8 *data, int len) {
     uint32 state[5];
@@ -273,86 +275,74 @@ char *b64_encode(uint8 *data, int len, bool padding) {
     return enc;
 }
 
+/* Maps a base64 character to its 6-bit value, accepting both the standard alphabet (+ /) and the URL-safe
+ * one (- _): JWTs are encoded with the latter and HTTP Basic auth uses the former, and the two only differ in
+ * these last two characters, so accepting both is unambiguous. Returns -1 for anything else. */
+int b64_value(char c) {
+    if (c >= 'A' && c <= 'Z') {
+        return c - 'A';
+    }
+    if (c >= 'a' && c <= 'z') {
+        return c - 'a' + 26;
+    }
+    if (c >= '0' && c <= '9') {
+        return c - '0' + 52;
+    }
+    if (c == '+' || c == '-') {
+        return 62;
+    }
+    if (c == '/' || c == '_') {
+        return 63;
+    }
+
+    return -1;
+}
+
 uint8 *b64_decode(char *s) {
-  int i = 0;
-  int j = 0;
-  int l, size = 0;
-  int len = strlen(s);
-  uint8 *dec = NULL;
-  uint8 buf[3];
-  uint8 tmp[4];
+    int i = 0, j, v, size = 0;
+    uint8 *dec = malloc(1);
+    uint8 buf[3];
+    uint8 tmp[4];
 
-  dec = malloc(1);
-
-    /* Parse until end of source */
-    while (len--) {
-        /* Break if char is = or not base64 char */
-        if (s[j] == '=') {
-            break;
+    /* Parse until end of source or start of padding */
+    while (*s && *s != '=') {
+        v = b64_value(*s++);
+        if (v < 0) {
+            /* Refuse outright rather than returning silent garbage: the previous code left the character's
+             * raw ASCII value in place when it was missing from the table */
+            free(dec);
+            return NULL;
         }
 
-        if (!(isalnum((int) s[j]) || '+' == s[j] || '/' == s[j])) {
-            break;
-        }
+        tmp[i++] = v;
 
-        /* Read up to 4 bytes at a time into tmp */
-        tmp[i++] = s[j++];
-
-        /* If 4 bytes read then decode into buf **/
+        /* If 4 characters read then decode into buf */
         if (i == 4) {
-            /* Translate values in tmp from table */
-            for (i = 0; i < 4; i++) {
-                /* Find translation char in b64_table */
-                for (l = 0; l < 64; l++) {
-                    if (tmp[i] == b64_table[l]) {
-                        tmp[i] = l;
-                        break;
-                    }
-                }
-            }
-
-            /* Decode */
             buf[0] = (tmp[0] << 2) + ((tmp[1] & 0x30) >> 4);
             buf[1] = ((tmp[1] & 0xf) << 4) + ((tmp[2] & 0x3c) >> 2);
             buf[2] = ((tmp[2] & 0x3) << 6) + tmp[3];
 
-            /* Write decoded buffer to dec */
             dec = realloc(dec, size + 3);
             for (i = 0; i < 3; i++) {
                 dec[size++] = buf[i];
             }
 
-            /* Reset */
             i = 0;
         }
     }
 
-    /* Remainder */
-    if (i > 0) {
-        /* Fill tmp with 0 at most 4 times */
-        for (j = i; j < 4; ++j) {
+    /* Remainder; a single leftover character encodes nothing */
+    if (i > 1) {
+        for (j = i; j < 4; j++) {
             tmp[j] = 0;
         }
 
-        /* Translate remainder */
-        for (j = 0; j < 4; j++) {
-            /* Find translation char in b64_table */
-            for (l = 0; l < 64; l++) {
-                if (tmp[j] == b64_table[l]) {
-                    tmp[j] = l;
-                    break;
-                }
-            }
-        }
-
-        /* Decode remainder */
         buf[0] = (tmp[0] << 2) + ((tmp[1] & 0x30) >> 4);
         buf[1] = ((tmp[1] & 0xf) << 4) + ((tmp[2] & 0x3c) >> 2);
         buf[2] = ((tmp[2] & 0x3) << 6) + tmp[3];
 
-        /* Write remainder decoded buffer to dec */
-        dec = realloc(dec, size + (i - 1));
-        for (j = 0; (j < i - 1); j++) {
+        dec = realloc(dec, size + i - 1);
+        for (j = 0; j < i - 1; j++) {
             dec[size++] = buf[j];
         }
     }

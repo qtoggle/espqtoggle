@@ -632,15 +632,16 @@ void httpclient_request(
         headers = realloc(headers, headers_len + 1);
         h = headers + headers_len - hl;
         snprintf(h, hl + 1, "Content-Length: %s\r\n", cl_value);
+    }
 
-        /* Add extra headers */
-        for (i = 0; i < header_count; i++) {
-            hl = strlen(header_names[i]) + strlen(header_values[i]) + 4;
-            headers_len += hl;
-            headers = realloc(headers, headers_len + 1);
-            h = headers + headers_len - hl;
-            snprintf(h, hl + 1, "%s: %s\r\n", header_names[i], header_values[i]);
-        }
+    /* Outside the body_len check above: a caller's headers have nothing to do with whether there is a body,
+     * and a GET or HEAD used to have them silently dropped */
+    for (i = 0; i < header_count; i++) {
+        hl = strlen(header_names[i]) + strlen(header_values[i]) + 4;
+        headers_len += hl;
+        headers = realloc(headers, headers_len + 1);
+        h = headers + headers_len - hl;
+        snprintf(h, hl + 1, "%s: %s\r\n", header_names[i], header_values[i]);
     }
 
     headers[headers_len] = 0;

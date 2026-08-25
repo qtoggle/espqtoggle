@@ -25,11 +25,19 @@ char *string_pool_read(char *pool, void *offs_save) {
     uint32 offs;
     memcpy(&offs, offs_save, 4);
 
-    if (offs == 0 || offs >= 65536) {  /* Some extra checking, just in case */
+    if (offs == 0 || offs >= CONFIG_STR_SIZE) {  /* Some extra checking, just in case */
         return NULL;
     }
 
-    return pool + offs;
+    /* A corrupted pool may hold no terminator at all, in which case reading the string would run past its end */
+    uint32 i;
+    for (i = offs; i < CONFIG_STR_SIZE; i++) {
+        if (!pool[i]) {
+            return pool + offs;
+        }
+    }
+
+    return NULL;
 }
 
 char *string_pool_read_dup(char *pool, void *offs_save) {
