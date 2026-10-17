@@ -81,6 +81,16 @@ void   ICACHE_FLASH_ATTR system_reset_set_callbacks(
 void   ICACHE_FLASH_ATTR system_reset_callback(bool factory);
 void   ICACHE_FLASH_ATTR system_check_reboot_loop(void);
 
+/* Records that an allocation failed, just before the allocator restarts the device. Writes straight to RTC
+ * memory and allocates nothing, since there is no memory left to work with. */
+void   ICACHE_FLASH_ATTR system_record_alloc_failure(uint32 size);
+
+/* Why the device last restarted, as determined by system_check_reboot_loop(). Returns a static string. */
+char   ICACHE_FLASH_ATTR *system_get_last_reset_reason(void);
+
+/* The size of the allocation that failed, when the last reset was caused by one; 0 otherwise */
+uint32 ICACHE_FLASH_ATTR system_get_last_alloc_fail_size(void);
+
 void   ICACHE_FLASH_ATTR system_get_fw_version(version_t *version);
 void   ICACHE_FLASH_ATTR system_set_fw_version(version_t *version);
 

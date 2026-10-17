@@ -1,0 +1,62 @@
+{
+    "name": "get-diag",
+    "instructions": [
+        {
+            "name": "json-http-client",
+            "params": {
+                "method": "GET",
+                "path": "/diag",
+                "headers": {
+                    "Authorization": "Bearer ${TEST_JWT_ADMIN}"
+                },
+                "expected_status": 200,
+                "expected_body_schema": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                        "last_reset",
+                        "free_mem",
+                        "boot_count"
+                    ],
+                    "properties": {
+                        "last_reset": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                                "reason",
+                                "alloc_size"
+                            ],
+                            "properties": {
+                                "reason": {
+                                    "enum": [
+                                        "unknown",
+                                        "power",
+                                        "external",
+                                        "software",
+                                        "exception",
+                                        "hardware-watchdog",
+                                        "software-watchdog",
+                                        "deep-sleep-wake",
+                                        "out-of-memory"
+                                    ]
+                                },
+                                "alloc_size": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                }
+                            }
+                        },
+                        "free_mem": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "boot_count": {
+                            "type": "integer",
+                            "minimum": 0
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

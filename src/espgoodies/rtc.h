@@ -40,5 +40,10 @@ uint32 ICACHE_FLASH_ATTR rtc_get_boot_count(void);
 uint32 ICACHE_FLASH_ATTR rtc_get_value(uint8 addr);
 bool   ICACHE_FLASH_ATTR rtc_set_value(uint8 addr, uint32 value);
 
+/* Same, but without the full-boot gate, for records that must survive a reset which clears it. The caller is
+ * responsible for telling a real record from uninitialized RTC contents, normally with a magic value. */
+uint32 ICACHE_FLASH_ATTR rtc_get_raw_value(uint8 addr);
+bool   ICACHE_FLASH_ATTR rtc_set_raw_value(uint8 addr, uint32 value);
+
 
 #endif /* _ESPGOODIES_RTC_H */

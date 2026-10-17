@@ -30,6 +30,7 @@
 #include "espgoodies/flashcfg.h"
 #include "espgoodies/httpserver.h"
 #include "espgoodies/ota.h"
+#include "espgoodies/rtc.h"
 #include "espgoodies/sleep.h"
 #include "espgoodies/system.h"
 #include "espgoodies/utils.h"
@@ -228,6 +229,9 @@ json_t *api_call_handle(int method, char* path, json_t *query_json, json_t *requ
     }
     else if (!strcmp(part1, "reset") && method == HTTP_METHOD_POST && !part2) {
         response_json = api_post_reset(query_json, request_json, code);
+    }
+    else if (!strcmp(part1, "diag") && method == HTTP_METHOD_GET && !part2) {
+        response_json = api_get_diag(query_json, code);
     }
 #ifdef _OTA
     else if (!strcmp(part1, "firmware") && !part2) {
@@ -3190,6 +3194,33 @@ json_t *api_patch_system(json_t *query_json, json_t *request_json, int *code) {
     system_config_save();
 
     *code = 204;
+
+    return response_json;
+}
+
+/* Diagnostics that have nothing to do with the qToggle API: they describe the firmware's own health, so they
+ * live here rather than among the device attributes. */
+json_t *api_get_diag(json_t *query_json, int *code) {
+    json_t *response_json = json_obj_new();
+
+    if (api_access_level < API_ACCESS_LEVEL_ADMIN) {
+        return FORBIDDEN(response_json, API_ACCESS_LEVEL_ADMIN);
+    }
+
+    /* Why the device last restarted. Without this, an unexpected reset leaves no trace that a release build
+     * can report, since the reason only ever went to the debug log. */
+    json_t *last_reset_json = json_obj_new();
+    json_obj_append(response_json, "last_reset", last_reset_json);
+    json_obj_append(last_reset_json, "reason", json_str_new(system_get_last_reset_reason()));
+    json_obj_append(last_reset_json, "alloc_size", json_int_new(system_get_last_alloc_fail_size()));
+
+    /* Free heap in bytes, unlike the device's mem_usage, which is a percentage of MAX_AVAILABLE_RAM */
+    json_obj_append(response_json, "free_mem", json_int_new(system_get_free_heap_size()));
+
+    /* Counts boots since the last full boot, so repeated resets are visible even without a history */
+    json_obj_append(response_json, "boot_count", json_int_new(rtc_get_boot_count()));
+
+    *code = 200;
 
     return response_json;
 }
