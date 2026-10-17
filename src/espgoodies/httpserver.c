@@ -67,9 +67,9 @@ static void ICACHE_FLASH_ATTR handle_request(httpserver_context_t *hc);
 static void ICACHE_FLASH_ATTR handle_request_timeout(void *arg);
 
 
-/* Sizes the body buffer from Content-Length in one allocation. Growing it a chunk at a time instead leaves a
- * run of blocks that are each too small for the next step, and with several requests in flight they cannot
- * coalesce. Returns FALSE when the length is out of range or there is not enough memory to spare. */
+/* Sizes the body buffer from Content-Length in a single exact allocation. Growing it a chunk at a time instead
+ * leaves a run of blocks that are each too small for the next step, and with several requests in flight they
+ * cannot coalesce. Returns FALSE when the length is out of range or there is not enough memory to spare. */
 bool alloc_body(httpserver_context_t *hc) {
     if (hc->content_length < 1 || hc->content_length > HTTP_MAX_BODY_LEN) {
         DEBUG_HTTPSERVER_CTX(hc, "content length %d out of range", hc->content_length);
@@ -83,9 +83,9 @@ bool alloc_body(httpserver_context_t *hc) {
     }
 
     free(hc->body);
-    hc->body = NULL;
     hc->body_len = 0;
-    hc->body_alloc_len = realloc_chunks(&hc->body, 0, hc->content_length + 1);
+    hc->body_alloc_len = hc->content_length + 1;
+    hc->body = malloc(hc->body_alloc_len);
 
     return TRUE;
 }
