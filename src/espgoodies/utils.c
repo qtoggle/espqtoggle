@@ -32,12 +32,16 @@
 #include "espgoodies/utils.h"
 
 
-/* Growth granularity for realloc_chunks(). Buffers that grow a token at a time (JSON dumps) or a packet at
- * a time (HTTP request bodies) call it constantly, so a small chunk means one realloc per few bytes on an
- * allocator that fragments badly. 64 wastes at most 63 bytes per buffer. */
-#define REALLOC_CHUNK_SIZE    64
-#define DTOSTR_BUF_LEN        32
-#define MAX_CALL_LATER_TIMERS 16
+/* Initial growth granularity for realloc_chunks(), which then doubles up to REALLOC_MAX_CHUNK_SIZE. Growing
+ * by a fixed step costs one realloc per step, and each of those can move the buffer to a fresh block, leaving
+ * behind a run of blocks that are each just too small for the next step. With several buffers growing at once
+ * those blocks sit between each other's live data and cannot coalesce, so a buffer can fail to grow while
+ * plenty of memory is still free. Doubling keeps the number of moves logarithmic; the cap keeps the wasted
+ * tail under REALLOC_MAX_CHUNK_SIZE bytes. */
+#define REALLOC_CHUNK_SIZE     64
+#define REALLOC_MAX_CHUNK_SIZE 1024
+#define DTOSTR_BUF_LEN         32
+#define MAX_CALL_LATER_TIMERS  16
 
 #if defined(_DEBUG) && defined(_DEBUG_IP)
 static struct espconn         *debug_udp_conn = NULL;
@@ -74,13 +78,14 @@ int realloc_chunks(char **p, int current_size, int req_size) {
         return current_size;
     }
 
-    while (current_size < req_size) {
-        current_size += REALLOC_CHUNK_SIZE;
+    int new_size = current_size > 0 ? current_size : REALLOC_CHUNK_SIZE;
+    while (new_size < req_size) {
+        new_size += new_size < REALLOC_MAX_CHUNK_SIZE ? new_size : REALLOC_MAX_CHUNK_SIZE;
     }
 
-    *p = realloc(*p, current_size);
+    *p = realloc(*p, new_size);
 
-    return current_size;
+    return new_size;
 }
 
 double strtod(const char *s, char **endptr) {

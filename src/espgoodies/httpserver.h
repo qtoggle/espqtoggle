@@ -71,6 +71,11 @@
 #define HTTP_MAX_HEADER_VALUE_LEN        256
 #define HTTP_MAX_BODY_LEN                10240
 
+/* Free heap that must remain after a request body has been allocated. my_malloc() reboots the device when an
+ * allocation fails, so checking before asking is the only way to answer an oversized body with a 400 rather
+ * than a reset. MAX_PARALLEL_HTTP_REQ bodies are allocated independently, so this is what bounds them. */
+#define HTTP_BODY_MIN_FREE_MEM           8192
+
 
 typedef void (*http_invalid_callback_t)(void *arg);
 typedef void (*http_timeout_callback_t)(void *arg);
