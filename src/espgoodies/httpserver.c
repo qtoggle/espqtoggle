@@ -22,6 +22,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <mem.h>
+#include <user_interface.h>
 
 #include "espgoodies/common.h"
 #include "espgoodies/utils.h"
@@ -59,11 +60,35 @@ static char   *server_name = NULL;
 static uint32  request_timeout = 8;
 
 
+static bool ICACHE_FLASH_ATTR alloc_body(httpserver_context_t *hc);
 static bool ICACHE_FLASH_ATTR handle_header_value_ready(httpserver_context_t *hc);
 static void ICACHE_FLASH_ATTR handle_invalid(httpserver_context_t *hc, char c);
 static void ICACHE_FLASH_ATTR handle_request(httpserver_context_t *hc);
 static void ICACHE_FLASH_ATTR handle_request_timeout(void *arg);
 
+
+/* Sizes the body buffer from Content-Length in one allocation. Growing it a chunk at a time instead leaves a
+ * run of blocks that are each too small for the next step, and with several requests in flight they cannot
+ * coalesce. Returns FALSE when the length is out of range or there is not enough memory to spare. */
+bool alloc_body(httpserver_context_t *hc) {
+    if (hc->content_length < 1 || hc->content_length > HTTP_MAX_BODY_LEN) {
+        DEBUG_HTTPSERVER_CTX(hc, "content length %d out of range", hc->content_length);
+        return FALSE;
+    }
+
+    uint32 free_mem = system_get_free_heap_size();
+    if (free_mem < (uint32) hc->content_length + HTTP_BODY_MIN_FREE_MEM) {
+        DEBUG_HTTPSERVER_CTX(hc, "refusing %d byte body, only %d bytes free", hc->content_length, free_mem);
+        return FALSE;
+    }
+
+    free(hc->body);
+    hc->body = NULL;
+    hc->body_len = 0;
+    hc->body_alloc_len = realloc_chunks(&hc->body, 0, hc->content_length + 1);
+
+    return TRUE;
+}
 
 bool handle_header_value_ready(httpserver_context_t *hc) {
     /* Without a cap, a request with enough headers exhausts the heap; header_count is a uint8 and would wrap
@@ -371,11 +396,12 @@ void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
                         hc->req_state = HTTP_STATE_HEADER_READY;
                         handle_request(hc);
                     }
-                    else if (hc->content_length == 1) {
+                    else if (alloc_body(hc)) {
                         hc->req_state = HTTP_STATE_BODY;
                     }
                     else {
-                        hc->req_state = HTTP_STATE_HEADER_READY;
+                        hc->req_state = HTTP_STATE_INVALID;
+                        handle_invalid(hc, c);
                     }
                 }
             }
@@ -387,34 +413,26 @@ void httpserver_parse_req_char(httpserver_context_t *hc, int c) {
             break;
         }
 
-        case HTTP_STATE_HEADER_READY: {
-            if (hc->content_length) {
-                hc->req_state = HTTP_STATE_BODY;
-                hc->body_alloc_len = realloc_chunks(&(hc->body), 0, 1);
-                hc->body_len = 1;
-                hc->body[0] = c;
-            }
-            else { /* Body unexpected */
-                hc->req_state = HTTP_STATE_INVALID;
-                handle_invalid(hc, c);
-            }
+        case HTTP_STATE_HEADER_READY: { /* Only reached without a body, so any data here is unexpected */
+            hc->req_state = HTTP_STATE_INVALID;
+            handle_invalid(hc, c);
 
             break;
         }
         
         case HTTP_STATE_BODY: {
-            if (hc->body_len >= HTTP_MAX_BODY_LEN) {
+            /* The buffer was sized from Content-Length, so a client sending more than it announced is the
+             * only way past its end */
+            if (hc->body_len + 1 >= hc->body_alloc_len) {
                 hc->req_state = HTTP_STATE_INVALID;
                 handle_invalid(hc, c);
                 break;
             }
 
-            hc->body_alloc_len = realloc_chunks(&(hc->body), hc->body_alloc_len, hc->body_len + 1);
             hc->body[hc->body_len++] = c;
 
             if (hc->body_len >= hc->content_length) {
                 hc->req_state = HTTP_STATE_BODY_READY;
-                hc->body_alloc_len = realloc_chunks(&(hc->body), hc->body_alloc_len, hc->body_len + 1);
                 hc->body[hc->body_len++] = 0;
                 handle_request(hc);
             }
