@@ -395,6 +395,7 @@ void *my_malloc(size_t size) {
     void *ptr = pvPortMalloc(size, "", 0);
     if (!ptr && size) {
         DEBUG_SYSTEM("malloc(%d) failed, resetting", size);
+        system_record_alloc_failure(size);
         rtc_reset();
         system_restart();
     }
@@ -406,6 +407,7 @@ void *my_realloc(void *ptr, size_t size) {
     ptr = pvPortRealloc(ptr, size, "", 0);
     if (!ptr && size) {
         DEBUG_SYSTEM("realloc(%x, %d) failed, resetting", (uint32) ptr, size);
+        system_record_alloc_failure(size);
         rtc_reset();
         system_restart();
     }
@@ -421,6 +423,7 @@ void *my_zalloc(size_t size) {
     void *ptr = pvPortZalloc(size, "", 0);
     if (!ptr && size) {
         DEBUG_SYSTEM("zalloc(%d) failed, resetting", size);
+        system_record_alloc_failure(size);
         rtc_reset();
         system_restart();
     }

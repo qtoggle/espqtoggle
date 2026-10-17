@@ -93,3 +93,21 @@ bool rtc_set_value(uint8 addr, uint32 value) {
 
     return TRUE;
 }
+
+uint32 rtc_get_raw_value(uint8 addr) {
+    uint32 value;
+    if (!system_rtc_mem_read(addr, &value, 4)) {
+        DEBUG_RTC("failed to read raw value at %d * 4", addr);
+        return 0;
+    }
+
+    return value;
+}
+
+bool rtc_set_raw_value(uint8 addr, uint32 value) {
+    if (!system_rtc_mem_write(addr, &value, 4)) {
+        return FALSE;
+    }
+
+    return TRUE;
+}

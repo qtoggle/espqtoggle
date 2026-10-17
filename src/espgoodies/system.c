@@ -44,6 +44,15 @@
 #define RTC_UNEXP_RESET_COUNT_ADDR RTC_USER_ADDR + 0 /* 130 * 4 bytes = 520 */
 #define MAX_UNEXP_RESET_COUNT      16
 
+/* RTC_USER_ADDR + 1 and + 2 belong to sleep.c */
+#define RTC_ALLOC_FAIL_MAGIC_ADDR  RTC_USER_ADDR + 3 /* 133 * 4 bytes = 532 */
+#define RTC_ALLOC_FAIL_SIZE_ADDR   RTC_USER_ADDR + 4 /* 134 * 4 bytes = 536 */
+
+/* Tells a real record from uninitialized RTC contents. The magic is mixed with the size so that both slots
+ * have to agree, and both are read and written raw, bypassing rtc_get_value()'s full-boot gate, because the
+ * allocator calls rtc_reset() on its way out. */
+#define ALLOC_FAIL_MAGIC           0x0a110cfa
+
 #define TASK_QUEUE_SIZE       8
 #define TASK_ID_SYSTEM_UPDATE 100
 
@@ -58,6 +67,8 @@ static bool                         status_led_level = TRUE;
 
 static uint32                       last_time_us = 0;
 static uint64                       uptime_us = 0;
+static char                        *last_reset_reason = "unknown";
+static uint32                       last_alloc_fail_size = 0;
 static os_timer_t                   reset_timer;
 static system_reset_callback_t      reset_callback = NULL;
 static system_reset_callback_t      reset_factory_callback = NULL;
@@ -276,33 +287,46 @@ void system_check_reboot_loop(void) {
 
     switch (reset_info->reason) {
         case REASON_DEFAULT_RST:
-            DEBUG_SYSTEM("reset reason: %s", "power reboot");
+            last_reset_reason = "power";
             break;
 
         case REASON_WDT_RST:
-            DEBUG_SYSTEM("reset reason: %s", "hardware watchdog");
+            last_reset_reason = "hardware-watchdog";
             break;
 
         case REASON_EXCEPTION_RST:
-            DEBUG_SYSTEM("reset reason: %s", "fatal exception");
+            last_reset_reason = "exception";
             break;
 
         case REASON_SOFT_WDT_RST:
-            DEBUG_SYSTEM("reset reason: %s", "software watchdog");
+            last_reset_reason = "software-watchdog";
             break;
 
         case REASON_SOFT_RESTART:
-            DEBUG_SYSTEM("reset reason: %s", "software reset");
+            last_reset_reason = "software";
             break;
 
         case REASON_DEEP_SLEEP_AWAKE:
-            DEBUG_SYSTEM("reset reason: %s", "deep-sleep wake");
+            last_reset_reason = "deep-sleep-wake";
             break;
 
         case REASON_EXT_SYS_RST:
-            DEBUG_SYSTEM("reset reason: %s", "hardware reset");
+            last_reset_reason = "external";
             break;
     }
+
+    /* An allocation failure restarts through system_restart(), which the SDK reports as a plain software reset
+     * or, depending on where it was called from, as an exception. Neither says anything about memory, so our
+     * own record is the only thing that identifies it. The record is cleared on every boot, so it always
+     * describes exactly one reset. */
+    uint32 alloc_fail_size = rtc_get_raw_value(RTC_ALLOC_FAIL_SIZE_ADDR);
+    if (rtc_get_raw_value(RTC_ALLOC_FAIL_MAGIC_ADDR) == (ALLOC_FAIL_MAGIC ^ alloc_fail_size)) {
+        last_reset_reason = "out-of-memory";
+        last_alloc_fail_size = alloc_fail_size;
+    }
+    rtc_set_raw_value(RTC_ALLOC_FAIL_MAGIC_ADDR, 0);
+
+    DEBUG_SYSTEM("reset reason: %s (alloc fail size = %d)", last_reset_reason, last_alloc_fail_size);
 
     if (reset_info->reason == REASON_WDT_RST ||
         reset_info->reason == REASON_SOFT_WDT_RST ||
@@ -324,6 +348,19 @@ void system_check_reboot_loop(void) {
     }
 
     rtc_set_value(RTC_UNEXP_RESET_COUNT_ADDR, unexp_reset_count);
+}
+
+void system_record_alloc_failure(uint32 size) {
+    rtc_set_raw_value(RTC_ALLOC_FAIL_SIZE_ADDR, size);
+    rtc_set_raw_value(RTC_ALLOC_FAIL_MAGIC_ADDR, ALLOC_FAIL_MAGIC ^ size);
+}
+
+char *system_get_last_reset_reason(void) {
+    return last_reset_reason;
+}
+
+uint32 system_get_last_alloc_fail_size(void) {
+    return last_alloc_fail_size;
 }
 
 void system_get_fw_version(version_t *version) {
