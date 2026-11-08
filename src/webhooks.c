@@ -260,7 +260,8 @@ void on_webhook_response(
         n = n->next;
     }
 
-    if (status == 200 || !n->retries_left) {
+    /* Any 2xx status means the consumer accepted the event; a master answers 204 */
+    if ((status >= 200 && status < 300) || !n->retries_left) {
         if (!n->retries_left) {
             DEBUG_WEBHOOKS("no more retries left");
         }
